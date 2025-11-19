@@ -4,10 +4,16 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/LeeDark/book-social/internal/config"
 	"github.com/go-chi/chi/v5"
 )
 
 func main() {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	r := chi.NewRouter()
 
 	// Add at least one route
@@ -16,8 +22,8 @@ func main() {
 	})
 
 	// Start the server with error handling
-	log.Println("Starting server on port :8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
-		panic(err)
+	log.Println("Starting server on port", cfg.HTTP.Addr)
+	if err := http.ListenAndServe(cfg.HTTP.Addr, r); err != nil {
+		log.Fatal(err)
 	}
 }
