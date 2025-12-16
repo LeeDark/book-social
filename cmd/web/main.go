@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/LeeDark/book-social/internal/buildinfo"
 	"github.com/LeeDark/book-social/internal/config"
 	"github.com/LeeDark/book-social/internal/logging"
 	"github.com/go-chi/chi/v5"
@@ -17,6 +18,12 @@ func main() {
 	}
 
 	logger := logging.New(cfg.Env, cfg.Log.Level, cfg.Log.Format)
+
+	logger.Info("starting book-social",
+		slog.String("version", buildinfo.Version),
+		slog.String("commit", buildinfo.Commit),
+		slog.String("build_date", buildinfo.BuildDate),
+	)
 
 	r := chi.NewRouter()
 
