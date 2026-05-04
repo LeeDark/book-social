@@ -1,6 +1,9 @@
 VERSION ?= v0.0.1
 COMMIT  := $(shell git rev-parse --short HEAD)
 DATE    := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+DB_PATH ?= ./data/book_social_dev.db
+
+.PHONY: build run db-dev-reset db-dev-shell
 
 build:
 	go build -ldflags "\
@@ -14,3 +17,9 @@ run:
 
 test:
 	go test ./...
+
+db-dev-reset:
+	DB_PATH=$(DB_PATH) ./db/sqlite/reset-dev-db.sh
+
+db-dev-shell:
+	sqlite3 $(DB_PATH)
