@@ -19,8 +19,8 @@ type Config struct {
 	}
 }
 
-func Load() (*Config, error) {
-	cfg := &Config{}
+func Load() (Config, error) {
+	cfg := Config{}
 
 	cfg.Env = getEnv("APP_ENV", "dev")
 

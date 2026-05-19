@@ -1,14 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 	"log/slog"
-	"net/http"
+	"os"
 
+	"github.com/LeeDark/book-social/internal/app"
 	"github.com/LeeDark/book-social/internal/buildinfo"
 	"github.com/LeeDark/book-social/internal/config"
 	"github.com/LeeDark/book-social/internal/logging"
-	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -18,24 +19,36 @@ func main() {
 	}
 
 	logger := logging.New(cfg.Env, cfg.Log.Level, cfg.Log.Format)
-
 	logger.Info("starting book-social",
 		slog.String("version", buildinfo.Version),
 		slog.String("commit", buildinfo.Commit),
 		slog.String("build_date", buildinfo.BuildDate),
 	)
 
-	r := chi.NewRouter()
+	//r := chi.NewRouter()
+	//
+	//// Add at least one route
+	//r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	//	w.Write([]byte("Book social: dev"))
+	//})
 
-	// Add at least one route
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Book social: dev"))
-	})
+	deps := app.Deps{
+		Config: cfg,
+		Logger: logger,
+	}
+	application := app.New(deps)
 
 	// Start the server with error handling
-	logger.Info("starting server",
-		slog.String("env", cfg.Env), slog.String("addr", cfg.HTTP.Addr))
-	if err := http.ListenAndServe(cfg.HTTP.Addr, r); err != nil {
-		log.Fatal(err)
+	//logger.Info("starting server",
+	//	slog.String("env", cfg.Env), slog.String("addr", cfg.HTTP.Addr))
+	//if err := http.ListenAndServe(cfg.HTTP.Addr, r); err != nil {
+	//	log.Fatal(err)
+	//}
+
+	ctx := context.Background()
+	err = app.Run(ctx, cfg, logger, application.Router)
+	if err != nil {
+		logger.Error("run app", slog.Any("error", err))
+		os.Exit(1)
 	}
 }
