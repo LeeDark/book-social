@@ -1,0 +1,18 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: booksocial:dev
+    container_name: booksocial
+    ports:
+      - "8080:8080"
+    environment:
+      APP_ENV: dev
+      APP_HTTP_ADDR: :8080
+      APP_DB_DSN: file:/app/data/book_social_dev.db
+    volumes:
+      - sqlite-data:/app/data
+
+volumes:
+  sqlite-data:

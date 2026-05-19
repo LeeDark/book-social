@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+
+# Build artifacts
+bin/
+
+# Development data
+data/
+*.db
+
+# Database scripts (included in image if needed via explicit COPY)
+db/
+
+# Documentation
+docs/
+
+# Test files
+*_test.go
+
+# Go modules (will be downloaded during build)
+vendor/
+
+# Makefile (not needed in container)
+Makefile
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose*.yml
+compose.yaml
+
+# Images and assets for documentation
+*.png
+*.jpg
+*.jpeg
