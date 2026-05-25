@@ -1,0 +1,37 @@
+:root {
+    --content-width: 960px;
+}
+
+body {
+    min-height: 100vh;
+}
+
+main.container {
+    max-width: var(--content-width);
+}
+
+.site-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.site-nav__brand {
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.site-nav__items {
+    display: flex;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.book-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.book-card__meta {
+    opacity: 0.75;
+}

@@ -18,7 +18,7 @@ func New(deps Deps) *App {
 	r := chi.NewRouter()
 
 	//RegisterMiddleware(r, deps)
-	//RegisterRoutes(r, deps)
+	RegisterRoutes(r, deps)
 
 	return &App{
 		Config: deps.Config,

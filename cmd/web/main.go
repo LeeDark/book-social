@@ -9,6 +9,7 @@ import (
 	"github.com/LeeDark/book-social/internal/app"
 	"github.com/LeeDark/book-social/internal/buildinfo"
 	"github.com/LeeDark/book-social/internal/config"
+	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/logging"
 )
 
@@ -25,25 +26,19 @@ func main() {
 		slog.String("build_date", buildinfo.BuildDate),
 	)
 
-	//r := chi.NewRouter()
-	//
-	//// Add at least one route
-	//r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-	//	w.Write([]byte("Book social: dev"))
-	//})
+	renderer, err := render.NewRenderer()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	homeHandler := app.NewHomeHandler(renderer, logger)
 
 	deps := app.Deps{
-		Config: cfg,
-		Logger: logger,
+		Config:      cfg,
+		Logger:      logger,
+		HomeHandler: homeHandler,
 	}
 	application := app.New(deps)
-
-	// Start the server with error handling
-	//logger.Info("starting server",
-	//	slog.String("env", cfg.Env), slog.String("addr", cfg.HTTP.Addr))
-	//if err := http.ListenAndServe(cfg.HTTP.Addr, r); err != nil {
-	//	log.Fatal(err)
-	//}
 
 	ctx := context.Background()
 	err = app.Run(ctx, cfg, logger, application.Router)

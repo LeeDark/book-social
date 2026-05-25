@@ -10,6 +10,6 @@ type Deps struct {
 	Config config.Config
 	Logger *slog.Logger
 
-	//HomeHandler
+	HomeHandler *HomeHandler
 	//CatalogHandler
 }

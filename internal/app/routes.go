@@ -7,14 +7,10 @@ import (
 )
 
 func RegisterRoutes(r chi.Router, deps Deps) {
-	//r.Handle("/static/*", http.StripPrefix(
-	//	"/static/",
-	//	http.FileServer(http.Dir(deps.Config.StaticDir))))
+	r.Handle("/static/*", http.StripPrefix(
+		"/static/",
+		http.FileServer(http.Dir("./internal/web/static"))))
 
-	// Add at least one route
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Book social: dev"))
-	})
-
-	//r.Get("/", deps.HomeHandler.Index)
+	r.Get("/", deps.HomeHandler.Index)
+	r.Get("/about", deps.HomeHandler.About)
 }
