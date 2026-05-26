@@ -1,10 +1,12 @@
 package app
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/LeeDark/book-social/internal/http/render"
+	"github.com/LeeDark/book-social/internal/http/response"
 )
 
 type HomePageData struct {
@@ -29,8 +31,7 @@ func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.renderer.Render(w, http.StatusOK, "home.tmpl", data); err != nil {
-		h.logger.Error("render home page", "error", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		response.ServerError(w, r, h.logger, fmt.Errorf("render home page: %w", err))
 		return
 	}
 }
@@ -41,8 +42,7 @@ func (h *HomeHandler) About(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.renderer.Render(w, http.StatusOK, "about.tmpl", data); err != nil {
-		h.logger.Error("render home page", "error", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		response.ServerError(w, r, h.logger, fmt.Errorf("render about page: %w", err))
 		return
 	}
 }
