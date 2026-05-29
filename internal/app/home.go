@@ -9,13 +9,13 @@ import (
 	"github.com/LeeDark/book-social/internal/http/response"
 )
 
-type HomePageData struct {
-	Title string
-}
-
 type HomeHandler struct {
 	renderer *render.Renderer
 	logger   *slog.Logger
+}
+
+type HomePageData struct {
+	Title string
 }
 
 func NewHomeHandler(renderer *render.Renderer, logger *slog.Logger) *HomeHandler {

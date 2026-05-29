@@ -1,0 +1,27 @@
+{{define "book_card"}}
+    <article class="book-card">
+        <a class="book-card__cover {{.CoverClass}}" href="{{.BookURL}}" aria-label="Open {{.Title}}">
+            <span class="book-card__cover-text">Book</span>
+        </a>
+
+        <div class="book-card__body">
+            <h2 class="book-card__title">
+                <a href="{{.BookURL}}">{{.Title}}</a>
+            </h2>
+
+            <p class="book-card__meta">
+                by <a href="{{.AuthorURL}}">{{.AuthorName}}</a>
+            </p>
+
+            {{if .GenreName}}
+                <p class="book-card__genre">
+                    <a href="{{.GenreURL}}">{{.GenreName}}</a>
+                </p>
+            {{end}}
+
+            {{if .Description}}
+                <p class="book-card__description">{{.Description}}</p>
+            {{end}}
+        </div>
+    </article>
+{{end}}

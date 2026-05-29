@@ -1,4 +1,4 @@
-package app
+package view
 
 type NavItem struct {
 	Key    string

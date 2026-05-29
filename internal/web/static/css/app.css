@@ -32,6 +32,72 @@ main.container {
     gap: 1rem;
 }
 
-.book-card__meta {
-    opacity: 0.75;
+.book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
 }
+
+.book-card {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.book-card__cover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 180px;
+    text-decoration: none;
+    background: #eee;
+}
+
+.book-card__cover-text {
+    font-weight: 700;
+    color: #555;
+}
+
+.book-card__body {
+    padding: 1rem;
+}
+
+.book-card__title {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+}
+
+.book-card__meta,
+.book-card__genre,
+.book-card__description {
+    margin: 0.4rem 0;
+}
+
+.book-card__description {
+    color: #555;
+}
+
+/*.book-card__meta {*/
+/*    opacity: 0.75;*/
+/*}*/
+
+/*.cover-0 {*/
+/*    background: linear-gradient(135deg, #e8e8e8, #cfcfcf);*/
+/*}*/
+
+/*.cover-1 {*/
+/*    background: linear-gradient(135deg, #dbeafe, #93c5fd);*/
+/*}*/
+
+/*.cover-2 {*/
+/*    background: linear-gradient(135deg, #dcfce7, #86efac);*/
+/*}*/
+
+/*.cover-3 {*/
+/*    background: linear-gradient(135deg, #fef3c7, #facc15);*/
+/*}*/
+
+/*.cover-4 {*/
+/*    background: linear-gradient(135deg, #fae8ff, #d8b4fe);*/
+/*}*/

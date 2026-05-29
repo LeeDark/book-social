@@ -11,26 +11,39 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 )
 
+type CatalogHandler interface {
+	Catalog(w http.ResponseWriter, r *http.Request)
+}
+
 type App struct {
 	Config config.Config
 	Logger *slog.Logger
 	Router http.Handler
+
+	HomeHandler    *HomeHandler
+	CatalogHandler CatalogHandler
 }
 
-func New(deps Deps) *App {
+func New(deps Deps,
+	homeHandler *HomeHandler,
+	catalogHandler CatalogHandler) *App {
 	r := chi.NewRouter()
 
-	RegisterMiddleware(r, deps)
-	RegisterRoutes(r, deps)
-
-	return &App{
-		Config: deps.Config,
-		Logger: deps.Logger,
-		Router: r,
+	app := &App{
+		Config:         deps.Config,
+		Logger:         deps.Logger,
+		Router:         r,
+		HomeHandler:    homeHandler,
+		CatalogHandler: catalogHandler,
 	}
+
+	app.RegisterMiddleware(r, deps)
+	app.RegisterRoutes(r, deps)
+
+	return app
 }
 
-func RegisterMiddleware(r chi.Router, deps Deps) {
+func (app *App) RegisterMiddleware(r chi.Router, deps Deps) {
 	r.Use(chimiddleware.RequestID)
 	r.Use(chimiddleware.RealIP)
 	r.Use(appmiddleware.RequestLogger(deps.Logger))

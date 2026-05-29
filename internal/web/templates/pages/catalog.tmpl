@@ -1,0 +1,21 @@
+{{define "title"}}{{.Title}}{{end}}
+
+{{define "main"}}
+    <section class="page-header">
+        <h1>Books</h1>
+        <p>Browse the catalog of books.</p>
+    </section>
+
+    {{if .Books}}
+        <section class="book-grid">
+            {{range .Books}}
+                {{template "book_card" .}}
+            {{end}}
+        </section>
+    {{else}}
+        <section class="empty-state">
+            <h2>No books found</h2>
+            <p>The catalog is empty for now.</p>
+        </section>
+    {{end}}
+{{end}}
