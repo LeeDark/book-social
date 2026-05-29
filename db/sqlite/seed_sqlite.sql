@@ -5,10 +5,10 @@ PRAGMA foreign_keys = ON;
 
 -- References
 -- Genres
-INSERT INTO genres(id, name, description)
-VALUES (1, 'Romance', 'Stories about love, relationships, and emotions.'),
-       (2, 'Fantasy', 'Books with magic, supernatural elements, or imaginary worlds.'),
-       (3, 'Detective', 'Stories focused on solving a crime or a puzzle.');
+INSERT INTO genres(id, name, slug, description)
+VALUES (1, 'Romance', 'romance','Stories about love, relationships, and emotions.'),
+       (2, 'Fantasy', 'fantasy', 'Books with magic, supernatural elements, or imaginary worlds.'),
+       (3, 'Detective', 'detective','Stories focused on solving a crime or a puzzle.');
 
 -- Data
 -- Authors
@@ -22,10 +22,12 @@ VALUES (1, 'Agatha', '', 'Christie',
    London.');
 
 -- Books
-INSERT INTO books(title, description, book_author_id, book_genre_id)
+INSERT INTO books(title, slug, description, book_author_id, book_genre_id)
 VALUES ('Murder on the Orient Express',
+        'murder-on-the-orient-express',
         'While traveling from Istanbul to London on the luxurious Orient Express, a wealthy American businessman is found murdered in his locked compartment. A snowdrift stops the train in Yugoslavia, leaving the detective Hercule Poirot to identify the killer among a group of diverse passengers, all of whom have secrets to hide. It is famous for having one of the most ingenious endings in detective fiction.',
         1, 3),
        ('The Hound of the Baskervilles',
-        ' This is perhaps the most celebrated Sherlock Holmes novel. Holmes and Dr. Watson travel to Dartmoor to investigate the mysterious death of Sir Charles Baskerville. Locals believe a supernatural, spectral hound haunts the foggy moors, cursed to kill members of the Baskerville family. Holmes must use logic to determine if the threat is truly paranormal or a cold-blooded human plot.',
+        'the-hound-of-the-baskervilles',
+        'This is perhaps the most celebrated Sherlock Holmes novel. Holmes and Dr. Watson travel to Dartmoor to investigate the mysterious death of Sir Charles Baskerville. Locals believe a supernatural, spectral hound haunts the foggy moors, cursed to kill members of the Baskerville family. Holmes must use logic to determine if the threat is truly paranormal or a cold-blooded human plot.',
         2, 3);

@@ -48,6 +48,7 @@ CREATE INDEX idx_authors_name ON authors(sur_name, first_name);
 CREATE TABLE genres (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
     description TEXT NULL,
     CONSTRAINT uq_genres_name UNIQUE (name)
 );
@@ -56,6 +57,7 @@ CREATE TABLE genres (
 CREATE TABLE books (
        id INTEGER PRIMARY KEY AUTOINCREMENT,
        title TEXT NOT NULL,
+       slug TEXT NOT NULL UNIQUE,
        description TEXT NULL,
 
        book_author_id INTEGER NULL,
