@@ -1,6 +1,5 @@
 ```mermaid
 erDiagram
-    erDiagram
     ROLES ||--o{ USERS : has
 
     BOOKS ||--o{ BOOK_AUTHORS : links
