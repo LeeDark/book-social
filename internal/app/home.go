@@ -67,6 +67,7 @@ func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
 			Title:       "Book Social",
 			Description: "Discover books, follow authors, and build a reading life with people who care about the same stories.",
 			ActiveNav:   "home",
+			Nav:         view.MainNavigation(),
 			Breadcrumbs: []view.Breadcrumb{
 				{Label: "Home"},
 			},
@@ -154,7 +155,9 @@ func homeComingSoon() []HomeFeatureData {
 func (h *HomeHandler) About(w http.ResponseWriter, r *http.Request) {
 	data := HomePageData{
 		Page: view.Page{
-			Title: "About Book Social",
+			Title:     "About Book Social",
+			Nav:       view.MainNavigation(),
+			ActiveNav: "about",
 		},
 	}
 

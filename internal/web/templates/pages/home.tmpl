@@ -23,7 +23,7 @@
                     <select id="home-search-genre" name="genre" aria-label="Genre">
                         <option value="">All genres</option>
                         {{range .Genres}}
-                            <option value="{{.Slug}}">{{.Name}}</option>
+                            <option value="{{.Slug}}"{{if eq $.Search.Genre .Slug}} selected{{end}}>{{.Name}}</option>
                         {{end}}
                     </select>
                     <button type="submit">Search</button>
