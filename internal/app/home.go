@@ -68,9 +68,6 @@ func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
 			Description: "Discover books, follow authors, and build a reading life with people who care about the same stories.",
 			ActiveNav:   "home",
 			Nav:         view.MainNavigation(),
-			Breadcrumbs: []view.Breadcrumb{
-				{Label: "Home"},
-			},
 		},
 		Search: HomeSearchData{
 			Action: "/books",

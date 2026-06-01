@@ -101,22 +101,57 @@ main.container > section {
 }
 
 .breadcrumbs {
-    margin-bottom: 1rem;
+    margin: 0 0 calc(var(--pico-spacing) * 0.75);
+    color: var(--pico-muted-color);
+    font-size: 0.875rem;
+    line-height: 1.4;
 }
 
 .breadcrumbs ol {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 0;
+    align-items: center;
+    gap: calc(var(--pico-spacing) * 0.35);
     margin: 0;
+    padding: 0;
     list-style: none;
 }
 
+.breadcrumbs ol:first-of-type,
+.breadcrumbs ol:last-of-type {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.breadcrumbs li {
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    color: inherit;
+}
+
 .breadcrumbs li + li::before {
-    content: "/";
-    margin-right: 0.5rem;
-    color: #777;
+    content: var(--pico-nav-breadcrumb-divider, "/");
+    margin-right: calc(var(--pico-spacing) * 0.35);
+    color: var(--pico-muted-color);
+    opacity: 0.55;
+}
+
+.breadcrumbs li :where(a, [role="link"]) {
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    color: var(--pico-muted-color);
+    text-decoration: none;
+}
+
+.breadcrumbs li :where(a, [role="link"]):hover {
+    color: var(--pico-primary);
+    text-decoration: underline;
+}
+
+.breadcrumbs [aria-current="page"] {
+    opacity: 0.75;
 }
 
 .site-nav {
