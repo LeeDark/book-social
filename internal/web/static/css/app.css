@@ -1,5 +1,8 @@
 :root {
-    --content-width: 960px;
+    --content-width: 1080px;
+    --muted-border: #d8dee4;
+    --muted-text: #5f6b76;
+    --surface-soft: #f6f8fa;
 }
 
 body {
@@ -8,6 +11,93 @@ body {
 
 main.container {
     max-width: var(--content-width);
+}
+
+main.container > section {
+    margin: 3rem 0;
+}
+
+.home-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.38fr);
+    gap: var(--pico-spacing);
+    align-items: start;
+    padding: clamp(1rem, 3vw, 2rem);
+    border: var(--pico-border-width) solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+}
+
+.home-hero h1 {
+    max-width: 16ch;
+    margin-bottom: 1rem;
+    color: var(--pico-color);
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.1;
+}
+
+.home-hero__content > p:not(.eyebrow) {
+    max-width: 62ch;
+    color: var(--pico-color);
+}
+
+.home-hero__panel {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.hero-stat {
+    margin: 0;
+    padding: 1rem;
+    border: var(--pico-border-width) solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-background-color);
+}
+
+.hero-stat strong,
+.hero-stat span {
+    display: block;
+}
+
+.hero-stat span {
+    color: var(--pico-muted-color);
+}
+
+.home-search {
+    margin-top: 1.5rem;
+    margin-bottom: 0;
+}
+
+.home-search .grid {
+    grid-template-columns: minmax(12rem, 1fr) minmax(9rem, 12rem) max-content;
+    gap: 0.75rem;
+    align-items: end;
+}
+
+.home-search button {
+    width: auto;
+    white-space: nowrap;
+}
+
+.section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.section-heading h2 {
+    margin: 0;
+}
+
+.eyebrow {
+    margin-bottom: 0.35rem;
+    color: var(--muted-text);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
 }
 
 .breadcrumbs {
@@ -52,16 +142,19 @@ main.container {
 }
 
 .book-grid {
-    display: flex;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 320px));
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
     gap: 1rem;
 }
 
 .book-card {
-    border: 1px solid #ddd;
-    border-radius: 12px;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--muted-border);
+    border-radius: 8px;
     overflow: hidden;
-    background: #eee;
+    background: #fff;
 }
 
 .book-card__cover {
@@ -94,7 +187,7 @@ main.container {
 }
 
 .book-card__description {
-    color: #555;
+    color: var(--muted-text);
 }
 
 .book-card__meta {
@@ -119,4 +212,40 @@ main.container {
 
 .cover-4 {
     background: linear-gradient(135deg, #fae8ff, #d8b4fe);
+}
+
+.compact-card {
+    height: 100%;
+    margin: 0;
+    border: 1px solid var(--muted-border);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.compact-card h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.05rem;
+}
+
+.compact-card p {
+    margin-bottom: 0;
+    color: var(--muted-text);
+}
+
+@media (max-width: 900px) {
+    .home-hero {
+        grid-template-columns: 1fr;
+        padding: 1.25rem;
+    }
+}
+
+@media (max-width: 760px) {
+    .home-search .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-heading {
+        align-items: start;
+        flex-direction: column;
+    }
 }
