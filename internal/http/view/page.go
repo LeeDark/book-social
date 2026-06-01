@@ -5,8 +5,14 @@ type Page struct {
 	Description string
 	ActiveNav   string
 	Nav         []NavItem
+	Breadcrumbs []Breadcrumb
 	//CurrentUser *CurrentUser
 	//Flash []FlashMessage
+}
+
+type Breadcrumb struct {
+	Label string
+	Href  string
 }
 
 type CurrentUser struct {
