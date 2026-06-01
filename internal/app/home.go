@@ -7,6 +7,7 @@ import (
 
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/http/response"
+	"github.com/LeeDark/book-social/internal/http/view"
 )
 
 type HomeHandler struct {
@@ -15,7 +16,7 @@ type HomeHandler struct {
 }
 
 type HomePageData struct {
-	Title string
+	view.Page
 }
 
 func NewHomeHandler(renderer *render.Renderer, logger *slog.Logger) *HomeHandler {
@@ -27,7 +28,12 @@ func NewHomeHandler(renderer *render.Renderer, logger *slog.Logger) *HomeHandler
 
 func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
 	data := HomePageData{
-		Title: "Book Social",
+		Page: view.Page{
+			Title: "Book Social",
+			Breadcrumbs: []view.Breadcrumb{
+				{Label: "Home"},
+			},
+		},
 	}
 
 	if err := h.renderer.Render(w, http.StatusOK, "home.tmpl", data); err != nil {
@@ -38,7 +44,9 @@ func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 func (h *HomeHandler) About(w http.ResponseWriter, r *http.Request) {
 	data := HomePageData{
-		Title: "About Book Social",
+		Page: view.Page{
+			Title: "About Book Social",
+		},
 	}
 
 	if err := h.renderer.Render(w, http.StatusOK, "about.tmpl", data); err != nil {

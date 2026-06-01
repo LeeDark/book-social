@@ -10,6 +10,25 @@ main.container {
     max-width: var(--content-width);
 }
 
+.breadcrumbs {
+    margin-bottom: 1rem;
+}
+
+.breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.breadcrumbs li + li::before {
+    content: "/";
+    margin-right: 0.5rem;
+    color: #777;
+}
+
 .site-nav {
     display: flex;
     align-items: center;
