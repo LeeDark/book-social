@@ -1,0 +1,19 @@
+.compact-card {
+    height: 100%;
+    margin: 0;
+    border: var(--pico-border-width) solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    color: var(--pico-color);
+}
+
+.compact-card h3 {
+    margin-bottom: 0.5rem;
+    color: var(--pico-color);
+    font-size: 1.05rem;
+}
+
+.compact-card p {
+    margin-bottom: 0;
+    color: var(--pico-muted-color);
+}
