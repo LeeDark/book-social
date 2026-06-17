@@ -31,6 +31,7 @@ func (s *CatalogService) CatalogPage(ctx context.Context) (CatalogPageData, erro
 			Title:       "Books",
 			Description: "Catalog page",
 			ActiveNav:   "catalog",
+			Nav:         view.MainNavigation(),
 			Breadcrumbs: []view.Breadcrumb{
 				{Label: "Home", Href: "/"},
 				{Label: "Catalog"},

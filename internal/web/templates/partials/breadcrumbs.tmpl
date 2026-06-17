@@ -1,8 +1,8 @@
 {{define "breadcrumbs"}}
-{{with .Breadcrumbs}}
+{{if gt (len .Breadcrumbs) 1}}
     <nav class="breadcrumbs" aria-label="Breadcrumb">
         <ol>
-            {{range .}}
+            {{range .Breadcrumbs}}
                 <li>
                     {{if .Href}}
                         <a href="{{.Href}}">{{.Label}}</a>

@@ -1,6 +1,119 @@
 {{define "title"}}{{.Title}}{{end}}
 
 {{define "main"}}
-    <h2>Book Social</h2>
-    <p>There's nothing to see here yet!</p>
+    <section class="home-hero">
+        <div class="home-hero__content">
+            <p class="eyebrow">A social catalog for curious readers</p>
+            <h1>Discover books worth talking about.</h1>
+            <p>
+                Book Social brings books, authors, genres, and reader signals into one calm place
+                for browsing what to read next.
+            </p>
+
+            <form class="home-search" action="{{.Search.Action}}" method="get" role="search">
+                <label for="home-search-query">Search the catalog</label>
+                <div class="grid">
+                    <input
+                        id="home-search-query"
+                        name="q"
+                        type="search"
+                        placeholder="Try a title, author, or keyword"
+                        value="{{.Search.Query}}"
+                    >
+                    <select id="home-search-genre" name="genre" aria-label="Genre">
+                        <option value="">All genres</option>
+                        {{range .Genres}}
+                            <option value="{{.Slug}}"{{if eq $.Search.Genre .Slug}} selected{{end}}>{{.Name}}</option>
+                        {{end}}
+                    </select>
+                    <button type="submit">Search</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="home-hero__panel" aria-label="Book Social highlights">
+            <article class="hero-stat">
+                <strong>Latest</strong>
+                <span>Fresh catalog additions</span>
+            </article>
+            <article class="hero-stat">
+                <strong>Genres</strong>
+                <span>Simple paths into discovery</span>
+            </article>
+            <article class="hero-stat">
+                <strong>Soon</strong>
+                <span>Profiles, lists, and reviews</span>
+            </article>
+        </div>
+    </section>
+
+    <section aria-labelledby="latest-books-heading">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Recently added</p>
+                <h2 id="latest-books-heading">Latest books</h2>
+            </div>
+            <a href="/books">View catalog</a>
+        </div>
+
+        <div class="grid book-grid">
+            {{range .LatestBooks}}
+                {{template "book_card" .}}
+            {{end}}
+        </div>
+    </section>
+
+    <section aria-labelledby="genres-heading">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Browse by mood</p>
+                <h2 id="genres-heading">Genres</h2>
+            </div>
+        </div>
+
+        <div class="grid">
+            {{range .Genres}}
+                <article class="compact-card">
+                    <h3><a href="{{.URL}}">{{.Name}}</a></h3>
+                    <p>{{.Description}}</p>
+                </article>
+            {{end}}
+        </div>
+    </section>
+
+    <section aria-labelledby="why-heading">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Why Book Social</p>
+                <h2 id="why-heading">Built for book discovery first</h2>
+            </div>
+        </div>
+
+        <div class="grid">
+            {{range .Benefits}}
+                <article class="compact-card">
+                    <h3>{{.Title}}</h3>
+                    <p>{{.Description}}</p>
+                </article>
+            {{end}}
+        </div>
+    </section>
+
+    <section aria-labelledby="coming-soon-heading">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Roadmap</p>
+                <h2 id="coming-soon-heading">Coming soon</h2>
+            </div>
+        </div>
+
+        <div class="grid">
+            {{range .ComingSoon}}
+                <article class="compact-card">
+                    <h3>{{.Title}}</h3>
+                    <p>{{.Description}}</p>
+                </article>
+            {{end}}
+        </div>
+    </section>
 {{end}}
