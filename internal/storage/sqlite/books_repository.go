@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/LeeDark/book-social/internal/modules/books"
@@ -80,4 +81,53 @@ func (r *BookRepository) ListBooks(ctx context.Context) ([]books.Book, error) {
 	}
 
 	return result, nil
+}
+
+func (r *BookRepository) GetBookBySlug(ctx context.Context, slug string) (books.Book, error) {
+	const query = `
+		SELECT
+			b.id,
+			b.slug,
+			b.title,
+			b.description,
+			
+			a.id,
+			a.first_name,
+			a.second_name,
+			a.sur_name,
+			
+			g.name,
+			g.slug,
+			g.description
+		FROM books b
+		JOIN authors a ON a.id = b.book_author_id
+		JOIN genres g ON g.id = b.book_genre_id
+		WHERE b.slug = ?
+		LIMIT 1;
+	`
+
+	var book books.Book
+
+	err := r.db.QueryRowContext(ctx, query, slug).Scan(
+		&book.ID,
+		&book.Slug,
+		&book.Title,
+		&book.Description,
+		&book.Author.ID,
+		&book.Author.FirstName,
+		&book.Author.SecondName,
+		&book.Author.SurName,
+		&book.Genre.Name,
+		&book.Genre.Slug,
+		&book.Genre.Description,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return books.Book{}, books.ErrBookNotFound
+		}
+
+		return books.Book{}, fmt.Errorf("get book by slug: %w", err)
+	}
+
+	return book, nil
 }

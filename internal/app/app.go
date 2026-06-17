@@ -13,6 +13,7 @@ import (
 
 type CatalogHandler interface {
 	Catalog(w http.ResponseWriter, r *http.Request)
+	BookDetails(w http.ResponseWriter, r *http.Request)
 }
 
 type App struct {

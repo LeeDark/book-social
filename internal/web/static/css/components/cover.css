@@ -1,0 +1,19 @@
+.cover-0 {
+    --cover-background: linear-gradient(135deg, #e8e8e8, #cfcfcf);
+}
+
+.cover-1 {
+    --cover-background: linear-gradient(135deg, #dbeafe, #93c5fd);
+}
+
+.cover-2 {
+    --cover-background: linear-gradient(135deg, #dcfce7, #86efac);
+}
+
+.cover-3 {
+    --cover-background: linear-gradient(135deg, #fef3c7, #facc15);
+}
+
+.cover-4 {
+    --cover-background: linear-gradient(135deg, #fae8ff, #d8b4fe);
+}
