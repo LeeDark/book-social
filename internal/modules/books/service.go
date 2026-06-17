@@ -50,14 +50,14 @@ func (s *CatalogService) BookDetailsPage(ctx context.Context, slug string) (Book
 
 	return BookDetailsPageData{
 		Page: view.Page{
-			Title:       book.Title,
+			Title:       book.Genre.Name + ": " + book.Title,
 			Description: "Book Details page",
 			ActiveNav:   "catalog",
 			Nav:         view.MainNavigation(),
 			Breadcrumbs: []view.Breadcrumb{
 				{Label: "Home", Href: "/"},
 				{Label: "Catalog", Href: "/books"},
-				{Label: book.Title},
+				{Label: book.Genre.Name + ": " + book.Title},
 			},
 		},
 		Book: mapBookToDetailsView(book),
