@@ -1,0 +1,46 @@
+{{define "title"}}{{.Title}}{{end}}
+
+{{define "main"}}
+    <article class="book-details">
+        <p class="book-details__back">
+            <a href="/books">← Back to catalog</a>
+        </p>
+
+        <div class="book-details__layout">
+            <div class="book-details__cover {{.Book.CoverClass}}" aria-label="Book cover for {{.Book.Title}}">
+                <span class="book-details__cover-text">Book</span>
+            </div>
+
+            <div class="book-details__body">
+                <header class="book-details__header">
+                    <h1 class="book-details__title">{{.Book.Title}}</h1>
+
+                    {{if .Book.Authors}}
+                        <p class="book-details__meta">
+                            by
+                            {{range $index, $author := .Book.Authors}}
+                                {{if $index}}, {{end}}
+                                <a href="{{$author.URL}}">{{$author.Name}}</a>
+                            {{end}}
+                        </p>
+                    {{end}}
+                </header>
+
+                {{if .Book.Genres}}
+                    <div class="book-details__genres">
+                        {{range .Book.Genres}}
+                            <a class="book-details__genre" href="{{.URL}}">{{.Name}}</a>
+                        {{end}}
+                    </div>
+                {{end}}
+
+                {{if .Book.Description}}
+                    <section class="book-details__description">
+                        <h2>Description</h2>
+                        <p>{{.Book.Description}}</p>
+                    </section>
+                {{end}}
+            </div>
+        </div>
+    </article>
+{{end}}

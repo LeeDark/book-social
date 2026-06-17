@@ -7,6 +7,7 @@ import (
 
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/http/response"
+	"github.com/go-chi/chi/v5"
 )
 
 type CatalogHandler struct {
@@ -29,10 +30,26 @@ func (h *CatalogHandler) Catalog(w http.ResponseWriter, r *http.Request) {
 		response.ServerError(w, r, h.logger, fmt.Errorf("get catalog page: %w", err))
 	}
 
-	h.logger.Debug("Catalog page", slog.Any("data", data))
+	//h.logger.Debug("Catalog page", slog.Any("data", data))
 
 	if err := h.renderer.Render(w, http.StatusOK, "catalog.tmpl", data); err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("render catalog page: %w", err))
+		return
+	}
+}
+
+func (h *CatalogHandler) BookDetails(w http.ResponseWriter, r *http.Request) {
+	slug := chi.URLParam(r, "slug")
+
+	data, err := h.service.BookDetailsPage(r.Context(), slug)
+	if err != nil {
+		response.ServerError(w, r, h.logger, fmt.Errorf("get book details page: %w", err))
+	}
+
+	//h.logger.Debug("Book Details page", slog.Any("data", data))
+
+	if err := h.renderer.Render(w, http.StatusOK, "book_details.tmpl", data); err != nil {
+		response.ServerError(w, r, h.logger, fmt.Errorf("render book details page: %w", err))
 		return
 	}
 }

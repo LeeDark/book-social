@@ -8,6 +8,7 @@ import (
 
 type CatalogPageProvider interface {
 	CatalogPage(ctx context.Context) (CatalogPageData, error)
+	BookDetailsPage(ctx context.Context, slug string) (BookDetailsPageData, error)
 }
 
 type CatalogService struct {
@@ -38,5 +39,27 @@ func (s *CatalogService) CatalogPage(ctx context.Context) (CatalogPageData, erro
 			},
 		},
 		Books: mapBooksToCards(books),
+	}, nil
+}
+
+func (s *CatalogService) BookDetailsPage(ctx context.Context, slug string) (BookDetailsPageData, error) {
+	book, err := s.repo.GetBookBySlug(ctx, slug)
+	if err != nil {
+		return BookDetailsPageData{}, err
+	}
+
+	return BookDetailsPageData{
+		Page: view.Page{
+			Title:       book.Title,
+			Description: "Book Details page",
+			ActiveNav:   "catalog",
+			Nav:         view.MainNavigation(),
+			Breadcrumbs: []view.Breadcrumb{
+				{Label: "Home", Href: "/"},
+				{Label: "Catalog", Href: "/books"},
+				{Label: book.Title},
+			},
+		},
+		Book: mapBookToDetailsView(book),
 	}, nil
 }
