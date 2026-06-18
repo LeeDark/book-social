@@ -1,6 +1,7 @@
 package books
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -28,6 +29,7 @@ func (h *CatalogHandler) Catalog(w http.ResponseWriter, r *http.Request) {
 	data, err := h.service.CatalogPage(r.Context())
 	if err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("get catalog page: %w", err))
+		return
 	}
 
 	//h.logger.Debug("Catalog page", slog.Any("data", data))
@@ -43,7 +45,13 @@ func (h *CatalogHandler) BookDetails(w http.ResponseWriter, r *http.Request) {
 
 	data, err := h.service.BookDetailsPage(r.Context(), slug)
 	if err != nil {
+		if errors.Is(err, ErrBookNotFound) {
+			response.NotFound(w)
+			return
+		}
+
 		response.ServerError(w, r, h.logger, fmt.Errorf("get book details page: %w", err))
+		return
 	}
 
 	//h.logger.Debug("Book Details page", slog.Any("data", data))
