@@ -6,14 +6,12 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/http/view"
+	"github.com/LeeDark/book-social/internal/testutil"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -117,7 +115,7 @@ func TestCatalogHandlerBookDetailsReturnsNotFoundForMissingBook(t *testing.T) {
 func newTestCatalogHandler(t *testing.T, service CatalogPageProvider) *CatalogHandler {
 	t.Helper()
 
-	restoreWorkingDir(t)
+	testutil.ChdirProjectRoot(t)
 
 	renderer, err := render.NewRenderer()
 	if err != nil {
@@ -127,28 +125,4 @@ func newTestCatalogHandler(t *testing.T, service CatalogPageProvider) *CatalogHa
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	return NewCatalogHandler(service, renderer, logger)
-}
-
-func restoreWorkingDir(t *testing.T) {
-	t.Helper()
-
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("runtime.Caller failed")
-	}
-
-	root := filepath.Clean(filepath.Join(filepath.Dir(filename), "../../.."))
-	previous, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("os.Getwd() error = %v", err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatalf("os.Chdir(%q) error = %v", root, err)
-	}
-
-	t.Cleanup(func() {
-		if err := os.Chdir(previous); err != nil {
-			t.Fatalf("restore working dir: %v", err)
-		}
-	})
 }
