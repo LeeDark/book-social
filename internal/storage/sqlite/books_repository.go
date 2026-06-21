@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/LeeDark/book-social/internal/modules/books"
 )
@@ -20,7 +21,11 @@ func NewBookRepository(db *sql.DB) *BookRepository {
 }
 
 func (r *BookRepository) ListBooks(ctx context.Context) ([]books.Book, error) {
-	const query = `
+	return r.ListBooksFiltered(ctx, books.BookFilter{})
+}
+
+func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.BookFilter) ([]books.Book, error) {
+	query := `
 		SELECT
 		    b.id,
 			b.title,
@@ -40,15 +45,36 @@ func (r *BookRepository) ListBooks(ctx context.Context) ([]books.Book, error) {
 		FROM books b
 		JOIN authors a ON a.id = b.book_author_id
 		JOIN genres g ON g.id = b.book_genre_id
-		ORDER BY b.title ASC;
 	`
 
-	rows, err := r.db.QueryContext(ctx, query)
+	var conditions []string
+	var args []any
+
+	if filter.AuthorSlug != "" {
+		conditions = append(conditions, "a.slug = ?")
+		args = append(args, filter.AuthorSlug)
+	}
+	if filter.GenreSlug != "" {
+		conditions = append(conditions, "g.slug = ?")
+		args = append(args, filter.GenreSlug)
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	query += " ORDER BY b.title ASC;"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("list books query: %w", err)
 	}
 	defer rows.Close()
 
+	return scanBookRows(rows)
+}
+
+func scanBookRows(rows *sql.Rows) ([]books.Book, error) {
 	result := make([]books.Book, 0)
 
 	for rows.Next() {

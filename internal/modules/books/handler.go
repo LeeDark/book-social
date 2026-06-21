@@ -26,7 +26,12 @@ func NewCatalogHandler(service CatalogPageProvider, renderer *render.Renderer, l
 }
 
 func (h *CatalogHandler) Catalog(w http.ResponseWriter, r *http.Request) {
-	data, err := h.service.CatalogPage(r.Context())
+	filter := BookFilter{
+		AuthorSlug: r.URL.Query().Get("author"),
+		GenreSlug:  r.URL.Query().Get("genre"),
+	}
+
+	data, err := h.service.CatalogPage(r.Context(), filter)
 	if err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("get catalog page: %w", err))
 		return

@@ -20,6 +20,14 @@ func (r fakeBookRepository) ListBooks(ctx context.Context) ([]Book, error) {
 	return r.books, nil
 }
 
+func (r fakeBookRepository) ListBooksFiltered(ctx context.Context, filter BookFilter) ([]Book, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	return r.books, nil
+}
+
 func (r fakeBookRepository) GetBookBySlug(ctx context.Context, slug string) (Book, error) {
 	if r.err != nil {
 		return Book{}, r.err
@@ -54,7 +62,7 @@ func TestCatalogServiceCatalogPageReturnsBooksFromRepository(t *testing.T) {
 		},
 	})
 
-	data, err := service.CatalogPage(context.Background())
+	data, err := service.CatalogPage(context.Background(), BookFilter{})
 	if err != nil {
 		t.Fatalf("CatalogPage() error = %v", err)
 	}

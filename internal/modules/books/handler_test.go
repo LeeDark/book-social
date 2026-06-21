@@ -22,7 +22,7 @@ type fakeCatalogPageProvider struct {
 	detailsErr  error
 }
 
-func (p fakeCatalogPageProvider) CatalogPage(ctx context.Context) (CatalogPageData, error) {
+func (p fakeCatalogPageProvider) CatalogPage(ctx context.Context, filter BookFilter) (CatalogPageData, error) {
 	if p.catalogErr != nil {
 		return CatalogPageData{}, p.catalogErr
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 type CatalogPageProvider interface {
-	CatalogPage(ctx context.Context) (CatalogPageData, error)
+	CatalogPage(ctx context.Context, filter BookFilter) (CatalogPageData, error)
 	BookDetailsPage(ctx context.Context, slug string) (BookDetailsPageData, error)
 }
 
@@ -21,8 +21,8 @@ func NewCatalogService(repo BookRepository) *CatalogService {
 	}
 }
 
-func (s *CatalogService) CatalogPage(ctx context.Context) (CatalogPageData, error) {
-	books, err := s.repo.ListBooks(ctx)
+func (s *CatalogService) CatalogPage(ctx context.Context, filter BookFilter) (CatalogPageData, error) {
+	books, err := s.repo.ListBooksFiltered(ctx, filter)
 	if err != nil {
 		return CatalogPageData{}, err
 	}
