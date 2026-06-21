@@ -76,7 +76,7 @@ func mapBooksToCards(books []Book) []BookCardView {
 			BookURL:     fmt.Sprintf("/books/%s", book.Slug),
 			CoverClass:  coverClassForBook(book.ID),
 			AuthorName:  book.Author.FirstName + " " + book.Author.SecondName + " " + book.Author.SurName,
-			AuthorURL:   fmt.Sprintf("/authors/%d", book.Author.ID),
+			AuthorURL:   fmt.Sprintf("/authors/%s", book.Author.Slug),
 			GenreName:   book.Genre.Name,
 			GenreURL:    fmt.Sprintf("/books?genre=%s", book.Genre.Slug),
 		}
@@ -96,7 +96,7 @@ func mapBookToDetailsView(book Book) BookDetailsView {
 		CoverClass:  coverClassForBook(book.ID),
 		Authors: []AuthorLinkView{{
 			Name: book.Author.FirstName + " " + book.Author.SecondName + " " + book.Author.SurName,
-			URL:  fmt.Sprintf("/authors/%d", book.Author.ID)}},
+			URL:  fmt.Sprintf("/authors/%s", book.Author.Slug)}},
 		Genres: []GenreLinkView{{
 			Name: book.Genre.Name,
 			URL:  fmt.Sprintf("/books?genre=%s", book.Genre.Slug),

@@ -76,7 +76,7 @@ func TestCatalogHandlerBookDetailsReturnsOKForExistingBook(t *testing.T) {
 			Book: BookDetailsView{
 				Title:       "The Quiet Atlas",
 				Description: "A reflective journey.",
-				Authors:     []AuthorLinkView{{Name: "Mira L. Stone", URL: "/authors/1"}},
+				Authors:     []AuthorLinkView{{Name: "Mira L. Stone", URL: "/authors/mira-l-stone"}},
 				Genres:      []GenreLinkView{{Name: "Literary Fiction", URL: "/books?genre=literary-fiction"}},
 			},
 		},

@@ -61,7 +61,7 @@ func TestCatalogServiceCatalogPageReturnsBooksFromRepository(t *testing.T) {
 				Title:       "Signal in the Stacks",
 				Slug:        "signal-in-the-stacks",
 				Description: "A library mystery.",
-				Author:      Author{ID: 2, FirstName: "Jon", SecondName: "A.", SurName: "Vale"},
+				Author:      Author{ID: 2, FirstName: "Jon", SecondName: "A.", SurName: "Vale", Slug: "jon-a-vale"},
 				Genre:       Genre{Name: "Mystery", Slug: "mystery"},
 			},
 			{
@@ -69,7 +69,7 @@ func TestCatalogServiceCatalogPageReturnsBooksFromRepository(t *testing.T) {
 				Title:       "A Field Guide to Tomorrow",
 				Slug:        "a-field-guide-to-tomorrow",
 				Description: "Hopeful science fiction.",
-				Author:      Author{ID: 3, FirstName: "Ada", SecondName: "M.", SurName: "Kern"},
+				Author:      Author{ID: 3, FirstName: "Ada", SecondName: "M.", SurName: "Kern", Slug: "ada-m-kern"},
 				Genre:       Genre{Name: "Science Fiction", Slug: "science-fiction"},
 			},
 		},
@@ -109,7 +109,7 @@ func TestCatalogServiceBookDetailsPageReturnsBookBySlug(t *testing.T) {
 			Title:       "The Quiet Atlas",
 			Slug:        "the-quiet-atlas",
 			Description: "A reflective journey.",
-			Author:      Author{ID: 1, FirstName: "Mira", SecondName: "L.", SurName: "Stone"},
+			Author:      Author{ID: 1, FirstName: "Mira", SecondName: "L.", SurName: "Stone", Slug: "mira-l-stone"},
 			Genre:       Genre{Name: "Literary Fiction", Slug: "literary-fiction"},
 		},
 	})

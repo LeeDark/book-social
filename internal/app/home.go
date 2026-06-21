@@ -89,36 +89,36 @@ func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
 func latestHomeBooks() []HomeBookCardData {
 	return []HomeBookCardData{
 		{
-			Title:       "The Quiet Atlas",
-			Slug:        "the-quiet-atlas",
-			Description: "A reflective journey through maps, memory, and the small choices that change a life.",
-			AuthorName:  "Mira Stone",
-			AuthorURL:   "/authors/1",
-			GenreName:   "Literary Fiction",
-			GenreURL:    "/books?genre=literary-fiction",
-			BookURL:     "/books/the-quiet-atlas",
+			Title:       "Pride and Prejudice",
+			Slug:        "pride-and-prejudice",
+			Description: "Elizabeth Bennet navigates family expectations, social pressure, and her changing judgment of the proud Mr. Darcy.",
+			AuthorName:  "Jane Austen",
+			AuthorURL:   "/authors/jane-austen",
+			GenreName:   "Romance",
+			GenreURL:    "/books?genre=romance",
+			BookURL:     "/books/pride-and-prejudice",
 			CoverClass:  "cover-1",
 		},
 		{
-			Title:       "Signal in the Stacks",
-			Slug:        "signal-in-the-stacks",
-			Description: "A library mystery about hidden marginalia, old networks, and a code nobody was meant to find.",
-			AuthorName:  "Jon Vale",
-			AuthorURL:   "/authors/2",
-			GenreName:   "Mystery",
-			GenreURL:    "/books?genre=mystery",
-			BookURL:     "/books/signal-in-the-stacks",
+			Title:       "Frankenstein",
+			Slug:        "frankenstein",
+			Description: "Victor Frankenstein creates a living being through scientific ambition, then recoils from the consequences.",
+			AuthorName:  "Mary Shelley",
+			AuthorURL:   "/authors/mary-shelley",
+			GenreName:   "Horror",
+			GenreURL:    "/books?genre=horror",
+			BookURL:     "/books/frankenstein",
 			CoverClass:  "cover-2",
 		},
 		{
-			Title:       "A Field Guide to Tomorrow",
-			Slug:        "a-field-guide-to-tomorrow",
-			Description: "Hopeful science fiction following three friends documenting cities after climate repair begins.",
-			AuthorName:  "Ada Kern",
-			AuthorURL:   "/authors/3",
+			Title:       "The Time Machine",
+			Slug:        "the-time-machine",
+			Description: "A scientist travels far into the future and discovers strange societies that reveal unsettling possibilities for humanity.",
+			AuthorName:  "H. G. Wells",
+			AuthorURL:   "/authors/h-g-wells",
 			GenreName:   "Science Fiction",
 			GenreURL:    "/books?genre=science-fiction",
-			BookURL:     "/books/a-field-guide-to-tomorrow",
+			BookURL:     "/books/the-time-machine",
 			CoverClass:  "cover-3",
 		},
 	}
@@ -126,10 +126,10 @@ func latestHomeBooks() []HomeBookCardData {
 
 func homeGenres() []HomeGenreData {
 	return []HomeGenreData{
-		{Name: "Literary Fiction", Slug: "literary-fiction", Description: "Character-led stories with room for reflection.", URL: "/books?genre=literary-fiction"},
-		{Name: "Mystery", Slug: "mystery", Description: "Clues, secrets, and page-turning investigations.", URL: "/books?genre=mystery"},
-		{Name: "Science Fiction", Slug: "science-fiction", Description: "Future worlds, big ideas, and human stakes.", URL: "/books?genre=science-fiction"},
-		{Name: "History", Slug: "history", Description: "Narratives that make the past easier to explore.", URL: "/books?genre=history"},
+		{Name: "Adventure", Slug: "adventure", Description: "Stories focused on journeys, exploration, danger, and exciting challenges.", URL: "/books?genre=adventure"},
+		{Name: "Biography", Slug: "biography", Description: "Books about the life of a real person.", URL: "/books?genre=biography"},
+		{Name: "Fantasy", Slug: "fantasy", Description: "Books with magic, supernatural elements, or imaginary worlds.", URL: "/books?genre=fantasy"},
+		{Name: "Science Fiction", Slug: "science-fiction", Description: "Stories based on futuristic technology, space exploration, time travel, or scientific ideas.", URL: "/books?genre=science-fiction"},
 	}
 }
 
