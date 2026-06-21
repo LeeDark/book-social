@@ -7,9 +7,10 @@ import (
 )
 
 type fakeBookRepository struct {
-	books []Book
-	book  Book
-	err   error
+	books  []Book
+	book   Book
+	author Author
+	err    error
 }
 
 func (r fakeBookRepository) ListBooks(ctx context.Context) ([]Book, error) {
@@ -38,6 +39,18 @@ func (r fakeBookRepository) GetBookBySlug(ctx context.Context, slug string) (Boo
 	}
 
 	return r.book, nil
+}
+
+func (r fakeBookRepository) GetAuthorBySlug(ctx context.Context, slug string) (Author, error) {
+	if r.err != nil {
+		return Author{}, r.err
+	}
+
+	if r.author.Slug != slug {
+		return Author{}, ErrAuthorNotFound
+	}
+
+	return r.author, nil
 }
 
 func TestCatalogServiceCatalogPageReturnsBooksFromRepository(t *testing.T) {

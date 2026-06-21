@@ -29,6 +29,18 @@ type BookDetailsPageData struct {
 	//Book BookCardView
 }
 
+type AuthorPageData struct {
+	view.Page
+	Author AuthorView
+	Books  []BookCardView
+}
+
+type AuthorView struct {
+	Name        string
+	Slug        string
+	Description string
+}
+
 type BookDetailsView struct {
 	ID          int
 	Title       string
@@ -92,4 +104,12 @@ func mapBookToDetailsView(book Book) BookDetailsView {
 	}
 
 	return details
+}
+
+func mapAuthorToView(author Author) AuthorView {
+	return AuthorView{
+		Name:        author.FirstName + " " + author.SecondName + " " + author.SurName,
+		Slug:        author.Slug,
+		Description: author.Description,
+	}
 }

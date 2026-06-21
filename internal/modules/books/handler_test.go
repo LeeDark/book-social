@@ -20,6 +20,8 @@ type fakeCatalogPageProvider struct {
 	catalogErr  error
 	detailsData BookDetailsPageData
 	detailsErr  error
+	authorData  AuthorPageData
+	authorErr   error
 }
 
 func (p fakeCatalogPageProvider) CatalogPage(ctx context.Context, filter BookFilter) (CatalogPageData, error) {
@@ -36,6 +38,14 @@ func (p fakeCatalogPageProvider) BookDetailsPage(ctx context.Context, slug strin
 	}
 
 	return p.detailsData, nil
+}
+
+func (p fakeCatalogPageProvider) AuthorPage(ctx context.Context, slug string) (AuthorPageData, error) {
+	if p.authorErr != nil {
+		return AuthorPageData{}, p.authorErr
+	}
+
+	return p.authorData, nil
 }
 
 func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {

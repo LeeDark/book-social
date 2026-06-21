@@ -66,3 +66,23 @@ func (h *CatalogHandler) BookDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h *CatalogHandler) Author(w http.ResponseWriter, r *http.Request) {
+	slug := chi.URLParam(r, "slug")
+
+	data, err := h.service.AuthorPage(r.Context(), slug)
+	if err != nil {
+		if errors.Is(err, ErrAuthorNotFound) {
+			response.NotFound(w)
+			return
+		}
+
+		response.ServerError(w, r, h.logger, fmt.Errorf("get author page: %w", err))
+		return
+	}
+
+	if err := h.renderer.Render(w, http.StatusOK, "author.tmpl", data); err != nil {
+		response.ServerError(w, r, h.logger, fmt.Errorf("render author page: %w", err))
+		return
+	}
+}

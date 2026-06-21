@@ -16,4 +16,5 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 
 	r.Get("/books", app.CatalogHandler.Catalog)
 	r.Get("/books/{slug}", app.CatalogHandler.BookDetails)
+	r.Get("/authors/{slug}", app.CatalogHandler.Author)
 }

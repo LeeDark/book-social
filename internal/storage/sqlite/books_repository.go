@@ -161,3 +161,38 @@ func (r *BookRepository) GetBookBySlug(ctx context.Context, slug string) (books.
 
 	return book, nil
 }
+
+func (r *BookRepository) GetAuthorBySlug(ctx context.Context, slug string) (books.Author, error) {
+	const query = `
+		SELECT
+			id,
+			first_name,
+			second_name,
+			sur_name,
+			slug,
+			description
+		FROM authors
+		WHERE slug = ?
+		LIMIT 1;
+	`
+
+	var author books.Author
+
+	err := r.db.QueryRowContext(ctx, query, slug).Scan(
+		&author.ID,
+		&author.FirstName,
+		&author.SecondName,
+		&author.SurName,
+		&author.Slug,
+		&author.Description,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return books.Author{}, books.ErrAuthorNotFound
+		}
+
+		return books.Author{}, fmt.Errorf("get author by slug: %w", err)
+	}
+
+	return author, nil
+}
