@@ -31,6 +31,7 @@ func (r *BookRepository) ListBooks(ctx context.Context) ([]books.Book, error) {
 			a.first_name,
 			a.second_name,
 			a.sur_name,
+			a.slug,
 			a.description,
 
 			g.name,
@@ -63,6 +64,7 @@ func (r *BookRepository) ListBooks(ctx context.Context) ([]books.Book, error) {
 			&book.Author.FirstName,
 			&book.Author.SecondName,
 			&book.Author.SurName,
+			&book.Author.Slug,
 			&book.Author.Description,
 
 			&book.Genre.Name,
@@ -95,6 +97,7 @@ func (r *BookRepository) GetBookBySlug(ctx context.Context, slug string) (books.
 			a.first_name,
 			a.second_name,
 			a.sur_name,
+			a.slug,
 			
 			g.name,
 			g.slug,
@@ -117,6 +120,7 @@ func (r *BookRepository) GetBookBySlug(ctx context.Context, slug string) (books.
 		&book.Author.FirstName,
 		&book.Author.SecondName,
 		&book.Author.SurName,
+		&book.Author.Slug,
 		&book.Genre.Name,
 		&book.Genre.Slug,
 		&book.Genre.Description,
