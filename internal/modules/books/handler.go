@@ -26,7 +26,12 @@ func NewCatalogHandler(service CatalogPageProvider, renderer *render.Renderer, l
 }
 
 func (h *CatalogHandler) Catalog(w http.ResponseWriter, r *http.Request) {
-	data, err := h.service.CatalogPage(r.Context())
+	filter := BookFilter{
+		AuthorSlug: r.URL.Query().Get("author"),
+		GenreSlug:  r.URL.Query().Get("genre"),
+	}
+
+	data, err := h.service.CatalogPage(r.Context(), filter)
 	if err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("get catalog page: %w", err))
 		return
@@ -58,6 +63,26 @@ func (h *CatalogHandler) BookDetails(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.renderer.Render(w, http.StatusOK, "book_details.tmpl", data); err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("render book details page: %w", err))
+		return
+	}
+}
+
+func (h *CatalogHandler) Author(w http.ResponseWriter, r *http.Request) {
+	slug := chi.URLParam(r, "slug")
+
+	data, err := h.service.AuthorPage(r.Context(), slug)
+	if err != nil {
+		if errors.Is(err, ErrAuthorNotFound) {
+			response.NotFound(w)
+			return
+		}
+
+		response.ServerError(w, r, h.logger, fmt.Errorf("get author page: %w", err))
+		return
+	}
+
+	if err := h.renderer.Render(w, http.StatusOK, "author.tmpl", data); err != nil {
+		response.ServerError(w, r, h.logger, fmt.Errorf("render author page: %w", err))
 		return
 	}
 }

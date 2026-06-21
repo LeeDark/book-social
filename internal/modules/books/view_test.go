@@ -14,6 +14,7 @@ func TestMapBooksToCards(t *testing.T) {
 				FirstName:  "Jon",
 				SecondName: "A.",
 				SurName:    "Vale",
+				Slug:       "jon-a-vale",
 			},
 			Genre: Genre{
 				Name: "Mystery",
@@ -42,7 +43,7 @@ func TestMapBooksToCards(t *testing.T) {
 	if card.AuthorName != "Jon A. Vale" {
 		t.Errorf("AuthorName = %q", card.AuthorName)
 	}
-	if card.AuthorURL != "/authors/2" {
+	if card.AuthorURL != "/authors/jon-a-vale" {
 		t.Errorf("AuthorURL = %q", card.AuthorURL)
 	}
 	if card.GenreName != "Mystery" {
@@ -67,6 +68,7 @@ func TestMapBookToDetailsView(t *testing.T) {
 			FirstName:  "Mira",
 			SecondName: "L.",
 			SurName:    "Stone",
+			Slug:       "mira-l-stone",
 		},
 		Genre: Genre{
 			Name: "Literary Fiction",
@@ -98,7 +100,7 @@ func TestMapBookToDetailsView(t *testing.T) {
 	if details.Authors[0].Name != "Mira L. Stone" {
 		t.Errorf("Author name = %q", details.Authors[0].Name)
 	}
-	if details.Authors[0].URL != "/authors/1" {
+	if details.Authors[0].URL != "/authors/mira-l-stone" {
 		t.Errorf("Author URL = %q", details.Authors[0].URL)
 	}
 

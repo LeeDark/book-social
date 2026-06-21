@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/LeeDark/book-social/internal/modules/books"
 )
@@ -20,7 +21,11 @@ func NewBookRepository(db *sql.DB) *BookRepository {
 }
 
 func (r *BookRepository) ListBooks(ctx context.Context) ([]books.Book, error) {
-	const query = `
+	return r.ListBooksFiltered(ctx, books.BookFilter{})
+}
+
+func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.BookFilter) ([]books.Book, error) {
+	query := `
 		SELECT
 		    b.id,
 			b.title,
@@ -31,6 +36,7 @@ func (r *BookRepository) ListBooks(ctx context.Context) ([]books.Book, error) {
 			a.first_name,
 			a.second_name,
 			a.sur_name,
+			a.slug,
 			a.description,
 
 			g.name,
@@ -39,15 +45,36 @@ func (r *BookRepository) ListBooks(ctx context.Context) ([]books.Book, error) {
 		FROM books b
 		JOIN authors a ON a.id = b.book_author_id
 		JOIN genres g ON g.id = b.book_genre_id
-		ORDER BY b.title ASC;
 	`
 
-	rows, err := r.db.QueryContext(ctx, query)
+	var conditions []string
+	var args []any
+
+	if filter.AuthorSlug != "" {
+		conditions = append(conditions, "a.slug = ?")
+		args = append(args, filter.AuthorSlug)
+	}
+	if filter.GenreSlug != "" {
+		conditions = append(conditions, "g.slug = ?")
+		args = append(args, filter.GenreSlug)
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	query += " ORDER BY b.title ASC;"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("list books query: %w", err)
 	}
 	defer rows.Close()
 
+	return scanBookRows(rows)
+}
+
+func scanBookRows(rows *sql.Rows) ([]books.Book, error) {
 	result := make([]books.Book, 0)
 
 	for rows.Next() {
@@ -63,6 +90,7 @@ func (r *BookRepository) ListBooks(ctx context.Context) ([]books.Book, error) {
 			&book.Author.FirstName,
 			&book.Author.SecondName,
 			&book.Author.SurName,
+			&book.Author.Slug,
 			&book.Author.Description,
 
 			&book.Genre.Name,
@@ -95,6 +123,7 @@ func (r *BookRepository) GetBookBySlug(ctx context.Context, slug string) (books.
 			a.first_name,
 			a.second_name,
 			a.sur_name,
+			a.slug,
 			
 			g.name,
 			g.slug,
@@ -117,6 +146,7 @@ func (r *BookRepository) GetBookBySlug(ctx context.Context, slug string) (books.
 		&book.Author.FirstName,
 		&book.Author.SecondName,
 		&book.Author.SurName,
+		&book.Author.Slug,
 		&book.Genre.Name,
 		&book.Genre.Slug,
 		&book.Genre.Description,
@@ -130,4 +160,39 @@ func (r *BookRepository) GetBookBySlug(ctx context.Context, slug string) (books.
 	}
 
 	return book, nil
+}
+
+func (r *BookRepository) GetAuthorBySlug(ctx context.Context, slug string) (books.Author, error) {
+	const query = `
+		SELECT
+			id,
+			first_name,
+			second_name,
+			sur_name,
+			slug,
+			description
+		FROM authors
+		WHERE slug = ?
+		LIMIT 1;
+	`
+
+	var author books.Author
+
+	err := r.db.QueryRowContext(ctx, query, slug).Scan(
+		&author.ID,
+		&author.FirstName,
+		&author.SecondName,
+		&author.SurName,
+		&author.Slug,
+		&author.Description,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return books.Author{}, books.ErrAuthorNotFound
+		}
+
+		return books.Author{}, fmt.Errorf("get author by slug: %w", err)
+	}
+
+	return author, nil
 }

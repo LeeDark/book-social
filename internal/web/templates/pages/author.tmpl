@@ -1,0 +1,25 @@
+{{define "title"}}{{.Title}}{{end}}
+
+{{define "main"}}
+    <section class="page-header">
+        <h1>{{.Author.Name}}</h1>
+        {{if .Author.Description}}
+            <p>{{.Author.Description}}</p>
+        {{end}}
+        <p><a href="/books?author={{.Author.Slug}}">View in catalog</a></p>
+    </section>
+
+    <section>
+        <h2>Books by this author</h2>
+
+        {{if .Books}}
+            <div class="book-grid">
+                {{range .Books}}
+                    {{template "book_card" .}}
+                {{end}}
+            </div>
+        {{else}}
+            <p>No books found for this author.</p>
+        {{end}}
+    </section>
+{{end}}

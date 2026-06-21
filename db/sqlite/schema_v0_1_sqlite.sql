@@ -39,6 +39,7 @@ CREATE TABLE authors (
      first_name  TEXT NOT NULL,
      second_name TEXT NULL,
      sur_name    TEXT NULL,
+     slug TEXT NOT NULL UNIQUE,
      description TEXT NULL
 );
 

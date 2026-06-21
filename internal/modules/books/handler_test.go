@@ -16,15 +16,22 @@ import (
 )
 
 type fakeCatalogPageProvider struct {
-	catalogData CatalogPageData
-	catalogErr  error
-	detailsData BookDetailsPageData
-	detailsErr  error
+	catalogData    CatalogPageData
+	catalogErr     error
+	catalogFilter  *BookFilter
+	detailsData    BookDetailsPageData
+	detailsErr     error
+	authorData     AuthorPageData
+	authorErr      error
+	receivedAuthor *string
 }
 
-func (p fakeCatalogPageProvider) CatalogPage(ctx context.Context) (CatalogPageData, error) {
+func (p fakeCatalogPageProvider) CatalogPage(ctx context.Context, filter BookFilter) (CatalogPageData, error) {
 	if p.catalogErr != nil {
 		return CatalogPageData{}, p.catalogErr
+	}
+	if p.catalogFilter != nil {
+		*p.catalogFilter = filter
 	}
 
 	return p.catalogData, nil
@@ -36,6 +43,17 @@ func (p fakeCatalogPageProvider) BookDetailsPage(ctx context.Context, slug strin
 	}
 
 	return p.detailsData, nil
+}
+
+func (p fakeCatalogPageProvider) AuthorPage(ctx context.Context, slug string) (AuthorPageData, error) {
+	if p.authorErr != nil {
+		return AuthorPageData{}, p.authorErr
+	}
+	if p.receivedAuthor != nil {
+		*p.receivedAuthor = slug
+	}
+
+	return p.authorData, nil
 }
 
 func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {
@@ -59,6 +77,54 @@ func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {
 	}
 }
 
+func TestCatalogHandlerCatalogPassesFilters(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		want BookFilter
+	}{
+		{
+			name: "author filter",
+			path: "/books?author=jane-austen",
+			want: BookFilter{AuthorSlug: "jane-austen"},
+		},
+		{
+			name: "genre filter",
+			path: "/books?genre=romance",
+			want: BookFilter{GenreSlug: "romance"},
+		},
+		{
+			name: "author and genre filters",
+			path: "/books?author=jane-austen&genre=romance",
+			want: BookFilter{AuthorSlug: "jane-austen", GenreSlug: "romance"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var gotFilter BookFilter
+			handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
+				catalogFilter: &gotFilter,
+				catalogData: CatalogPageData{
+					Page: view.Page{Title: "Books"},
+				},
+			})
+
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			rec := httptest.NewRecorder()
+
+			handler.Catalog(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+			}
+			if gotFilter != tt.want {
+				t.Fatalf("filter = %+v, want %+v", gotFilter, tt.want)
+			}
+		})
+	}
+}
+
 func TestCatalogHandlerBookDetailsReturnsOKForExistingBook(t *testing.T) {
 	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
 		detailsData: BookDetailsPageData{
@@ -66,7 +132,7 @@ func TestCatalogHandlerBookDetailsReturnsOKForExistingBook(t *testing.T) {
 			Book: BookDetailsView{
 				Title:       "The Quiet Atlas",
 				Description: "A reflective journey.",
-				Authors:     []AuthorLinkView{{Name: "Mira L. Stone", URL: "/authors/1"}},
+				Authors:     []AuthorLinkView{{Name: "Mira L. Stone", URL: "/authors/mira-l-stone"}},
 				Genres:      []GenreLinkView{{Name: "Literary Fiction", URL: "/books?genre=literary-fiction"}},
 			},
 		},
@@ -109,6 +175,54 @@ func TestCatalogHandlerBookDetailsReturnsNotFoundForMissingBook(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "Not Found") {
 		t.Fatalf("body does not contain Not Found: %q", rec.Body.String())
+	}
+}
+
+func TestCatalogHandlerAuthorReturnsOKForExistingAuthor(t *testing.T) {
+	var gotSlug string
+	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
+		receivedAuthor: &gotSlug,
+		authorData: AuthorPageData{
+			Page:   view.Page{Title: "Jane Austen"},
+			Author: AuthorView{Name: "Jane Austen", Slug: "jane-austen"},
+			Books:  []BookCardView{{Title: "Pride and Prejudice", BookURL: "/books/pride-and-prejudice"}},
+		},
+	})
+
+	router := chi.NewRouter()
+	router.Get("/authors/{slug}", handler.Author)
+
+	req := httptest.NewRequest(http.MethodGet, "/authors/jane-austen", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	if gotSlug != "jane-austen" {
+		t.Fatalf("author slug = %q, want %q", gotSlug, "jane-austen")
+	}
+	if !strings.Contains(rec.Body.String(), "Pride and Prejudice") {
+		t.Fatalf("body does not contain author book: %q", rec.Body.String())
+	}
+}
+
+func TestCatalogHandlerAuthorReturnsNotFoundForMissingAuthor(t *testing.T) {
+	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
+		authorErr: ErrAuthorNotFound,
+	})
+
+	router := chi.NewRouter()
+	router.Get("/authors/{slug}", handler.Author)
+
+	req := httptest.NewRequest(http.MethodGet, "/authors/missing-author", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
 	}
 }
 

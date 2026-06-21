@@ -11,6 +11,7 @@ type Author struct {
 	FirstName   string
 	SecondName  string
 	SurName     string
+	Slug        string
 	Description string
 }
 
