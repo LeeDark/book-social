@@ -77,6 +77,30 @@ func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {
 	}
 }
 
+func TestCatalogHandlerCatalogRendersEmptyState(t *testing.T) {
+	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
+		catalogData: CatalogPageData{
+			Page: view.Page{Title: "Books"},
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/books", nil)
+	rec := httptest.NewRecorder()
+
+	handler.Catalog(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	body := rec.Body.String()
+	for _, fragment := range []string{"No books found", "View catalog", "Go home"} {
+		if !strings.Contains(body, fragment) {
+			t.Fatalf("body does not contain %q: %q", fragment, body)
+		}
+	}
+}
+
 func TestCatalogHandlerCatalogPassesFilters(t *testing.T) {
 	tests := []struct {
 		name string

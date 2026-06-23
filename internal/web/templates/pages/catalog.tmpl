@@ -24,9 +24,15 @@
             </div>
         </section>
     {{else}}
-        <section class="empty-state">
-            <h2>No books found</h2>
-            <p>The catalog is empty for now.</p>
+        <section class="empty-state" aria-labelledby="catalog-empty-heading">
+            <div class="empty-state__icon" aria-hidden="true">BS</div>
+            <p class="eyebrow">No results</p>
+            <h2 id="catalog-empty-heading">No books found</h2>
+            <p>The catalog does not have books for this view yet. Try returning to the full catalog or start from the home page.</p>
+            <div class="empty-state__actions">
+                <a href="/books" role="button">View catalog</a>
+                <a class="secondary" href="/" role="button">Go home</a>
+            </div>
         </section>
     {{end}}
 {{end}}

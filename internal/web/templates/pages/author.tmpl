@@ -19,7 +19,15 @@
                 {{end}}
             </div>
         {{else}}
-            <p>No books found for this author.</p>
+            <div class="empty-state empty-state--compact" aria-labelledby="author-empty-heading">
+                <div class="empty-state__icon" aria-hidden="true">BS</div>
+                <p class="eyebrow">No books</p>
+                <h3 id="author-empty-heading">No books found for this author</h3>
+                <p>This author page is ready, but there are no catalog books linked here yet.</p>
+                <div class="empty-state__actions">
+                    <a href="/books" role="button">View catalog</a>
+                </div>
+            </div>
         {{end}}
     </section>
 {{end}}
