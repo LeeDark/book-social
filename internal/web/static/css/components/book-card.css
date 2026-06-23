@@ -35,14 +35,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 180px;
+    min-height: 180px;
+    padding: 1rem;
     text-decoration: none;
-    background: var(--cover-background, var(--surface-soft));
+    background:
+        radial-gradient(circle at 20% 20%, rgb(255 255 255 / 0.22), transparent 32%),
+        color-mix(in srgb, var(--cover-background-start, var(--surface-soft)) 22%, var(--pico-card-background-color));
 }
 
-.book-card__cover-text {
-    font-weight: 700;
-    color: #555;
+.book-card__cover-book {
+    width: min(7rem, 42%);
+    aspect-ratio: 2 / 3;
 }
 
 .book-card__body {

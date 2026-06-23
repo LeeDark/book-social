@@ -51,7 +51,7 @@ func (h *CatalogHandler) BookDetails(w http.ResponseWriter, r *http.Request) {
 	data, err := h.service.BookDetailsPage(r.Context(), slug)
 	if err != nil {
 		if errors.Is(err, ErrBookNotFound) {
-			response.NotFound(w)
+			response.RenderNotFound(w, r, h.logger, h.renderer)
 			return
 		}
 
@@ -73,7 +73,7 @@ func (h *CatalogHandler) Author(w http.ResponseWriter, r *http.Request) {
 	data, err := h.service.AuthorPage(r.Context(), slug)
 	if err != nil {
 		if errors.Is(err, ErrAuthorNotFound) {
-			response.NotFound(w)
+			response.RenderNotFound(w, r, h.logger, h.renderer)
 			return
 		}
 

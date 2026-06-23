@@ -1,0 +1,14 @@
+{{define "title"}}{{.Title}}{{end}}
+
+{{define "main"}}
+    <section class="empty-state" aria-labelledby="not-found-heading">
+        <div class="empty-state__icon" aria-hidden="true">404</div>
+        <p class="eyebrow">Not found</p>
+        <h1 id="not-found-heading">Page not found</h1>
+        <p>The page may have moved, or the link may point to a book or author that is not in the catalog yet.</p>
+        <div class="empty-state__actions">
+            <a href="/books" role="button">Browse catalog</a>
+            <a class="secondary" href="/" role="button">Go home</a>
+        </div>
+    </section>
+{{end}}

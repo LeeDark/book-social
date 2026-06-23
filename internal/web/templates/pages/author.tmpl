@@ -1,25 +1,42 @@
 {{define "title"}}{{.Title}}{{end}}
 
 {{define "main"}}
-    <section class="page-header">
+    <section class="page-header author-header">
+        <p class="eyebrow">Author</p>
         <h1>{{.Author.Name}}</h1>
         {{if .Author.Description}}
             <p>{{.Author.Description}}</p>
         {{end}}
-        <p><a href="/books?author={{.Author.Slug}}">View in catalog</a></p>
+        <p class="author-header__action"><a href="/books?author={{.Author.Slug}}">View in catalog</a></p>
     </section>
 
-    <section>
-        <h2>Books by this author</h2>
+    <section class="author-results" aria-labelledby="author-results-heading">
+        <div class="author-results__bar">
+            <div>
+                <p class="eyebrow">Books</p>
+                <h2 id="author-results-heading">Books by this author</h2>
+            </div>
+            {{if .Books}}
+                <p>{{if eq (len .Books) 1}}1 book{{else}}{{len .Books}} books{{end}}</p>
+            {{end}}
+        </div>
 
         {{if .Books}}
-            <div class="book-grid">
+            <div class="book-grid author-grid">
                 {{range .Books}}
                     {{template "book_card" .}}
                 {{end}}
             </div>
         {{else}}
-            <p>No books found for this author.</p>
+            <div class="empty-state empty-state--compact" aria-labelledby="author-empty-heading">
+                <div class="empty-state__icon" aria-hidden="true">BS</div>
+                <p class="eyebrow">No books</p>
+                <h3 id="author-empty-heading">No books found for this author</h3>
+                <p>This author page is ready, but there are no catalog books linked here yet.</p>
+                <div class="empty-state__actions">
+                    <a href="/books" role="button">View catalog</a>
+                </div>
+            </div>
         {{end}}
     </section>
 {{end}}

@@ -77,6 +77,30 @@ func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {
 	}
 }
 
+func TestCatalogHandlerCatalogRendersEmptyState(t *testing.T) {
+	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
+		catalogData: CatalogPageData{
+			Page: view.Page{Title: "Books"},
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/books", nil)
+	rec := httptest.NewRecorder()
+
+	handler.Catalog(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	body := rec.Body.String()
+	for _, fragment := range []string{"No books found", "View catalog", "Go home"} {
+		if !strings.Contains(body, fragment) {
+			t.Fatalf("body does not contain %q: %q", fragment, body)
+		}
+	}
+}
+
 func TestCatalogHandlerCatalogPassesFilters(t *testing.T) {
 	tests := []struct {
 		name string
@@ -173,8 +197,8 @@ func TestCatalogHandlerBookDetailsReturnsNotFoundForMissingBook(t *testing.T) {
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
 	}
-	if !strings.Contains(rec.Body.String(), "Not Found") {
-		t.Fatalf("body does not contain Not Found: %q", rec.Body.String())
+	if !strings.Contains(rec.Body.String(), "Page not found") {
+		t.Fatalf("body does not contain Page not found: %q", rec.Body.String())
 	}
 }
 
@@ -223,6 +247,9 @@ func TestCatalogHandlerAuthorReturnsNotFoundForMissingAuthor(t *testing.T) {
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+	if !strings.Contains(rec.Body.String(), "Browse catalog") {
+		t.Fatalf("body does not contain Browse catalog: %q", rec.Body.String())
 	}
 }
 
