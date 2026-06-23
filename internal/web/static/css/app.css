@@ -1,10 +1,30 @@
 :root {
-    --content-width: 1080px;
+    --content-width: 1120px;
+    --content-width-narrow: 760px;
     --muted-border: #d8dee4;
     --muted-text: #5f6b76;
     --surface-soft: #f6f8fa;
+    --surface-raised: var(--pico-card-background-color);
+    --surface-tint: var(--pico-card-sectioning-background-color);
+    --shadow-soft: 0 16px 40px rgb(15 23 42 / 0.08);
+    --shadow-subtle: 0 8px 24px rgb(15 23 42 / 0.06);
 }
 
 body {
     min-height: 100vh;
+    background: var(--pico-background-color);
+    color: var(--pico-color);
+}
+
+a {
+    text-underline-offset: 0.18em;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid var(--pico-primary-focus);
+    outline-offset: 3px;
 }

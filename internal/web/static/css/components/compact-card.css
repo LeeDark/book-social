@@ -5,6 +5,7 @@
     border-radius: var(--pico-border-radius);
     background: var(--pico-card-background-color);
     color: var(--pico-color);
+    box-shadow: var(--shadow-subtle);
 }
 
 .compact-card h3 {

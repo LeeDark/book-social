@@ -1,17 +1,47 @@
 .site-nav {
     align-items: center;
-    padding: 0.75rem 0;
+    gap: 1rem;
+    margin-bottom: 0;
+    padding: 0.9rem 0;
     border-bottom: var(--pico-border-width) solid var(--pico-muted-border-color);
 }
 
 .site-nav__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     font-weight: 700;
     text-decoration: none;
 }
 
+.site-nav__brand::before {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    background: var(--pico-primary);
+    color: var(--pico-primary-inverse);
+    content: "BS";
+    font-size: 0.78rem;
+    line-height: 1;
+}
+
 .site-nav__items {
     flex-wrap: wrap;
+    gap: 0.25rem;
     justify-content: flex-end;
+}
+
+.site-nav__items a {
+    border-radius: 999px;
+    color: var(--pico-muted-color);
+    text-decoration: none;
+}
+
+.site-nav__items a:hover {
+    background: var(--surface-soft);
+    color: var(--pico-color);
 }
 
 .site-nav__items a[aria-current="page"] {
@@ -19,4 +49,15 @@
     color: var(--pico-primary);
     font-weight: 700;
     text-decoration: none;
+}
+
+@media (max-width: 760px) {
+    .site-nav {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .site-nav__items {
+        justify-content: flex-start;
+    }
 }

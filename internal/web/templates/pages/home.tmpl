@@ -5,45 +5,32 @@
         <div class="home-hero__content">
             <p class="eyebrow">A social catalog for curious readers</p>
             <h1>Discover books worth talking about.</h1>
-            <p>
-                Book Social brings books, authors, genres, and reader signals into one calm place
-                for browsing what to read next.
+            <p class="home-hero__lead">
+                Browse a growing catalog of books, follow paths through authors and genres,
+                and get a clear starting point for what to read next.
             </p>
 
-            <form class="home-search" action="{{.Search.Action}}" method="get" role="search">
-                <label for="home-search-query">Search the catalog</label>
-                <div class="grid">
-                    <input
-                        id="home-search-query"
-                        name="q"
-                        type="search"
-                        placeholder="Try a title, author, or keyword"
-                        value="{{.Search.Query}}"
-                    >
-                    <select id="home-search-genre" name="genre" aria-label="Genre">
-                        <option value="">All genres</option>
-                        {{range .Genres}}
-                            <option value="{{.Slug}}"{{if eq $.Search.Genre .Slug}} selected{{end}}>{{.Name}}</option>
-                        {{end}}
-                    </select>
-                    <button type="submit">Search</button>
-                </div>
-            </form>
+            <div class="home-hero__actions" aria-label="Primary actions">
+                <a href="/books" role="button">Browse catalog</a>
+                <a class="secondary" href="#genres-heading" role="button">Explore genres</a>
+            </div>
+
+            <p class="home-hero__note">Available now: catalog, book pages, author pages, and genre browsing.</p>
         </div>
 
         <div class="home-hero__panel" aria-label="Book Social highlights">
-            <article class="hero-stat">
-                <strong>Latest</strong>
-                <span>Fresh catalog additions</span>
-            </article>
-            <article class="hero-stat">
-                <strong>Genres</strong>
-                <span>Simple paths into discovery</span>
-            </article>
-            <article class="hero-stat">
-                <strong>Soon</strong>
-                <span>Profiles, lists, and reviews</span>
-            </article>
+            <div class="hero-stat">
+                <strong>Catalog first</strong>
+                <span>Books, authors, and genres are browsable today.</span>
+            </div>
+            <div class="hero-stat">
+                <strong>Reader-friendly</strong>
+                <span>Short descriptions keep discovery quick.</span>
+            </div>
+            <div class="hero-stat">
+                <strong>Social later</strong>
+                <span>Profiles, lists, and reviews are planned next.</span>
+            </div>
         </div>
     </section>
 

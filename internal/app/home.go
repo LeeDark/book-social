@@ -17,29 +17,23 @@ type HomeHandler struct {
 
 type HomePageData struct {
 	view.Page
-	Search      HomeSearchData
 	LatestBooks []HomeBookCardData
 	Genres      []HomeGenreData
 	Benefits    []HomeFeatureData
 	ComingSoon  []HomeFeatureData
 }
 
-type HomeSearchData struct {
-	Query  string
-	Genre  string
-	Action string
-}
-
 type HomeBookCardData struct {
-	Title       string
-	Slug        string
-	Description string
-	AuthorName  string
-	AuthorURL   string
-	GenreName   string
-	GenreURL    string
-	BookURL     string
-	CoverClass  string
+	Title           string
+	Slug            string
+	Description     string
+	AuthorName      string
+	AuthorURL       string
+	GenreName       string
+	GenreURL        string
+	BookURL         string
+	CoverClass      string
+	ShowDetailsLink bool
 }
 
 type HomeGenreData struct {
@@ -68,11 +62,6 @@ func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
 			Description: "Discover books, follow authors, and build a reading life with people who care about the same stories.",
 			ActiveNav:   "home",
 			Nav:         view.MainNavigation(),
-		},
-		Search: HomeSearchData{
-			Action: "/books",
-			Query:  r.URL.Query().Get("q"),
-			Genre:  r.URL.Query().Get("genre"),
 		},
 		LatestBooks: latestHomeBooks(),
 		Genres:      homeGenres(),
@@ -135,16 +124,16 @@ func homeGenres() []HomeGenreData {
 
 func homeBenefits() []HomeFeatureData {
 	return []HomeFeatureData{
-		{Title: "Find your next read", Description: "Browse books by title, author, or genre without losing the thread of what caught your eye."},
-		{Title: "Follow the people behind the books", Description: "Keep authors and their work close as the catalog grows."},
-		{Title: "Build around taste", Description: "Use genres and collections as simple starting points for deeper discovery later."},
+		{Title: "Find your next read", Description: "Browse the catalog by book, author, or genre without losing the thread of what caught your eye."},
+		{Title: "Follow the people behind the books", Description: "Open author pages to see short biographies and related books in one place."},
+		{Title: "Build around taste", Description: "Use genres as simple starting points while deeper discovery tools are still growing."},
 	}
 }
 
 func homeComingSoon() []HomeFeatureData {
 	return []HomeFeatureData{
 		{Title: "Reader profiles", Description: "Save favorites, track reading status, and shape a public shelf."},
-		{Title: "Author pages", Description: "Dedicated views for biographies, bibliographies, and related books."},
+		{Title: "Reading lists", Description: "Group books into personal lists for themes, goals, and recommendations."},
 		{Title: "Community signals", Description: "Lightweight reviews, recommendations, and lists from other readers."},
 	}
 }

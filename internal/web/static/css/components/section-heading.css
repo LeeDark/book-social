@@ -3,11 +3,17 @@
     align-items: end;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.1rem;
 }
 
 .section-heading h2 {
     margin: 0;
+    font-size: clamp(1.55rem, 3vw, 2.1rem);
+    line-height: 1.15;
+}
+
+.section-heading a {
+    white-space: nowrap;
 }
 
 .eyebrow {
