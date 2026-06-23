@@ -1,16 +1,27 @@
 {{define "title"}}{{.Title}}{{end}}
 
 {{define "main"}}
-    <section class="page-header">
-        <h1>Books</h1>
-        <p>Browse the catalog of books.</p>
+    <section class="page-header catalog-header">
+        <p class="eyebrow">Catalog</p>
+        <h1>Books to browse next</h1>
+        <p>Explore the current collection, open book details, or follow author and genre links to narrow the catalog.</p>
     </section>
 
     {{if .Books}}
-        <section class="book-grid">
-            {{range .Books}}
-                {{template "book_card" .}}
-            {{end}}
+        <section class="catalog-results" aria-labelledby="catalog-results-heading">
+            <div class="catalog-results__bar">
+                <div>
+                    <p class="eyebrow">Results</p>
+                    <h2 id="catalog-results-heading">Catalog books</h2>
+                </div>
+                <p>{{if eq (len .Books) 1}}1 book{{else}}{{len .Books}} books{{end}}</p>
+            </div>
+
+            <div class="book-grid catalog-grid">
+                {{range .Books}}
+                    {{template "book_card" .}}
+                {{end}}
+            </div>
         </section>
     {{else}}
         <section class="empty-state">

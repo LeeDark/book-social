@@ -69,7 +69,8 @@
 
 .book-card__meta,
 .book-card__genre,
-.book-card__description {
+.book-card__description,
+.book-card__footer {
     margin: 0.4rem 0;
 }
 
@@ -85,7 +86,18 @@
 }
 
 .book-card__description {
+    flex: 1;
     line-height: 1.5;
+}
+
+.book-card__footer {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: var(--pico-border-width) solid var(--pico-muted-border-color);
+}
+
+.book-card__footer a {
+    font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {

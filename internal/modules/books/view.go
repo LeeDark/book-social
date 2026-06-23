@@ -12,15 +12,16 @@ type CatalogPageData struct {
 }
 
 type BookCardView struct {
-	Title       string
-	Slug        string
-	Description string
-	AuthorName  string
-	AuthorURL   string
-	GenreName   string
-	GenreURL    string
-	BookURL     string
-	CoverClass  string
+	Title           string
+	Slug            string
+	Description     string
+	AuthorName      string
+	AuthorURL       string
+	GenreName       string
+	GenreURL        string
+	BookURL         string
+	CoverClass      string
+	ShowDetailsLink bool
 }
 
 type BookDetailsPageData struct {
@@ -70,15 +71,16 @@ func mapBooksToCards(books []Book) []BookCardView {
 	cards := make([]BookCardView, 0, len(books))
 	for _, book := range books {
 		card := BookCardView{
-			Title:       book.Title,
-			Slug:        book.Slug,
-			Description: book.Description,
-			BookURL:     fmt.Sprintf("/books/%s", book.Slug),
-			CoverClass:  coverClassForBook(book.ID),
-			AuthorName:  book.Author.FirstName + " " + book.Author.SecondName + " " + book.Author.SurName,
-			AuthorURL:   fmt.Sprintf("/authors/%s", book.Author.Slug),
-			GenreName:   book.Genre.Name,
-			GenreURL:    fmt.Sprintf("/books?genre=%s", book.Genre.Slug),
+			Title:           book.Title,
+			Slug:            book.Slug,
+			Description:     book.Description,
+			BookURL:         fmt.Sprintf("/books/%s", book.Slug),
+			CoverClass:      coverClassForBook(book.ID),
+			AuthorName:      book.Author.FirstName + " " + book.Author.SecondName + " " + book.Author.SurName,
+			AuthorURL:       fmt.Sprintf("/authors/%s", book.Author.Slug),
+			GenreName:       book.Genre.Name,
+			GenreURL:        fmt.Sprintf("/books?genre=%s", book.Genre.Slug),
+			ShowDetailsLink: true,
 		}
 
 		cards = append(cards, card)

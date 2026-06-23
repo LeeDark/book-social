@@ -22,6 +22,12 @@
             {{if .Description}}
                 <p class="book-card__description">{{.Description}}</p>
             {{end}}
+
+            {{if .ShowDetailsLink}}
+                <p class="book-card__footer">
+                    <a href="{{.BookURL}}" aria-label="View details for {{.Title}}">View details</a>
+                </p>
+            {{end}}
         </div>
     </article>
 {{end}}
