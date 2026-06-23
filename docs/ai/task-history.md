@@ -78,3 +78,30 @@ Decisions:
 Known follow-ups:
 - No pagination, sorting, search, or empty-state redesign was added.
 - No database migration system was introduced; local development still uses reset SQL.
+
+## 2026-06-23 — Site presentation polish
+
+Result:
+- Polished shared layout, navigation, spacing, and page rhythm.
+- Improved Home page hero, copy, and real catalog/genre calls to action.
+- Polished Catalog page header, results area, book cards, and responsive 3/2/1 column grid.
+- Added reusable empty-state styling for catalog and author pages.
+- Added branded rendered 404 page for missing books, authors, and unknown routes.
+- Improved placeholder book covers across catalog, home, and book details.
+- Aligned Author page header and book grid with Catalog presentation.
+
+Decisions:
+- Kept Pico CSS as the base.
+- Kept server-rendered templates and existing routing style.
+- Did not add frontend frameworks or new heavy dependencies.
+- Removed non-functional Home keyword search until real catalog search exists.
+- Used generated placeholder covers because the data model has no cover image URL yet.
+
+Tests:
+- `make test` passes.
+- Added tests for empty catalog rendering and branded 404 behavior.
+
+Known follow-ups:
+- Real cover image support can add `<img loading="lazy">` later.
+- Real catalog search can reintroduce the Home search form.
+- Manual visual checks should be done locally outside Codex.
