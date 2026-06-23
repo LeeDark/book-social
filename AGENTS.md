@@ -51,3 +51,50 @@ Summarize:
 - tests added/updated
 - commands run
 - anything intentionally left for later
+
+## Testing
+
+Use:
+
+```bash
+make test
+```
+
+## Running the web server in Codex
+
+Do not try to start the web server inside the Codex sandbox for verification.
+
+Avoid commands like:
+
+```bash
+GOCACHE=/tmp/book-social-go-cache APP_HTTP_ADDR=:18080 go run ./cmd/web
+curl -I http://localhost:18080/books
+```
+
+The Codex sandbox may not allow opening listening sockets or accessing `localhost`, so these checks can fail with environment errors such as:
+
+```text
+listen tcp :18080: socket: operation not permitted
+curl: (7) Couldn't connect to server
+```
+
+These errors should be treated as sandbox/environment limitations, not as project failures.
+
+For automated verification, prefer:
+
+```bash
+GOCACHE=/tmp/book-social-go-cache go test ./...
+```
+
+For HTTP behavior, use Go tests with `net/http/httptest` instead of starting a real server.
+
+For visual/manual checks, report the exact routes the user should open locally, for example:
+
+```text
+/
+ /books
+ /books/{valid-slug}
+ /books/unknown-slug
+```
+
+If a task requires browser verification, stop and ask the user to run the app locally outside the Codex sandbox.

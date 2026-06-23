@@ -16,7 +16,7 @@ run:
 	go run ./cmd/web
 
 test:
-	go test -count=1 ./...
+	GOCACHE=/tmp/go-build-cache go test ./...
 
 db-dev-reset:
 	DB_PATH=$(DB_PATH) ./db/sqlite/reset-dev-db.sh
