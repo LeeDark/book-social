@@ -1,19 +1,101 @@
 .cover-0 {
-    --cover-background: linear-gradient(135deg, #e8e8e8, #cfcfcf);
+    --cover-background-start: #e8e8e8;
+    --cover-background-end: #cfcfcf;
+    --cover-ink: #263238;
+    --cover-background: linear-gradient(135deg, var(--cover-background-start), var(--cover-background-end));
 }
 
 .cover-1 {
-    --cover-background: linear-gradient(135deg, #dbeafe, #93c5fd);
+    --cover-background-start: #dbeafe;
+    --cover-background-end: #93c5fd;
+    --cover-ink: #172554;
+    --cover-background: linear-gradient(135deg, var(--cover-background-start), var(--cover-background-end));
 }
 
 .cover-2 {
-    --cover-background: linear-gradient(135deg, #dcfce7, #86efac);
+    --cover-background-start: #dcfce7;
+    --cover-background-end: #86efac;
+    --cover-ink: #14532d;
+    --cover-background: linear-gradient(135deg, var(--cover-background-start), var(--cover-background-end));
 }
 
 .cover-3 {
-    --cover-background: linear-gradient(135deg, #fef3c7, #facc15);
+    --cover-background-start: #fef3c7;
+    --cover-background-end: #facc15;
+    --cover-ink: #713f12;
+    --cover-background: linear-gradient(135deg, var(--cover-background-start), var(--cover-background-end));
 }
 
 .cover-4 {
-    --cover-background: linear-gradient(135deg, #fae8ff, #d8b4fe);
+    --cover-background-start: #fae8ff;
+    --cover-background-end: #d8b4fe;
+    --cover-ink: #581c87;
+    --cover-background: linear-gradient(135deg, var(--cover-background-start), var(--cover-background-end));
+}
+
+.book-card__cover-book,
+.book-details__cover {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid rgb(15 23 42 / 0.18);
+    border-radius: 7px;
+    background:
+        linear-gradient(90deg, rgb(15 23 42 / 0.16), transparent 16%),
+        var(--cover-background, var(--surface-soft));
+    box-shadow:
+        0 12px 22px rgb(15 23 42 / 0.18),
+        inset 8px 0 12px rgb(15 23 42 / 0.08);
+    color: var(--cover-ink, #263238);
+    overflow: hidden;
+}
+
+.book-card__cover-book {
+    padding: 0.7rem 0.6rem;
+}
+
+.book-cover__brand,
+.book-cover__title {
+    position: relative;
+    z-index: 1;
+    display: block;
+}
+
+.book-cover__brand {
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1.1;
+    opacity: 0.72;
+    text-transform: uppercase;
+}
+
+.book-cover__title {
+    display: -webkit-box;
+    margin-top: auto;
+    overflow: hidden;
+    font-size: clamp(0.4rem, 0.8vw, 0.6rem);
+    font-weight: 800;
+    line-height: 1.1;
+    text-wrap: balance;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+}
+
+.book-cover__rule {
+    display: block;
+    width: 42%;
+    height: 3px;
+    margin-top: 0.7rem;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.42;
+}
+
+.book-details__cover .book-cover__brand {
+    font-size: 0.72rem;
+}
+
+.book-details__cover .book-cover__title {
+    font-size: clamp(0.75rem, 1.8vw, 1rem);
 }

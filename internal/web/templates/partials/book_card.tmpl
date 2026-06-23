@@ -1,7 +1,11 @@
 {{define "book_card"}}
     <article class="book-card">
         <a class="book-card__cover {{.CoverClass}}" href="{{.BookURL}}" aria-label="Open {{.Title}}">
-            <span class="book-card__cover-text">Book</span>
+            <span class="book-card__cover-book" aria-hidden="true">
+                <span class="book-cover__brand">Book Social</span>
+                <span class="book-cover__title">{{.Title}}</span>
+                <span class="book-cover__rule"></span>
+            </span>
         </a>
 
         <div class="book-card__body">

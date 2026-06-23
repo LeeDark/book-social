@@ -20,21 +20,18 @@
 
 .book-details__cover {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: space-between;
 
     width: 220px;
-    height: 330px;
+    aspect-ratio: 2 / 3;
+    height: auto;
+    padding: 1.2rem;
 
     border-radius: 8px;
     overflow: hidden;
     background: var(--cover-background, var(--surface-soft));
     text-decoration: none;
-}
-
-.book-details__cover-text {
-    font-weight: 700;
-    color: #555;
 }
 
 .book-details__body {
@@ -81,6 +78,5 @@
 
     .book-details__cover {
         width: 180px;
-        height: 270px;
     }
 }
