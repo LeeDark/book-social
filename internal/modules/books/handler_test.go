@@ -197,8 +197,8 @@ func TestCatalogHandlerBookDetailsReturnsNotFoundForMissingBook(t *testing.T) {
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
 	}
-	if !strings.Contains(rec.Body.String(), "Not Found") {
-		t.Fatalf("body does not contain Not Found: %q", rec.Body.String())
+	if !strings.Contains(rec.Body.String(), "Page not found") {
+		t.Fatalf("body does not contain Page not found: %q", rec.Body.String())
 	}
 }
 
@@ -247,6 +247,9 @@ func TestCatalogHandlerAuthorReturnsNotFoundForMissingAuthor(t *testing.T) {
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+	if !strings.Contains(rec.Body.String(), "Browse catalog") {
+		t.Fatalf("body does not contain Browse catalog: %q", rec.Body.String())
 	}
 }
 
