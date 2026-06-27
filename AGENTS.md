@@ -21,6 +21,26 @@ Architecture:
 - Keep package boundaries clean.
 - Do not introduce heavy dependencies without a strong reason.
 
+## AI-assisted workflow
+
+Prefer small, reviewable steps.
+
+For learning-oriented tasks, do not implement the full solution immediately.
+Instead:
+- inspect the relevant files
+- propose a short plan
+- stop for review
+- wait for explicit approval before coding
+
+For implementation tasks:
+- make minimal focused changes
+- avoid unrelated refactoring
+- explain changed files
+- provide manual test steps
+- run automated tests where possible
+
+Do not turn small tasks into large rewrites.
+
 ## Testing
 
 - Use the standard Go testing package.
@@ -28,7 +48,7 @@ Architecture:
 - Use `httptest` for HTTP handlers.
 - Use fake repositories/services for unit tests.
 - Avoid database integration tests unless explicitly requested.
-- `go test ./...` must pass before finishing.
+- `make test` must pass before finishing.
 
 ## UI
 
@@ -51,14 +71,6 @@ Summarize:
 - tests added/updated
 - commands run
 - anything intentionally left for later
-
-## Testing
-
-Use:
-
-```bash
-make test
-```
 
 ## Running the web server in Codex
 
