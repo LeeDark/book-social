@@ -11,6 +11,10 @@ type templCatalogHandler interface {
 	CatalogTempl(w http.ResponseWriter, r *http.Request)
 }
 
+type gomponentsCatalogHandler interface {
+	CatalogGomponents(w http.ResponseWriter, r *http.Request)
+}
+
 func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 	r.Handle("/static/*", http.StripPrefix(
 		"/static/",
@@ -22,6 +26,9 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 	r.Get("/books", app.CatalogHandler.Catalog)
 	if handler, ok := app.CatalogHandler.(templCatalogHandler); ok {
 		r.Get("/books-templ", handler.CatalogTempl)
+	}
+	if handler, ok := app.CatalogHandler.(gomponentsCatalogHandler); ok {
+		r.Get("/books-gomponents", handler.CatalogGomponents)
 	}
 	r.Get("/books/{slug}", app.CatalogHandler.BookDetails)
 	r.Get("/authors/{slug}", app.CatalogHandler.Author)

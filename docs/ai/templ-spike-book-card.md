@@ -2,6 +2,8 @@
 
 Date: 2026-06-29
 
+Follow-up: `docs/ai/frontend-rendering-spike-book-card.md` compares this Templ spike with a gomponents version.
+
 ## What Was Added
 
 - Added Templ as a project dependency and tool entry.

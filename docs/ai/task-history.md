@@ -146,3 +146,50 @@ Commands run:
 Decision:
 - Use Templ only for components for now.
 - Postpone a full layout migration until the project has more repeated UI components or stronger type-safety needs in templates.
+
+## 2026-06-29 — Frontend rendering spike: Templ vs gomponents for BookCard
+
+Result:
+- Kept the existing `/books` Go-template page unchanged.
+- Kept the isolated `/books-templ` Templ route.
+- Added gomponents using the current module path `maragu.dev/gomponents`.
+- Added a gomponents `BookCard` component and catalog-like page.
+- Added an isolated `/books-gomponents` route.
+- Added integration-test coverage for `/books-gomponents`.
+- Added comparison note at `docs/ai/frontend-rendering-spike-book-card.md`.
+
+Changed files:
+- `go.mod`
+- `go.sum`
+- `internal/app/routes.go`
+- `internal/app/app_integration_test.go`
+- `internal/http/render/gomponents.go`
+- `internal/modules/books/handler.go`
+- `internal/web/gomponents/components/book_card.go`
+- `internal/web/gomponents/components/view.go`
+- `internal/web/gomponents/pages/books.go`
+- `internal/web/gomponents/pages/view.go`
+- `docs/ai/frontend-rendering-spike-book-card.md`
+- `docs/ai/templ-spike-book-card.md`
+- `docs/ai/task-history.md`
+
+Commands run:
+- `GOCACHE=/tmp/book-social-go-cache go list -m -versions maragu.dev/gomponents`
+- `GOCACHE=/tmp/book-social-go-cache go get maragu.dev/gomponents@v1.3.0`
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/app ./internal/modules/books ./internal/http/render ./internal/web/gomponents/components ./internal/web/gomponents/pages`
+- `GOCACHE=/tmp/book-social-go-cache go mod tidy`
+- `make templ-generate`
+- `go tool templ generate -check`
+- `GOCACHE=/tmp/book-social-go-cache go test ./...`
+- `make test`
+
+Validation:
+- Focused package tests passed.
+- Templ generation/check passed with no generated updates.
+- Full `go test ./...` passed.
+- `make test` passed.
+
+Decision:
+- Keep `html/template` for now.
+- Use Templ later for selected reusable components if typed component contracts become valuable.
+- Keep gomponents as an acceptable small-component experiment, but do not migrate pages/layout to gomponents now.
