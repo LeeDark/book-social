@@ -15,11 +15,18 @@
 
             <p class="book-card__meta">
                 by <a href="{{.AuthorURL}}">{{.AuthorName}}</a>
+                {{if and .UseHTMXFilters .AuthorFilterURL}}
+                    <a href="{{.AuthorFilterURL}}" hx-get="{{.AuthorFilterURL}}" hx-target="#book-list" hx-swap="innerHTML" hx-push-url="true" aria-label="Filter catalog by {{.AuthorName}}">Filter</a>
+                {{end}}
             </p>
 
             {{if .GenreName}}
                 <p class="book-card__genre">
-                    <a href="{{.GenreURL}}">{{.GenreName}}</a>
+                    {{if .UseHTMXFilters}}
+                        <a href="{{.GenreURL}}" hx-get="{{.GenreURL}}" hx-target="#book-list" hx-swap="innerHTML" hx-push-url="true">{{.GenreName}}</a>
+                    {{else}}
+                        <a href="{{.GenreURL}}">{{.GenreName}}</a>
+                    {{end}}
                 </p>
             {{end}}
 

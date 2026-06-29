@@ -17,11 +17,13 @@ type BookCardView struct {
 	Description     string
 	AuthorName      string
 	AuthorURL       string
+	AuthorFilterURL string
 	GenreName       string
 	GenreURL        string
 	BookURL         string
 	CoverClass      string
 	ShowDetailsLink bool
+	UseHTMXFilters  bool
 }
 
 type BookDetailsPageData struct {
@@ -78,12 +80,21 @@ func mapBooksToCards(books []Book) []BookCardView {
 			CoverClass:      coverClassForBook(book.ID),
 			AuthorName:      book.Author.FirstName + " " + book.Author.SecondName + " " + book.Author.SurName,
 			AuthorURL:       fmt.Sprintf("/authors/%s", book.Author.Slug),
+			AuthorFilterURL: fmt.Sprintf("/books?author=%s", book.Author.Slug),
 			GenreName:       book.Genre.Name,
 			GenreURL:        fmt.Sprintf("/books?genre=%s", book.Genre.Slug),
 			ShowDetailsLink: true,
 		}
 
 		cards = append(cards, card)
+	}
+
+	return cards
+}
+
+func enableHTMXFilters(cards []BookCardView) []BookCardView {
+	for i := range cards {
+		cards[i].UseHTMXFilters = true
 	}
 
 	return cards

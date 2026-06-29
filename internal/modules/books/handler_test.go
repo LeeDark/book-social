@@ -59,8 +59,17 @@ func (p fakeCatalogPageProvider) AuthorPage(ctx context.Context, slug string) (A
 func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {
 	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
 		catalogData: CatalogPageData{
-			Page:  view.Page{Title: "Books"},
-			Books: []BookCardView{{Title: "Signal in the Stacks", BookURL: "/books/signal-in-the-stacks"}},
+			Page: view.Page{Title: "Books"},
+			Books: []BookCardView{{
+				Title:           "Signal in the Stacks",
+				BookURL:         "/books/signal-in-the-stacks",
+				AuthorName:      "Jon A. Vale",
+				AuthorURL:       "/authors/jon-a-vale",
+				AuthorFilterURL: "/books?author=jon-a-vale",
+				GenreName:       "Mystery",
+				GenreURL:        "/books?genre=mystery",
+				UseHTMXFilters:  true,
+			}},
 		},
 	})
 
@@ -74,6 +83,47 @@ func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "Signal in the Stacks") {
 		t.Fatalf("body does not contain rendered book title: %q", rec.Body.String())
+	}
+	for _, fragment := range []string{`src="/static/js/vendor/htmx.min.js"`, `hx-get="/books?author=jon-a-vale"`, `hx-get="/books?genre=mystery"`} {
+		if !strings.Contains(rec.Body.String(), fragment) {
+			t.Fatalf("body does not contain %q: %q", fragment, rec.Body.String())
+		}
+	}
+}
+
+func TestCatalogHandlerCatalogReturnsPartialForHTMXRequest(t *testing.T) {
+	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
+		catalogData: CatalogPageData{
+			Page: view.Page{Title: "Books"},
+			Books: []BookCardView{{
+				Title:           "Signal in the Stacks",
+				BookURL:         "/books/signal-in-the-stacks",
+				AuthorName:      "Jon A. Vale",
+				AuthorURL:       "/authors/jon-a-vale",
+				AuthorFilterURL: "/books?author=jon-a-vale",
+				GenreName:       "Mystery",
+				GenreURL:        "/books?genre=mystery",
+				UseHTMXFilters:  true,
+			}},
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/books?genre=mystery", nil)
+	req.Header.Set("HX-Request", "true")
+	rec := httptest.NewRecorder()
+
+	handler.Catalog(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	body := rec.Body.String()
+	if !strings.Contains(body, "Signal in the Stacks") {
+		t.Fatalf("body does not contain rendered book title: %q", body)
+	}
+	if strings.Contains(body, "<!doctype html>") || strings.Contains(body, "<main class=\"container\">") {
+		t.Fatalf("body contains full layout markup: %q", body)
 	}
 }
 

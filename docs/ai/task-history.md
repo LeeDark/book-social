@@ -193,3 +193,48 @@ Decision:
 - Keep `html/template` for now.
 - Use Templ later for selected reusable components if typed component contracts become valuable.
 - Keep gomponents as an acceptable small-component experiment, but do not migrate pages/layout to gomponents now.
+
+## 2026-06-29 — HTMX spike for catalog filters
+
+Result:
+- Added local vendored HTMX 2.0.4 at `internal/web/static/js/vendor/htmx.min.js`.
+- Included HTMX from the base layout with `defer`.
+- Added a `book_list` template partial and stable `#book-list` catalog target.
+- Added HTMX attributes to catalog genre filter links.
+- Added a small author catalog filter link while preserving existing author detail links.
+- Updated the catalog handler to return the full page for normal requests and only the book list partial for `HX-Request: true`.
+- Kept `/books`, `/books?author=...`, and `/books?genre=...` working as normal MPA routes.
+- Added spike note at `docs/ai/htmx-catalog-filters-spike.md`.
+
+Changed files:
+- `internal/http/render/renderer.go`
+- `internal/modules/books/handler.go`
+- `internal/modules/books/service.go`
+- `internal/modules/books/view.go`
+- `internal/web/templates/base.tmpl`
+- `internal/web/templates/pages/catalog.tmpl`
+- `internal/web/templates/partials/book_card.tmpl`
+- `internal/web/templates/partials/book_list.tmpl`
+- `internal/web/static/js/vendor/htmx.min.js`
+- `internal/modules/books/handler_test.go`
+- `internal/modules/books/service_test.go`
+- `internal/modules/books/view_test.go`
+- `internal/app/app_integration_test.go`
+- `docs/ai/htmx-catalog-filters-spike.md`
+- `docs/ai/task-history.md`
+
+Commands run:
+- `curl -L https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js -o internal/web/static/js/vendor/htmx.min.js`
+- `gofmt -w internal/http/render/renderer.go internal/modules/books/handler.go internal/modules/books/view.go internal/modules/books/handler_test.go internal/modules/books/view_test.go internal/app/app_integration_test.go`
+- `gofmt -w internal/modules/books/view.go internal/modules/books/service.go internal/modules/books/handler_test.go internal/modules/books/service_test.go`
+- `GOCACHE=/tmp/book-social-go-cache go test ./...`
+- `make test`
+
+Validation:
+- Full Go test suite passed.
+- `make test` passed.
+- Browser/server verification was not run inside Codex because the project instructions avoid starting the web server in the sandbox.
+
+Decision:
+- Keep this as a progressive enhancement spike.
+- Postpone broader filter UI, search, pagination, and sorting until a later catalog task.

@@ -43,6 +43,14 @@ func (h *CatalogHandler) Catalog(w http.ResponseWriter, r *http.Request) {
 
 	//h.logger.Debug("Catalog page", slog.Any("data", data))
 
+	if r.Header.Get("HX-Request") == "true" {
+		if err := h.renderer.RenderPartial(w, http.StatusOK, "catalog.tmpl", "book_list", data); err != nil {
+			response.ServerError(w, r, h.logger, fmt.Errorf("render catalog book list partial: %w", err))
+			return
+		}
+		return
+	}
+
 	if err := h.renderer.Render(w, http.StatusOK, "catalog.tmpl", data); err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("render catalog page: %w", err))
 		return

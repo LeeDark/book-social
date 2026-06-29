@@ -104,6 +104,9 @@ func TestCatalogServiceCatalogPageReturnsBooksFromRepository(t *testing.T) {
 	if first.GenreURL != "/books?genre=mystery" {
 		t.Errorf("first GenreURL = %q", first.GenreURL)
 	}
+	if !first.UseHTMXFilters {
+		t.Errorf("first UseHTMXFilters = false, want true")
+	}
 }
 
 func TestCatalogServiceCatalogPagePassesFilterToRepository(t *testing.T) {
@@ -200,6 +203,9 @@ func TestCatalogServiceAuthorPageReturnsAuthorAndBooks(t *testing.T) {
 	}
 	if data.Books[0].BookURL != "/books/pride-and-prejudice" {
 		t.Errorf("book URL = %q", data.Books[0].BookURL)
+	}
+	if data.Books[0].UseHTMXFilters {
+		t.Errorf("author page book UseHTMXFilters = true, want false")
 	}
 }
 

@@ -46,6 +46,9 @@ func TestMapBooksToCards(t *testing.T) {
 	if card.AuthorURL != "/authors/jon-a-vale" {
 		t.Errorf("AuthorURL = %q", card.AuthorURL)
 	}
+	if card.AuthorFilterURL != "/books?author=jon-a-vale" {
+		t.Errorf("AuthorFilterURL = %q", card.AuthorFilterURL)
+	}
 	if card.GenreName != "Mystery" {
 		t.Errorf("GenreName = %q", card.GenreName)
 	}

@@ -99,6 +99,32 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 	}
 }
 
+func TestCatalogRouteReturnsPartialForHTMXRequest(t *testing.T) {
+	handler := newIntegrationTestApp(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/books?genre=classic", nil)
+	req.Header.Set("HX-Request", "true")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d; body = %q", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	body := rec.Body.String()
+	for _, fragment := range []string{"Pride and Prejudice", "Classic"} {
+		if !strings.Contains(body, fragment) {
+			t.Fatalf("body does not contain %q: %q", fragment, body)
+		}
+	}
+	for _, fragment := range []string{"<!doctype html>", "<main class=\"container\">", "Dracula"} {
+		if strings.Contains(body, fragment) {
+			t.Fatalf("body contains unwanted fragment %q: %q", fragment, body)
+		}
+	}
+}
+
 func newIntegrationTestApp(t *testing.T) http.Handler {
 	t.Helper()
 

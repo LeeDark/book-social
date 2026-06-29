@@ -39,7 +39,7 @@ func (s *CatalogService) CatalogPage(ctx context.Context, filter BookFilter) (Ca
 				{Label: "Catalog"},
 			},
 		},
-		Books: mapBooksToCards(books),
+		Books: enableHTMXFilters(mapBooksToCards(books)),
 	}, nil
 }
 
