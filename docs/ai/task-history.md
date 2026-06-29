@@ -105,3 +105,44 @@ Known follow-ups:
 - Real cover image support can add `<img loading="lazy">` later.
 - Real catalog search can reintroduce the Home search form.
 - Manual visual checks should be done locally outside Codex.
+
+## 2026-06-29 — Templ spike for BookCard component
+
+Result:
+- Added Templ as a project dependency and Go tool.
+- Added `make templ-generate`.
+- Added a Templ `BookCard` component and generated code.
+- Added an isolated `/books-templ` route that reuses the catalog service and renders Templ book cards.
+- Kept the existing `/books` Go-template route unchanged.
+- Added a short spike note at `docs/ai/templ-spike-book-card.md`.
+
+Changed files:
+- `go.mod`
+- `go.sum`
+- `Makefile`
+- `internal/app/routes.go`
+- `internal/app/app_integration_test.go`
+- `internal/http/render/templ.go`
+- `internal/modules/books/handler.go`
+- `internal/web/templ/components/book_card.templ`
+- `internal/web/templ/components/book_card_templ.go`
+- `internal/web/templ/components/view.go`
+- `internal/web/templ/pages/books_templ.templ`
+- `internal/web/templ/pages/books_templ_templ.go`
+- `internal/web/templ/pages/view.go`
+- `docs/ai/templ-spike-book-card.md`
+- `docs/ai/task-history.md`
+
+Commands run:
+- `go get github.com/a-h/templ@v0.3.1020`
+- `go get -tool github.com/a-h/templ/cmd/templ@v0.3.1020`
+- `make templ-generate`
+- `GOCACHE=/tmp/book-social-go-cache go mod tidy`
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/app ./internal/modules/books ./internal/http/render ./internal/web/templ/components ./internal/web/templ/pages`
+- `go tool templ generate -check`
+- `GOCACHE=/tmp/book-social-go-cache go test ./...`
+- `make test`
+
+Decision:
+- Use Templ only for components for now.
+- Postpone a full layout migration until the project has more repeated UI components or stronger type-safety needs in templates.

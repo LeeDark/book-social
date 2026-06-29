@@ -7,6 +7,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+type templCatalogHandler interface {
+	CatalogTempl(w http.ResponseWriter, r *http.Request)
+}
+
 func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 	r.Handle("/static/*", http.StripPrefix(
 		"/static/",
@@ -16,6 +20,9 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 	r.Get("/about", app.HomeHandler.About)
 
 	r.Get("/books", app.CatalogHandler.Catalog)
+	if handler, ok := app.CatalogHandler.(templCatalogHandler); ok {
+		r.Get("/books-templ", handler.CatalogTempl)
+	}
 	r.Get("/books/{slug}", app.CatalogHandler.BookDetails)
 	r.Get("/authors/{slug}", app.CatalogHandler.Author)
 

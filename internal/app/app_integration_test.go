@@ -35,6 +35,12 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 			wantFragments: []string{"Pride and Prejudice", "jane-austen", "Classic"},
 		},
 		{
+			name:          "templ catalog spike",
+			path:          "/books-templ",
+			wantStatus:    http.StatusOK,
+			wantFragments: []string{"Books rendered with Templ cards", "Pride and Prejudice", "jane-austen", "Classic"},
+		},
+		{
 			name:          "existing book details",
 			path:          "/books/pride-and-prejudice",
 			wantStatus:    http.StatusOK,
