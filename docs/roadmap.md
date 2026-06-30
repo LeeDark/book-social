@@ -1,41 +1,93 @@
-# Roadmap: Book-Social v1
+# Roadmap
 
-## About Book-Social v1
+This roadmap is a working guide, not a release promise.
 
-## v0.0
+## v0.1 Baseline
 
-- [x] Basic functionality: config, logging, errors, version, Makefile
-- [x] Basic HTTP server and routes
-- [x] Choose a framework: chi, echo, gin
+Current v0.1 is a small server-rendered book catalog.
 
-## v0.1
+Done:
+- [x] Basic app skeleton: config, logging, errors, build info, Makefile.
+- [x] chi router, middleware, routes, 404 rendering.
+- [x] Modular monolith shape.
+- [x] Layered books/catalog module: handler, service, repository.
+- [x] SQLite schema, seed data, reset script.
+- [x] Home and About pages.
+- [x] Catalog page.
+- [x] Book details page.
+- [x] Author page.
+- [x] Author and genre catalog filters.
+- [x] View/page models, navigation, breadcrumbs.
+- [x] Basic unit tests and small HTTP/integration-style tests.
+- [x] HTMX catalog filter spike.
+- [x] Templ and gomponents rendering spikes.
+- [x] Initial documentation audit.
 
-- [x] Architecture and Infrastructure
-  - [x] Basic domain model: User, Catalog, Library
-  - [x] Database: SQLite as DB/store for dev, no migrations
-  - [x] Basic Dockerfile and Docker Compose
-  - [x] Modular monolith, App skeleton
-  - [x] Layered Architecture: Handlers & Services & Repositories
-- [ ] Frontend
-  - [x] Minimal Frontend with Go, MPA, Go Template
-  - [ ] HTMX/Templ
-- [ ] Basic Home, Catalog routes, handlers and HTML/CSS templates
-  - [x] Home, Home to Catalog
-  - [ ] Catalog Service
-  - [x] Page navigation contract
-  - [x] View/Page models
-  - [ ] Basic tests
+Still intentionally rough:
+- [ ] Docker/Compose runtime setup is experimental.
+- [ ] No database migrations.
+- [ ] No PostgreSQL support.
+- [ ] No auth or user library features.
+- [ ] No search, sorting, or pagination.
+- [ ] No real cover image storage.
 
-## v0.2
+## v0.1 Cleanup
 
-- [ ] Advanced functionality: linters, code quality, CI
-- [ ] Database: support SQLite/PostgreSQL for dev/prod
-- [ ] Database: the best migration strategy
-- [ ] Documentation, MPA Endpoints, OpenAPI
-- [ ] Advanced HTTP features: middlewares, graceful shutdown
-- [ ] Basic authentication, Sessions and Cookies
-- [ ] User Registration, Login, Logout
-- [ ] Catalog and User routes, handlers and HTML/CSS templates
+Before starting larger v0.2 work:
+- [ ] Finish documentation cleanup.
+- [ ] Decide what to do with archived AI prompt logs.
+- [ ] Clarify Docker/Compose status or fix it in a focused task.
+- [ ] Keep `html/template` as the primary rendering path.
+- [ ] Keep Templ/gomponents as historical spikes unless a later task changes direction.
+
+## v0.2 Direction
+
+Recommended order:
+
+1. Quality baseline
+   - [ ] `make fmt`
+   - [ ] `make vet`
+   - [ ] optional lint command
+   - [ ] CI running tests
+
+2. Database foundation
+   - [ ] migration strategy
+   - [ ] SQLite configuration cleanup
+   - [ ] PostgreSQL decision and initial support if still wanted
+   - [ ] test database bootstrap helpers
+
+3. Schema v0.2
+   - [ ] books/authors many-to-many
+   - [ ] books/genres many-to-many
+   - [ ] covers table with URL metadata
+   - [ ] `library_items`
+   - [ ] `library_item_tags`
+   - [ ] updated seed data
+
+4. Catalog v0.2
+   - [ ] read models for multiple authors and genres
+   - [ ] update catalog page
+   - [ ] update book details page
+   - [ ] update author pages
+   - [ ] keep routes stable where possible
+
+5. Auth foundation
+   - [ ] session strategy
+   - [ ] password hashing policy
+   - [ ] CSRF decision for forms
+   - [ ] registration, login, logout
+
+## Later
+
+These notes are intentionally less detailed than v0.1/v0.2. Keep them as direction markers and refine them only when the project gets closer to that stage.
+
+Short summary:
+- User library: statuses, shelves, tags, notes.
+- Search, sorting, and pagination.
+- Importers and cover storage.
+- Admin basics.
+- Accessibility and i18n pass.
+- Observability and deployment hardening.
 
 ## v0.3
 
@@ -63,7 +115,7 @@
 ## v0.5
 
 - [ ] Catalog features (to add later)
-- [ ] Import books from third-pary databases like Goodreads
+- [ ] Import books from third-party databases like Goodreads
 - [ ] Importer abstraction, background jobs
 - [ ] Pagination, filters, search
 - [ ] Full-text search in catalog

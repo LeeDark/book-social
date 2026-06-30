@@ -1,40 +1,28 @@
-Page navigation contract
+# Page Contract
 
-- backend routes
-- handlers
-- templates, forms, layouts
-- navigation, links
-- redirects, htmx/partial rendering
+This file is kept as the short page/navigation contract.
 
-BookSocial
+For the current route list, see [routes.md](routes.md).
 
-```text
-GET /static/*       -> Static files
-GET /               -> Home page
-GET /about          -> About page
-GET /books          -> Catalog/List books page
-GET /books/{slug}   -> Book details page
-GET /authors/{id}   -> Author page
-```
+## Rules
 
-```text
-GET /   -> Home page
-- route: GET /
-- active nav item: "home"
-- template: home/index.html
-```
+- Routes are registered in `internal/app/routes.go`.
+- Handlers prepare page/view data.
+- Templates render page/view data.
+- Navigation state comes from shared page data.
+- Catalog filter links should remain normal links.
+- HTMX behavior may enhance links, but must not be required for basic navigation.
 
-```text
-GET /books
-- full page by default
-- return catalog page with layout
-- active nav item: "catalog"
-- page title: "Books"
-- supports query params:
-  - ?q=
-  - ?page=
-  - ?genre=
-- if HR-Request: true, returns only books list fragment
-- response must include Vary: HX-Request
-```
+## Current Navigation Areas
 
+- Home: `/`
+- About: `/about`
+- Catalog: `/books`
+- Book details: `/books/{slug}`
+- Author details: `/authors/{slug}`
+
+## Breadcrumbs
+
+- Home should not show breadcrumbs.
+- Catalog and detail pages may show subtle breadcrumbs.
+- Breadcrumb data should be prepared by handlers/services, not hard-coded per template.
