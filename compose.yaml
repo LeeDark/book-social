@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: booksocial:dev
+    image: book-social:dev
     container_name: booksocial
     ports:
       - "8080:8080"

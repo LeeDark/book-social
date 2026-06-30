@@ -13,6 +13,17 @@ Architecture:
 - MPA / server-side templates
 - SQLite for now, PostgreSQL may be added later
 
+Useful project docs:
+- `README.md`
+- `docs/architecture.md`
+- `docs/development.md`
+- `docs/routes.md`
+- `docs/domain.md`
+- `docs/database_v0_1.md`
+- `docs/roadmap.md`
+- `docs/ai/project-context.md`
+- `docs/ai/task-history.md`
+
 ## Current technical direction
 
 - Keep the project simple and educational.
@@ -40,6 +51,11 @@ For implementation tasks:
 - run automated tests where possible
 
 Do not turn small tasks into large rewrites.
+
+For documentation cleanup:
+- preserve useful history, but separate it from current instructions
+- keep raw AI prompt logs in `docs/archive/` until reviewed
+- do not treat experimental spike notes as current project direction
 
 ## Testing
 
@@ -104,9 +120,9 @@ For visual/manual checks, report the exact routes the user should open locally, 
 
 ```text
 /
- /books
- /books/{valid-slug}
- /books/unknown-slug
+/books
+/books/{valid-slug}
+/books/unknown-slug
 ```
 
 If a task requires browser verification, stop and ask the user to run the app locally outside the Codex sandbox.

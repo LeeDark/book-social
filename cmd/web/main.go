@@ -31,7 +31,7 @@ func main() {
 		slog.String("build_date", buildinfo.BuildDate),
 	)
 
-	db, err := sqlite.Open(ctx, "./data/book_social_dev.db")
+	db, err := sqlite.Open(ctx, cfg.DB.DSN)
 	if err != nil {
 		logger.Error("failed to open database", "error", err)
 		os.Exit(1)

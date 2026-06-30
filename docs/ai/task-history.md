@@ -238,3 +238,33 @@ Validation:
 Decision:
 - Keep this as a progressive enhancement spike.
 - Postpone broader filter UI, search, pagination, and sorting until a later catalog task.
+
+## 2026-06-30 — Documentation audit and cleanup
+
+Result:
+- Added a root `README.md`.
+- Added focused project docs for architecture, development, routes, database overview, and testing.
+- Updated roadmap to separate the current v0.1 baseline from planned v0.2 work.
+- Updated domain and database docs so v0.1 matches the active SQLite schema.
+- Recorded Docker/Compose status for follow-up; it was later clarified as a dev-only local setup.
+- Kept Templ and gomponents as spike-only context, not main README routes.
+- Moved raw local AI/task notes into `docs/archive/` for later review without staging or committing them.
+
+Validation:
+- Documentation-only change.
+- `make test` should still pass before finishing.
+
+## 2026-06-30 — Docker/Compose v0.1 dev setup cleanup
+
+Result:
+- Verified `docker build --progress=plain -t book-social:dev .`.
+- Found initial Compose failure: final image did not include server templates.
+- Copied runtime templates/static assets into the final image.
+- Added a small dev entrypoint that initializes and seeds the SQLite database when the Docker database file is missing or empty.
+- Wired `APP_DB_DSN` into app startup.
+- Documented Docker/Compose as a basic local development setup, not production infrastructure.
+
+Validation:
+- `docker compose up --build -d` started the app.
+- `curl http://localhost:8080/` returned 200.
+- `curl http://localhost:8080/books` returned 200 with seeded catalog data.

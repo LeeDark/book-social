@@ -1,393 +1,88 @@
-# Domain Model v0.1
+# Domain Model
 
-Goal: a simple schema (no many-to-many yet) to quickly create tables and start building features.
+This document describes domain concepts. Database column details live in:
 
-## Conventions
-- Naming: snake_case for fields.
-- Passwords are never stored in plain form: `password_hash` only.
-- `required/optional` marked explicitly.
-- Foreign keys are marked as `FK -> table.column`.
-- Table naming: plural (roles, users, books, ...).
+- [Database v0.1](database_v0_1.md)
+- [Database v0.2 target](database_v0_2.md)
 
----
+## Current v0.1 Model
 
-## Roles / Users
+Book Social currently models a small book catalog.
 
-### roles
-- id (PK)
-- role_name (required, unique)
-- is_admin (required)
+### Book
 
-### users
-- id (PK)
-- first_name (required)
-- second_name (optional)
-- sur_name (optional)
-- login (required, unique)
-- password_hash (required)
-- email (required, unique)
-- role_id (required, FK -> roles.id)
+A book has:
 
-Relations:
-- roles 1 -> N users
+- title
+- slug
+- description
+- one author
+- one genre
 
----
+Current limitation:
 
-## Books / Authors / Genres (v0.1)
+- v0.1 supports only one author and one genre per book.
 
-### authors
-- id (PK)
-- first_name (required)
-- second_name (optional)
-- sur_name (optional)
-- description (optional)
+### Author
 
-### genres
-- id (PK)
-- name (required, unique)
-- description (optional)
+An author has:
 
-### books
-v0.1 assumes a single author and a single genre per book.
-- id (PK)
-- title (required)
-- description (optional)
-- author_id (optional, FK -> authors.id)
-- genre_id  (optional, FK -> genres.id)
+- name parts
+- slug
+- description
 
-Relations (v0.1):
-- authors 1 -> N books (books.author_id)
-- genres  1 -> N books (books.genre_id)
+Author pages are addressed by slug:
 
----
-
-## Covers (v0.1)
-TBD in v0.1.
-
-Direction decision:
-- store cover as URL + metadata (not BLOB)
-
----
-
-## Library / Shelves / Tags (v0.1)
-
-### shelves
-- id (PK)
-- name (required, unique)
-- description (optional)
-
-### tags
-- id (PK)
-- name (required, unique)
-- description (optional)
-
-### library
-A library record is: "book on shelf" + optionally a single tag.
-- id (PK)
-- shelf_id (required, FK -> shelves.id)
-- book_id  (required, FK -> books.id)
-- tag_id   (optional, FK -> tags.id)
-
-Relations (v0.1):
-- shelves 1 -> N library
-- books   1 -> N library
-- tags    1 -> N library (optional)
-
----
-
-## Mermaid ERD (v0.1)
-
-```mermaid
-erDiagram
-  ROLES ||--o{ USERS : has
-
-  AUTHORS ||--o{ BOOKS : writes
-  GENRES  ||--o{ BOOKS : classifies
-
-  SHELVES ||--o{ LIBRARY : contains
-  BOOKS   ||--o{ LIBRARY : listed
-  TAGS    ||--o{ LIBRARY : tagged
-
-  ROLES {
-    int id PK
-    string role_name
-    boolean is_admin
-  }
-
-  USERS {
-    int id PK
-    string first_name
-    string second_name
-    string sur_name
-    string login
-    string password_hash
-    string email
-    int role_id FK
-  }
-
-  AUTHORS {
-    int id PK
-    string first_name
-    string second_name
-    string sur_name
-    string description
-  }
-
-  GENRES {
-    int id PK
-    string name
-    string description
-  }
-
-  BOOKS {
-    int id PK
-    string title
-    string description
-    int author_id FK
-    int genre_id FK
-  }
-
-  SHELVES {
-    int id PK
-    string name
-    string description
-  }
-
-  TAGS {
-    int id PK
-    string name
-    string description
-  }
-
-  LIBRARY {
-    int id PK
-    int shelf_id FK
-    int book_id FK
-    int tag_id FK
-  }
+```text
+/authors/{authorSlug}
 ```
 
-# Domain Model v0.2 (Target)
+### Genre
 
-Goal: normalize the schema:
-- many-to-many for Books <-> Authors and Books <-> Genres
-- `library` becomes `library_items`
-- tags via join table
-- `covers` stored as URL + metadata
+A genre has:
 
-## Conventions
-- Naming: snake_case.
-- `password_hash` only.
-- many-to-many uses join tables with composite PKs.
-- Table naming: plural.
+- name
+- slug
+- description
 
----
+Genre filtering uses:
 
-## Roles / Users
-
-### roles
-- id (PK)
-- role_name (required, unique)
-- is_admin (required)
-
-### users
-- id (PK)
-- first_name (required)
-- second_name (optional)
-- sur_name (optional)
-- login (required, unique)
-- password_hash (required)
-- email (required, unique)
-- role_id (required, FK -> roles.id)
-
-Relation:
-- roles 1 -> N users
-
----
-
-## Books / Authors / Genres
-
-### authors
-- id (PK)
-- first_name (required)
-- second_name (optional)
-- sur_name (optional)
-- description (optional)
-
-### genres
-- id (PK)
-- name (required, unique)
-- description (optional)
-
-### books
-- id (PK)
-- title (required)
-- description (optional)
-
-### book_authors (Books <-> Authors)
-- book_id (PK, FK -> books.id)
-- author_id (PK, FK -> authors.id)
-
-### book_genres (Books <-> Genres)
-- book_id (PK, FK -> books.id)
-- genre_id (PK, FK -> genres.id)
-
-Relations:
-- books M <-> N authors via book_authors
-- books M <-> N genres  via book_genres
-
----
-
-## Covers (URL + metadata)
-
-### covers
-- id (PK)
-- book_id (required, FK -> books.id)
-- variant (required; e.g. original/small/medium)
-- url (required)
-- mime_type (optional)
-- byte_size (optional)
-- width (optional)
-- height (optional)
-- checksum_sha256 (optional)
-  Constraint:
-- unique(book_id, variant)
-
-Relation:
-- books 1 -> N covers
-
----
-
-## Library / Shelves / Tags
-
-### shelves
-- id (PK)
-- name (required, unique)
-- description (optional)
-
-### tags
-- id (PK)
-- name (required, unique)
-- description (optional)
-
-### library_items
-A library item is: "book on shelf".
-- id (PK)
-- shelf_id (required, FK -> shelves.id)
-- book_id  (required, FK -> books.id)
-  Constraint:
-- unique(shelf_id, book_id)
-
-### library_item_tags (LibraryItems <-> Tags)
-- library_item_id (PK, FK -> library_items.id)
-- tag_id (PK, FK -> tags.id)
-
-Relations:
-- shelves 1 -> N library_items
-- books   1 -> N library_items
-- library_items M <-> N tags via library_item_tags
-
----
-
-## Mermaid ERD (v0.2)
-
-```mermaid
-erDiagram
-  ROLES ||--o{ USERS : has
-
-  BOOKS ||--o{ BOOK_AUTHORS : links
-  AUTHORS ||--o{ BOOK_AUTHORS : links
-
-  BOOKS ||--o{ BOOK_GENRES : links
-  GENRES ||--o{ BOOK_GENRES : links
-
-  BOOKS ||--o{ COVERS : has
-
-  SHELVES ||--o{ LIBRARY_ITEMS : contains
-  BOOKS   ||--o{ LIBRARY_ITEMS : listed
-
-  LIBRARY_ITEMS ||--o{ LIBRARY_ITEM_TAGS : tagged_by
-  TAGS          ||--o{ LIBRARY_ITEM_TAGS : tags
-
-  ROLES {
-    int id PK
-    string role_name
-    boolean is_admin
-  }
-
-  USERS {
-    int id PK
-    string first_name
-    string second_name
-    string sur_name
-    string login
-    string password_hash
-    string email
-    int role_id FK
-  }
-
-  AUTHORS {
-    int id PK
-    string first_name
-    string second_name
-    string sur_name
-    string description
-  }
-
-  GENRES {
-    int id PK
-    string name
-    string description
-  }
-
-  BOOKS {
-    int id PK
-    string title
-    string description
-  }
-
-  BOOK_AUTHORS {
-    int book_id FK
-    int author_id FK
-  }
-
-  BOOK_GENRES {
-    int book_id FK
-    int genre_id FK
-  }
-
-  COVERS {
-    int id PK
-    int book_id FK
-    string variant
-    string url
-    string mime_type
-    int byte_size
-    int width
-    int height
-    string checksum_sha256
-  }
-
-  SHELVES {
-    int id PK
-    string name
-    string description
-  }
-
-  TAGS {
-    int id PK
-    string name
-    string description
-  }
-
-  LIBRARY_ITEMS {
-    int id PK
-    int shelf_id FK
-    int book_id FK
-  }
-
-  LIBRARY_ITEM_TAGS {
-    int library_item_id FK
-    int tag_id FK
-  }
+```text
+/books?genre={genreSlug}
 ```
+
+### Catalog
+
+The catalog can:
+
+- list books
+- filter by author slug
+- filter by genre slug
+- combine author and genre filters
+- open book details by book slug
+
+### User, Library, Shelves, Tags
+
+The v0.1 schema includes users, roles, shelves, tags, and library tables, but current user-facing behavior is focused on the public catalog.
+
+User accounts, authentication, and library workflows are planned later.
+
+## v0.2 Target
+
+v0.2 should normalize the catalog model:
+
+- books can have multiple authors
+- books can have multiple genres
+- covers can be stored as URL metadata
+- `library` can become `library_items`
+- tags can move to a join table
+
+The target schema is described in [database_v0_2.md](database_v0_2.md).
+
+## Current Design Rules
+
+- Keep database details out of templates.
+- Use page/view models for rendering.
+- Keep SQL in repository implementations.
+- Keep handler, service, and repository responsibilities separate.
+- Do not add auth/library behavior until the data and roadmap are clearer.

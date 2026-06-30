@@ -1,3 +1,17 @@
+# Database v0.2 Target
+
+This is a planned target schema, not the active application schema.
+
+Main changes from v0.1:
+
+- books/authors become many-to-many
+- books/genres become many-to-many
+- covers store URL metadata
+- `library` becomes `library_items`
+- tags move to `library_item_tags`
+
+Slugs should remain part of catalog entities because current routes use book, author, and genre slugs.
+
 ```mermaid
 erDiagram
     ROLES ||--o{ USERS : has
@@ -38,17 +52,20 @@ erDiagram
         string first_name
         string second_name
         string sur_name
+        string slug
         string description
     }
 
     GENRES {
         int id PK
         string name
+        string slug
         string description
     }
 
     BOOKS {
         int id PK
+        string slug
         string title
         string description
     }
