@@ -3,7 +3,7 @@ COMMIT  := $(shell git rev-parse --short HEAD)
 DATE    := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 DB_PATH ?= ./data/book_social_dev.db
 
-.PHONY: build run test db-dev-reset db-dev-shell
+.PHONY: build run test templ-generate db-dev-reset db-dev-shell
 
 build:
 	go build -ldflags "\
@@ -17,6 +17,9 @@ run:
 
 test:
 	GOCACHE=/tmp/go-build-cache go test -count=1 ./...
+
+templ-generate:
+	go tool templ generate
 
 db-dev-reset:
 	DB_PATH=$(DB_PATH) ./db/sqlite/reset-dev-db.sh

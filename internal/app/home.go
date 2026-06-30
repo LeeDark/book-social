@@ -29,11 +29,13 @@ type HomeBookCardData struct {
 	Description     string
 	AuthorName      string
 	AuthorURL       string
+	AuthorFilterURL string
 	GenreName       string
 	GenreURL        string
 	BookURL         string
 	CoverClass      string
 	ShowDetailsLink bool
+	UseHTMXFilters  bool
 }
 
 type HomeGenreData struct {

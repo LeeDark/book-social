@@ -8,6 +8,10 @@ import (
 
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/http/response"
+	gomponentscomponents "github.com/LeeDark/book-social/internal/web/gomponents/components"
+	gomponentspages "github.com/LeeDark/book-social/internal/web/gomponents/pages"
+	templcomponents "github.com/LeeDark/book-social/internal/web/templ/components"
+	templpages "github.com/LeeDark/book-social/internal/web/templ/pages"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -39,10 +43,100 @@ func (h *CatalogHandler) Catalog(w http.ResponseWriter, r *http.Request) {
 
 	//h.logger.Debug("Catalog page", slog.Any("data", data))
 
+	if r.Header.Get("HX-Request") == "true" {
+		if err := h.renderer.RenderPartial(w, http.StatusOK, "catalog.tmpl", "book_list", data); err != nil {
+			response.ServerError(w, r, h.logger, fmt.Errorf("render catalog book list partial: %w", err))
+			return
+		}
+		return
+	}
+
 	if err := h.renderer.Render(w, http.StatusOK, "catalog.tmpl", data); err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("render catalog page: %w", err))
 		return
 	}
+}
+
+func (h *CatalogHandler) CatalogTempl(w http.ResponseWriter, r *http.Request) {
+	filter := BookFilter{
+		AuthorSlug: r.URL.Query().Get("author"),
+		GenreSlug:  r.URL.Query().Get("genre"),
+	}
+
+	data, err := h.service.CatalogPage(r.Context(), filter)
+	if err != nil {
+		response.ServerError(w, r, h.logger, fmt.Errorf("get templ catalog page: %w", err))
+		return
+	}
+
+	templData := templpages.BooksTemplPageData{
+		Books: mapBookCardsToTempl(data.Books),
+	}
+
+	if err := render.RenderTempl(w, r, http.StatusOK, templpages.BooksTemplPage(templData)); err != nil {
+		response.ServerError(w, r, h.logger, fmt.Errorf("render templ catalog page: %w", err))
+		return
+	}
+}
+
+func (h *CatalogHandler) CatalogGomponents(w http.ResponseWriter, r *http.Request) {
+	filter := BookFilter{
+		AuthorSlug: r.URL.Query().Get("author"),
+		GenreSlug:  r.URL.Query().Get("genre"),
+	}
+
+	data, err := h.service.CatalogPage(r.Context(), filter)
+	if err != nil {
+		response.ServerError(w, r, h.logger, fmt.Errorf("get gomponents catalog page: %w", err))
+		return
+	}
+
+	gomponentsData := gomponentspages.BooksPageData{
+		Books: mapBookCardsToGomponents(data.Books),
+	}
+
+	if err := render.RenderGomponent(w, http.StatusOK, gomponentspages.BooksPage(gomponentsData)); err != nil {
+		response.ServerError(w, r, h.logger, fmt.Errorf("render gomponents catalog page: %w", err))
+		return
+	}
+}
+
+func mapBookCardsToGomponents(cards []BookCardView) []gomponentscomponents.BookCardView {
+	result := make([]gomponentscomponents.BookCardView, 0, len(cards))
+	for _, card := range cards {
+		result = append(result, gomponentscomponents.BookCardView{
+			Title:           card.Title,
+			Slug:            card.Slug,
+			Description:     card.Description,
+			AuthorName:      card.AuthorName,
+			AuthorURL:       card.AuthorURL,
+			GenreName:       card.GenreName,
+			GenreURL:        card.GenreURL,
+			BookURL:         card.BookURL,
+			CoverClass:      card.CoverClass,
+			ShowDetailsLink: card.ShowDetailsLink,
+		})
+	}
+	return result
+}
+
+func mapBookCardsToTempl(cards []BookCardView) []templcomponents.BookCardView {
+	result := make([]templcomponents.BookCardView, 0, len(cards))
+	for _, card := range cards {
+		result = append(result, templcomponents.BookCardView{
+			Title:           card.Title,
+			Slug:            card.Slug,
+			Description:     card.Description,
+			AuthorName:      card.AuthorName,
+			AuthorURL:       card.AuthorURL,
+			GenreName:       card.GenreName,
+			GenreURL:        card.GenreURL,
+			BookURL:         card.BookURL,
+			CoverClass:      card.CoverClass,
+			ShowDetailsLink: card.ShowDetailsLink,
+		})
+	}
+	return result
 }
 
 func (h *CatalogHandler) BookDetails(w http.ResponseWriter, r *http.Request) {

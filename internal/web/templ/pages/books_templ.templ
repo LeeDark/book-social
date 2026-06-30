@@ -1,0 +1,61 @@
+package pages
+
+import (
+	"github.com/LeeDark/book-social/internal/web/templ/components"
+)
+
+templ BooksTemplPage(data BooksTemplPageData) {
+	<!doctype html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>Books Templ Spike</title>
+			<link rel="stylesheet" href="/static/css/pico.min.css"/>
+			<link rel="stylesheet" href="/static/css/app.css"/>
+			<link rel="stylesheet" href="/static/css/layout.css"/>
+			<link rel="stylesheet" href="/static/css/components/book-card.css"/>
+			<link rel="stylesheet" href="/static/css/components/cover.css"/>
+			<link rel="stylesheet" href="/static/css/components/empty-state.css"/>
+			<link rel="stylesheet" href="/static/css/pages/catalog.css"/>
+		</head>
+		<body>
+			<main class="container">
+				<section class="page-header catalog-header">
+					<p class="eyebrow">Templ spike</p>
+					<h1>Books rendered with Templ cards</h1>
+					<p>This experimental route reuses the catalog service and renders only the book cards with Templ.</p>
+				</section>
+
+				if len(data.Books) > 0 {
+					<section class="catalog-results" aria-labelledby="templ-catalog-results-heading">
+						<div class="catalog-results__bar">
+							<div>
+								<p class="eyebrow">Results</p>
+								<h2 id="templ-catalog-results-heading">Catalog books</h2>
+							</div>
+							if len(data.Books) == 1 {
+								<p>1 book</p>
+							} else {
+								<p>{ len(data.Books) } books</p>
+							}
+						</div>
+
+						<div class="book-grid catalog-grid">
+							for _, book := range data.Books {
+								@components.BookCard(book)
+							}
+						</div>
+					</section>
+				} else {
+					<section class="empty-state" aria-labelledby="templ-catalog-empty-heading">
+						<div class="empty-state__icon" aria-hidden="true">BS</div>
+						<p class="eyebrow">No results</p>
+						<h2 id="templ-catalog-empty-heading">No books found</h2>
+						<p>The catalog does not have books for this view yet.</p>
+					</section>
+				}
+			</main>
+		</body>
+	</html>
+}

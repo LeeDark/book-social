@@ -1,0 +1,30 @@
+{{define "book_list"}}
+    {{if .Books}}
+        <section class="catalog-results" aria-labelledby="catalog-results-heading">
+            <div class="catalog-results__bar">
+                <div>
+                    <p class="eyebrow">Results</p>
+                    <h2 id="catalog-results-heading">Catalog books</h2>
+                </div>
+                <p>{{if eq (len .Books) 1}}1 book{{else}}{{len .Books}} books{{end}}</p>
+            </div>
+
+            <div class="book-grid catalog-grid">
+                {{range .Books}}
+                    {{template "book_card" .}}
+                {{end}}
+            </div>
+        </section>
+    {{else}}
+        <section class="empty-state" aria-labelledby="catalog-empty-heading">
+            <div class="empty-state__icon" aria-hidden="true">BS</div>
+            <p class="eyebrow">No results</p>
+            <h2 id="catalog-empty-heading">No books found</h2>
+            <p>The catalog does not have books for this view yet. Try returning to the full catalog or start from the home page.</p>
+            <div class="empty-state__actions">
+                <a href="/books" role="button">View catalog</a>
+                <a class="secondary" href="/" role="button">Go home</a>
+            </div>
+        </section>
+    {{end}}
+{{end}}

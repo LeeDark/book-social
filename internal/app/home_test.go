@@ -26,6 +26,9 @@ func TestHomeHandlerIndexReturnsOK(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), "Discover books worth talking about.") {
 		t.Fatalf("body does not contain home heading: %q", rec.Body.String())
 	}
+	if strings.Contains(rec.Body.String(), "hx-target=\"#book-list\"") {
+		t.Fatalf("home page contains catalog-only HTMX filter attributes: %q", rec.Body.String())
+	}
 }
 
 func TestHomeHandlerAboutReturnsOK(t *testing.T) {

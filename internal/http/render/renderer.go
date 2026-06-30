@@ -38,3 +38,17 @@ func (r *Renderer) Render(w http.ResponseWriter, status int, page string, data a
 
 	return nil
 }
+
+func (r *Renderer) RenderPartial(w http.ResponseWriter, status int, page string, partial string, data any) error {
+	ts, ok := r.cache[page]
+	if !ok {
+		return fmt.Errorf("the template %s does not exist", page)
+	}
+
+	w.WriteHeader(status)
+	if err := ts.ExecuteTemplate(w, partial, data); err != nil {
+		return fmt.Errorf("template error: %w", err)
+	}
+
+	return nil
+}
