@@ -10,10 +10,17 @@ Current state:
 - SQLite is active for local development.
 - There is no migration system yet.
 - PostgreSQL support is planned, not implemented.
-- Docker/Compose database wiring is experimental.
+- Docker/Compose uses a dev-only SQLite database in a named volume.
 
 For local database reset:
 
 ```bash
 make db-dev-reset
+```
+
+For Docker database reset:
+
+```bash
+docker compose down -v
+docker compose up --build
 ```

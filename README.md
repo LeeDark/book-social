@@ -19,7 +19,7 @@ Current v0.1 baseline:
 
 Not current production direction:
 - Templ and gomponents routes are experiments only.
-- Docker and Docker Compose are early/experimental.
+- Docker and Docker Compose are supported as a basic local development setup, not production infrastructure.
 - PostgreSQL, migrations, authentication, user libraries, search, pagination, and social features are planned later.
 
 ## Tech Stack
@@ -50,6 +50,38 @@ Default address:
 
 ```text
 http://localhost:8080
+```
+
+## Run With Docker
+
+Docker/Compose is a dev-only local setup for v0.1.
+
+Build the image:
+
+```bash
+docker build --progress=plain -t book-social:dev .
+```
+
+Start the app:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+```text
+http://localhost:8080
+```
+
+The Compose setup stores SQLite data in a named volume mounted at `/app/data`.
+On first start, the container initializes and seeds `/app/data/book_social_dev.db` if it is missing or empty.
+
+Reset the Docker SQLite database:
+
+```bash
+docker compose down -v
+docker compose up --build
 ```
 
 Useful routes:
@@ -103,7 +135,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 Near-term cleanup:
 - Finish documentation inventory and cleanup.
 - Keep v0.1 as the stable learning baseline.
-- Treat Docker/Compose as experimental until runtime asset/database behavior is cleaned up.
+- Keep Docker/Compose as a dev-only local setup; do not add production deployment claims yet.
 
 v0.2 direction:
 - Quality baseline: format/test/lint/CI.

@@ -41,4 +41,5 @@ Current rendering direction:
 
 Current infrastructure caveat:
 - SQLite is the active local database.
-- Docker/Compose are experimental until runtime database and asset behavior are cleaned up.
+- Docker/Compose are supported as a basic local development setup for v0.1.
+- Docker/Compose are not production-ready infrastructure.

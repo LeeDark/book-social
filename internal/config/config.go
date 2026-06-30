@@ -26,7 +26,7 @@ func Load() (Config, error) {
 
 	cfg.HTTP.Addr = getEnv("APP_HTTP_ADDR", ":8080")
 
-	//cfg.DB.DSN = getEnv("APP_DB_DSN", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	cfg.DB.DSN = getEnv("APP_DB_DSN", "./data/book_social_dev.db")
 
 	cfg.Log.Level = getEnv("APP_LOG_LEVEL", "debug")
 	cfg.Log.Format = getEnv("APP_LOG_FORMAT", "text")

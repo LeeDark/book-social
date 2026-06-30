@@ -49,27 +49,70 @@ Current environment variables:
 
 - `APP_ENV`, default `dev`
 - `APP_HTTP_ADDR`, default `:8080`
+- `APP_DB_DSN`, default `./data/book_social_dev.db`
 - `APP_LOG_LEVEL`, default `debug`
 - `APP_LOG_FORMAT`, default `text`
 
-Important current limitation:
-
-- `cmd/web/main.go` currently opens `./data/book_social_dev.db` directly.
-- `APP_DB_DSN` exists in Compose, but is not currently used by runtime wiring.
-
 ## Docker And Compose
 
-Docker and Compose are experimental for now.
+Docker and Compose are supported as a basic local development setup for v0.1.
 
-Known limitations:
+They are not production-ready infrastructure. Do not treat this setup as deployment guidance.
 
-- Runtime database path/configuration needs cleanup.
-- Template/static asset behavior should be verified before treating the image as a normal run target.
-- Kubernetes files are early experiments and intentionally out of scope for current documentation cleanup.
-
-For local development, prefer:
+Build the image:
 
 ```bash
-make db-dev-reset
-make run
+docker build --progress=plain -t book-social:dev .
 ```
+
+Start the app:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+```text
+http://localhost:8080
+```
+
+The Compose environment sets:
+
+```text
+APP_ENV=dev
+APP_HTTP_ADDR=:8080
+APP_DB_DSN=file:/app/data/book_social_dev.db
+```
+
+## SQLite In Docker
+
+Compose mounts a named volume at:
+
+```text
+/app/data
+```
+
+On container startup, `docker-entrypoint.sh` checks the configured SQLite database path. If the database file is missing or empty, it runs:
+
+```text
+db/sqlite/schema_v0_1_sqlite.sql
+db/sqlite/seed_sqlite.sql
+```
+
+Reset and seed the Docker database from scratch:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+This removes the Compose volume, then lets the entrypoint initialize a fresh seeded SQLite database.
+
+## Out Of Scope
+
+- Production deployment setup.
+- Health checks.
+- Reverse proxy configuration.
+- Orchestration.
+- Kubernetes cleanup.

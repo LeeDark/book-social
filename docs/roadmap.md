@@ -24,7 +24,7 @@ Done:
 - [x] Initial documentation audit.
 
 Still intentionally rough:
-- [ ] Docker/Compose runtime setup is experimental.
+- [x] Docker/Compose basic local development setup.
 - [ ] No database migrations.
 - [ ] No PostgreSQL support.
 - [ ] No auth or user library features.
@@ -36,7 +36,7 @@ Still intentionally rough:
 Before starting larger v0.2 work:
 - [ ] Finish documentation cleanup.
 - [ ] Decide what to do with archived AI prompt logs.
-- [ ] Clarify Docker/Compose status or fix it in a focused task.
+- [x] Clarify Docker/Compose status as dev-only local setup.
 - [ ] Keep `html/template` as the primary rendering path.
 - [ ] Keep Templ/gomponents as historical spikes unless a later task changes direction.
 

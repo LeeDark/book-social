@@ -12,9 +12,6 @@ bin/
 data/
 *.db
 
-# Database scripts (included in image if needed via explicit COPY)
-db/
-
 # Documentation
 docs/
 
