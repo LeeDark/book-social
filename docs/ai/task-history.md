@@ -238,3 +238,18 @@ Validation:
 Decision:
 - Keep this as a progressive enhancement spike.
 - Postpone broader filter UI, search, pagination, and sorting until a later catalog task.
+
+## 2026-06-30 — Documentation audit and cleanup
+
+Result:
+- Added a root `README.md`.
+- Added focused project docs for architecture, development, routes, database overview, and testing.
+- Updated roadmap to separate the current v0.1 baseline from planned v0.2 work.
+- Updated domain and database docs so v0.1 matches the active SQLite schema.
+- Marked Docker/Compose as experimental.
+- Kept Templ and gomponents as spike-only context, not main README routes.
+- Moved raw local AI/task notes into `docs/archive/` for later review without staging or committing them.
+
+Validation:
+- Documentation-only change.
+- `make test` should still pass before finishing.

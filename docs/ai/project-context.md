@@ -9,7 +9,7 @@ Main goals:
 - practice MPA / SSR with templates
 - start with SQLite
 - later compare SQLite and PostgreSQL
-- gradually add tests, auth, better catalog behavior, HTMX, and Templ
+- gradually add tests, auth, better catalog behavior, and selected frontend experiments
 
 Current modules:
 - home
@@ -24,6 +24,7 @@ Current focus:
 - minimal working features first
 - clean package boundaries
 - small incremental tasks
+- current documentation should describe implemented behavior, not planned behavior
 
 Current catalog behavior:
 - `/books` lists books.
@@ -32,3 +33,12 @@ Current catalog behavior:
 - `/books?author={authorSlug}&genre={genreSlug}` applies both filters.
 - `/books/{bookSlug}` shows book details.
 - `/authors/{authorSlug}` shows an author page and books by that author.
+
+Current rendering direction:
+- `html/template` is the primary rendering path.
+- HTMX is present as a small progressive-enhancement spike for catalog filters.
+- Templ and gomponents routes are experiments documented in spike notes, not the main frontend direction.
+
+Current infrastructure caveat:
+- SQLite is the active local database.
+- Docker/Compose are experimental until runtime database and asset behavior are cleaned up.
