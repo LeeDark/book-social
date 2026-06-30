@@ -93,7 +93,7 @@ Compose mounts a named volume at:
 /app/data
 ```
 
-On container startup, `docker-entrypoint.sh` checks the configured SQLite database path. If the database file is missing or empty, it runs:
+On container startup, `docker/entrypoint.sh` checks the configured SQLite database path. If the database file is missing or empty, it runs:
 
 ```text
 db/sqlite/schema_v0_1_sqlite.sql
