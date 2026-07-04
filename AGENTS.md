@@ -23,6 +23,7 @@ Useful project docs:
 - `docs/roadmap.md`
 - `docs/ai/project-context.md`
 - `docs/ai/task-history.md`
+- `docs/ai/ai-augmented-development-workflow.md`
 
 ## Current technical direction
 
@@ -35,6 +36,10 @@ Useful project docs:
 ## AI-assisted workflow
 
 Prefer small, reviewable steps.
+
+Use `docs/ai/ai-augmented-development-workflow.md` together with this file for AI-assisted work.
+When a task names a working mode from that document, follow that mode unless it conflicts with this
+file or the user's latest instruction.
 
 For learning-oriented tasks, do not implement the full solution immediately.
 Instead:
@@ -53,9 +58,9 @@ For implementation tasks:
 Do not turn small tasks into large rewrites.
 
 For documentation cleanup:
-- preserve useful history, but separate it from current instructions
+- preserve useful history but separate it from current instructions
 - keep raw AI prompt logs in `docs/archive/` until reviewed
-- do not treat experimental spike notes as current project direction
+- do not treat experimental spike notes as the current project direction
 
 ## Testing
 

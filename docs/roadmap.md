@@ -4,7 +4,7 @@ This roadmap is a working guide, not a release promise.
 
 ## v0.1 Baseline
 
-Current v0.1 is a small server-rendered book catalog.
+v0.1 is closed as the baseline for the next development stage.
 
 Done:
 - [x] Basic app skeleton: config, logging, errors, build info, Makefile.
@@ -22,60 +22,134 @@ Done:
 - [x] HTMX catalog filter spike.
 - [x] Templ and gomponents rendering spikes.
 - [x] Initial documentation audit.
+- [x] Close v0.1 as the baseline.
 
 Still intentionally rough:
 - [x] Docker/Compose basic local development setup.
-- [ ] No database migrations.
-- [ ] No PostgreSQL support.
-- [ ] No auth or user library features.
-- [ ] No search, sorting, or pagination.
-- [ ] No real cover image storage.
-
-## v0.1 Cleanup
-
-Before starting larger v0.2 work:
-- [ ] Finish documentation cleanup.
-- [ ] Decide what to do with archived AI prompt logs.
-- [x] Clarify Docker/Compose status as dev-only local setup.
-- [ ] Keep `html/template` as the primary rendering path.
-- [ ] Keep Templ/gomponents as historical spikes unless a later task changes direction.
+- [x] No database migrations.
+- [x] No PostgreSQL support.
+- [x] No auth or user library features.
+- [x] No search, sorting, or pagination.
+- [x] No real cover image storage.
 
 ## v0.2 Direction
 
-Recommended order:
+v0.2 should be implemented by dependency order, not as one large mixed feature batch.
 
-1. Quality baseline
-   - [ ] `make fmt`
-   - [ ] `make vet`
-   - [ ] optional lint command
-   - [ ] CI running tests
+Main waves:
+- Data / infrastructure: quality checks, migrations, SQLite/PostgreSQL decision, schema v0.2,
+  repositories, catalog changes.
+- User / auth: sessions, cookies, registration, login/logout, auth middleware, user-facing auth UI.
 
-2. Database foundation
-   - [ ] migration strategy
-   - [ ] SQLite configuration cleanup
-   - [ ] PostgreSQL decision and initial support if still wanted
-   - [ ] test database bootstrap helpers
+## v0.2.1 Quality & DB Foundation
 
-3. Schema v0.2
-   - [ ] books/authors many-to-many
-   - [ ] books/genres many-to-many
-   - [ ] covers table with URL metadata
-   - [ ] `library_items`
-   - [ ] `library_item_tags`
-   - [ ] updated seed data
+Goal: make schema changes safe before changing the catalog model.
 
-4. Catalog v0.2
-   - [ ] read models for multiple authors and genres
-   - [ ] update catalog page
-   - [ ] update book details page
-   - [ ] update author pages
-   - [ ] keep routes stable where possible
+- [ ] Add or confirm Make targets: `test`, `fmt`, `vet`, optional `lint`.
+- [ ] Add CI for `go test ./...`, `go vet ./...`, and lint if configured.
+- [ ] Decide how the database driver / config is selected.
+- [ ] Define migration layout for SQLite and possible PostgreSQL support.
+- [ ] Add a migration runner command or package.
+- [ ] Clarify `reset-db` and seed workflow.
+- [ ] Add minimal test DB bootstrap helpers if needed for repository tests.
 
-5. Auth foundation
-   - [ ] session strategy
-   - [ ] password hashing policy
-   - [ ] CSRF decision for forms
-   - [ ] registration, login, logout
+Definition of Done:
+- [ ] `make test` passes.
+- [ ] The project has a clear migration path for v0.2 schema work.
+- [ ] PostgreSQL is either minimally supported or explicitly deferred.
+
+## v0.2.2 Domain Model v0.2
+
+Goal: move the data model from the v0.1 simple catalog shape to the v0.2 target shape.
+
+- [ ] Add migrations for `book_authors` and `book_genres`.
+- [ ] Add `covers` with URL and metadata fields.
+- [ ] Add `library_items`.
+- [ ] Add `library_item_tags`.
+- [ ] Migrate v0.1 data from `books.author_id` and `books.genre_id`.
+- [ ] Migrate or replace old `library` data if present.
+- [ ] Update seed data for v0.2.
+- [ ] Decide and document slug policy for books, authors, and genres.
+
+Definition of Done:
+- [ ] Fresh database setup works with v0.2 seed data.
+- [ ] Existing v0.1 catalog data has a defined migration story.
+- [ ] Covers are stored as metadata/URLs only; upload/storage is deferred.
+
+## v0.2.3 Catalog v0.2
+
+Goal: restore and improve catalog reads after the schema change.
+
+- [ ] Add read models for book cards with multiple authors and genres.
+- [ ] Add a book details read model with authors, genres, and covers.
+- [ ] Add author details read model with the author's books.
+- [ ] Update catalog page.
+- [ ] Update book details page.
+- [ ] Update author details page.
+- [ ] Update the home page to use the new read model.
+- [ ] Update MPA endpoint documentation in `docs/routes.md` or a focused endpoint doc.
+
+Definition of Done:
+- [ ] Stable routes still work where possible: `/`, `/books`, `/books/{slug}`, `/authors/{slug}`.
+- [ ] Repository and handler tests cover the new catalog read shape.
+- [ ] Templates still use view/page models rather than raw database structs.
+
+## v0.2.4 HTTP Foundation
+
+Goal: prepare the HTTP layer for auth and user workflows.
+
+- [ ] Add or review a graceful shutdown.
+- [ ] Confirm a base middleware chain.
+- [ ] Add request ID if useful.
+- [ ] Confirm logging middleware behavior.
+- [ ] Add panic recovery/error page behavior if missing.
+- [ ] Add secure headers' policy.
+- [ ] Add a static / cache headers policy.
+- [ ] Decide timeout middleware scope.
+
+Definition of Done:
+- [ ] HTTP middleware order is documented or obvious in code.
+- [ ] Handler tests cover important error/status behavior.
+- [ ] No real server startup is required for Codex verification; use `httptest`.
+
+## v0.2.5 Auth Foundation
+
+Goal: create the minimal auth/session core before building forms.
+
+- [ ] Decide session strategy; prefer minimal DB-backed sessions for this project.
+- [ ] Add `sessions` table or equivalent session storage.
+- [ ] Define password hashing policy: hash only, no plaintext password storage or logging.
+- [ ] Add user repository/service foundations.
+- [ ] Add a session create/delete/load behavior.
+- [ ] Add current-user middleware.
+- [ ] Define minimal transaction rule: services own transactions for use cases touching multiple tables.
+- [ ] Decide CSRF strategy for MPA forms.
+- [ ] Define a minimal validation strategy for auth inputs.
+
+Definition of Done:
+- [ ] Auth core can create users, verify passwords, create sessions, delete sessions, and load the current user.
+- [ ] Unit tests cover success and failure paths.
+- [ ] Password and session behavior are documented enough for future maintenance.
+
+## v0.2.6 Registration/Login/Logout
+
+Goal: expose the minimal user-facing auth workflow.
+
+- [ ] Add a registration form and handler.
+- [ ] Add login form and handler.
+- [ ] Add a logout handler.
+- [ ] Add `/me` or another minimal protected route.
+- [ ] Update navigation for anonymous and logged-in states.
+- [ ] Add flash messages for login/logout/register outcomes.
+- [ ] Add validation errors for duplicate login/email and invalid credentials.
+- [ ] Add handler tests with `httptest`.
+
+Definition of Done:
+- [ ] Anonymous users can register and log in.
+- [ ] Logged-in users can log out.
+- [ ] Anonymous users are redirected from the protected route.
+- [ ] `make test` passes.
+- [ ] v0.2 release notes or task history are updated.
 
 ## Later
 
@@ -91,15 +165,14 @@ Short summary:
 
 ## v0.3
 
-- [ ] Database: Data Layer Maturity
-  - [ ] Transaction policy
-  - [ ] Test fixtures / DB bootstrap
-  - [ ] Repository contracts
-  - [ ] Admin audit basics
-- [ ] Error model, Validation strategy
-- [ ] More unit tests
-- [ ] Integration tests, try testcontainers
-- [ ] Admin panel: Basics
+- [ ] Data layer maturity beyond the minimal v0.2 rules.
+- [ ] Repository contracts.
+- [ ] Test fixtures beyond minimal v0.2 bootstrap.
+- [ ] Admin audit basics.
+- [ ] Error model and mature validation strategy.
+- [ ] More unit tests.
+- [ ] Integration tests; consider testcontainers.
+- [ ] Admin panel basics.
 
 ## v0.4
 
