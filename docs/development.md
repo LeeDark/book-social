@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Go 1.25
+- Go 1.26
 - SQLite CLI for database reset and shell commands
 
 ## Common Commands
@@ -25,22 +25,22 @@ Test:
 make test
 ```
 
-Generate Templ experiment files:
+Generate Templ files:
 
 ```bash
-make templ-generate
+make templ/generate
 ```
 
 Reset local SQLite database:
 
 ```bash
-make db-dev-reset
+make db/reset
 ```
 
 Open local SQLite database:
 
 ```bash
-make db-dev-shell
+make db/shell
 ```
 
 ## Configuration
@@ -62,13 +62,13 @@ They are not production-ready infrastructure. Do not treat this setup as deploym
 Build the image:
 
 ```bash
-docker build --progress=plain -t book-social:dev .
+make docker/build
 ```
 
 Start the app:
 
 ```bash
-docker compose up --build
+make docker/up
 ```
 
 Open:
@@ -103,8 +103,8 @@ db/sqlite/seed_sqlite.sql
 Reset and seed the Docker database from scratch:
 
 ```bash
-docker compose down -v
-docker compose up --build
+make docker/down
+make docker/up
 ```
 
 This removes the Compose volume, then lets the entrypoint initialize a fresh seeded SQLite database.

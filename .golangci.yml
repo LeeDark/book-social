@@ -1,0 +1,51 @@
+version: "2"
+
+run:
+  go: "1.26"
+  modules-download-mode: readonly
+  tests: false
+  allow-parallel-runners: false
+
+output:
+  formats:
+    tab:
+      path: stdout
+      print-linter-name: true
+  path-prefix: ""
+
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - bodyclose
+    - sqlclosecheck
+    - errcheck
+    - errorlint
+  settings:
+    staticcheck:
+      checks:
+        - all
+    depguard:
+      rules:
+        main:
+          list-mode: lax
+          allow:
+            - $gostd
+            - github.com
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+    paths:
+      - ^pkg/
+
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - ^pkg/
