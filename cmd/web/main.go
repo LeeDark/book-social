@@ -36,7 +36,9 @@ func main() {
 		logger.Error("failed to open database", "error", err)
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	renderer, err := render.NewRenderer()
 	if err != nil {

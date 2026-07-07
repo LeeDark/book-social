@@ -268,3 +268,27 @@ Validation:
 - `docker compose up --build -d` started the app.
 - `curl http://localhost:8080/` returned 200.
 - `curl http://localhost:8080/books` returned 200 with seeded catalog data.
+
+## 2026-07-07 — Makefile refactoring and documentation update
+
+Result:
+- Reorganized and standardized the `Makefile` with a `group/action` pattern.
+- Added targets: `tidy`, `audit`, `build`, `test`, `lint`, `lint/fix`, `db/reset`, `db/shell`, `docker/build`, `docker/up`, `docker/down`, `templ/generate`.
+- Consolidated redundant linting targets into a single robust `lint` target with version-aware installation.
+- Updated `docs/development.md` to reflect the new standardized commands.
+- Partially addressed v0.2.1 Quality & DB Foundation roadmap goals.
+
+Changed files:
+- `Makefile`
+- `docs/development.md`
+
+Commands run:
+- `make help`
+- `make test`
+- `make lint` (found pre-existing issues)
+- `make build`
+
+Validation:
+- All tests pass.
+- Help output is organized and clear.
+- Build successfully produces binary.

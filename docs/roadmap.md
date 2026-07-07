@@ -45,7 +45,7 @@ Main waves:
 
 Goal: make schema changes safe before changing the catalog model.
 
-- [ ] Add or confirm Make targets: `test`, `fmt`, `vet`, optional `lint`.
+- [x] Add or confirm Make targets: `test`, `fmt`, `vet`, optional `lint`.
 - [ ] Add CI for `go test ./...`, `go vet ./...`, and lint if configured.
 - [ ] Decide how the database driver / config is selected.
 - [ ] Define migration layout for SQLite and possible PostgreSQL support.

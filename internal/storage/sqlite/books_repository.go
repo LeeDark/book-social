@@ -69,7 +69,9 @@ func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.Boo
 	if err != nil {
 		return nil, fmt.Errorf("list books query: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	return scanBookRows(rows)
 }
