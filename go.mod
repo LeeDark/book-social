@@ -1,6 +1,6 @@
 module github.com/LeeDark/book-social
 
-go 1.25.0
+go 1.26.4
 
 require (
 	github.com/a-h/templ v0.3.1020
