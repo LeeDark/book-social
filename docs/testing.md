@@ -9,7 +9,13 @@ make test
 This runs:
 
 ```bash
-GOCACHE=/tmp/go-build-cache go test -count=1 ./...
+go test -v -race -count=1 ./...
+```
+
+In the Codex sandbox, use a writable Go build cache:
+
+```bash
+GOCACHE=/tmp/book-social-go-cache make test
 ```
 
 ## Current Coverage Shape

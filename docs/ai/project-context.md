@@ -8,7 +8,7 @@ Main goals:
 - build a modular monolith
 - practice MPA / SSR with templates
 - start with SQLite
-- later compare SQLite and PostgreSQL
+- compare SQLite and PostgreSQL incrementally
 - gradually add tests, auth, better catalog behavior, and selected frontend experiments
 
 Current modules:
@@ -40,6 +40,8 @@ Current rendering direction:
 - Templ and gomponents routes are experiments documented in spike notes, not the main frontend direction.
 
 Current infrastructure caveat:
-- SQLite is the active local database.
+- `APP_ENV=dev` uses SQLite and is the active local database path.
+- `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
+- PostgreSQL catalog repository methods are placeholders until the SQLite behavior is ported.
 - Docker/Compose are supported as a basic local development setup for v0.1.
 - Docker/Compose are not production-ready infrastructure.

@@ -47,11 +47,41 @@ make db/shell
 
 Current environment variables:
 
-- `APP_ENV`, default `dev`
+- `APP_ENV`, allowed values `dev`, `stage`, `prod`; default `dev`
 - `APP_HTTP_ADDR`, default `:8080`
-- `APP_DB_DSN`, default `./data/book_social_dev.db`
+- `APP_DB_DSN`, default `./data/book_social_dev.db`; use a SQLite DSN for `dev` and a PostgreSQL DSN for `stage` or `prod`
 - `APP_LOG_LEVEL`, default `debug`
 - `APP_LOG_FORMAT`, default `text`
+
+`APP_ENV=test` is not a supported runtime environment. Tests build their own configuration
+and temporary SQLite databases where needed.
+
+Set variables for one command:
+
+```bash
+APP_ENV=dev APP_DB_DSN='./data/book_social_dev.db' make run
+```
+
+Export variables for the current terminal session:
+
+```bash
+export APP_ENV=stage
+export APP_DB_DSN='postgres://user:password@localhost:5432/book_social?sslmode=disable'
+make run
+```
+
+Check what the current shell will pass to the app:
+
+```bash
+echo "$APP_ENV"
+echo "$APP_DB_DSN"
+```
+
+Runtime database selection:
+
+- `APP_ENV=dev` opens `APP_DB_DSN` with the SQLite driver.
+- `APP_ENV=stage` and `APP_ENV=prod` open `APP_DB_DSN` with the PostgreSQL driver.
+- PostgreSQL startup is currently connection-only for the catalog module; the PostgreSQL book repository methods are placeholders until they are ported from SQLite.
 
 ## Docker And Compose
 

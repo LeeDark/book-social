@@ -27,7 +27,7 @@ Done:
 Still intentionally rough:
 - [x] Docker/Compose basic local development setup.
 - [x] No database migrations.
-- [x] No PostgreSQL support.
+- [x] PostgreSQL has only basic connection/startup support; catalog repositories are not implemented yet.
 - [x] No auth or user library features.
 - [x] No search, sorting, or pagination.
 - [x] No real cover image storage.
@@ -47,7 +47,7 @@ Goal: make schema changes safe before changing the catalog model.
 
 - [x] Add or confirm Make targets: `test`, `fmt`, `vet`, optional `lint`.
 - [ ] Add CI for `go test ./...`, `go vet ./...`, and lint if configured.
-- [ ] Decide how the database driver / config is selected.
+- [x] Decide how the database driver / config is selected.
 - [ ] Define migration layout for SQLite and possible PostgreSQL support.
 - [ ] Add a migration runner command or package.
 - [ ] Clarify `reset-db` and seed workflow.
@@ -56,7 +56,7 @@ Goal: make schema changes safe before changing the catalog model.
 Definition of Done:
 - [ ] `make test` passes.
 - [ ] The project has a clear migration path for v0.2 schema work.
-- [ ] PostgreSQL is either minimally supported or explicitly deferred.
+- [x] PostgreSQL is minimally supported at startup; repository behavior remains a follow-up.
 
 ## v0.2.2 Domain Model v0.2
 

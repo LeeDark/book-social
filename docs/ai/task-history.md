@@ -292,3 +292,21 @@ Validation:
 - All tests pass.
 - Help output is organized and clear.
 - Build successfully produces binary.
+
+## 2026-07-09 — APP_ENV database selection and documentation update
+
+Result:
+- Restricted runtime `APP_ENV` values to `dev`, `stage`, and `prod`.
+- Kept `APP_ENV=dev` on SQLite using `APP_DB_DSN`.
+- Added PostgreSQL startup support for `APP_ENV=stage` and `APP_ENV=prod`.
+- Added a PostgreSQL book repository skeleton that satisfies the catalog repository interface but returns not implemented errors.
+- Documented terminal environment variable usage and clarified that `APP_ENV=test` is not a runtime mode.
+
+Decisions:
+- Keep database selection in `cmd/web/main.go` for now because startup wiring already lives there.
+- Do not copy SQLite catalog queries into PostgreSQL yet.
+- Treat PostgreSQL as connection/startup support only until the repository implementation is ported deliberately.
+
+Validation:
+- `GOCACHE=/tmp/book-social-go-cache make test` passed after the implementation change.
+- Documentation follow-up was docs-only.

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"log/slog"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/logging"
 	"github.com/LeeDark/book-social/internal/modules/books"
+	"github.com/LeeDark/book-social/internal/storage/postgresql"
 	"github.com/LeeDark/book-social/internal/storage/sqlite"
 )
 
@@ -31,7 +33,22 @@ func main() {
 		slog.String("build_date", buildinfo.BuildDate),
 	)
 
-	db, err := sqlite.Open(ctx, cfg.DB.DSN)
+	var (
+		db       *sql.DB
+		bookRepo books.BookRepository
+	)
+
+	switch cfg.Env {
+	case config.EnvDev:
+		db, err = sqlite.Open(ctx, cfg.DB.DSN)
+		bookRepo = sqlite.NewBookRepository(db)
+	case config.EnvStage, config.EnvProd:
+		db, err = postgresql.Open(ctx, cfg.DB.DSN)
+		bookRepo = postgresql.NewBookRepository(db)
+	default:
+		logger.Error("unsupported app environment", slog.String("env", cfg.Env))
+		os.Exit(1)
+	}
 	if err != nil {
 		logger.Error("failed to open database", "error", err)
 		os.Exit(1)
@@ -51,7 +68,6 @@ func main() {
 		Renderer: renderer,
 	}
 
-	bookRepo := sqlite.NewBookRepository(db)
 	catalogService := books.NewCatalogService(bookRepo)
 
 	homeHandler := app.NewHomeHandler(deps.Renderer, deps.Logger)

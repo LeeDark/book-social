@@ -16,18 +16,20 @@ Current v0.1 baseline:
 - Local SQLite schema and seed data.
 - Unit tests and small HTTP/integration-style tests.
 - HTMX catalog filter spike as progressive enhancement.
+- Environment-based database selection: SQLite for `dev`, PostgreSQL connection setup for `stage` and `prod`.
 
 Not current production direction:
 - Templ and gomponents routes are experiments only.
 - Docker and Docker Compose are supported as a basic local development setup, not production infrastructure.
-- PostgreSQL, migrations, authentication, user libraries, search, pagination, and social features are planned later.
+- PostgreSQL catalog repositories, migrations, authentication, user libraries, search, pagination, and social features are planned later.
 
 ## Tech Stack
 
-- Go 1.25
+- Go 1.26
 - chi router
 - `html/template`
 - SQLite via `modernc.org/sqlite`
+- PostgreSQL driver via `github.com/lib/pq`
 - Pico CSS plus project CSS
 - HTMX vendored locally for a small catalog filter spike
 - Templ and gomponents as rendering experiments
@@ -37,7 +39,7 @@ Not current production direction:
 Reset the local development database:
 
 ```bash
-make db-dev-reset
+make db/reset
 ```
 
 Run the web app:
@@ -50,6 +52,19 @@ Default address:
 
 ```text
 http://localhost:8080
+```
+
+Local development defaults to:
+
+```text
+APP_ENV=dev
+APP_DB_DSN=./data/book_social_dev.db
+```
+
+Set environment variables before the command when you need a different configuration:
+
+```bash
+APP_ENV=dev APP_DB_DSN='./data/book_social_dev.db' make run
 ```
 
 ## Run With Docker
@@ -111,6 +126,7 @@ cmd/web/                 application entrypoint
 internal/app/            app wiring, routes, home handler
 internal/modules/books/  books/catalog module
 internal/storage/sqlite/ SQLite repository implementation
+internal/storage/postgresql/ PostgreSQL connection and repository skeleton
 internal/http/           rendering, response helpers, middleware, view models
 internal/web/            templates, static assets, rendering experiments
 db/sqlite/               local SQLite schema, seed, reset script
@@ -139,6 +155,6 @@ Near-term cleanup:
 
 v0.2 direction:
 - Quality baseline: format/test/lint/CI.
-- Database strategy: migrations and SQLite/PostgreSQL decision.
+- Database strategy: migrations and completing PostgreSQL repository support.
 - Catalog read model updates for the v0.2 schema.
 - Authentication and user flows after the data foundation is clearer.

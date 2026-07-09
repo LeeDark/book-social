@@ -12,12 +12,12 @@ Source files:
 - SQLite is the active local development database.
 - There is no migration system yet.
 - Local reset recreates the database from schema and seed SQL.
-- PostgreSQL support is planned later.
+- PostgreSQL startup support exists for `stage` and `prod`, but the v0.1 book repository is implemented only for SQLite.
 
 Reset command:
 
 ```bash
-make db-dev-reset
+make db/reset
 ```
 
 Default local database path:
