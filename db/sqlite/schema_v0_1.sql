@@ -1,4 +1,4 @@
--- schema_v0_1_sqlite.sql
+-- schema_v0_1.sql
 -- SQLite version
 
 PRAGMA foreign_keys = ON;
@@ -106,7 +106,7 @@ CREATE TABLE library (
      library_tag_id   INTEGER NULL,
 
      -- чтобы не плодить одинаковые записи
-     CONSTRAINT uq_library_triplet UNIQUE (library_shelf_id, library_book_id, library_tag_id),
+     CONSTRAINT uq_library_shelf_book UNIQUE (library_shelf_id, library_book_id),
 
      CONSTRAINT fk_library_shelf
          FOREIGN KEY (library_shelf_id) REFERENCES shelves(id)

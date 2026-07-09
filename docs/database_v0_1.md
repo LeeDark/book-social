@@ -3,8 +3,8 @@
 This describes the active local SQLite v0.1 schema.
 
 Source files:
-- `db/sqlite/schema_v0_1_sqlite.sql`
-- `db/sqlite/seed_sqlite.sql`
+- `db/sqlite/schema_v0_1.sql`
+- `db/sqlite/seed.sql`
 - `db/sqlite/reset-dev-db.sh`
 
 ## Current Approach

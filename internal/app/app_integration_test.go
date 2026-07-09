@@ -166,7 +166,7 @@ func newIntegrationTestDB(t *testing.T, ctx context.Context) *sql.DB {
 	})
 
 	statements := []string{
-		// Keep this test schema in sync with db/sqlite/schema_v0_1_sqlite.sql
+		// Keep this test schema in sync with db/sqlite/schema_v0_1.sql
 		// until the project introduces migrations.
 		`CREATE TABLE authors (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
