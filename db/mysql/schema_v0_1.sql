@@ -35,8 +35,10 @@ CREATE TABLE authors (
      first_name  VARCHAR(100) NOT NULL,
      second_name VARCHAR(100) NULL,
      sur_name    VARCHAR(100) NULL,
+     slug VARCHAR(160) NOT NULL,
      description TEXT NULL,
      PRIMARY KEY (id),
+     UNIQUE KEY uq_authors_slug (slug),
      KEY idx_authors_name (sur_name, first_name)
 ) ENGINE=InnoDB;
 
@@ -44,21 +46,25 @@ CREATE TABLE authors (
 CREATE TABLE genres (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARCHAR(120) NOT NULL,
+    slug VARCHAR(160) NOT NULL,
     description TEXT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_genres_name (name)
+    UNIQUE KEY uq_genres_name (name),
+    UNIQUE KEY uq_genres_slug (slug)
 ) ENGINE=InnoDB;
 
 -- Books (v0.1: прямые FK на Author и Genre)
 CREATE TABLE books (
        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
        title VARCHAR(255) NOT NULL,
+       slug VARCHAR(255) NOT NULL,
        description TEXT NULL,
 
        book_author_id INT UNSIGNED NULL,
        book_genre_id  INT UNSIGNED NULL,
 
        PRIMARY KEY (id),
+       UNIQUE KEY uq_books_slug (slug),
        KEY idx_books_author (book_author_id),
        KEY idx_books_genre  (book_genre_id),
 
@@ -109,7 +115,7 @@ CREATE TABLE library (
      KEY idx_library_tag   (library_tag_id),
 
     -- чтобы не плодить одинаковые записи
-     UNIQUE KEY uq_library_triplet (library_shelf_id, library_book_id, library_tag_id),
+     UNIQUE KEY uq_library_shelf_book (library_shelf_id, library_book_id),
 
      CONSTRAINT fk_library_shelf
          FOREIGN KEY (library_shelf_id) REFERENCES shelves(id)
