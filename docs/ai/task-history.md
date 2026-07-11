@@ -398,6 +398,7 @@ Result:
 - Documented the current SQLite and PostgreSQL reset paths.
 - Added shared SQLite test DB helpers under `internal/testutil`.
 - Reused the shared SQLite catalog schema helper in app integration, SQLite repository, and PostgreSQL repository tests.
+- Added shared PostgreSQL catalog test DB helpers under `internal/testutil`.
 - Converted PostgreSQL repository tests to opt-in real PostgreSQL tests using `BOOK_SOCIAL_POSTGRES_TEST_DSN`.
 - Kept PostgreSQL repository tests skipped by default when the test DSN is not set.
 - Updated roadmap status for reset/seed workflow clarification and minimal test DB bootstrap helpers.
@@ -408,6 +409,7 @@ Changed files:
 - `docs/testing.md`
 - `docs/roadmap.md`
 - `internal/testutil/sqlite_db.go`
+- `internal/testutil/postgresql_db.go`
 - `internal/app/app_integration_test.go`
 - `internal/storage/sqlite/books_repository_test.go`
 - `internal/storage/postgresql/books_repository_test.go`

@@ -77,6 +77,6 @@ databases, apply the minimal catalog schema, and optionally seed a small determi
 fixture.
 
 This keeps tests fast and isolated without depending on the full development seed dataset.
-PostgreSQL repository tests are opt-in. Set `BOOK_SOCIAL_POSTGRES_TEST_DSN` to a disposable
-PostgreSQL database DSN to run them. Those tests drop and recreate the `public` schema before
-loading minimal fixture data.
+PostgreSQL repository tests are opt-in. Shared helpers in `internal/testutil` open the configured
+test database, drop and recreate the `public` schema, and apply the minimal PostgreSQL catalog test
+schema. Set `BOOK_SOCIAL_POSTGRES_TEST_DSN` to a disposable PostgreSQL database DSN to run them.

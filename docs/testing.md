@@ -46,9 +46,9 @@ Current repository and HTTP integration tests create disposable SQLite databases
 - HTTP integration tests use temporary SQLite files from `t.TempDir()`
 - tests insert minimal deterministic data needed by the behavior under test
 
-Shared helpers in `internal/testutil` provide the minimal SQLite catalog schema and a small catalog
-fixture. Tests can still keep scenario-specific fixture rows locally when they need more data than
-the default helper provides.
+Shared helpers in `internal/testutil` provide minimal SQLite and PostgreSQL catalog test schemas.
+The SQLite helper can also seed a small catalog fixture. Tests can still keep scenario-specific
+fixture rows locally when they need more data than the default helper provides.
 
 PostgreSQL repository tests are opt-in because they require a real PostgreSQL database. By default
 they skip unless `BOOK_SOCIAL_POSTGRES_TEST_DSN` is set.
