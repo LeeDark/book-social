@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/LeeDark/book-social/internal/modules/books"
+	"github.com/LeeDark/book-social/internal/testutil"
 )
 
 func TestBookRepositoryListBooksFiltered(t *testing.T) {
@@ -105,29 +106,9 @@ func newTestBookRepositoryDB(t *testing.T, ctx context.Context) *sql.DB {
 		_ = db.Close()
 	})
 
+	testutil.ApplySQLiteCatalogTestSchema(t, ctx, db)
+
 	statements := []string{
-		`CREATE TABLE authors (
-			id INTEGER PRIMARY KEY,
-			first_name TEXT NOT NULL,
-			second_name TEXT NOT NULL,
-			sur_name TEXT NOT NULL,
-			slug TEXT NOT NULL UNIQUE,
-			description TEXT NOT NULL
-		);`,
-		`CREATE TABLE genres (
-			id INTEGER PRIMARY KEY,
-			name TEXT NOT NULL,
-			slug TEXT NOT NULL UNIQUE,
-			description TEXT NOT NULL
-		);`,
-		`CREATE TABLE books (
-			id INTEGER PRIMARY KEY,
-			title TEXT NOT NULL,
-			slug TEXT NOT NULL UNIQUE,
-			description TEXT NOT NULL,
-			book_author_id INTEGER NOT NULL,
-			book_genre_id INTEGER NOT NULL
-		);`,
 		`INSERT INTO authors(id, first_name, second_name, sur_name, slug, description) VALUES
 			(1, 'Jane', '', 'Austen', 'jane-austen', 'English novelist.'),
 			(2, 'Mary', '', 'Shelley', 'mary-shelley', 'English writer.'),
@@ -144,7 +125,7 @@ func newTestBookRepositoryDB(t *testing.T, ctx context.Context) *sql.DB {
 
 	for _, statement := range statements {
 		if _, err := db.ExecContext(ctx, statement); err != nil {
-			t.Fatalf("exec test schema statement: %v", err)
+			t.Fatalf("exec test seed statement: %v", err)
 		}
 	}
 
