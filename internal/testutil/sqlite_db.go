@@ -13,6 +13,23 @@ func NewSQLiteCatalogTestDB(t *testing.T, ctx context.Context) *sql.DB {
 	t.Helper()
 
 	dsn := filepath.Join(t.TempDir(), "book_social_test.db")
+	db := NewSQLiteTestDB(t, ctx, dsn)
+
+	ApplySQLiteCatalogTestSchema(t, ctx, db)
+	SeedSQLiteCatalogTestData(t, ctx, db)
+
+	return db
+}
+
+func NewSQLiteMemoryTestDB(t *testing.T, ctx context.Context) *sql.DB {
+	t.Helper()
+
+	return NewSQLiteTestDB(t, ctx, ":memory:")
+}
+
+func NewSQLiteTestDB(t *testing.T, ctx context.Context, dsn string) *sql.DB {
+	t.Helper()
+
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		t.Fatalf("sql.Open() error = %v", err)
@@ -29,9 +46,6 @@ func NewSQLiteCatalogTestDB(t *testing.T, ctx context.Context) *sql.DB {
 	t.Cleanup(func() {
 		_ = db.Close()
 	})
-
-	ApplySQLiteCatalogTestSchema(t, ctx, db)
-	SeedSQLiteCatalogTestData(t, ctx, db)
 
 	return db
 }
