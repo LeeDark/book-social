@@ -25,7 +25,7 @@ Done:
 - [x] Close v0.1 as the baseline.
 
 Still intentionally rough:
-- [x] Docker/Compose basic local development setup.
+- [x] Docker/Compose local environment workflows.
 - [x] No database migrations.
 - [x] PostgreSQL has startup support and v0.1 catalog repository behavior.
 - [x] No auth or user library features.

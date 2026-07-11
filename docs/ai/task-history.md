@@ -357,3 +357,35 @@ Changed files:
 
 Validation:
 - Documentation wording scan found no remaining stale PostgreSQL placeholder language outside historical task-history entries.
+
+## 2026-07-11 — Docker Compose environment workflows
+
+Result:
+- Split Compose configuration into a common app file plus environment-specific files for dev, stage, and prod.
+- Kept `APP_ENV=dev` on SQLite with a named `/app/data` volume.
+- Added local PostgreSQL services for `APP_ENV=stage` and `APP_ENV=prod`, initialized from the existing v0.1 PostgreSQL schema and seed SQL files.
+- Updated the Docker entrypoint so SQLite initialization only runs for `APP_ENV=dev`.
+- Replaced generic Compose Make targets with explicit environment commands.
+- Updated current docs to describe the new Docker/Compose commands and reset behavior.
+
+Changed files:
+- `Makefile`
+- `compose.yaml`
+- `compose.dev.yaml`
+- `compose.stage.yaml`
+- `compose.prod.yaml`
+- `docker/entrypoint.sh`
+- `README.md`
+- `docs/development.md`
+- `docs/database.md`
+- `docs/roadmap.md`
+- `docs/ai/project-context.md`
+- `docs/ai/task-history.md`
+
+Validation:
+- `make help`
+- `docker compose -f compose.yaml -f compose.dev.yaml config`
+- `docker compose -f compose.yaml -f compose.stage.yaml config`
+- `docker compose -f compose.yaml -f compose.prod.yaml config`
+- `sh -n docker/entrypoint.sh`
+- `GOCACHE=/tmp/book-social-go-cache make test`

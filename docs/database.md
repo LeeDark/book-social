@@ -11,7 +11,7 @@ Current state:
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
 - There is no migration system yet.
 - PostgreSQL has a connection package and v0.1 book repository implementation.
-- Docker/Compose uses a dev-only SQLite database in a named volume.
+- Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
 For local database reset:
 
@@ -19,11 +19,27 @@ For local database reset:
 make db/reset
 ```
 
-For Docker database reset:
+For Docker database reset, choose the environment you want to recreate.
+
+Dev SQLite:
 
 ```bash
-make docker/down
-make docker/up
+make compose/dev/down
+make compose/dev/up
+```
+
+Stage PostgreSQL:
+
+```bash
+make compose/stage/down
+make compose/stage/up
+```
+
+Prod PostgreSQL:
+
+```bash
+make compose/prod/down
+make compose/prod/up
 ```
 
 For a PostgreSQL database, apply the v0.1 SQL files manually for now:

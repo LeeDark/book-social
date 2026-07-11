@@ -4,6 +4,7 @@
 
 - Go 1.26
 - SQLite CLI for database reset and shell commands
+- Docker and Docker Compose for container workflows
 
 ## Common Commands
 
@@ -93,9 +94,10 @@ psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 
 ## Docker And Compose
 
-Docker and Compose are supported as a basic local development setup for v0.1.
+Docker and Compose are supported as local environment workflows for v0.1.
 
-They are not production-ready infrastructure. Do not treat this setup as deployment guidance.
+They are not production-ready infrastructure. Do not treat the `prod` Compose workflow as
+deployment guidance; it only runs the app with `APP_ENV=prod` locally.
 
 Build the image:
 
@@ -103,10 +105,10 @@ Build the image:
 make docker/build
 ```
 
-Start the app:
+Start the dev app with SQLite:
 
 ```bash
-make docker/up
+make compose/dev/up
 ```
 
 Open:
@@ -115,7 +117,7 @@ Open:
 http://localhost:8080
 ```
 
-The Compose environment sets:
+The dev Compose environment sets:
 
 ```text
 APP_ENV=dev
@@ -123,9 +125,24 @@ APP_HTTP_ADDR=:8080
 APP_DB_DSN=file:/app/data/book_social_dev.db
 ```
 
+Start the stage app with PostgreSQL:
+
+```bash
+make compose/stage/up
+```
+
+Start the prod app with PostgreSQL:
+
+```bash
+make compose/prod/up
+```
+
+Both PostgreSQL Compose workflows run a local `postgres` service and set `APP_DB_DSN`
+to the matching container database.
+
 ## SQLite In Docker
 
-Compose mounts a named volume at:
+Dev Compose mounts a named volume at:
 
 ```text
 /app/data
@@ -141,11 +158,35 @@ db/sqlite/seed.sql
 Reset and seed the Docker database from scratch:
 
 ```bash
-make docker/down
-make docker/up
+make compose/dev/down
+make compose/dev/up
 ```
 
 This removes the Compose volume, then lets the entrypoint initialize a fresh seeded SQLite database.
+
+## PostgreSQL In Docker
+
+Stage and prod Compose mount named PostgreSQL data volumes. On first start, the official
+PostgreSQL image initializes the database from:
+
+```text
+db/postgresql/schema_v0_1.sql
+db/postgresql/seed.sql
+```
+
+Reset and seed the stage PostgreSQL database from scratch:
+
+```bash
+make compose/stage/down
+make compose/stage/up
+```
+
+Reset and seed the prod PostgreSQL database from scratch:
+
+```bash
+make compose/prod/down
+make compose/prod/up
+```
 
 ## Out Of Scope
 

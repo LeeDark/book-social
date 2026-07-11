@@ -21,7 +21,7 @@ Current v0.1 baseline:
 
 Not current production direction:
 - Templ and gomponents routes are experiments only.
-- Docker and Docker Compose are supported as a basic local development setup, not production infrastructure.
+- Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
 - Migrations, authentication, user libraries, search, pagination, and social features are planned later.
 
 ## Tech Stack
@@ -70,18 +70,31 @@ APP_ENV=dev APP_DB_DSN='./data/book_social_dev.db' make run
 
 ## Run With Docker
 
-Docker/Compose is a dev-only local setup for v0.1.
+Docker/Compose provides local environment workflows for v0.1.
+It is not production deployment infrastructure.
 
 Build the image:
 
 ```bash
-docker build --progress=plain -t book-social:dev .
+make docker/build
 ```
 
-Start the app:
+Start the dev app with SQLite:
 
 ```bash
-docker compose up --build
+make compose/dev/up
+```
+
+Start the stage app with PostgreSQL:
+
+```bash
+make compose/stage/up
+```
+
+Start the prod app with PostgreSQL:
+
+```bash
+make compose/prod/up
 ```
 
 Open:
@@ -90,14 +103,15 @@ Open:
 http://localhost:8080
 ```
 
-The Compose setup stores SQLite data in a named volume mounted at `/app/data`.
+The dev Compose setup stores SQLite data in a named volume mounted at `/app/data`.
 On first start, the container initializes and seeds `/app/data/book_social_dev.db` if it is missing or empty.
+The stage and prod Compose setups run a local PostgreSQL container initialized from `db/postgresql/schema_v0_1.sql` and `db/postgresql/seed.sql`.
 
 Reset the Docker SQLite database:
 
 ```bash
-docker compose down -v
-docker compose up --build
+make compose/dev/down
+make compose/dev/up
 ```
 
 Useful routes:
@@ -152,7 +166,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 Near-term cleanup:
 - Finish documentation inventory and cleanup.
 - Keep v0.1 as the stable learning baseline.
-- Keep Docker/Compose as a dev-only local setup; do not add production deployment claims yet.
+- Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:
 - Quality baseline: format/test/lint/CI.

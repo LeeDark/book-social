@@ -10,6 +10,9 @@ GOLANGCI_LINT_VERSION := 2.12.2
 
 # App settings
 DB_PATH ?= ./data/book_social_dev.db
+COMPOSE_DEV := docker compose -f compose.yaml -f compose.dev.yaml
+COMPOSE_STAGE := docker compose -f compose.yaml -f compose.stage.yaml
+COMPOSE_PROD := docker compose -f compose.yaml -f compose.prod.yaml
 
 # --- Help ---
 
@@ -96,15 +99,35 @@ db/shell:
 docker/build:
 	docker build --progress=plain -t book-social:dev .
 
-.PHONY: docker/up
-## docker/up: start the application using Docker Compose
-docker/up:
-	docker compose up --build
+.PHONY: compose/dev/up
+## compose/dev/up: start the dev Compose environment with SQLite
+compose/dev/up:
+	$(COMPOSE_DEV) up --build
 
-.PHONY: docker/down
-## docker/down: stop and remove Docker Compose containers and volumes
-docker/down:
-	docker compose down -v
+.PHONY: compose/dev/down
+## compose/dev/down: stop the dev Compose environment and remove volumes
+compose/dev/down:
+	$(COMPOSE_DEV) down -v
+
+.PHONY: compose/stage/up
+## compose/stage/up: start the stage Compose environment with PostgreSQL
+compose/stage/up:
+	$(COMPOSE_STAGE) up --build
+
+.PHONY: compose/stage/down
+## compose/stage/down: stop the stage Compose environment and remove volumes
+compose/stage/down:
+	$(COMPOSE_STAGE) down -v
+
+.PHONY: compose/prod/up
+## compose/prod/up: start the prod Compose environment with PostgreSQL
+compose/prod/up:
+	$(COMPOSE_PROD) up --build
+
+.PHONY: compose/prod/down
+## compose/prod/down: stop the prod Compose environment and remove volumes
+compose/prod/down:
+	$(COMPOSE_PROD) down -v
 
 # --- Tools ---
 
