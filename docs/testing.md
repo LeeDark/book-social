@@ -50,8 +50,18 @@ Shared helpers in `internal/testutil` provide the minimal SQLite catalog schema 
 fixture. Tests can still keep scenario-specific fixture rows locally when they need more data than
 the default helper provides.
 
-The current PostgreSQL repository tests use SQLite-backed compatibility tests. Add real PostgreSQL
-test bootstrap later only when a task explicitly needs database-specific behavior.
+PostgreSQL repository tests are opt-in because they require a real PostgreSQL database. By default
+they skip unless `BOOK_SOCIAL_POSTGRES_TEST_DSN` is set.
+
+The PostgreSQL test DSN must point at a disposable database. The repository tests drop and recreate
+the `public` schema before loading their minimal fixture data.
+
+Example:
+
+```bash
+BOOK_SOCIAL_POSTGRES_TEST_DSN='postgres://book_social:book_social@localhost:5432/book_social_test?sslmode=disable' \
+  go test ./internal/storage/postgresql
+```
 
 Do not use the full development seed dataset in ordinary unit or handler tests. Use full seed data
 only for an explicit seed smoke test or database setup check.

@@ -50,7 +50,7 @@ Goal: make schema changes safe before changing the catalog model.
 - [x] Decide how the database driver / config is selected.
 - [ ] Define migration layout for SQLite and possible PostgreSQL support.
 - [ ] Add a migration runner command or package.
-- [ ] Clarify `reset-db` and seed workflow.
+- [x] Clarify `reset-db` and seed workflow.
 - [x] Add minimal test DB bootstrap helpers if needed for repository tests.
 
 Definition of Done:

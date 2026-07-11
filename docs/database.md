@@ -77,5 +77,6 @@ databases, apply the minimal catalog schema, and optionally seed a small determi
 fixture.
 
 This keeps tests fast and isolated without depending on the full development seed dataset.
-The current PostgreSQL repository tests still use SQLite-backed compatibility tests; real
-PostgreSQL integration test bootstrap remains a future task.
+PostgreSQL repository tests are opt-in. Set `BOOK_SOCIAL_POSTGRES_TEST_DSN` to a disposable
+PostgreSQL database DSN to run them. Those tests drop and recreate the `public` schema before
+loading minimal fixture data.
