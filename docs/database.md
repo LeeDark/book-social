@@ -72,9 +72,10 @@ psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 Tests do not use the local development database file.
 
 Current SQLite repository and HTTP integration tests create temporary or in-memory SQLite
-databases inside the test process. They apply small inline schemas and minimal deterministic
-test data in the test files.
+databases inside the test process. Shared helpers in `internal/testutil` create SQLite test
+databases, apply the minimal catalog schema, and optionally seed a small deterministic catalog
+fixture.
 
-This keeps tests fast and isolated, but the schema setup is duplicated today. A future v0.2
-task should introduce minimal test DB bootstrap helpers so repository and integration tests
-can share schema and fixture setup without depending on the full development seed dataset.
+This keeps tests fast and isolated without depending on the full development seed dataset.
+The current PostgreSQL repository tests still use SQLite-backed compatibility tests; real
+PostgreSQL integration test bootstrap remains a future task.

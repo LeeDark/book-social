@@ -46,8 +46,12 @@ Current repository and HTTP integration tests create disposable SQLite databases
 - HTTP integration tests use temporary SQLite files from `t.TempDir()`
 - tests insert minimal deterministic data needed by the behavior under test
 
-For now, test schema and fixture setup lives inline in the relevant test files. This is acceptable
-for v0.1, but v0.2 schema work should add small shared bootstrap helpers before the test setup grows.
+Shared helpers in `internal/testutil` provide the minimal SQLite catalog schema and a small catalog
+fixture. Tests can still keep scenario-specific fixture rows locally when they need more data than
+the default helper provides.
+
+The current PostgreSQL repository tests use SQLite-backed compatibility tests. Add real PostgreSQL
+test bootstrap later only when a task explicitly needs database-specific behavior.
 
 Do not use the full development seed dataset in ordinary unit or handler tests. Use full seed data
 only for an explicit seed smoke test or database setup check.
