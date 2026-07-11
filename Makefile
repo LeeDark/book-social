@@ -41,7 +41,7 @@ audit: tidy lint test
 .PHONY: run
 ## run: run the application locally
 run:
-	go run ./cmd/web
+	APP_ENV=dev go run ./cmd/web
 
 # --- Build ---
 
