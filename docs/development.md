@@ -38,6 +38,9 @@ Reset local SQLite database:
 make db/reset
 ```
 
+This is destructive. It recreates the configured SQLite database from
+`db/sqlite/schema_v0_1.sql` and `db/sqlite/seed.sql`.
+
 Open local SQLite database:
 
 ```bash
@@ -91,6 +94,9 @@ Initialize a PostgreSQL database:
 psql "$APP_DB_DSN" -f db/postgresql/schema_v0_1.sql
 psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 ```
+
+For a disposable local PostgreSQL database, `db/postgresql/reset-dev-db.sh` drops and recreates
+the `public` schema, then applies the PostgreSQL schema and seed files.
 
 ## Docker And Compose
 

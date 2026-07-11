@@ -36,6 +36,22 @@ Current tests cover:
 
 There are also small integration-style HTTP tests that use `httptest` and a temporary SQLite database.
 
+## Test Databases
+
+Tests should not read or write the local development database at `./data/book_social_dev.db`.
+
+Current repository and HTTP integration tests create disposable SQLite databases:
+
+- repository tests use in-memory SQLite databases
+- HTTP integration tests use temporary SQLite files from `t.TempDir()`
+- tests insert minimal deterministic data needed by the behavior under test
+
+For now, test schema and fixture setup lives inline in the relevant test files. This is acceptable
+for v0.1, but v0.2 schema work should add small shared bootstrap helpers before the test setup grows.
+
+Do not use the full development seed dataset in ordinary unit or handler tests. Use full seed data
+only for an explicit seed smoke test or database setup check.
+
 ## Testing Guidance
 
 - Prefer table-driven tests.
