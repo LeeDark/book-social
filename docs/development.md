@@ -81,7 +81,15 @@ Runtime database selection:
 
 - `APP_ENV=dev` opens `APP_DB_DSN` with the SQLite driver.
 - `APP_ENV=stage` and `APP_ENV=prod` open `APP_DB_DSN` with the PostgreSQL driver.
-- PostgreSQL startup is currently connection-only for the catalog module; the PostgreSQL book repository methods are placeholders until they are ported from SQLite.
+- The v0.1 book repository behavior is implemented for both SQLite and PostgreSQL.
+- PostgreSQL databases must be initialized manually for now; there is no migration runner yet.
+
+Initialize a PostgreSQL database:
+
+```bash
+psql "$APP_DB_DSN" -f db/postgresql/schema_v0_1.sql
+psql "$APP_DB_DSN" -f db/postgresql/seed.sql
+```
 
 ## Docker And Compose
 

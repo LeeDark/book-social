@@ -27,7 +27,7 @@ Done:
 Still intentionally rough:
 - [x] Docker/Compose basic local development setup.
 - [x] No database migrations.
-- [x] PostgreSQL has only basic connection/startup support; catalog repositories are not implemented yet.
+- [x] PostgreSQL has startup support and v0.1 catalog repository behavior.
 - [x] No auth or user library features.
 - [x] No search, sorting, or pagination.
 - [x] No real cover image storage.
@@ -56,7 +56,7 @@ Goal: make schema changes safe before changing the catalog model.
 Definition of Done:
 - [ ] `make test` passes.
 - [ ] The project has a clear migration path for v0.2 schema work.
-- [x] PostgreSQL is minimally supported at startup; repository behavior remains a follow-up.
+- [x] PostgreSQL is minimally supported at startup and has v0.1 catalog repository behavior.
 
 ## v0.2.2 Domain Model v0.2
 

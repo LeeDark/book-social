@@ -14,7 +14,7 @@ HTTP handler
   -> service/use case
   -> repository interface
   -> SQLite repository for dev
-  -> PostgreSQL repository skeleton for stage/prod
+  -> PostgreSQL repository for stage/prod
 ```
 
 ## Layers
@@ -23,7 +23,7 @@ HTTP handler
 - `internal/app`: app wiring, middleware, routes, home/about pages.
 - `internal/modules/books`: catalog domain models, service, handler, views.
 - `internal/storage/sqlite`: SQLite implementation of repository interfaces.
-- `internal/storage/postgresql`: PostgreSQL connection and repository skeleton.
+- `internal/storage/postgresql`: PostgreSQL connection and repository implementation.
 - `internal/http`: renderer, response helpers, middleware, shared page/navigation views.
 - `internal/web`: server templates, static assets, and rendering experiments.
 
@@ -34,8 +34,8 @@ HTTP handler
 - Keep `html/template` as the primary rendering path.
 - Keep Templ and gomponents as experiments until there is a stronger reason to migrate.
 - Use SQLite for `APP_ENV=dev`.
-- Use PostgreSQL connection setup for `APP_ENV=stage` and `APP_ENV=prod`.
-- Keep PostgreSQL catalog queries as a follow-up; the current PostgreSQL book repository is only a placeholder.
+- Use PostgreSQL for `APP_ENV=stage` and `APP_ENV=prod`.
+- Keep the v0.1 catalog repository behavior aligned between SQLite and PostgreSQL.
 - Introduce migrations later, after the v0.1 baseline is documented.
 
 ## Package Boundaries

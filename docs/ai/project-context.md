@@ -42,6 +42,7 @@ Current rendering direction:
 Current infrastructure caveat:
 - `APP_ENV=dev` uses SQLite and is the active local database path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
-- PostgreSQL catalog repository methods are placeholders until the SQLite behavior is ported.
+- PostgreSQL catalog repository methods implement the current v0.1 SQLite behavior.
+- There is no migration system yet; PostgreSQL databases are initialized manually from SQL files.
 - Docker/Compose are supported as a basic local development setup for v0.1.
 - Docker/Compose are not production-ready infrastructure.

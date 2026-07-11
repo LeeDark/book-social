@@ -310,3 +310,50 @@ Decisions:
 Validation:
 - `GOCACHE=/tmp/book-social-go-cache make test` passed after the implementation change.
 - Documentation follow-up was docs-only.
+
+## 2026-07-10 — PostgreSQL BookRepository implementation
+
+Result:
+- Ported the SQLite catalog repository behavior to `internal/storage/postgresql`.
+- Implemented book listing, author/genre filtering, book detail lookup by slug, and author lookup by slug.
+- Preserved existing domain-level not-found errors for missing books and authors.
+- Added PostgreSQL repository tests covering a list, filter, detail, and not-found behavior.
+
+Changed files:
+- `internal/storage/postgresql/books_repository.go`
+- `internal/storage/postgresql/books_repository_test.go`
+- `docs/ai/task-history.md`
+
+Commands run:
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/storage/postgresql`
+- `GOCACHE=/tmp/book-social-go-cache make test`
+
+Validation:
+- Focused PostgreSQL storage tests passed.
+- Full `make test` passed.
+
+Documentation follow-up suggestions, completed in the next entry:
+- Update `docs/ai/project-context.md` to say PostgreSQL catalog repository methods are implemented for the v0.1 schema.
+- Update `README.md`, `docs/architecture.md`, `docs/database.md`, `docs/database_v0_1.md`, `docs/development.md`, and `docs/roadmap.md` to remove stale "PostgreSQL repository skeleton/placeholders" wording.
+- Consider documenting how to initialize a stage/prod PostgreSQL database with `db/postgresql/schema_v0_1.sql` and `db/postgresql/seed.sql`.
+
+## 2026-07-10 — PostgreSQL documentation sync
+
+Result:
+- Updated current documentation to reflect that PostgreSQL now has v0.1 catalog repository behavior.
+- Removed stale PostgreSQL skeleton/placeholder wording from project-facing docs.
+- Documented manual PostgreSQL initialization with `db/postgresql/schema_v0_1.sql` and `db/postgresql/seed.sql`.
+- Kept migration system and production deployment setup documented as future work.
+
+Changed files:
+- `README.md`
+- `docs/architecture.md`
+- `docs/database.md`
+- `docs/database_v0_1.md`
+- `docs/development.md`
+- `docs/roadmap.md`
+- `docs/ai/project-context.md`
+- `docs/ai/task-history.md`
+
+Validation:
+- Documentation wording scan found no remaining stale PostgreSQL placeholder language outside historical task-history entries.

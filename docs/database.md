@@ -10,7 +10,7 @@ Current state:
 - `APP_ENV=dev` uses SQLite and is the active local development path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
 - There is no migration system yet.
-- PostgreSQL has a basic connection package and book repository skeleton, but catalog queries are not implemented there yet.
+- PostgreSQL has a connection package and v0.1 book repository implementation.
 - Docker/Compose uses a dev-only SQLite database in a named volume.
 
 For local database reset:
@@ -24,4 +24,11 @@ For Docker database reset:
 ```bash
 make docker/down
 make docker/up
+```
+
+For a PostgreSQL database, apply the v0.1 SQL files manually for now:
+
+```bash
+psql "$APP_DB_DSN" -f db/postgresql/schema_v0_1.sql
+psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 ```

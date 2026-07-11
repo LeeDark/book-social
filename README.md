@@ -16,12 +16,13 @@ Current v0.1 baseline:
 - Local SQLite schema and seed data.
 - Unit tests and small HTTP/integration-style tests.
 - HTMX catalog filter spike as progressive enhancement.
-- Environment-based database selection: SQLite for `dev`, PostgreSQL connection setup for `stage` and `prod`.
+- Environment-based database selection: SQLite for `dev`, PostgreSQL for `stage` and `prod`.
+- v0.1 catalog repository behavior is implemented for both SQLite and PostgreSQL.
 
 Not current production direction:
 - Templ and gomponents routes are experiments only.
 - Docker and Docker Compose are supported as a basic local development setup, not production infrastructure.
-- PostgreSQL catalog repositories, migrations, authentication, user libraries, search, pagination, and social features are planned later.
+- Migrations, authentication, user libraries, search, pagination, and social features are planned later.
 
 ## Tech Stack
 
@@ -126,7 +127,7 @@ cmd/web/                 application entrypoint
 internal/app/            app wiring, routes, home handler
 internal/modules/books/  books/catalog module
 internal/storage/sqlite/ SQLite repository implementation
-internal/storage/postgresql/ PostgreSQL connection and repository skeleton
+internal/storage/postgresql/ PostgreSQL connection and repository implementation
 internal/http/           rendering, response helpers, middleware, view models
 internal/web/            templates, static assets, rendering experiments
 db/sqlite/               local SQLite schema, seed, reset script
@@ -155,6 +156,6 @@ Near-term cleanup:
 
 v0.2 direction:
 - Quality baseline: format/test/lint/CI.
-- Database strategy: migrations and completing PostgreSQL repository support.
+- Database strategy: migrations and schema evolution.
 - Catalog read model updates for the v0.2 schema.
 - Authentication and user flows after the data foundation is clearer.

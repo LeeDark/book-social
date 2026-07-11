@@ -1,18 +1,21 @@
 # Database v0.1
 
-This describes the active local SQLite v0.1 schema.
+This describes the active v0.1 schema used by local SQLite development and PostgreSQL stage/prod environments.
 
 Source files:
 - `db/sqlite/schema_v0_1.sql`
 - `db/sqlite/seed.sql`
 - `db/sqlite/reset-dev-db.sh`
+- `db/postgresql/schema_v0_1.sql`
+- `db/postgresql/seed.sql`
 
 ## Current Approach
 
 - SQLite is the active local development database.
+- PostgreSQL is used for `APP_ENV=stage` and `APP_ENV=prod`.
+- The v0.1 book repository behavior is implemented for both SQLite and PostgreSQL.
 - There is no migration system yet.
 - Local reset recreates the database from schema and seed SQL.
-- PostgreSQL startup support exists for `stage` and `prod`, but the v0.1 book repository is implemented only for SQLite.
 
 Reset command:
 
@@ -24,6 +27,13 @@ Default local database path:
 
 ```text
 ./data/book_social_dev.db
+```
+
+Manual PostgreSQL initialization:
+
+```bash
+psql "$APP_DB_DSN" -f db/postgresql/schema_v0_1.sql
+psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 ```
 
 ## Tables
