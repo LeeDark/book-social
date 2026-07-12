@@ -10,6 +10,9 @@ GOLANGCI_LINT_VERSION := 2.12.2
 
 # App settings
 DB_PATH ?= ./data/book_social_dev.db
+MIGRATE ?= migrate
+MIGRATIONS_DIR ?= ./db/sqlite/migrations
+MIGRATIONS_DATABASE_URL ?= sqlite://$(DB_PATH)
 COMPOSE_DEV := docker compose -f compose.yaml -f compose.dev.yaml
 COMPOSE_STAGE := docker compose -f compose.yaml -f compose.stage.yaml
 COMPOSE_PROD := docker compose -f compose.yaml -f compose.prod.yaml
@@ -86,6 +89,16 @@ lint/fix: .install-linter
 ## db/reset: reset the local development database
 db/reset:
 	DB_PATH=$(DB_PATH) ./db/sqlite/reset-dev-db.sh
+
+.PHONY: db/migrate/up
+## db/migrate/up: apply pending database migrations
+db/migrate/up:
+	$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "$(MIGRATIONS_DATABASE_URL)" up
+
+.PHONY: db/migrate/down
+## db/migrate/down: roll back the latest database migration
+db/migrate/down:
+	$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "$(MIGRATIONS_DATABASE_URL)" down 1
 
 .PHONY: db/shell
 ## db/shell: open the local development database in sqlite3

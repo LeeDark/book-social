@@ -9,7 +9,7 @@ Current state:
 
 - `APP_ENV=dev` uses SQLite and is the active local development path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
-- Baseline migration files exist, but there is no migration runner yet.
+- Baseline migration files exist and can be applied with the `golang-migrate` CLI.
 - PostgreSQL has a connection package and v0.1 book repository implementation.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
@@ -33,8 +33,48 @@ Migration files use matching sequence numbers where they represent the same doma
 The first migration pair is the v0.1 baseline schema. Future v0.2 schema changes should add
 new numbered migration pairs instead of editing the baseline migration.
 
-There is no migration runner yet, so reset and bootstrap scripts do not use these migration
-files today.
+Run pending SQLite migrations against the default local database:
+
+```bash
+make db/migrate/up
+```
+
+Roll back the latest SQLite migration:
+
+```bash
+make db/migrate/down
+```
+
+For PostgreSQL, pass the driver and DSN explicitly:
+
+```bash
+make db/migrate/up \
+  MIGRATIONS_DIR=./db/postgresql/migrations \
+  MIGRATIONS_DATABASE_URL='postgres://user:password@localhost:5432/book_social?sslmode=disable&x-multi-statement=true'
+
+make db/migrate/down \
+  MIGRATIONS_DIR=./db/postgresql/migrations \
+  MIGRATIONS_DATABASE_URL='postgres://user:password@localhost:5432/book_social?sslmode=disable&x-multi-statement=true'
+```
+
+The project uses the installed `migrate` binary from `golang-migrate`. It records applied
+versions in `schema_migrations`. The Make targets apply all pending migrations on `up` and roll
+back one migration on `down`.
+
+The installed `migrate` binary must include the database driver being used. Local SQLite
+migrations require a binary with the SQLite driver; PostgreSQL migrations require the PostgreSQL
+driver. Check the installed binary with `migrate -help`.
+
+If the SQLite driver is missing, rebuild the CLI with the project drivers:
+
+```bash
+go install -tags 'sqlite postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+```
+
+The PostgreSQL baseline migration contains multiple SQL statements, so the PostgreSQL migration
+URL should include `x-multi-statement=true`.
+
+Reset and bootstrap scripts do not use migrations yet.
 
 ## Reset And Seed
 
@@ -45,9 +85,9 @@ used for local development or disposable test data.
 seed SQL is development data, not production data. It is expected to run after a fresh schema
 or reset; it is not treated as a repeatable data migration.
 
-There is no migration runner yet. The current reset scripts apply the v0.1 schema SQL and then
-the matching seed SQL directly. Later, reset should destroy only disposable local database state,
-run all migrations up, and then apply seed data.
+The current reset scripts apply the v0.1 schema SQL and then the matching seed SQL directly.
+Later, reset should destroy only disposable local database state, run all migrations up, and then
+apply seed data.
 
 For local SQLite reset:
 

@@ -18,11 +18,12 @@ Current v0.1 baseline:
 - HTMX catalog filter spike as progressive enhancement.
 - Environment-based database selection: SQLite for `dev`, PostgreSQL for `stage` and `prod`.
 - v0.1 catalog repository behavior is implemented for both SQLite and PostgreSQL.
+- `golang-migrate` CLI wiring and v0.1 baseline migrations for SQLite and PostgreSQL.
 
 Not current production direction:
 - Templ and gomponents routes are experiments only.
 - Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
-- Migrations, authentication, user libraries, search, pagination, and social features are planned later.
+- Authentication, user libraries, search, pagination, and social features are planned later.
 
 ## Tech Stack
 
@@ -31,6 +32,7 @@ Not current production direction:
 - `html/template`
 - SQLite via `modernc.org/sqlite`
 - PostgreSQL driver via `github.com/lib/pq`
+- `golang-migrate` CLI for schema migrations, built with SQLite and PostgreSQL drivers
 - Pico CSS plus project CSS
 - HTMX vendored locally for a small catalog filter spike
 - Templ and gomponents as rendering experiments
@@ -144,7 +146,8 @@ internal/storage/sqlite/ SQLite repository implementation
 internal/storage/postgresql/ PostgreSQL connection and repository implementation
 internal/http/           rendering, response helpers, middleware, view models
 internal/web/            templates, static assets, rendering experiments
-db/sqlite/               local SQLite schema, seed, reset script
+db/sqlite/               local SQLite schema, migrations, seed, reset script
+db/postgresql/           PostgreSQL schema, migrations, seed, reset script
 docs/                    project documentation
 docs/ai/                 AI-agent context, task history, spike notes
 ```

@@ -26,7 +26,7 @@ Done:
 
 Still intentionally rough:
 - [x] Docker/Compose local environment workflows.
-- [x] No database migrations.
+- [x] No database migrations in the v0.1 runtime/reset workflow.
 - [x] PostgreSQL has startup support and v0.1 catalog repository behavior.
 - [x] No auth or user library features.
 - [x] No search, sorting, or pagination.
@@ -49,7 +49,7 @@ Goal: make schema changes safe before changing the catalog model.
 - [ ] Add CI for `go test ./...`, `go vet ./...`, and lint if configured.
 - [x] Decide how the database driver / config is selected.
 - [x] Define migration layout for SQLite and possible PostgreSQL support.
-- [ ] Add a migration runner command or package.
+- [x] Add migration commands using the `golang-migrate` CLI.
 - [x] Clarify `reset-db` and seed workflow.
 - [x] Add minimal test DB bootstrap helpers if needed for repository tests.
 

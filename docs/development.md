@@ -4,6 +4,7 @@
 
 - Go 1.26
 - SQLite CLI for database reset and shell commands
+- `golang-migrate` CLI for database migrations, built with SQLite and PostgreSQL drivers
 - Docker and Docker Compose for container workflows
 
 ## Common Commands
@@ -47,6 +48,32 @@ Open local SQLite database:
 make db/shell
 ```
 
+Apply pending SQLite migrations:
+
+```bash
+make db/migrate/up
+```
+
+Roll back the latest SQLite migration:
+
+```bash
+make db/migrate/down
+```
+
+The installed `migrate` binary must include the SQLite database driver for local SQLite
+migrations. Check supported drivers with:
+
+```bash
+migrate -help
+```
+
+If `sqlite` is missing from the `Database drivers` list, rebuild the CLI with the project
+drivers:
+
+```bash
+go install -tags 'sqlite postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+```
+
 ## Configuration
 
 Current environment variables:
@@ -86,7 +113,7 @@ Runtime database selection:
 - `APP_ENV=dev` opens `APP_DB_DSN` with the SQLite driver.
 - `APP_ENV=stage` and `APP_ENV=prod` open `APP_DB_DSN` with the PostgreSQL driver.
 - The v0.1 book repository behavior is implemented for both SQLite and PostgreSQL.
-- PostgreSQL databases must be initialized manually for now; there is no migration runner yet.
+- PostgreSQL databases can be initialized from schema SQL or with the `golang-migrate` CLI.
 
 Initialize a PostgreSQL database:
 
@@ -97,6 +124,22 @@ psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 
 For a disposable local PostgreSQL database, `db/postgresql/reset-dev-db.sh` drops and recreates
 the `public` schema, then applies the PostgreSQL schema and seed files.
+
+Apply PostgreSQL migrations manually:
+
+```bash
+make db/migrate/up \
+  MIGRATIONS_DIR=./db/postgresql/migrations \
+  MIGRATIONS_DATABASE_URL='postgres://user:password@localhost:5432/book_social?sslmode=disable&x-multi-statement=true'
+```
+
+Rollback the latest PostgreSQL migration manually:
+
+```bash
+make db/migrate/down \
+  MIGRATIONS_DIR=./db/postgresql/migrations \
+  MIGRATIONS_DATABASE_URL='postgres://user:password@localhost:5432/book_social?sslmode=disable&x-multi-statement=true'
+```
 
 ## Docker And Compose
 
