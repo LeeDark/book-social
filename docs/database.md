@@ -9,9 +9,32 @@ Current state:
 
 - `APP_ENV=dev` uses SQLite and is the active local development path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
-- There is no migration system yet.
+- Baseline migration files exist, but there is no migration runner yet.
 - PostgreSQL has a connection package and v0.1 book repository implementation.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
+
+## Migration Layout
+
+SQLite and PostgreSQL migrations live in separate folders because the project keeps
+dialect-specific SQL explicit:
+
+```text
+db/sqlite/migrations/
+db/postgresql/migrations/
+```
+
+Migration files use matching sequence numbers where they represent the same domain change:
+
+```text
+000001_create_v0_1_schema.up.sql
+000001_create_v0_1_schema.down.sql
+```
+
+The first migration pair is the v0.1 baseline schema. Future v0.2 schema changes should add
+new numbered migration pairs instead of editing the baseline migration.
+
+There is no migration runner yet, so reset and bootstrap scripts do not use these migration
+files today.
 
 ## Reset And Seed
 
@@ -23,7 +46,8 @@ seed SQL is development data, not production data. It is expected to run after a
 or reset; it is not treated as a repeatable data migration.
 
 There is no migration runner yet. The current reset scripts apply the v0.1 schema SQL and then
-the matching seed SQL directly.
+the matching seed SQL directly. Later, reset should destroy only disposable local database state,
+run all migrations up, and then apply seed data.
 
 For local SQLite reset:
 

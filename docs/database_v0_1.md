@@ -6,15 +6,19 @@ Source files:
 - `db/sqlite/schema_v0_1.sql`
 - `db/sqlite/seed.sql`
 - `db/sqlite/reset-dev-db.sh`
+- `db/sqlite/migrations/000001_create_v0_1_schema.up.sql`
+- `db/sqlite/migrations/000001_create_v0_1_schema.down.sql`
 - `db/postgresql/schema_v0_1.sql`
 - `db/postgresql/seed.sql`
+- `db/postgresql/migrations/000001_create_v0_1_schema.up.sql`
+- `db/postgresql/migrations/000001_create_v0_1_schema.down.sql`
 
 ## Current Approach
 
 - SQLite is the active local development database.
 - PostgreSQL is used for `APP_ENV=stage` and `APP_ENV=prod`.
 - The v0.1 book repository behavior is implemented for both SQLite and PostgreSQL.
-- There is no migration system yet.
+- The v0.1 baseline migration files exist, but there is no migration runner yet.
 - Local reset recreates the database from schema and seed SQL.
 
 Reset command:
