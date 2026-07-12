@@ -46,7 +46,7 @@ Main waves:
 Goal: make schema changes safe before changing the catalog model.
 
 - [x] Add or confirm Make targets: `test`, `fmt`, `vet`, optional `lint`.
-- [ ] Add CI for `go test ./...`, `go vet ./...`, and lint if configured.
+- [x] Add CI for `go test ./...`, `go vet ./...`, and lint if configured.
 - [x] Decide how the database driver / config is selected.
 - [x] Define migration layout for SQLite and possible PostgreSQL support.
 - [x] Add migration commands using the `golang-migrate` CLI.
@@ -54,9 +54,17 @@ Goal: make schema changes safe before changing the catalog model.
 - [x] Add minimal test DB bootstrap helpers if needed for repository tests.
 
 Definition of Done:
-- [ ] `make test` passes.
-- [ ] The project has a clear migration path for v0.2 schema work.
+- [x] `make test` passes.
+- [x] The project has a clear migration path for v0.2 schema work.
 - [x] PostgreSQL is minimally supported at startup and has v0.1 catalog repository behavior.
+
+Related docs:
+- `README.md`
+- `docs/development.md`
+- `docs/database.md`
+- `docs/database_v0_1.md`
+- `docs/testing.md`
+- `docs/ai/project-context.md`
 
 ## v0.2.2 Domain Model v0.2
 

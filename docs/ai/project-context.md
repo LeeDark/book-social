@@ -43,6 +43,8 @@ Current infrastructure caveat:
 - `APP_ENV=dev` uses SQLite and is the active local database path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
 - PostgreSQL catalog repository methods implement the current v0.1 SQLite behavior.
-- There is no migration system yet; PostgreSQL databases are initialized manually from SQL files.
+- Baseline SQLite and PostgreSQL migrations exist under `db/*/migrations`.
+- Migration commands use the installed `golang-migrate` CLI through `make db/migrate/up` and `make db/migrate/down`.
+- Reset and Docker bootstrap still use schema plus seed SQL directly until the reset workflow is migrated.
 - Docker/Compose are supported as local environment workflows for SQLite dev and PostgreSQL stage/prod.
 - Docker/Compose are not production-ready infrastructure.

@@ -420,3 +420,42 @@ Validation:
 - `GOCACHE=/tmp/book-social-go-cache go test ./internal/storage/sqlite ./internal/testutil`
 - `GOCACHE=/tmp/book-social-go-cache go test ./internal/storage/postgresql ./internal/testutil`
 - `GOCACHE=/tmp/book-social-go-cache make test`
+
+## 2026-07-12 — v0.2.1 migration foundation closure
+
+Result:
+- Added baseline migration layout for SQLite and PostgreSQL under `db/*/migrations`.
+- Added v0.1 baseline migration pairs for both database dialects.
+- Wired `make db/migrate/up` and `make db/migrate/down` to the installed `golang-migrate` CLI.
+- Rebuilt the local `migrate` CLI with `sqlite` and `postgres` build tags for verification.
+- Documented that reset/bootstrap still use schema plus seed SQL directly until a later reset migration task.
+- Confirmed existing CI covers `go test ./...`, `go vet ./...`, and golangci-lint.
+- Updated depguard allowlist for the PostgreSQL driver used by current storage code.
+- Marked v0.2.1 Quality & DB Foundation roadmap Definition of Done complete.
+- Documented how CI, Docker Compose, and migrations relate today.
+
+Changed files:
+- `.golangci.yml`
+- `Makefile`
+- `README.md`
+- `docs/database.md`
+- `docs/database_v0_1.md`
+- `docs/development.md`
+- `docs/roadmap.md`
+- `docs/ai/project-context.md`
+- `docs/ai/task-history.md`
+- `db/sqlite/migrations/000001_create_v0_1_schema.up.sql`
+- `db/sqlite/migrations/000001_create_v0_1_schema.down.sql`
+- `db/postgresql/migrations/000001_create_v0_1_schema.up.sql`
+- `db/postgresql/migrations/000001_create_v0_1_schema.down.sql`
+
+Validation:
+- `migrate -help` listed `sqlite`, `postgres`, and `postgresql` database drivers after rebuild.
+- `make db/migrate/up MIGRATIONS_DATABASE_URL=sqlite:///tmp/book-social-migrate-cli-smoke-20260712.db`
+- `make db/migrate/down MIGRATIONS_DATABASE_URL=sqlite:///tmp/book-social-migrate-cli-smoke-20260712.db`
+- `GOCACHE=/tmp/book-social-go-cache make test`
+
+Decision:
+- Use `golang-migrate` CLI instead of a custom in-project migration runner.
+- Keep Docker Compose dev/stage/prod bootstrap on schema plus seed SQL for now.
+- Treat migration smoke tests as local/manual until CI grows database service jobs.

@@ -76,6 +76,9 @@ URL should include `x-multi-statement=true`.
 
 Reset and bootstrap scripts do not use migrations yet.
 
+CI runs Go tests, `go vet`, and lint. It does not run database migrations or Docker Compose
+workflows yet. Migration smoke checks should be run locally against disposable databases.
+
 ## Reset And Seed
 
 `reset` means recreating a local database from scratch. It is destructive and should only be

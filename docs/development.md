@@ -189,6 +189,27 @@ make compose/prod/up
 Both PostgreSQL Compose workflows run a local `postgres` service and set `APP_DB_DSN`
 to the matching container database.
 
+## CI, Compose, And Migrations
+
+CI currently runs code quality checks only:
+
+```text
+go test ./...
+go vet ./...
+golangci-lint
+```
+
+CI does not start Docker Compose services and does not run migration smoke tests yet.
+
+For local Docker Compose work, use reset/bootstrap for disposable seeded environments:
+
+- `make compose/dev/up` starts SQLite dev and initializes the database from `db/sqlite/schema_v0_1.sql` plus `db/sqlite/seed.sql` when the volume is empty.
+- `make compose/stage/up` starts PostgreSQL stage and initializes from `db/postgresql/schema_v0_1.sql` plus `db/postgresql/seed.sql` when the volume is empty.
+- `make compose/prod/up` does the same for a local prod-like PostgreSQL environment.
+
+Use migration commands separately when you want to test migration files against a disposable
+database. The migration workflow and the Docker reset/bootstrap workflow are not unified yet.
+
 ## SQLite In Docker
 
 Dev Compose mounts a named volume at:
