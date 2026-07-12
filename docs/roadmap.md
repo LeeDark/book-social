@@ -70,18 +70,33 @@ Related docs:
 
 Goal: move the data model from the v0.1 simple catalog shape to the v0.2 target shape.
 
+Preparation:
+- [ ] Add a SQLite migration smoke target for a disposable database.
+- [ ] Decide whether SQLite migration smoke should run in CI now or remain local/manual.
+- [ ] Decide when to add a PostgreSQL service job to CI for repository and migration checks.
+- [ ] Redesign disposable reset flow to run migrations up, then apply seed data.
+- [ ] Keep seed data as development/sample data, separate from schema migrations.
+- [ ] Decide when Docker/Compose bootstrap should switch from schema SQL to migrations plus seed.
+- [ ] Plan the v0.2 migration sequence before repository changes.
+
+Schema:
 - [ ] Add migrations for `book_authors` and `book_genres`.
-- [ ] Add `covers` with URL and metadata fields.
+- [ ] Add `covers` with URL and metadata fields, including `UNIQUE(book_id, variant)`.
 - [ ] Add `library_items`.
 - [ ] Add `library_item_tags`.
-- [ ] Migrate v0.1 data from `books.author_id` and `books.genre_id`.
-- [ ] Migrate or replace old `library` data if present.
+- [ ] Migrate v0.1 data from `books.book_author_id` and `books.book_genre_id`.
+- [ ] Migrate `library` rows into `library_items`.
+- [ ] Migrate `library.library_tag_id` into `library_item_tags`.
+- [ ] Remove old `books.book_author_id`, `books.book_genre_id`, and `library` after data is migrated.
 - [ ] Update seed data for v0.2.
 - [ ] Decide and document slug policy for books, authors, and genres.
 
 Definition of Done:
 - [ ] Fresh database setup works with v0.2 seed data.
 - [ ] Existing v0.1 catalog data has a defined migration story.
+- [ ] SQLite migration up/down smoke passes.
+- [ ] Seed smoke passes after migrations.
+- [ ] SQLite test DB can be created from the v0.2 schema.
 - [ ] Covers are stored as metadata/URLs only; upload/storage is deferred.
 
 ## v0.2.3 Catalog v0.2
