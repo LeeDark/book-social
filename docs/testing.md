@@ -9,7 +9,13 @@ make test
 This runs:
 
 ```bash
-GOCACHE=/tmp/go-build-cache go test -count=1 ./...
+go test -v -race -count=1 ./...
+```
+
+In the Codex sandbox, use a writable Go build cache:
+
+```bash
+GOCACHE=/tmp/book-social-go-cache make test
 ```
 
 ## Current Coverage Shape
@@ -29,6 +35,36 @@ Current tests cover:
 - logging middleware
 
 There are also small integration-style HTTP tests that use `httptest` and a temporary SQLite database.
+
+## Test Databases
+
+Tests should not read or write the local development database at `./data/book_social_dev.db`.
+
+Current repository and HTTP integration tests create disposable SQLite databases:
+
+- repository tests use in-memory SQLite databases
+- HTTP integration tests use temporary SQLite files from `t.TempDir()`
+- tests insert minimal deterministic data needed by the behavior under test
+
+Shared helpers in `internal/testutil` provide minimal SQLite and PostgreSQL catalog test schemas.
+The SQLite helper can also seed a small catalog fixture. Tests can still keep scenario-specific
+fixture rows locally when they need more data than the default helper provides.
+
+PostgreSQL repository tests are opt-in because they require a real PostgreSQL database. By default
+they skip unless `BOOK_SOCIAL_POSTGRES_TEST_DSN` is set.
+
+The PostgreSQL test DSN must point at a disposable database. The repository tests drop and recreate
+the `public` schema before loading their minimal fixture data.
+
+Example:
+
+```bash
+BOOK_SOCIAL_POSTGRES_TEST_DSN='postgres://book_social:book_social@localhost:5432/book_social_test?sslmode=disable' \
+  go test ./internal/storage/postgresql
+```
+
+Do not use the full development seed dataset in ordinary unit or handler tests. Use full seed data
+only for an explicit seed smoke test or database setup check.
 
 ## Testing Guidance
 

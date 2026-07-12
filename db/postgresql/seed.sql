@@ -1,7 +1,5 @@
--- seed_sqlite.sql
--- SQLite version
-
-PRAGMA foreign_keys = ON;
+-- seed.sql
+-- PostgreSQL version
 
 -- References
 -- Genres
@@ -523,3 +521,8 @@ VALUES ('Murder on the Orient Express',
         'the-children-of-captain-grant',
         'A search party travels across continents to rescue a missing sea captain. The novel combines geography, peril, and discovery in a style suited to young adventure readers.',
         5, 23);
+
+-- Keep identity sequences ahead of explicit seed IDs.
+SELECT setval(pg_get_serial_sequence('genres', 'id'), (SELECT MAX(id) FROM genres));
+SELECT setval(pg_get_serial_sequence('authors', 'id'), (SELECT MAX(id) FROM authors));
+SELECT setval(pg_get_serial_sequence('books', 'id'), (SELECT MAX(id) FROM books));

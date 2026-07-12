@@ -1,0 +1,11 @@
+services:
+  app:
+    container_name: booksocial-dev
+    environment:
+      APP_ENV: dev
+      APP_DB_DSN: file:/app/data/book_social_dev.db
+    volumes:
+      - sqlite-data:/app/data
+
+volumes:
+  sqlite-data:

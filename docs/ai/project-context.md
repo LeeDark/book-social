@@ -8,7 +8,7 @@ Main goals:
 - build a modular monolith
 - practice MPA / SSR with templates
 - start with SQLite
-- later compare SQLite and PostgreSQL
+- compare SQLite and PostgreSQL incrementally
 - gradually add tests, auth, better catalog behavior, and selected frontend experiments
 
 Current modules:
@@ -40,6 +40,11 @@ Current rendering direction:
 - Templ and gomponents routes are experiments documented in spike notes, not the main frontend direction.
 
 Current infrastructure caveat:
-- SQLite is the active local database.
-- Docker/Compose are supported as a basic local development setup for v0.1.
+- `APP_ENV=dev` uses SQLite and is the active local database path.
+- `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
+- PostgreSQL catalog repository methods implement the current v0.1 SQLite behavior.
+- Baseline SQLite and PostgreSQL migrations exist under `db/*/migrations`.
+- Migration commands use the installed `golang-migrate` CLI through `make db/migrate/up` and `make db/migrate/down`.
+- Reset and Docker bootstrap still use schema plus seed SQL directly until the reset workflow is migrated.
+- Docker/Compose are supported as local environment workflows for SQLite dev and PostgreSQL stage/prod.
 - Docker/Compose are not production-ready infrastructure.

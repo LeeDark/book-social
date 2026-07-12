@@ -1,0 +1,29 @@
+services:
+  app:
+    container_name: booksocial-prod
+    environment:
+      APP_ENV: prod
+      APP_DB_DSN: postgres://book_social:book_social@postgres:5432/book_social_prod?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: booksocial-prod-postgres
+    environment:
+      POSTGRES_DB: book_social_prod
+      POSTGRES_USER: book_social
+      POSTGRES_PASSWORD: book_social
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U book_social -d book_social_prod"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres-prod-data:/var/lib/postgresql
+      - ./db/postgresql/schema_v0_1.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./db/postgresql/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+
+volumes:
+  postgres-prod-data:

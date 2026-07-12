@@ -1,29 +1,53 @@
 # Database v0.1
 
-This describes the active local SQLite v0.1 schema.
+This describes the active v0.1 schema used by local SQLite development and PostgreSQL stage/prod environments.
 
 Source files:
-- `db/sqlite/schema_v0_1_sqlite.sql`
-- `db/sqlite/seed_sqlite.sql`
+- `db/sqlite/schema_v0_1.sql`
+- `db/sqlite/seed.sql`
 - `db/sqlite/reset-dev-db.sh`
+- `db/sqlite/migrations/000001_create_v0_1_schema.up.sql`
+- `db/sqlite/migrations/000001_create_v0_1_schema.down.sql`
+- `db/postgresql/schema_v0_1.sql`
+- `db/postgresql/seed.sql`
+- `db/postgresql/migrations/000001_create_v0_1_schema.up.sql`
+- `db/postgresql/migrations/000001_create_v0_1_schema.down.sql`
 
 ## Current Approach
 
 - SQLite is the active local development database.
-- There is no migration system yet.
+- PostgreSQL is used for `APP_ENV=stage` and `APP_ENV=prod`.
+- The v0.1 book repository behavior is implemented for both SQLite and PostgreSQL.
+- The v0.1 baseline migration files can be applied with the `golang-migrate` CLI.
 - Local reset recreates the database from schema and seed SQL.
-- PostgreSQL support is planned later.
 
 Reset command:
 
 ```bash
-make db-dev-reset
+make db/reset
 ```
 
 Default local database path:
 
 ```text
 ./data/book_social_dev.db
+```
+
+Manual PostgreSQL initialization:
+
+```bash
+psql "$APP_DB_DSN" -f db/postgresql/schema_v0_1.sql
+psql "$APP_DB_DSN" -f db/postgresql/seed.sql
+```
+
+Manual migration commands:
+
+```bash
+make db/migrate/up
+make db/migrate/down
+make db/migrate/up \
+  MIGRATIONS_DIR=./db/postgresql/migrations \
+  MIGRATIONS_DATABASE_URL='postgres://user:password@localhost:5432/book_social?sslmode=disable&x-multi-statement=true'
 ```
 
 ## Tables

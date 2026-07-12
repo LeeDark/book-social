@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS booknet
+CREATE DATABASE IF NOT EXISTS book_social
     DEFAULT CHARACTER SET utf8mb4
     DEFAULT COLLATE utf8mb4_0900_ai_ci;
 
-USE booknet;
+USE book_social;

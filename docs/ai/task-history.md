@@ -292,3 +292,170 @@ Validation:
 - All tests pass.
 - Help output is organized and clear.
 - Build successfully produces binary.
+
+## 2026-07-09 — APP_ENV database selection and documentation update
+
+Result:
+- Restricted runtime `APP_ENV` values to `dev`, `stage`, and `prod`.
+- Kept `APP_ENV=dev` on SQLite using `APP_DB_DSN`.
+- Added PostgreSQL startup support for `APP_ENV=stage` and `APP_ENV=prod`.
+- Added a PostgreSQL book repository skeleton that satisfies the catalog repository interface but returns not implemented errors.
+- Documented terminal environment variable usage and clarified that `APP_ENV=test` is not a runtime mode.
+
+Decisions:
+- Keep database selection in `cmd/web/main.go` for now because startup wiring already lives there.
+- Do not copy SQLite catalog queries into PostgreSQL yet.
+- Treat PostgreSQL as connection/startup support only until the repository implementation is ported deliberately.
+
+Validation:
+- `GOCACHE=/tmp/book-social-go-cache make test` passed after the implementation change.
+- Documentation follow-up was docs-only.
+
+## 2026-07-10 — PostgreSQL BookRepository implementation
+
+Result:
+- Ported the SQLite catalog repository behavior to `internal/storage/postgresql`.
+- Implemented book listing, author/genre filtering, book detail lookup by slug, and author lookup by slug.
+- Preserved existing domain-level not-found errors for missing books and authors.
+- Added PostgreSQL repository tests covering a list, filter, detail, and not-found behavior.
+
+Changed files:
+- `internal/storage/postgresql/books_repository.go`
+- `internal/storage/postgresql/books_repository_test.go`
+- `docs/ai/task-history.md`
+
+Commands run:
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/storage/postgresql`
+- `GOCACHE=/tmp/book-social-go-cache make test`
+
+Validation:
+- Focused PostgreSQL storage tests passed.
+- Full `make test` passed.
+
+Documentation follow-up suggestions, completed in the next entry:
+- Update `docs/ai/project-context.md` to say PostgreSQL catalog repository methods are implemented for the v0.1 schema.
+- Update `README.md`, `docs/architecture.md`, `docs/database.md`, `docs/database_v0_1.md`, `docs/development.md`, and `docs/roadmap.md` to remove stale "PostgreSQL repository skeleton/placeholders" wording.
+- Consider documenting how to initialize a stage/prod PostgreSQL database with `db/postgresql/schema_v0_1.sql` and `db/postgresql/seed.sql`.
+
+## 2026-07-10 — PostgreSQL documentation sync
+
+Result:
+- Updated current documentation to reflect that PostgreSQL now has v0.1 catalog repository behavior.
+- Removed stale PostgreSQL skeleton/placeholder wording from project-facing docs.
+- Documented manual PostgreSQL initialization with `db/postgresql/schema_v0_1.sql` and `db/postgresql/seed.sql`.
+- Kept migration system and production deployment setup documented as future work.
+
+Changed files:
+- `README.md`
+- `docs/architecture.md`
+- `docs/database.md`
+- `docs/database_v0_1.md`
+- `docs/development.md`
+- `docs/roadmap.md`
+- `docs/ai/project-context.md`
+- `docs/ai/task-history.md`
+
+Validation:
+- Documentation wording scan found no remaining stale PostgreSQL placeholder language outside historical task-history entries.
+
+## 2026-07-11 — Docker Compose environment workflows
+
+Result:
+- Split Compose configuration into a common app file plus environment-specific files for dev, stage, and prod.
+- Kept `APP_ENV=dev` on SQLite with a named `/app/data` volume.
+- Added local PostgreSQL services for `APP_ENV=stage` and `APP_ENV=prod`, initialized from the existing v0.1 PostgreSQL schema and seed SQL files.
+- Updated the Docker entrypoint so SQLite initialization only runs for `APP_ENV=dev`.
+- Replaced generic Compose Make targets with explicit environment commands.
+- Updated current docs to describe the new Docker/Compose commands and reset behavior.
+
+Changed files:
+- `Makefile`
+- `compose.yaml`
+- `compose.dev.yaml`
+- `compose.stage.yaml`
+- `compose.prod.yaml`
+- `docker/entrypoint.sh`
+- `README.md`
+- `docs/development.md`
+- `docs/database.md`
+- `docs/roadmap.md`
+- `docs/ai/project-context.md`
+- `docs/ai/task-history.md`
+
+Validation:
+- `make help`
+- `docker compose -f compose.yaml -f compose.dev.yaml config`
+- `docker compose -f compose.yaml -f compose.stage.yaml config`
+- `docker compose -f compose.yaml -f compose.prod.yaml config`
+- `sh -n docker/entrypoint.sh`
+- `GOCACHE=/tmp/book-social-go-cache make test`
+
+## 2026-07-11 — Reset, seed, and test DB workflow clarification
+
+Result:
+- Documented that local reset is destructive and recreates the database from schema plus seed SQL.
+- Clarified that seed data is deterministic development data, not production data or a repeatable migration.
+- Documented the current SQLite and PostgreSQL reset paths.
+- Added shared SQLite test DB helpers under `internal/testutil`.
+- Reused the shared SQLite catalog schema helper in app integration, SQLite repository, and PostgreSQL repository tests.
+- Added shared PostgreSQL catalog test DB helpers under `internal/testutil`.
+- Converted PostgreSQL repository tests to opt-in real PostgreSQL tests using `BOOK_SOCIAL_POSTGRES_TEST_DSN`.
+- Kept PostgreSQL repository tests skipped by default when the test DSN is not set.
+- Updated roadmap status for reset/seed workflow clarification and minimal test DB bootstrap helpers.
+
+Changed files:
+- `docs/database.md`
+- `docs/development.md`
+- `docs/testing.md`
+- `docs/roadmap.md`
+- `internal/testutil/sqlite_db.go`
+- `internal/testutil/postgresql_db.go`
+- `internal/app/app_integration_test.go`
+- `internal/storage/sqlite/books_repository_test.go`
+- `internal/storage/postgresql/books_repository_test.go`
+- `docs/ai/task-history.md`
+
+Validation:
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/app ./internal/testutil`
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/storage/sqlite ./internal/testutil`
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/storage/postgresql ./internal/testutil`
+- `GOCACHE=/tmp/book-social-go-cache make test`
+
+## 2026-07-12 — v0.2.1 migration foundation closure
+
+Result:
+- Added baseline migration layout for SQLite and PostgreSQL under `db/*/migrations`.
+- Added v0.1 baseline migration pairs for both database dialects.
+- Wired `make db/migrate/up` and `make db/migrate/down` to the installed `golang-migrate` CLI.
+- Rebuilt the local `migrate` CLI with `sqlite` and `postgres` build tags for verification.
+- Documented that reset/bootstrap still use schema plus seed SQL directly until a later reset migration task.
+- Confirmed existing CI covers `go test ./...`, `go vet ./...`, and golangci-lint.
+- Updated depguard allowlist for the PostgreSQL driver used by current storage code.
+- Marked v0.2.1 Quality & DB Foundation roadmap Definition of Done complete.
+- Documented how CI, Docker Compose, and migrations relate today.
+
+Changed files:
+- `.golangci.yml`
+- `Makefile`
+- `README.md`
+- `docs/database.md`
+- `docs/database_v0_1.md`
+- `docs/development.md`
+- `docs/roadmap.md`
+- `docs/ai/project-context.md`
+- `docs/ai/task-history.md`
+- `db/sqlite/migrations/000001_create_v0_1_schema.up.sql`
+- `db/sqlite/migrations/000001_create_v0_1_schema.down.sql`
+- `db/postgresql/migrations/000001_create_v0_1_schema.up.sql`
+- `db/postgresql/migrations/000001_create_v0_1_schema.down.sql`
+
+Validation:
+- `migrate -help` listed `sqlite`, `postgres`, and `postgresql` database drivers after rebuild.
+- `make db/migrate/up MIGRATIONS_DATABASE_URL=sqlite:///tmp/book-social-migrate-cli-smoke-20260712.db`
+- `make db/migrate/down MIGRATIONS_DATABASE_URL=sqlite:///tmp/book-social-migrate-cli-smoke-20260712.db`
+- `GOCACHE=/tmp/book-social-go-cache make test`
+
+Decision:
+- Use `golang-migrate` CLI instead of a custom in-project migration runner.
+- Keep Docker Compose dev/stage/prod bootstrap on schema plus seed SQL for now.
+- Treat migration smoke tests as local/manual until CI grows database service jobs.

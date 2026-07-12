@@ -25,9 +25,9 @@ Done:
 - [x] Close v0.1 as the baseline.
 
 Still intentionally rough:
-- [x] Docker/Compose basic local development setup.
-- [x] No database migrations.
-- [x] No PostgreSQL support.
+- [x] Docker/Compose local environment workflows.
+- [x] No database migrations in the v0.1 runtime/reset workflow.
+- [x] PostgreSQL has startup support and v0.1 catalog repository behavior.
 - [x] No auth or user library features.
 - [x] No search, sorting, or pagination.
 - [x] No real cover image storage.
@@ -46,34 +46,57 @@ Main waves:
 Goal: make schema changes safe before changing the catalog model.
 
 - [x] Add or confirm Make targets: `test`, `fmt`, `vet`, optional `lint`.
-- [ ] Add CI for `go test ./...`, `go vet ./...`, and lint if configured.
-- [ ] Decide how the database driver / config is selected.
-- [ ] Define migration layout for SQLite and possible PostgreSQL support.
-- [ ] Add a migration runner command or package.
-- [ ] Clarify `reset-db` and seed workflow.
-- [ ] Add minimal test DB bootstrap helpers if needed for repository tests.
+- [x] Add CI for `go test ./...`, `go vet ./...`, and lint if configured.
+- [x] Decide how the database driver / config is selected.
+- [x] Define migration layout for SQLite and possible PostgreSQL support.
+- [x] Add migration commands using the `golang-migrate` CLI.
+- [x] Clarify `reset-db` and seed workflow.
+- [x] Add minimal test DB bootstrap helpers if needed for repository tests.
 
 Definition of Done:
-- [ ] `make test` passes.
-- [ ] The project has a clear migration path for v0.2 schema work.
-- [ ] PostgreSQL is either minimally supported or explicitly deferred.
+- [x] `make test` passes.
+- [x] The project has a clear migration path for v0.2 schema work.
+- [x] PostgreSQL is minimally supported at startup and has v0.1 catalog repository behavior.
+
+Related docs:
+- `README.md`
+- `docs/development.md`
+- `docs/database.md`
+- `docs/database_v0_1.md`
+- `docs/testing.md`
+- `docs/ai/project-context.md`
 
 ## v0.2.2 Domain Model v0.2
 
 Goal: move the data model from the v0.1 simple catalog shape to the v0.2 target shape.
 
+Preparation:
+- [ ] Add a SQLite migration smoke target for a disposable database.
+- [ ] Decide whether SQLite migration smoke should run in CI now or remain local/manual.
+- [ ] Decide when to add a PostgreSQL service job to CI for repository and migration checks.
+- [ ] Redesign disposable reset flow to run migrations up, then apply seed data.
+- [ ] Keep seed data as development/sample data, separate from schema migrations.
+- [ ] Decide when Docker/Compose bootstrap should switch from schema SQL to migrations plus seed.
+- [ ] Plan the v0.2 migration sequence before repository changes.
+
+Schema:
 - [ ] Add migrations for `book_authors` and `book_genres`.
-- [ ] Add `covers` with URL and metadata fields.
+- [ ] Add `covers` with URL and metadata fields, including `UNIQUE(book_id, variant)`.
 - [ ] Add `library_items`.
 - [ ] Add `library_item_tags`.
-- [ ] Migrate v0.1 data from `books.author_id` and `books.genre_id`.
-- [ ] Migrate or replace old `library` data if present.
+- [ ] Migrate v0.1 data from `books.book_author_id` and `books.book_genre_id`.
+- [ ] Migrate `library` rows into `library_items`.
+- [ ] Migrate `library.library_tag_id` into `library_item_tags`.
+- [ ] Remove old `books.book_author_id`, `books.book_genre_id`, and `library` after data is migrated.
 - [ ] Update seed data for v0.2.
 - [ ] Decide and document slug policy for books, authors, and genres.
 
 Definition of Done:
 - [ ] Fresh database setup works with v0.2 seed data.
 - [ ] Existing v0.1 catalog data has a defined migration story.
+- [ ] SQLite migration up/down smoke passes.
+- [ ] Seed smoke passes after migrations.
+- [ ] SQLite test DB can be created from the v0.2 schema.
 - [ ] Covers are stored as metadata/URLs only; upload/storage is deferred.
 
 ## v0.2.3 Catalog v0.2

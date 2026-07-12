@@ -1,15 +1,19 @@
 #!/usr/bin/env sh
 set -eu
 
-db_dsn="${APP_DB_DSN:-./data/book_social_dev.db}"
-db_path="${db_dsn#file:}"
+app_env="${APP_ENV:-dev}"
 
-mkdir -p "$(dirname "$db_path")"
+if [ "$app_env" = "dev" ]; then
+  db_dsn="${APP_DB_DSN:-./data/book_social_dev.db}"
+  db_path="${db_dsn#file:}"
 
-if [ ! -s "$db_path" ]; then
-  sqlite3 "$db_path" < db/sqlite/schema_v0_1_sqlite.sql
-  sqlite3 "$db_path" < db/sqlite/seed_sqlite.sql
-  echo "Database initialized: $db_path"
+  mkdir -p "$(dirname "$db_path")"
+
+  if [ ! -s "$db_path" ]; then
+    sqlite3 "$db_path" < db/sqlite/schema_v0_1.sql
+    sqlite3 "$db_path" < db/sqlite/seed.sql
+    echo "Database initialized: $db_path"
+  fi
 fi
 
 exec "$@"

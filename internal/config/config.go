@@ -1,9 +1,18 @@
 package config
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
+
+const (
+	EnvDev   = "dev"
+	EnvStage = "stage"
+	EnvProd  = "prod"
+)
 
 type Config struct {
-	Env string // dev, prod, test
+	Env string // dev, stage, prod
 
 	HTTP struct {
 		Addr string // ":8080"
@@ -22,7 +31,10 @@ type Config struct {
 func Load() (Config, error) {
 	cfg := Config{}
 
-	cfg.Env = getEnv("APP_ENV", "dev")
+	cfg.Env = getEnv("APP_ENV", EnvDev)
+	if err := validateEnv(cfg.Env); err != nil {
+		return Config{}, err
+	}
 
 	cfg.HTTP.Addr = getEnv("APP_HTTP_ADDR", ":8080")
 
@@ -32,6 +44,15 @@ func Load() (Config, error) {
 	cfg.Log.Format = getEnv("APP_LOG_FORMAT", "text")
 
 	return cfg, nil
+}
+
+func validateEnv(env string) error {
+	switch env {
+	case EnvDev, EnvStage, EnvProd:
+		return nil
+	default:
+		return fmt.Errorf("APP_ENV must be one of %q, %q, or %q", EnvDev, EnvStage, EnvProd)
+	}
 }
 
 func getEnv(key, def string) string {

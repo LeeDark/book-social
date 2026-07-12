@@ -1,4 +1,4 @@
-package sqlite
+package postgresql
 
 import (
 	"context"
@@ -8,6 +8,19 @@ import (
 	"github.com/LeeDark/book-social/internal/modules/books"
 	"github.com/LeeDark/book-social/internal/testutil"
 )
+
+func TestBookRepositoryListBooks(t *testing.T) {
+	ctx := context.Background()
+	db := newTestBookRepositoryDB(t, ctx)
+	repo := NewBookRepository(db)
+
+	gotBooks, err := repo.ListBooks(ctx)
+	if err != nil {
+		t.Fatalf("ListBooks() error = %v", err)
+	}
+
+	assertBookSlugs(t, gotBooks, []string{"emma", "frankenstein", "pride-and-prejudice", "the-time-machine"})
+}
 
 func TestBookRepositoryListBooksFiltered(t *testing.T) {
 	ctx := context.Background()
@@ -53,16 +66,40 @@ func TestBookRepositoryListBooksFiltered(t *testing.T) {
 				t.Fatalf("ListBooksFiltered() error = %v", err)
 			}
 
-			got := bookSlugs(gotBooks)
-			if len(got) != len(tt.want) {
-				t.Fatalf("book slugs = %v, want %v", got, tt.want)
-			}
-			for i := range got {
-				if got[i] != tt.want[i] {
-					t.Fatalf("book slugs = %v, want %v", got, tt.want)
-				}
-			}
+			assertBookSlugs(t, gotBooks, tt.want)
 		})
+	}
+}
+
+func TestBookRepositoryGetBookBySlug(t *testing.T) {
+	ctx := context.Background()
+	db := newTestBookRepositoryDB(t, ctx)
+	repo := NewBookRepository(db)
+
+	book, err := repo.GetBookBySlug(ctx, "frankenstein")
+	if err != nil {
+		t.Fatalf("GetBookBySlug() error = %v", err)
+	}
+
+	if book.Title != "Frankenstein" {
+		t.Fatalf("Title = %q, want %q", book.Title, "Frankenstein")
+	}
+	if book.Author.Slug != "mary-shelley" {
+		t.Fatalf("Author.Slug = %q, want %q", book.Author.Slug, "mary-shelley")
+	}
+	if book.Genre.Slug != "science-fiction" {
+		t.Fatalf("Genre.Slug = %q, want %q", book.Genre.Slug, "science-fiction")
+	}
+}
+
+func TestBookRepositoryGetBookBySlugReturnsNotFound(t *testing.T) {
+	ctx := context.Background()
+	db := newTestBookRepositoryDB(t, ctx)
+	repo := NewBookRepository(db)
+
+	_, err := repo.GetBookBySlug(ctx, "missing-book")
+	if err != books.ErrBookNotFound {
+		t.Fatalf("GetBookBySlug() error = %v, want %v", err, books.ErrBookNotFound)
 	}
 }
 
@@ -98,15 +135,7 @@ func TestBookRepositoryGetAuthorBySlugReturnsNotFound(t *testing.T) {
 func newTestBookRepositoryDB(t *testing.T, ctx context.Context) *sql.DB {
 	t.Helper()
 
-	db, err := Open(ctx, "file:book_repository_test?mode=memory&cache=shared")
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	t.Cleanup(func() {
-		_ = db.Close()
-	})
-
-	testutil.ApplySQLiteCatalogTestSchema(t, ctx, db)
+	db := testutil.NewPostgresCatalogTestDB(t, ctx)
 
 	statements := []string{
 		`INSERT INTO authors(id, first_name, second_name, sur_name, slug, description) VALUES
@@ -125,17 +154,27 @@ func newTestBookRepositoryDB(t *testing.T, ctx context.Context) *sql.DB {
 
 	for _, statement := range statements {
 		if _, err := db.ExecContext(ctx, statement); err != nil {
-			t.Fatalf("exec test seed statement: %v", err)
+			t.Fatalf("exec test database statement: %v", err)
 		}
 	}
 
 	return db
 }
 
-func bookSlugs(bookList []books.Book) []string {
-	slugs := make([]string, 0, len(bookList))
+func assertBookSlugs(t *testing.T, bookList []books.Book, want []string) {
+	t.Helper()
+
+	got := make([]string, 0, len(bookList))
 	for _, book := range bookList {
-		slugs = append(slugs, book.Slug)
+		got = append(got, book.Slug)
 	}
-	return slugs
+
+	if len(got) != len(want) {
+		t.Fatalf("book slugs = %v, want %v", got, want)
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			t.Fatalf("book slugs = %v, want %v", got, want)
+		}
+	}
 }

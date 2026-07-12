@@ -16,18 +16,23 @@ Current v0.1 baseline:
 - Local SQLite schema and seed data.
 - Unit tests and small HTTP/integration-style tests.
 - HTMX catalog filter spike as progressive enhancement.
+- Environment-based database selection: SQLite for `dev`, PostgreSQL for `stage` and `prod`.
+- v0.1 catalog repository behavior is implemented for both SQLite and PostgreSQL.
+- `golang-migrate` CLI wiring and v0.1 baseline migrations for SQLite and PostgreSQL.
 
 Not current production direction:
 - Templ and gomponents routes are experiments only.
-- Docker and Docker Compose are supported as a basic local development setup, not production infrastructure.
-- PostgreSQL, migrations, authentication, user libraries, search, pagination, and social features are planned later.
+- Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
+- Authentication, user libraries, search, pagination, and social features are planned later.
 
 ## Tech Stack
 
-- Go 1.25
+- Go 1.26
 - chi router
 - `html/template`
 - SQLite via `modernc.org/sqlite`
+- PostgreSQL driver via `github.com/lib/pq`
+- `golang-migrate` CLI for schema migrations, built with SQLite and PostgreSQL drivers
 - Pico CSS plus project CSS
 - HTMX vendored locally for a small catalog filter spike
 - Templ and gomponents as rendering experiments
@@ -37,7 +42,7 @@ Not current production direction:
 Reset the local development database:
 
 ```bash
-make db-dev-reset
+make db/reset
 ```
 
 Run the web app:
@@ -52,20 +57,46 @@ Default address:
 http://localhost:8080
 ```
 
+Local development defaults to:
+
+```text
+APP_ENV=dev
+APP_DB_DSN=./data/book_social_dev.db
+```
+
+Set environment variables before the command when you need a different configuration:
+
+```bash
+APP_ENV=dev APP_DB_DSN='./data/book_social_dev.db' make run
+```
+
 ## Run With Docker
 
-Docker/Compose is a dev-only local setup for v0.1.
+Docker/Compose provides local environment workflows for v0.1.
+It is not production deployment infrastructure.
 
 Build the image:
 
 ```bash
-docker build --progress=plain -t book-social:dev .
+make docker/build
 ```
 
-Start the app:
+Start the dev app with SQLite:
 
 ```bash
-docker compose up --build
+make compose/dev/up
+```
+
+Start the stage app with PostgreSQL:
+
+```bash
+make compose/stage/up
+```
+
+Start the prod app with PostgreSQL:
+
+```bash
+make compose/prod/up
 ```
 
 Open:
@@ -74,14 +105,15 @@ Open:
 http://localhost:8080
 ```
 
-The Compose setup stores SQLite data in a named volume mounted at `/app/data`.
+The dev Compose setup stores SQLite data in a named volume mounted at `/app/data`.
 On first start, the container initializes and seeds `/app/data/book_social_dev.db` if it is missing or empty.
+The stage and prod Compose setups run a local PostgreSQL container initialized from `db/postgresql/schema_v0_1.sql` and `db/postgresql/seed.sql`.
 
 Reset the Docker SQLite database:
 
 ```bash
-docker compose down -v
-docker compose up --build
+make compose/dev/down
+make compose/dev/up
 ```
 
 Useful routes:
@@ -111,9 +143,11 @@ cmd/web/                 application entrypoint
 internal/app/            app wiring, routes, home handler
 internal/modules/books/  books/catalog module
 internal/storage/sqlite/ SQLite repository implementation
+internal/storage/postgresql/ PostgreSQL connection and repository implementation
 internal/http/           rendering, response helpers, middleware, view models
 internal/web/            templates, static assets, rendering experiments
-db/sqlite/               local SQLite schema, seed, reset script
+db/sqlite/               local SQLite schema, migrations, seed, reset script
+db/postgresql/           PostgreSQL schema, migrations, seed, reset script
 docs/                    project documentation
 docs/ai/                 AI-agent context, task history, spike notes
 ```
@@ -135,10 +169,10 @@ docs/ai/                 AI-agent context, task history, spike notes
 Near-term cleanup:
 - Finish documentation inventory and cleanup.
 - Keep v0.1 as the stable learning baseline.
-- Keep Docker/Compose as a dev-only local setup; do not add production deployment claims yet.
+- Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:
 - Quality baseline: format/test/lint/CI.
-- Database strategy: migrations and SQLite/PostgreSQL decision.
+- Database strategy: migrations and schema evolution.
 - Catalog read model updates for the v0.2 schema.
 - Authentication and user flows after the data foundation is clearer.
