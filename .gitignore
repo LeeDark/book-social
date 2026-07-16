@@ -8,4 +8,3 @@ data/*.db-wal
 
 docs/archive
 docs/private
-k8s

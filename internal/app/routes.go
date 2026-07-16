@@ -20,6 +20,7 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 		"/static/",
 		http.FileServer(http.Dir("./internal/web/static"))))
 
+	r.Get("/healthz", healthz)
 	r.Get("/", app.HomeHandler.Index)
 	r.Get("/about", app.HomeHandler.About)
 
@@ -36,4 +37,8 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		response.RenderNotFound(w, r, deps.Logger, deps.Renderer)
 	})
+}
+
+func healthz(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }

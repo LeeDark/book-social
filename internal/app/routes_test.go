@@ -29,21 +29,7 @@ func (fakeCatalogHandler) Author(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestAppUnknownRouteRendersNotFoundPage(t *testing.T) {
-	testutil.ChdirProjectRoot(t)
-
-	renderer, err := render.NewRenderer()
-	if err != nil {
-		t.Fatalf("render.NewRenderer() error = %v", err)
-	}
-
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	deps := Deps{
-		Config:   config.Config{},
-		Logger:   logger,
-		Renderer: renderer,
-	}
-
-	app := New(deps, NewHomeHandler(renderer, logger), fakeCatalogHandler{})
+	app := newRoutesTestApp(t)
 
 	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/missing-page", nil)
 	rec := httptest.NewRecorder()
@@ -60,6 +46,39 @@ func TestAppUnknownRouteRendersNotFoundPage(t *testing.T) {
 			t.Fatalf("body does not contain %q: %q", fragment, body)
 		}
 	}
+}
+
+func TestAppHealthzReturnsOK(t *testing.T) {
+	app := newRoutesTestApp(t)
+
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/healthz", nil)
+	rec := httptest.NewRecorder()
+
+	app.Router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+}
+
+func newRoutesTestApp(t *testing.T) *App {
+	t.Helper()
+
+	testutil.ChdirProjectRoot(t)
+
+	renderer, err := render.NewRenderer()
+	if err != nil {
+		t.Fatalf("render.NewRenderer() error = %v", err)
+	}
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	deps := Deps{
+		Config:   config.Config{},
+		Logger:   logger,
+		Renderer: renderer,
+	}
+
+	return New(deps, NewHomeHandler(renderer, logger), fakeCatalogHandler{})
 }
 
 var _ CatalogHandler = fakeCatalogHandler{}
