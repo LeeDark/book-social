@@ -100,6 +100,17 @@ db/migrate/up:
 db/migrate/down:
 	$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "$(MIGRATIONS_DATABASE_URL)" down 1
 
+.PHONY: db/migrate/smoke
+## db/migrate/smoke: smoke-test SQLite migrations on a disposable database
+db/migrate/smoke:
+	@set -eu; \
+		smoke_dir="$$(mktemp -d)"; \
+		smoke_db="$$smoke_dir/book_social.db"; \
+		trap 'rm -f "$$smoke_db" "$$smoke_db-shm" "$$smoke_db-wal"; rmdir "$$smoke_dir"' EXIT; \
+		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$smoke_db" up; \
+		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$smoke_db" down 1; \
+		echo "SQLite migration smoke check passed"
+
 .PHONY: db/shell
 ## db/shell: open the local development database in sqlite3
 db/shell:
