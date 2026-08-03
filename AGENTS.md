@@ -11,7 +11,7 @@ Architecture:
 - services / use cases
 - repositories
 - MPA / server-side templates
-- SQLite for now, PostgreSQL may be added later
+- persistence details follow the current architecture and roadmap documents
 
 Useful project docs:
 - `README.md`
@@ -25,7 +25,11 @@ Useful project docs:
 - `docs/ai/task-history.md`
 - `docs/ai/ai-augmented-development-workflow.md`
 
-## Current technical direction
+Use `docs/roadmap.md` as the source of truth for the current priority, active stage, and deferred
+work. Read it when the task depends on project sequencing, but do not load it for unrelated,
+well-scoped tasks.
+
+## Stable technical direction
 
 - Keep the project simple and educational.
 - Prefer clear Go code over clever abstractions.
@@ -33,34 +37,107 @@ Useful project docs:
 - Keep package boundaries clean.
 - Do not introduce heavy dependencies without a strong reason.
 
-## AI-assisted workflow
+## Operating contract
 
-Prefer small, reviewable steps.
+The user's latest explicit instruction takes precedence over the defaults in this file.
 
-Use `docs/ai/ai-augmented-development-workflow.md` together with this file for AI-assisted work.
-When a task names a working mode from that document, follow that mode unless it conflicts with this
-file or the user's latest instruction.
+- Prefer small, reviewable steps.
+- Inspect only the files and documents relevant to the requested task.
+- Do not turn small tasks into large rewrites.
+- Do not widen the scope, redesign architecture, or add dependencies without a task-specific reason.
+- Use `docs/ai/ai-augmented-development-workflow.md` for the full workflow and mode explanations.
+- When the prompt names a working mode, apply the matching contract below.
 
-For learning-oriented tasks, do not implement the full solution immediately.
-Instead:
-- inspect the relevant files
-- propose a short plan
-- stop for review
-- wait for explicit approval before coding
+## Working modes
 
-For implementation tasks:
-- make minimal focused changes
-- avoid unrelated refactoring
-- explain changed files
-- provide manual test steps
-- run automated tests where possible
+### Manager Mode
 
-Do not turn small tasks into large rewrites.
+- Inspect the relevant code before editing.
+- Make the smallest focused change that satisfies the request.
+- Preserve the existing project style and architecture.
+- Run the narrowest relevant checks.
+- Report the result and remaining risks.
 
-For documentation cleanup:
-- preserve useful history but separate it from current instructions
-- keep raw AI prompt logs in `docs/archive/` until reviewed
-- do not treat experimental spike notes as the current project direction
+### Documentation Mode
+
+- Change only the requested documentation files.
+- Do not change implementation files.
+- Preserve technical meaning and useful history.
+- Separate current behavior from planned behavior.
+- Keep raw AI prompt logs in `docs/archive/` until reviewed.
+- Do not treat experimental spike notes as the current project direction.
+
+### Review Mode
+
+- Inspect the requested change without editing files.
+- List findings first and order them by severity.
+- Include file and line references when possible.
+- Mention test gaps and residual risks.
+
+### Planning Mode
+
+- Inspect only the context needed to prepare the plan.
+- Define scope, stages, verification, and the definition of done.
+- Do not implement or edit files unless the user explicitly changes modes.
+
+### Book or Source Study Mode
+
+- Summarize concepts in original wording without copying large source fragments.
+- Connect relevant concepts to the current project.
+- Separate ideas into applicable now, deferred, or not relevant.
+- Do not implement source material until the user explicitly changes modes.
+
+### Tutor Mode
+
+- Treat the request as one interactive learning turn, not a persistent goal.
+- Explain the concept and provide one focused exercise.
+- Do not write the final implementation first.
+- Do not edit files unless the user explicitly changes modes.
+- Finish the response after the exercise and wait for the user.
+- Waiting for the user is not a blocker.
+- Do not poll the repository while waiting.
+- Do not create a persistent goal or token budget.
+
+### Pair Programmer Mode
+
+- Treat the request as an interactive session, not a persistent goal.
+- Let the user implement the first version.
+- Before implementation, provide only scoped guidance and acceptance criteria, then wait.
+- Review the diff only after the user says it is ready.
+- Suggest minimal targeted fixes instead of rewriting the solution.
+- Waiting for the user is not a blocker.
+- Do not poll the repository while waiting.
+- Do not create a persistent goal or token budget.
+
+## Persistent goals and token budgets
+
+- Create a persistent Codex goal (`/goal`) only when the user explicitly requests one.
+- Set a token budget only when the user explicitly specifies it.
+- A persistent goal must describe one bounded result that the agent can complete without waiting for
+  user work.
+- Do not use persistent goals for Tutor Mode or Pair Programmer Mode.
+- Do not use pause as a substitute for ending an interactive turn.
+- If the task requires user implementation or input, finish the current turn and wait normally.
+
+## Verification contract
+
+- Run the narrowest relevant check first.
+- Run the full test suite when the scope or risk justifies it.
+- Report the exact commands run and their results.
+- Separate pre-existing failures from failures caused by the current change.
+- If sandbox or environment restrictions prevent a check, explain the limitation and provide the
+  exact local verification step.
+
+## Completion contract
+
+After an implementation or documentation change, summarize:
+
+- files changed;
+- behavior or documentation changed;
+- tests and checks run;
+- failures, residual risks, or work intentionally left for later.
+
+Do not commit changes unless the user explicitly requests it.
 
 ## Testing
 
@@ -69,7 +146,7 @@ For documentation cleanup:
 - Use `httptest` for HTTP handlers.
 - Use fake repositories/services for unit tests.
 - Avoid database integration tests unless explicitly requested.
-- `make test` must pass before finishing.
+- Prefer `make test` for the full project test suite when the task scope or risk justifies it.
 
 ## UI
 
@@ -84,14 +161,6 @@ For documentation cleanup:
 2. Explain briefly what you plan to change.
 3. Make the smallest reasonable change.
 4. Run or explain the relevant tests.
-
-## After changing code
-
-Summarize:
-- files changed
-- tests added/updated
-- commands run
-- anything intentionally left for later
 
 ## Running the web server in Codex
 
