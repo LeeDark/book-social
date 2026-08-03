@@ -129,10 +129,6 @@ CREATE TABLE library_v0_2 (
              ON DELETE SET NULL
 );
 
-CREATE INDEX idx_library_v0_2_shelf ON library_v0_2(library_shelf_id);
-CREATE INDEX idx_library_v0_2_book ON library_v0_2(library_book_id);
-CREATE INDEX idx_library_v0_2_tag ON library_v0_2(library_tag_id);
-
 INSERT INTO library_v0_2 (id, library_shelf_id, library_book_id, library_tag_id)
 SELECT id, library_shelf_id, library_book_id, library_tag_id
 FROM library_v0_1;
@@ -141,3 +137,7 @@ DROP TABLE library_v0_1;
 DROP TABLE books_v0_1;
 
 ALTER TABLE library_v0_2 RENAME TO library;
+
+CREATE INDEX idx_library_shelf ON library(library_shelf_id);
+CREATE INDEX idx_library_book ON library(library_book_id);
+CREATE INDEX idx_library_tag ON library(library_tag_id);
