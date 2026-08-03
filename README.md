@@ -6,7 +6,7 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-Current v0.1 baseline:
+Current v0.2.2 database foundation with v0.1 read-side:
 - Home and About pages.
 - Book catalog page.
 - Book details page.
@@ -18,7 +18,10 @@ Current v0.1 baseline:
 - HTMX catalog filter spike as progressive enhancement.
 - Environment-based database selection: SQLite for `dev`, PostgreSQL for `stage` and `prod`.
 - v0.1 catalog repository behavior is implemented for both SQLite and PostgreSQL.
-- `golang-migrate` CLI wiring and v0.1 baseline migrations for SQLite and PostgreSQL.
+- `golang-migrate` CLI wiring and v0.1/v0.2 migrations for SQLite and PostgreSQL.
+- Normalized catalog tables for many-to-many authors/genres and URL-only cover metadata.
+- Migration-first reset and Docker/Compose bootstrap followed by development seed data.
+- Local migration/seed smoke checks and v0.2 SQLite/PostgreSQL test helpers.
 
 Not current production direction:
 - Templ and gomponents routes are experiments only.
@@ -72,7 +75,7 @@ APP_ENV=dev APP_DB_DSN='./data/book_social_dev.db' make run
 
 ## Run With Docker
 
-Docker/Compose provides local environment workflows for v0.1.
+Docker/Compose provides local environment workflows for the v0.2 database bootstrap.
 It is not production deployment infrastructure.
 
 Build the image:
@@ -106,8 +109,10 @@ http://localhost:8080
 ```
 
 The dev Compose setup stores SQLite data in a named volume mounted at `/app/data`.
-On first start, the container initializes and seeds `/app/data/book_social_dev.db` if it is missing or empty.
-The stage and prod Compose setups run a local PostgreSQL container initialized from `db/postgresql/schema_v0_1.sql` and `db/postgresql/seed.sql`.
+On first start, the container applies all SQLite migrations and seeds
+`/app/data/book_social_dev.db` if it is missing or empty. The stage and prod Compose setups run a
+local PostgreSQL container initialized by the app entrypoint with all PostgreSQL migrations and
+`db/postgresql/seed.sql`.
 
 Reset the Docker SQLite database:
 
@@ -159,20 +164,19 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Routes](docs/routes.md)
 - [Domain model](docs/domain.md)
 - [Database v0.1](docs/database_v0_1.md)
-- [Database v0.2 target](docs/database_v0_2.md)
+- [Database v0.2](docs/database_v0_2.md)
 - [Testing](docs/testing.md)
 - [Roadmap](docs/roadmap.md)
 - [AI project context](docs/ai/project-context.md)
 
 ## Roadmap Summary
 
-Near-term cleanup:
-- Finish documentation inventory and cleanup.
-- Keep v0.1 as the stable learning baseline.
+Near-term work:
+- Start the dependent v0.2.3 branch to adapt catalog read models and repositories.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:
 - Quality baseline: format/test/lint/CI.
-- Database strategy: migrations and schema evolution.
-- Catalog read model updates for the v0.2 schema.
+- Database strategy: migrations and schema evolution (v0.2.2 complete).
+- Catalog read model updates for the v0.2 schema (v0.2.3 next).
 - Authentication and user flows after the data foundation is clearer.

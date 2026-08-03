@@ -84,7 +84,15 @@ VALUES (1, 'Agatha', '', 'Christie', 'agatha-christie',
         'An ancient Chinese military strategist traditionally credited with a concise and influential work on strategy.');
 
 -- Books
-INSERT INTO books(title, slug, description, book_author_id, book_genre_id)
+CREATE TEMP TABLE seed_book_relationships (
+    title TEXT NOT NULL,
+    slug TEXT NOT NULL,
+    description TEXT NULL,
+    author_id INTEGER NOT NULL,
+    genre_id INTEGER NOT NULL
+);
+
+INSERT INTO seed_book_relationships(title, slug, description, author_id, genre_id)
 VALUES ('Murder on the Orient Express',
         'murder-on-the-orient-express',
         'While traveling from Istanbul to London on the luxurious Orient Express, a wealthy American businessman is found murdered in his locked compartment. A snowdrift stops the train in Yugoslavia, leaving the detective Hercule Poirot to identify the killer among a group of diverse passengers, all of whom have secrets to hide. It is famous for having one of the most ingenious endings in detective fiction.',
@@ -521,6 +529,22 @@ VALUES ('Murder on the Orient Express',
         'the-children-of-captain-grant',
         'A search party travels across continents to rescue a missing sea captain. The novel combines geography, peril, and discovery in a style suited to young adventure readers.',
         5, 23);
+
+INSERT INTO books (title, slug, description)
+SELECT title, slug, description
+FROM seed_book_relationships;
+
+INSERT INTO book_authors (book_id, author_id)
+SELECT books.id, seed_book_relationships.author_id
+FROM books
+JOIN seed_book_relationships ON seed_book_relationships.slug = books.slug;
+
+INSERT INTO book_genres (book_id, genre_id)
+SELECT books.id, seed_book_relationships.genre_id
+FROM books
+JOIN seed_book_relationships ON seed_book_relationships.slug = books.slug;
+
+DROP TABLE seed_book_relationships;
 
 -- Keep identity sequences ahead of explicit seed IDs.
 SELECT setval(pg_get_serial_sequence('genres', 'id'), (SELECT MAX(id) FROM genres));

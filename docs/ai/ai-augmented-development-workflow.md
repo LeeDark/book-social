@@ -41,6 +41,31 @@ This workflow does not replace:
 - architectural judgment;
 - manual debugging.
 
+## Instruction Surfaces And Responsibilities
+
+Keep durable instructions, workflow guidance, and current plans separate:
+
+```text
+current prompt
+  -> the task, mode, scope, and temporary constraints for this turn
+
+AGENTS.md
+  -> stable repository rules that coding agents should apply automatically
+
+ai-augmented-development-workflow.md
+  -> the full human-readable workflow, explanations, and reusable examples
+
+PLAN.md or the current roadmap
+  -> active priority, stage, sequencing, status, and deferred work
+
+architecture and decision documents
+  -> technical boundaries, accepted decisions, and project-specific design
+```
+
+The user's latest explicit task instruction takes precedence over workflow defaults. Keep
+`AGENTS.md` concise and operational; do not copy the entire workflow or current backlog into it.
+Read only the documents relevant to the task rather than loading every linked document by default.
+
 ## Core Principles
 
 ### 1. Ownership Stays With The Developer
@@ -87,7 +112,7 @@ accidental rewrites and makes review easier.
 
 ### 4. Small Tasks Are Easier To Review
 
-Prefer tasks that fit one clear goal:
+Prefer tasks that fit one clear task objective:
 
 - one feature;
 - one bug fix;
@@ -120,8 +145,8 @@ Use this loop for AI-assisted development tasks:
 
 ```text
 idea
-  -> clarify the goal
-  -> convert the goal into a scoped task
+  -> clarify the task objective
+  -> convert the objective into a scoped task
   -> choose the working mode
   -> provide repository context
   -> execute the task
@@ -131,10 +156,66 @@ idea
   -> commit focused changes
 ```
 
+## Task Objectives, Persistent Goals, And Token Budgets
+
+An ordinary task objective and a persistent Codex goal are different:
+
+```text
+task objective
+  -> the result requested in the current turn
+
+persistent Codex goal (`/goal`)
+  -> a target that remains attached to the chat across turns
+```
+
+Use an ordinary task objective by default. Create `/goal` only when the user explicitly requests a
+persistent goal and the agent can complete the result without waiting for user work.
+
+Good persistent goals:
+
+- implement one bounded change and run its checks;
+- inspect an existing diff and return a review;
+- perform a scoped analysis with a clear final artifact.
+
+Do not use a persistent goal for:
+
+- Tutor Mode;
+- Pair Programmer Mode;
+- waiting for the user to implement or answer;
+- one short question or review;
+- work that will resume manually later.
+
+A token budget is optional and belongs only to an explicit persistent goal. Set it only when the
+user explicitly specifies it. One budgeted goal should produce one bounded, agent-owned result with
+a reachable completion condition.
+
+Do not use `/goal pause` as a substitute for ending an interactive turn. When user input or
+implementation is required, finish the response and wait normally. Waiting is not a blocker, and
+the repository should not be polled while waiting.
+
+Use `/status` for current chat and context information and `/usage` for account usage when those
+commands are available. A persistent goal is not required to inspect usage.
+
+## Local Modes And Built-In Codex Mechanisms
+
+The working modes in this document are local workflow contracts. They become durable when defined
+in `AGENTS.md`; their names alone are not built-in Codex behavior.
+
+Built-in Codex mechanisms include:
+
+- `/plan`: enter planning mode before implementation;
+- `/review`: review a working tree, commit, or branch diff without editing it;
+- `/goal`: create and manage a persistent goal.
+
+`Tutor Mode`, `Pair Programmer Mode`, `Manager Mode`, `Documentation Mode`, and
+`Book or Source Study Mode` are project workflow labels. `Review Mode` and `Planning Mode` overlap
+with `/review` and `/plan`, but the local contracts may add project-specific rules.
+
 ## Working Modes
 
 Different tasks need different operating modes. Stating the mode at the start of a prompt
-helps control scope and expected behavior.
+helps control scope and expected behavior. When `AGENTS.md` already defines the mode, the prompt can
+contain only the mode name and a task or document reference.
 
 ### 1. Manager Mode
 
@@ -178,13 +259,13 @@ Main risk:
 Formula:
 
 ```text
-Pair Programmer Mode: review an existing implementation and suggest targeted fixes.
+Pair Programmer Mode: I implement the first version; review it when I say it is ready.
 ```
 
 Use when:
 
 - the first version was implemented manually;
-- the goal is learning through feedback;
+- the purpose is learning through feedback;
 - the task is architecture-sensitive;
 - review is more useful than replacement.
 
@@ -199,11 +280,17 @@ Good for:
 
 Rules:
 
+- before implementation, provide scoped guidance and acceptance criteria, then end the turn;
+- let the developer implement the first version;
+- wait until the developer says the implementation is ready for review;
 - do not rewrite the whole solution by default;
 - review the diff;
 - prioritize correctness and project fit;
 - suggest minimal changes;
-- explain what should be practiced next when useful.
+- explain what should be practiced next when useful;
+- do not poll the repository while waiting;
+- do not create a persistent goal or token budget;
+- treat waiting for the developer as a normal turn boundary, not a blocker.
 
 Main value:
 
@@ -240,7 +327,12 @@ Rules:
 - propose a small exercise;
 - ask checking questions when useful;
 - give hints before final answers when appropriate;
-- connect theory with practical code.
+- connect theory with practical code;
+- do not edit files or write the final implementation unless the mode changes;
+- end the turn after the exercise and wait for the developer;
+- do not poll the repository while waiting;
+- do not create a persistent goal or token budget;
+- treat waiting for the developer as a normal turn boundary, not a blocker.
 
 ### 4. Review Mode
 
@@ -301,7 +393,7 @@ Good for:
 
 Rules:
 
-- define the goal and constraints;
+- define the task objective and constraints;
 - propose stages;
 - define outputs and Definition of Done;
 - explicitly name what to postpone;
@@ -386,12 +478,13 @@ When no mode is specified, choose the safest interpretation:
 Every significant AI-assisted task should answer:
 
 - What mode is this?
-- What is the goal?
+- What is the task objective?
 - What is the scope?
 - What must not change?
 - What is the expected output?
 - How will the result be verified?
 - Should the assistant stop before editing or before the next logical step?
+- Does this task genuinely need a persistent `/goal`? The default answer is no.
 
 ## Task Design
 
@@ -400,7 +493,7 @@ A strong AI task includes:
 - working mode;
 - repository context;
 - current state;
-- goal;
+- task objective;
 - files or areas to inspect;
 - allowed files or areas;
 - forbidden files or areas;
@@ -456,11 +549,11 @@ Use this loop for AI-assisted study:
 
 ```text
 topic
-  -> short explanation
-  -> small exercise
-  -> manual implementation
+  -> Tutor turn: short explanation and small exercise
+  -> end the turn and wait
+  -> developer implements manually
   -> run or test
-  -> review
+  -> Pair Programmer review turn
   -> short summary
 ```
 
@@ -517,6 +610,29 @@ The workflow is improving when:
 - documentation matches actual behavior;
 - fewer unrelated changes appear in a task.
 
+## Model And Usage Policy
+
+This section reflects the working policy as of 2026-07-28. Model names, availability, reasoning
+levels, and usage rates can change; verify the current model picker and official documentation
+before treating them as permanent project rules.
+
+- Use Luna for clear, repeatable, high-volume tasks such as summaries, documentation drafts, simple
+  Tutor turns, extraction, and transformation.
+- Use Terra as the default for everyday Go development, technical tutoring, scoped implementation,
+  debugging, and normal code review.
+- Use Sol for genuinely ambiguous, cross-component, high-risk, or architecture-sensitive work.
+- Use the lowest reasoning level that reliably produces the needed result: Light/Low for clear
+  tasks, Medium for normal multi-step work, and High/Extra High for difficult analysis.
+- Treat Max and Ultra as exceptional. Max spends more reasoning on one task; Ultra uses subagents
+  for work that can be divided into meaningful independent parts.
+- Do not compensate for an unclear task by selecting a more expensive model. Reduce scope and
+  provide relevant context first.
+- Avoid persistent goals, repeated repository polling, unnecessary subagents, and long unrelated
+  chat context when an interactive or one-turn task is sufficient.
+
+Keep detailed or frequently changing model comparisons outside `AGENTS.md`. `AGENTS.md` should
+contain only a stable project default when one is genuinely needed.
+
 ## Tool Usage Guidelines
 
 ### Planning And Discussion Assistants
@@ -572,7 +688,40 @@ Rules:
 
 ## Prompt Templates
 
-### Mode-Based Task Prompt
+When the mode contracts already live in `AGENTS.md`, prefer the compact prompt. Use the expanded
+template only for complex or high-risk work.
+
+### Compact Daily Prompt
+
+```text
+<Mode>
+
+<Task or link to the task description>
+<Optional current step or narrow scope>
+```
+
+Examples:
+
+```text
+Tutor Mode
+
+@PLAN.md — Stage 1, Step 2.
+```
+
+```text
+Pair Programmer Mode
+
+@PLAN.md — Stage 1, Step 2.
+Start with scope and acceptance criteria.
+```
+
+```text
+Documentation Mode
+
+Update only the verification section in @README.md.
+```
+
+### Expanded Mode-Based Task Prompt
 
 ```text
 Mode:
@@ -608,7 +757,7 @@ Expected output:
 Context:
 - Project:
 - Current state:
-- Goal:
+- Task objective:
 - Constraints:
 - What to avoid:
 
@@ -630,7 +779,7 @@ Mode:
 
 Context:
 - Repository:
-- Current goal:
+- Current task objective:
 - Relevant files/areas:
 - Current stage:
 
@@ -673,6 +822,17 @@ Do not rewrite the whole solution.
 Give concrete comments and a short verdict.
 ```
 
+### Pair Programmer Setup Prompt
+
+```text
+Pair Programmer Mode.
+
+Task: <task or document reference>
+
+Define the narrow scope and acceptance criteria, then end the turn.
+I will implement the first version and tell you when it is ready for review.
+```
+
 ### Pair Programmer Review Prompt
 
 ```text
@@ -699,9 +859,11 @@ Expected output:
 ### Learning Prompt
 
 ```text
+Tutor Mode.
+
 Topic:
 Current level:
-Goal:
+Task objective:
 
 Please provide:
 1. short explanation;
@@ -709,6 +871,9 @@ Please provide:
 3. small exercise;
 4. expected behavior;
 5. hints before the full solution.
+
+Do not write the final implementation.
+End the turn after the exercise and wait for my response.
 ```
 
 ## Anti-Patterns
@@ -718,6 +883,10 @@ Avoid:
 - using a learning prompt but accepting generated code without practice;
 - asking for review and allowing automatic rewrites;
 - asking for implementation without defining scope;
+- creating a persistent goal that depends on user implementation or input;
+- using `/goal pause` instead of ending an interactive turn;
+- polling the repository while waiting for the user;
+- loading every linked document for a small scoped task;
 - mixing planning, teaching, implementation, refactoring, documentation, and validation in one task;
 - asking AI to improve everything;
 - accepting large diffs without review;
@@ -725,6 +894,7 @@ Avoid:
 - treating explanations as proof of understanding;
 - polishing documentation while avoiding implementation;
 - adding new tools before finishing current tasks;
+- using Sol, Max, Ultra, or subagents by default for routine work;
 - trusting broad production-ready claims without verification;
 - turning every idea into a permanent document.
 

@@ -9,7 +9,9 @@ DB_PASSWORD="${PGPASSWORD:-pa55word}"
 DB_HOST="${PGHOST:-localhost}"
 DB_PORT="${PGPORT:-5432}"
 
-SCHEMA_PATH="$SCRIPT_DIR/schema_v0_1.sql"
+MIGRATE="${MIGRATE:-migrate}"
+MIGRATIONS_DIR="${MIGRATIONS_DIR:-$SCRIPT_DIR/migrations}"
+MIGRATIONS_DATABASE_URL="${MIGRATIONS_DATABASE_URL:-postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=disable&x-multi-statement=true}"
 SEED_PATH="$SCRIPT_DIR/seed.sql"
 
 export PGPASSWORD="$DB_PASSWORD"
@@ -28,7 +30,10 @@ DROP SCHEMA IF EXISTS public CASCADE;
 CREATE SCHEMA public;
 SQL
 
-"${PSQL[@]}" -f "$SCHEMA_PATH"
+"$MIGRATE" \
+    -path "$MIGRATIONS_DIR" \
+    -database "$MIGRATIONS_DATABASE_URL" \
+    up
 "${PSQL[@]}" -f "$SEED_PATH"
 
 echo "PostgreSQL database reset: $DB_NAME"

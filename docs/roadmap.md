@@ -101,38 +101,37 @@ without prematurely fixing the future personal-library model.
 
 Preparation:
 
-- [ ] Add a SQLite migration smoke target for a disposable database.
-- [ ] Decide whether SQLite migration smoke should run in CI now or remain local/manual.
-- [ ] Decide when to add a PostgreSQL service job to CI for repository and migration checks.
-- [ ] Redesign disposable reset flow to run migrations up, then apply seed data.
-- [ ] Keep seed data as development/sample data, separate from schema migrations.
-- [ ] Decide when Docker/Compose bootstrap should switch from schema SQL to migrations plus seed.
-- [ ] Plan the v0.2 migration sequence before repository changes.
+- [x] Add a SQLite migration and seed smoke target for a disposable database.
+- [x] Keep SQLite migration smoke local/manual for now; defer CI integration.
+- [x] Defer a PostgreSQL service job to a separate follow-up.
+- [x] Redesign disposable reset flow to run migrations up, then apply seed data.
+- [x] Keep seed data as development/sample data, separate from schema migrations.
+- [x] Switch Docker/Compose bootstrap to migrations plus seed.
+- [x] Plan and implement the v0.2 migration sequence before repository changes.
 
 Schema:
 
-- [ ] Add migrations for `book_authors` and `book_genres`.
-- [ ] Add `covers` with URL and metadata fields, including `UNIQUE(book_id, variant)`.
-- [ ] Migrate v0.1 data from `books.book_author_id` and `books.book_genre_id`.
-- [ ] Remove old `books.book_author_id` and `books.book_genre_id` after data is migrated.
-- [ ] Decide and document whether unused v0.1 `library`, `shelves`, and `tags` sample data is
-  removed, temporarily isolated, or preserved for a later explicit migration.
+- [x] Add migrations for `book_authors` and `book_genres`.
+- [x] Add `covers` with URL and metadata fields, including `UNIQUE(book_id, variant)`.
+- [x] Migrate v0.1 data from `books.book_author_id` and `books.book_genre_id`.
+- [x] Remove old `books.book_author_id` and `books.book_genre_id` after data is migrated.
+- [x] Preserve unused v0.1 `library`, `shelves`, and `tags` structures as explicit legacy/demo data.
 - [ ] Defer the final `library_items` schema to v0.3, where `user_id`, reading status, dates,
   uniqueness, and privacy rules are defined together.
 - [ ] Defer user shelves and `library_item_tags` to v0.5.
-- [ ] Update seed data for v0.2.
-- [ ] Decide and document slug policy for books, authors, and genres.
+- [x] Update seed data for v0.2.
+- [x] Decide and document slug policy for books, authors, and genres.
 
 Definition of Done:
 
-- [ ] Fresh database setup works with v0.2 seed data.
-- [ ] Existing v0.1 catalog data has a defined migration story.
-- [ ] Legacy sample library structures cannot accidentally be mistaken for the final user-library
+- [x] Fresh database setup works with v0.2 seed data.
+- [x] Existing v0.1 catalog data has a defined migration story.
+- [x] Legacy sample library structures cannot accidentally be mistaken for the final user-library
   model.
-- [ ] SQLite migration up/down smoke passes.
-- [ ] Seed smoke passes after migrations.
-- [ ] SQLite test DB can be created from the v0.2 schema.
-- [ ] Covers are stored as metadata/URLs only; upload/storage is deferred.
+- [x] SQLite migration up/down smoke passes.
+- [x] Seed smoke passes after migrations.
+- [x] SQLite test DB can be created from the v0.2 schema.
+- [x] Covers are stored as metadata/URLs only; upload/storage is deferred.
 
 ## v0.2.3 Catalog v0.2
 

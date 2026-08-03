@@ -100,6 +100,32 @@ db/migrate/up:
 db/migrate/down:
 	$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "$(MIGRATIONS_DATABASE_URL)" down 1
 
+.PHONY: db/migrate/smoke
+## db/migrate/smoke: smoke-test SQLite migrations on a disposable database
+db/migrate/smoke:
+	@set -eu; \
+		smoke_dir="$$(mktemp -d)"; \
+		smoke_db="$$smoke_dir/book_social.db"; \
+		legacy_db="$$smoke_dir/legacy.db"; \
+		trap 'rm -f "$$smoke_db" "$$smoke_db-shm" "$$smoke_db-wal" "$$legacy_db" "$$legacy_db-shm" "$$legacy_db-wal"; rmdir "$$smoke_dir"' EXIT; \
+		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$smoke_db" up; \
+		sqlite3 "$$smoke_db" < ./db/sqlite/seed.sql; \
+		counts="$$(sqlite3 -noheader -separator '|' "$$smoke_db" \
+			"SELECT (SELECT COUNT(*) FROM books) || '|' || (SELECT COUNT(*) FROM book_authors) || '|' || (SELECT COUNT(*) FROM book_genres);")"; \
+		test "$$counts" = "109|109|109"; \
+		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$smoke_db" down 1; \
+		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$legacy_db" up 1; \
+		sqlite3 "$$legacy_db" \
+			"INSERT INTO authors(id, first_name, sur_name, slug) VALUES (1, 'Jane', 'Austen', 'jane-austen'); \
+			 INSERT INTO genres(id, name, slug) VALUES (1, 'Classic', 'classic'); \
+			 INSERT INTO books(id, title, slug, description, book_author_id, book_genre_id) VALUES (1, 'Pride and Prejudice', 'pride-and-prejudice', 'A novel.', 1, 1);"; \
+		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$legacy_db" up; \
+		legacy_counts="$$(sqlite3 -noheader -separator '|' "$$legacy_db" \
+			"SELECT (SELECT COUNT(*) FROM book_authors) || '|' || (SELECT COUNT(*) FROM book_genres) || '|' || (SELECT COUNT(*) FROM pragma_table_info('books') WHERE name IN ('book_author_id', 'book_genre_id'));")"; \
+		test "$$legacy_counts" = "1|1|0"; \
+		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$legacy_db" down 1; \
+		echo "SQLite migration, seed, and legacy-data smoke checks passed"
+
 .PHONY: db/shell
 ## db/shell: open the local development database in sqlite3
 db/shell:

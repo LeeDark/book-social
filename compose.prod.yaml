@@ -22,8 +22,6 @@ services:
       retries: 5
     volumes:
       - postgres-prod-data:/var/lib/postgresql
-      - ./db/postgresql/schema_v0_1.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./db/postgresql/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
 
 volumes:
   postgres-prod-data:

@@ -1,14 +1,16 @@
-# Database v0.2 Target
+# Database v0.2
 
-This is a planned target schema, not the active application schema.
+Migration `000002_normalize_catalog` creates this schema after the v0.1 baseline migration.
+The database/bootstrap path is v0.2, while application read repositories remain v0.1-shaped until
+the dependent v0.2.3 branch.
 
 Main changes from v0.1:
 
 - books/authors become many-to-many
 - books/genres become many-to-many
 - covers store URL metadata
-- `library` becomes `library_items`
-- tags move to `library_item_tags`
+- legacy `library`, `shelves`, and `tags` remain preserved as demo/legacy structures
+- the final user `library_items` model is deferred to v0.3
 
 Slugs should remain part of catalog entities because current routes use book, author, and genre slugs.
 
@@ -24,11 +26,9 @@ erDiagram
 
     BOOKS ||--o{ COVERS : has
 
-    SHELVES ||--o{ LIBRARY_ITEMS : contains
-    BOOKS   ||--o{ LIBRARY_ITEMS : listed
-
-    LIBRARY_ITEMS ||--o{ LIBRARY_ITEM_TAGS : tagged_by
-    TAGS          ||--o{ LIBRARY_ITEM_TAGS : tags
+    SHELVES ||--o{ LIBRARY : legacy_contains
+    BOOKS   ||--o{ LIBRARY : legacy_lists
+    TAGS    ||--o{ LIBRARY : legacy_tags
 
     ROLES {
         int id PK
@@ -104,14 +104,21 @@ erDiagram
         string description
     }
 
-    LIBRARY_ITEMS {
+    LIBRARY {
         int id PK
-        int shelf_id FK
-        int book_id FK
-    }
-
-    LIBRARY_ITEM_TAGS {
-        int library_item_id FK
-        int tag_id FK
+        int library_shelf_id FK
+        int library_book_id FK
+        int library_tag_id FK
     }
 ```
+
+The catalog migration does not create `library_items` or `library_item_tags`. Those tables require
+user identity, reading status, privacy, and lifecycle rules that belong to the later personal
+library work.
+
+## Slugs and covers
+
+`books.slug`, `authors.slug`, and `genres.slug` remain unique within their entity type and are
+treated as stable public identifiers. A slug change requires a later redirect/compatibility
+decision. Covers store only external URL and technical metadata; file upload and media storage are
+out of scope.
