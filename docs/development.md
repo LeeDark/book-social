@@ -39,8 +39,8 @@ Reset local SQLite database:
 make db/reset
 ```
 
-This is destructive. It recreates the configured SQLite database from
-`db/sqlite/schema_v0_1.sql` and `db/sqlite/seed.sql`.
+This is destructive. It removes the configured disposable SQLite database, applies all migrations,
+and loads `db/sqlite/seed.sql`.
 
 Open local SQLite database:
 
@@ -72,6 +72,12 @@ drivers:
 
 ```bash
 go install -tags 'sqlite postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+```
+
+Run the disposable SQLite migration, seed, legacy-data, and down checks with:
+
+```bash
+make db/migrate/smoke
 ```
 
 ## Configuration
@@ -112,18 +118,21 @@ Runtime database selection:
 
 - `APP_ENV=dev` opens `APP_DB_DSN` with the SQLite driver.
 - `APP_ENV=stage` and `APP_ENV=prod` open `APP_DB_DSN` with the PostgreSQL driver.
-- The v0.1 book repository behavior is implemented for both SQLite and PostgreSQL.
-- PostgreSQL databases can be initialized from schema SQL or with the `golang-migrate` CLI.
+- The v0.1 book repository behavior is implemented for both SQLite and PostgreSQL; its read-side
+  migration to v0.2 is deferred to v0.2.3.
+- PostgreSQL databases are initialized through migrations plus seed in the reset and Compose
+  bootstrap paths.
 
-Initialize a PostgreSQL database:
+Initialize a disposable PostgreSQL database with migrations and seed:
 
 ```bash
-psql "$APP_DB_DSN" -f db/postgresql/schema_v0_1.sql
-psql "$APP_DB_DSN" -f db/postgresql/seed.sql
+PGHOST=localhost PGPORT=5432 PGDATABASE=book_social PGUSER=book_social \
+  db/postgresql/reset-dev-db.sh
 ```
 
 For a disposable local PostgreSQL database, `db/postgresql/reset-dev-db.sh` drops and recreates
-the `public` schema, then applies the PostgreSQL schema and seed files.
+the `public` schema, then applies all PostgreSQL migrations and the seed file. The PostgreSQL
+migration URL must include `x-multi-statement=true`.
 
 Apply PostgreSQL migrations manually:
 
@@ -143,7 +152,7 @@ make db/migrate/down \
 
 ## Docker And Compose
 
-Docker and Compose are supported as local environment workflows for v0.1.
+Docker and Compose are supported as local environment workflows for the v0.2 bootstrap.
 
 They are not production-ready infrastructure. Do not treat the `prod` Compose workflow as
 deployment guidance; it only runs the app with `APP_ENV=prod` locally.
@@ -199,16 +208,18 @@ go vet ./...
 golangci-lint
 ```
 
-CI does not start Docker Compose services and does not run migration smoke tests yet.
+CI does not start Docker Compose services and does not run migration smoke tests yet. The current
+boundary is intentional: migration smoke remains a local/manual check until the `migrate` CLI and
+database setup are made reproducible in CI. A PostgreSQL service job is deferred.
 
 For local Docker Compose work, use reset/bootstrap for disposable seeded environments:
 
-- `make compose/dev/up` starts SQLite dev and initializes the database from `db/sqlite/schema_v0_1.sql` plus `db/sqlite/seed.sql` when the volume is empty.
-- `make compose/stage/up` starts PostgreSQL stage and initializes from `db/postgresql/schema_v0_1.sql` plus `db/postgresql/seed.sql` when the volume is empty.
+- `make compose/dev/up` starts SQLite dev and initializes the database from all SQLite migrations plus `db/sqlite/seed.sql` when the volume is empty.
+- `make compose/stage/up` starts PostgreSQL stage and initializes from all PostgreSQL migrations plus `db/postgresql/seed.sql` when the database is empty.
 - `make compose/prod/up` does the same for a local prod-like PostgreSQL environment.
 
-Use migration commands separately when you want to test migration files against a disposable
-database. The migration workflow and the Docker reset/bootstrap workflow are not unified yet.
+The Docker reset/bootstrap workflow and the migration workflow now use the same migration-first
+ordering. Use `make db/migrate/smoke` for a disposable SQLite verification.
 
 ## SQLite In Docker
 
@@ -218,10 +229,9 @@ Dev Compose mounts a named volume at:
 /app/data
 ```
 
-On container startup, `docker/entrypoint.sh` checks the configured SQLite database path. If the database file is missing or empty, it runs:
+On container startup, `docker/entrypoint.sh` checks the configured SQLite database path. If the database file is missing or empty, it runs all SQLite migrations and then:
 
 ```text
-db/sqlite/schema_v0_1.sql
 db/sqlite/seed.sql
 ```
 
@@ -236,11 +246,10 @@ This removes the Compose volume, then lets the entrypoint initialize a fresh see
 
 ## PostgreSQL In Docker
 
-Stage and prod Compose mount named PostgreSQL data volumes. On first start, the official
-PostgreSQL image initializes the database from:
+Stage and prod Compose mount named PostgreSQL data volumes. On first start, the app entrypoint
+applies all PostgreSQL migrations and, when the catalog is empty, loads:
 
 ```text
-db/postgresql/schema_v0_1.sql
 db/postgresql/seed.sql
 ```
 

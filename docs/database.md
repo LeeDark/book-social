@@ -2,14 +2,15 @@
 
 Database docs are split by project stage:
 
-- [Database v0.1](database_v0_1.md): active SQLite development schema.
-- [Database v0.2 target](database_v0_2.md): planned normalized target schema.
+- [Database v0.1](database_v0_1.md): baseline schema created by migration `000001`.
+- [Database v0.2](database_v0_2.md): normalized catalog schema created by migration `000002`.
 
 Current state:
 
 - `APP_ENV=dev` uses SQLite and is the active local development path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
-- Baseline migration files exist and can be applied with the `golang-migrate` CLI.
+- Baseline and catalog-normalization migration files exist and can be applied with the
+  `golang-migrate` CLI.
 - PostgreSQL has a connection package and v0.1 book repository implementation.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
@@ -30,8 +31,8 @@ Migration files use matching sequence numbers where they represent the same doma
 000001_create_v0_1_schema.down.sql
 ```
 
-The first migration pair is the v0.1 baseline schema. Future v0.2 schema changes should add
-new numbered migration pairs instead of editing the baseline migration.
+The first migration pair is the v0.1 baseline schema. Migration `000002` normalizes catalog
+relationships and adds cover metadata without editing the baseline migration.
 
 Run pending SQLite migrations against the default local database:
 
@@ -74,10 +75,15 @@ go install -tags 'sqlite postgres' github.com/golang-migrate/migrate/v4/cmd/migr
 The PostgreSQL baseline migration contains multiple SQL statements, so the PostgreSQL migration
 URL should include `x-multi-statement=true`.
 
-Reset and bootstrap scripts do not use migrations yet.
-
 CI runs Go tests, `go vet`, and lint. It does not run database migrations or Docker Compose
-workflows yet. Migration smoke checks should be run locally against disposable databases.
+The local migration and seed smoke check is:
+
+```bash
+make db/migrate/smoke
+```
+
+It verifies a clean migration plus seed, migration of one v0.1 catalog row, and the documented
+down-migration path. CI does not run this target or Docker Compose workflows yet.
 
 ## Reset And Seed
 
@@ -88,9 +94,8 @@ used for local development or disposable test data.
 seed SQL is development data, not production data. It is expected to run after a fresh schema
 or reset; it is not treated as a repeatable data migration.
 
-The current reset scripts apply the v0.1 schema SQL and then the matching seed SQL directly.
-Later, reset should destroy only disposable local database state, run all migrations up, and then
-apply seed data.
+Reset scripts destroy only disposable local database state, run all migrations up, and then apply
+the matching seed SQL.
 
 For local SQLite reset:
 
@@ -99,7 +104,7 @@ make db/reset
 ```
 
 This runs `db/sqlite/reset-dev-db.sh`, which removes the configured SQLite database file,
-applies `db/sqlite/schema_v0_1.sql`, and then applies `db/sqlite/seed.sql`.
+applies all SQLite migrations, and then applies `db/sqlite/seed.sql`.
 
 For manual PostgreSQL reset, use `db/postgresql/reset-dev-db.sh` with PostgreSQL environment
 variables such as `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`.
@@ -127,10 +132,16 @@ make compose/prod/down
 make compose/prod/up
 ```
 
-For a PostgreSQL database, apply the v0.1 SQL files manually for now:
+For a disposable PostgreSQL database, `db/postgresql/reset-dev-db.sh` drops and recreates the
+`public` schema, applies all PostgreSQL migrations, and then applies `db/postgresql/seed.sql`.
+The PostgreSQL migration URL used by the script includes `x-multi-statement=true`.
+
+For a PostgreSQL database, apply migrations manually:
 
 ```bash
-psql "$APP_DB_DSN" -f db/postgresql/schema_v0_1.sql
+MIGRATIONS_DIR=./db/postgresql/migrations \
+MIGRATIONS_DATABASE_URL='postgres://user:password@localhost:5432/book_social?sslmode=disable&x-multi-statement=true' \
+make db/migrate/up
 psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 ```
 
@@ -139,11 +150,12 @@ psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 Tests do not use the local development database file.
 
 Current SQLite repository and HTTP integration tests create temporary or in-memory SQLite
-databases inside the test process. Shared helpers in `internal/testutil` create SQLite test
-databases, apply the minimal catalog schema, and optionally seed a small deterministic catalog
-fixture.
+databases inside the test process and still exercise the v0.1 read-side until v0.2.3. The shared
+v0.2 helper creates the normalized catalog schema and a deterministic multi-relation fixture for
+migration/seed checks.
 
 This keeps tests fast and isolated without depending on the full development seed dataset.
-PostgreSQL repository tests are opt-in. Shared helpers in `internal/testutil` open the configured
-test database, drop and recreate the `public` schema, and apply the minimal PostgreSQL catalog test
-schema. Set `BOOK_SOCIAL_POSTGRES_TEST_DSN` to a disposable PostgreSQL database DSN to run them.
+PostgreSQL repository tests are opt-in and still exercise the v0.1 read-side. The v0.2 helper
+opens the configured disposable database, resets `public`, and applies a normalized catalog
+fixture. Set `BOOK_SOCIAL_POSTGRES_TEST_DSN` to run PostgreSQL tests. Because helpers reset one
+shared schema, run packages sequentially with `go test -p 1 ./...` when using one DSN.

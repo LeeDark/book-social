@@ -459,3 +459,33 @@ Decision:
 - Use `golang-migrate` CLI instead of a custom in-project migration runner.
 - Keep Docker Compose dev/stage/prod bootstrap on schema plus seed SQL for now.
 - Treat migration smoke tests as local/manual until CI grows database service jobs.
+
+## 2026-08-03 — v0.2.2 catalog domain model closure
+
+Result:
+- Recorded decisions for legacy `library`/`shelves`/`tags`, strict down-migration limits, stable
+  slugs, and the local-only CI boundary.
+- Added SQLite and PostgreSQL `000002_normalize_catalog` migrations for many-to-many authors and
+  genres plus URL/metadata-only covers.
+- Preserved v0.1 relationships during migration and removed the old direct book FK columns.
+- Updated SQLite and PostgreSQL seed data to populate junction tables.
+- Switched SQLite reset, PostgreSQL reset, and Docker/Compose bootstrap to migrations followed by
+  seed data.
+- Added v0.2 SQLite/PostgreSQL test helpers and checks for normalized relationships and cover
+  uniqueness.
+- Extended `make db/migrate/smoke` to cover clean seed, v0.1 data migration, and down-migration.
+- Updated database, development, README, roadmap, project-context, and task-history documentation.
+
+Decisions:
+- Legacy library tables remain isolated demo data; `library_items` is deferred to v0.3.
+- Down-migration refuses ambiguous multi-author or multi-genre data instead of dropping links.
+- Slugs remain stable, unique per entity type; redirect behavior after a change is deferred.
+- SQLite migration smoke remains local/manual. A PostgreSQL CI service job is deferred.
+- v0.2.3 is a separate dependent branch for read-side catalog adaptation.
+
+Validation:
+- `make db/migrate/smoke`
+- `GOCACHE=/tmp/book-social-go-cache make test`
+- `git diff --check`
+- PostgreSQL tests pass with a disposable DSN when run sequentially (`go test -p 1 ./...`); they
+  skip when `BOOK_SOCIAL_POSTGRES_TEST_DSN` is unset.

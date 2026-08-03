@@ -42,9 +42,16 @@ Current rendering direction:
 Current infrastructure caveat:
 - `APP_ENV=dev` uses SQLite and is the active local database path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
-- PostgreSQL catalog repository methods implement the current v0.1 SQLite behavior.
-- Baseline SQLite and PostgreSQL migrations exist under `db/*/migrations`.
+- PostgreSQL catalog repository methods still implement the current v0.1 read-side; v0.2.3 will
+  adapt them to normalized relations.
+- SQLite and PostgreSQL v0.1 baseline plus v0.2 normalization migrations exist under
+  `db/*/migrations`.
 - Migration commands use the installed `golang-migrate` CLI through `make db/migrate/up` and `make db/migrate/down`.
-- Reset and Docker bootstrap still use schema plus seed SQL directly until the reset workflow is migrated.
+- Reset and Docker/Compose bootstrap apply all migrations first and then seed SQL.
+- `make db/migrate/smoke` checks clean setup, seed counts, v0.1 relationship migration, and down.
+- CI currently keeps migration smoke and a PostgreSQL service job local/manual; PostgreSQL tests
+  use a disposable DSN and should run with `go test -p 1` when sharing one database.
+- Legacy `library`, `shelves`, and `tags` remain demo structures. The final `library_items` model is
+  deferred to v0.3.
 - Docker/Compose are supported as local environment workflows for SQLite dev and PostgreSQL stage/prod.
 - Docker/Compose are not production-ready infrastructure.
