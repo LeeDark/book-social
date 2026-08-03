@@ -108,8 +108,12 @@ db/migrate/smoke:
 		smoke_db="$$smoke_dir/book_social.db"; \
 		trap 'rm -f "$$smoke_db" "$$smoke_db-shm" "$$smoke_db-wal"; rmdir "$$smoke_dir"' EXIT; \
 		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$smoke_db" up; \
+		sqlite3 "$$smoke_db" < ./db/sqlite/seed.sql; \
+		counts="$$(sqlite3 -noheader -separator '|' "$$smoke_db" \
+			"SELECT (SELECT COUNT(*) FROM books) || '|' || (SELECT COUNT(*) FROM book_authors) || '|' || (SELECT COUNT(*) FROM book_genres);")"; \
+		test "$$counts" = "109|109|109"; \
 		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$smoke_db" down 1; \
-		echo "SQLite migration smoke check passed"
+		echo "SQLite migration and seed smoke check passed"
 
 .PHONY: db/shell
 ## db/shell: open the local development database in sqlite3
