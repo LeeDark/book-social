@@ -150,12 +150,11 @@ psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 Tests do not use the local development database file.
 
 Current SQLite repository and HTTP integration tests create temporary or in-memory SQLite
-databases inside the test process and still exercise the v0.1 read-side until v0.2.3. The shared
-v0.2 helper creates the normalized catalog schema and a deterministic multi-relation fixture for
-migration/seed checks.
+databases inside the test process and exercise the normalized v0.2 catalog read-side. The shared
+v0.2 helper creates the normalized catalog schema and a deterministic multi-relation fixture.
 
 This keeps tests fast and isolated without depending on the full development seed dataset.
-PostgreSQL repository tests are opt-in and still exercise the v0.1 read-side. The v0.2 helper
-opens the configured disposable database, resets `public`, and applies a normalized catalog
-fixture. Set `BOOK_SOCIAL_POSTGRES_TEST_DSN` to run PostgreSQL tests. Because helpers reset one
-shared schema, run packages sequentially with `go test -p 1 ./...` when using one DSN.
+PostgreSQL repository tests are opt-in and exercise the same normalized v0.2 catalog read-side.
+The helper opens the configured disposable database, resets `public`, and applies the normalized
+catalog fixture. Set `BOOK_SOCIAL_POSTGRES_TEST_DSN` to run PostgreSQL tests. Because helpers
+reset one shared schema, run packages sequentially with `go test -p 1 ./...` when using one DSN.
