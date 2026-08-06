@@ -1,8 +1,7 @@
 # Database v0.2
 
 Migration `000002_normalize_catalog` creates this schema after the v0.1 baseline migration.
-The database/bootstrap path is v0.2, while application read repositories remain v0.1-shaped until
-the dependent v0.2.3 branch.
+The database/bootstrap path and SQLite/PostgreSQL catalog read repositories use this v0.2 shape.
 
 Main changes from v0.1:
 

@@ -36,8 +36,11 @@ HTTP handler
   revisit conditions live in `docs/backlog.md`.
 - Use SQLite for `APP_ENV=dev`.
 - Use PostgreSQL for `APP_ENV=stage` and `APP_ENV=prod`.
-- Keep the v0.1 catalog repository behavior aligned between SQLite and PostgreSQL.
-- Introduce migrations later, after the v0.1 baseline is documented.
+- Keep the normalized v0.2 catalog read contract aligned between SQLite and PostgreSQL.
+- Use migrations for schema evolution; reset and local Compose bootstrap apply migrations before
+  deterministic seed data.
+- Keep catalog cards and details on explicit view models: authors and genres are collections, and
+  details may select a `front` cover from cover metadata.
 
 ## Package Boundaries
 

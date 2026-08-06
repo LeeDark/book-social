@@ -1,6 +1,7 @@
 # Database v0.1
 
-This describes the active v0.1 schema used by local SQLite development and PostgreSQL stage/prod environments.
+This describes the historical v0.1 baseline schema. Migration `000002_normalize_catalog` advances
+local SQLite and PostgreSQL stage/prod databases to the current v0.2 catalog schema.
 
 Source files:
 - `db/sqlite/schema_v0_1.sql`
@@ -17,8 +18,9 @@ Source files:
 
 - SQLite is the active local development database.
 - PostgreSQL is used for `APP_ENV=stage` and `APP_ENV=prod`.
-- The v0.1 book repository behavior is implemented for both SQLite and PostgreSQL.
-- The v0.1 baseline migration files can be applied with the `golang-migrate` CLI.
+- The v0.1 baseline migration files can be used to understand the starting schema before v0.2.
+- Current reset and bootstrap paths apply all migrations, including v0.2 normalization, before
+  loading seed data.
 - Local reset recreates the database from schema and seed SQL.
 
 Reset command:

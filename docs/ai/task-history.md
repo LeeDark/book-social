@@ -505,3 +505,31 @@ Result:
 Decision:
 - The roadmap remains the source of truth for current priority and accepted release scope.
 - Backlog entries are candidates, not commitments, and move to the roadmap only after review.
+
+## 2026-08-06 — v0.2.3 Catalog v0.2 closure
+
+Result:
+- Replaced the v0.1 single-author/single-genre catalog read shape with normalized `Authors`,
+  `Genres`, and `Covers` collections across SQLite and PostgreSQL repositories.
+- Kept catalog filters and stable MPA routes intact. Filters select matching books while cards and
+  author pages retain each selected book's full relationships.
+- Updated catalog, book-details, author, and HTMX partial templates to render multiple authors and
+  genres from view models.
+- Added URL-only cover mapping for details: the `front` variant renders as an image and missing or
+  non-front-only data uses the existing CSS placeholder.
+- Replaced the home page's hardcoded book-card data with a narrow featured-books provider and the
+  shared card view model. The section no longer promises a chronological "Recently added" order.
+- Removed the executable Templ/gomponents spikes and retained their historical notes.
+- Documented current normalized catalog behavior and marked v0.2.3 closed; v0.2.4 HTTP Foundation
+  is the next planned release.
+
+Validation:
+- Focused service, handler, SQLite, PostgreSQL, and app integration tests passed.
+- PostgreSQL parity tests passed against a disposable PostgreSQL DSN, run sequentially.
+- `GOCACHE=/tmp/book-social-go-cache make test` passed.
+- `make db/migrate/smoke` passed.
+- `git diff --check` passed.
+
+Decision:
+- Keep external cover URLs as read metadata only. File upload, proxying, caching, galleries,
+  search, sorting, pagination, auth, and user-library behavior remain outside v0.2.3.

@@ -6,7 +6,7 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-Current v0.2.2 database foundation with v0.1 read-side:
+Current v0.2.3 normalized catalog read-side:
 - Home and About pages.
 - Book catalog page.
 - Book details page.
@@ -17,9 +17,12 @@ Current v0.2.2 database foundation with v0.1 read-side:
 - Unit tests and small HTTP/integration-style tests.
 - HTMX catalog filter spike as progressive enhancement.
 - Environment-based database selection: SQLite for `dev`, PostgreSQL for `stage` and `prod`.
-- v0.1 catalog repository behavior is implemented for both SQLite and PostgreSQL.
+- SQLite and PostgreSQL implement the same normalized catalog read contract.
 - `golang-migrate` CLI wiring and v0.1/v0.2 migrations for SQLite and PostgreSQL.
 - Normalized catalog tables for many-to-many authors/genres and URL-only cover metadata.
+- Catalog cards and book details render all related authors and genres.
+- Book details display the `front` cover URL when available and a CSS placeholder otherwise.
+- The home page uses the shared catalog-card read model for a deterministic featured selection.
 - Migration-first reset and Docker/Compose bootstrap followed by development seed data.
 - Local migration/seed smoke checks and v0.2 SQLite/PostgreSQL test helpers.
 
@@ -171,11 +174,11 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Start the dependent v0.2.3 branch to adapt catalog read models and repositories.
+- Start v0.2.4 HTTP Foundation.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:
 - Quality baseline: format/test/lint/CI.
 - Database strategy: migrations and schema evolution (v0.2.2 complete).
-- Catalog read model updates for the v0.2 schema (v0.2.3 next).
+- Catalog read model updates for the v0.2 schema (v0.2.3 complete).
 - Authentication and user flows after the data foundation is clearer.

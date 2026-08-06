@@ -11,7 +11,7 @@ Current state:
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
 - Baseline and catalog-normalization migration files exist and can be applied with the
   `golang-migrate` CLI.
-- PostgreSQL has a connection package and v0.1 book repository implementation.
+- SQLite and PostgreSQL implement the normalized v0.2 catalog read-side.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
 ## Migration Layout

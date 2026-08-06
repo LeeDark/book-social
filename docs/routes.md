@@ -29,6 +29,16 @@ Unknown filter slugs return an empty catalog result, not a 404.
 
 - Unknown book slugs return 404.
 - Unknown author slugs return 404.
+- Book details render all related authors and genres. When no `front` cover metadata exists, the
+  page renders its CSS cover placeholder.
+- Author pages show the selected author's details and catalog cards with each book's complete
+  author and genre lists.
+
+## Home Page
+
+`GET /` renders a small deterministic featured selection through the same catalog card read model
+as the other pages. It does not claim a chronological "Recently added" order because books do not
+currently have `created_at`.
 
 ## HTMX Catalog Filter Spike
 
