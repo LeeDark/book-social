@@ -1,6 +1,7 @@
 package books
 
 type Genre struct {
+	ID          int
 	Name        string
 	Slug        string
 	Description string
@@ -15,11 +16,23 @@ type Author struct {
 	Description string
 }
 
+type Cover struct {
+	ID             int
+	Variant        string
+	URL            string
+	MIMEType       *string
+	ByteSize       *int64
+	Width          *int
+	Height         *int
+	ChecksumSHA256 *string
+}
+
 type Book struct {
 	ID          int
 	Title       string
 	Slug        string
 	Description string
-	Author      Author
-	Genre       Genre
+	Authors     []Author
+	Genres      []Genre
+	Covers      []Cover
 }

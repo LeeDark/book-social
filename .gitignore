@@ -8,3 +8,4 @@ data/*.db-wal
 
 docs/archive
 docs/private
+.empryo/

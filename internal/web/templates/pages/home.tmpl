@@ -34,17 +34,17 @@
         </div>
     </section>
 
-    <section aria-labelledby="latest-books-heading">
+    <section aria-labelledby="featured-books-heading">
         <div class="section-heading">
             <div>
-                <p class="eyebrow">Recently added</p>
-                <h2 id="latest-books-heading">Latest books</h2>
+                <p class="eyebrow">Catalog highlights</p>
+                <h2 id="featured-books-heading">Featured books</h2>
             </div>
             <a href="/books">View catalog</a>
         </div>
 
         <div class="grid book-grid">
-            {{range .LatestBooks}}
+            {{range .FeaturedBooks}}
                 {{template "book_card" .}}
             {{end}}
         </div>

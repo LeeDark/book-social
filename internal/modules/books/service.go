@@ -12,6 +12,10 @@ type CatalogPageProvider interface {
 	AuthorPage(ctx context.Context, slug string) (AuthorPageData, error)
 }
 
+type FeaturedBooksProvider interface {
+	FeaturedBooks(ctx context.Context) ([]BookCardView, error)
+}
+
 type CatalogService struct {
 	repo BookRepository
 }
@@ -43,22 +47,41 @@ func (s *CatalogService) CatalogPage(ctx context.Context, filter BookFilter) (Ca
 	}, nil
 }
 
+func (s *CatalogService) FeaturedBooks(ctx context.Context) ([]BookCardView, error) {
+	bookList, err := s.repo.ListBooks(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	const featuredBooksLimit = 3
+	if len(bookList) > featuredBooksLimit {
+		bookList = bookList[:featuredBooksLimit]
+	}
+
+	return mapBooksToCards(bookList), nil
+}
+
 func (s *CatalogService) BookDetailsPage(ctx context.Context, slug string) (BookDetailsPageData, error) {
 	book, err := s.repo.GetBookBySlug(ctx, slug)
 	if err != nil {
 		return BookDetailsPageData{}, err
 	}
 
+	pageLabel := book.Title
+	if len(book.Genres) > 0 {
+		pageLabel = book.Genres[0].Name + ": " + book.Title
+	}
+
 	return BookDetailsPageData{
 		Page: view.Page{
-			Title:       book.Genre.Name + ": " + book.Title,
+			Title:       pageLabel,
 			Description: "Book Details page",
 			ActiveNav:   "catalog",
 			Nav:         view.MainNavigation(),
 			Breadcrumbs: []view.Breadcrumb{
 				{Label: "Home", Href: "/"},
 				{Label: "Catalog", Href: "/books"},
-				{Label: book.Genre.Name + ": " + book.Title},
+				{Label: pageLabel},
 			},
 		},
 		Book: mapBookToDetailsView(book),
@@ -76,7 +99,7 @@ func (s *CatalogService) AuthorPage(ctx context.Context, slug string) (AuthorPag
 		return AuthorPageData{}, err
 	}
 
-	authorName := author.FirstName + " " + author.SecondName + " " + author.SurName
+	authorName := authorFullName(author)
 
 	return AuthorPageData{
 		Page: view.Page{

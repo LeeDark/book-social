@@ -167,10 +167,3 @@ compose/prod/up:
 ## compose/prod/down: stop the prod Compose environment and remove volumes
 compose/prod/down:
 	$(COMPOSE_PROD) down -v
-
-# --- Tools ---
-
-.PHONY: templ/generate
-## templ/generate: generate Go code from .templ files
-templ/generate:
-	go tool templ generate

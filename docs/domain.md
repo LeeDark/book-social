@@ -3,9 +3,9 @@
 This document describes domain concepts. Database column details live in:
 
 - [Database v0.1](database_v0_1.md)
-- [Database v0.2 target](database_v0_2.md)
+- [Database v0.2](database_v0_2.md)
 
-## Current v0.1 Model
+## Current v0.2 Catalog Model
 
 Book Social currently models a small book catalog.
 
@@ -16,12 +16,13 @@ A book has:
 - title
 - slug
 - description
-- one author
-- one genre
+- zero or more authors
+- zero or more genres
+- zero or more cover metadata records
 
-Current limitation:
-
-- v0.1 supports only one author and one genre per book.
+Catalog reads preserve deterministic ordering: books by title and ID; related authors, genres,
+and covers by their documented fields and ID. A catalog filter selects matching books without
+hiding the other authors or genres of a selected book.
 
 ### Author
 
@@ -61,23 +62,20 @@ The catalog can:
 - combine author and genre filters
 - open book details by book slug
 
+### Cover
+
+A cover is URL metadata associated with a book. Its variant and optional technical metadata are
+available to the read-side. Book details use the `front` variant when present; otherwise the UI
+uses a CSS placeholder. Uploading, proxying, or storing cover files is not part of the current
+model.
+
+The normalized schema is described in [database_v0_2.md](database_v0_2.md).
+
 ### User, Library, Shelves, Tags
 
-The v0.1 schema includes users, roles, shelves, tags, and library tables, but current user-facing behavior is focused on the public catalog.
-
-User accounts, authentication, and library workflows are planned later.
-
-## v0.2 Target
-
-v0.2 should normalize the catalog model:
-
-- books can have multiple authors
-- books can have multiple genres
-- covers can be stored as URL metadata
-- `library` can become `library_items`
-- tags can move to a join table
-
-The target schema is described in [database_v0_2.md](database_v0_2.md).
+The schema still contains legacy/demo `library`, `shelves`, and `tags` structures. They are not
+the user-facing personal-library model. Authentication and the final `library_items` model are
+deferred to later v0.2 and v0.3 work.
 
 ## Current Design Rules
 

@@ -27,12 +27,6 @@ Test:
 make test
 ```
 
-Generate Templ files:
-
-```bash
-make templ/generate
-```
-
 Reset local SQLite database:
 
 ```bash
@@ -118,8 +112,8 @@ Runtime database selection:
 
 - `APP_ENV=dev` opens `APP_DB_DSN` with the SQLite driver.
 - `APP_ENV=stage` and `APP_ENV=prod` open `APP_DB_DSN` with the PostgreSQL driver.
-- The v0.1 book repository behavior is implemented for both SQLite and PostgreSQL; its read-side
-  migration to v0.2 is deferred to v0.2.3.
+- SQLite and PostgreSQL implement the normalized v0.2 catalog read-side, including multi-author,
+  multi-genre, and book-cover metadata reads.
 - PostgreSQL databases are initialized through migrations plus seed in the reset and Compose
   bootstrap paths.
 
@@ -149,6 +143,16 @@ make db/migrate/down \
   MIGRATIONS_DIR=./db/postgresql/migrations \
   MIGRATIONS_DATABASE_URL='postgres://user:password@localhost:5432/book_social?sslmode=disable&x-multi-statement=true'
 ```
+
+Run the opt-in PostgreSQL repository suite against a disposable database:
+
+```bash
+BOOK_SOCIAL_POSTGRES_TEST_DSN='postgres://user:password@localhost:5432/book_social_test?sslmode=disable' \
+  GOCACHE=/tmp/book-social-go-cache go test -p 1 ./internal/storage/postgresql
+```
+
+The test helper resets the database's `public` schema; never point this variable at non-disposable
+data.
 
 ## Docker And Compose
 

@@ -33,17 +33,21 @@ Current catalog behavior:
 - `/books?author={authorSlug}&genre={genreSlug}` applies both filters.
 - `/books/{bookSlug}` shows book details.
 - `/authors/{authorSlug}` shows an author page and books by that author.
+- Catalog cards and book details show all related authors and genres.
+- Book details use `front` cover metadata when available and a CSS placeholder when it is absent.
+- The home page loads a deterministic featured selection through the shared catalog-card read model.
 
 Current rendering direction:
 - `html/template` is the primary rendering path.
 - HTMX is present as a small progressive-enhancement spike for catalog filters.
-- Templ and gomponents routes are experiments documented in spike notes, not the main frontend direction.
+- Completed Templ and gomponents experiments remain documented in spike notes, but their routes,
+  dependencies, and executable code have been removed. Revisit conditions live in
+  `docs/backlog.md`.
 
 Current infrastructure caveat:
 - `APP_ENV=dev` uses SQLite and is the active local database path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
-- PostgreSQL catalog repository methods still implement the current v0.1 read-side; v0.2.3 will
-  adapt them to normalized relations.
+- SQLite and PostgreSQL catalog repositories implement the same normalized v0.2 read contract.
 - SQLite and PostgreSQL v0.1 baseline plus v0.2 normalization migrations exist under
   `db/*/migrations`.
 - Migration commands use the installed `golang-migrate` CLI through `make db/migrate/up` and `make db/migrate/down`.
@@ -55,3 +59,7 @@ Current infrastructure caveat:
   deferred to v0.3.
 - Docker/Compose are supported as local environment workflows for SQLite dev and PostgreSQL stage/prod.
 - Docker/Compose are not production-ready infrastructure.
+
+Next planned release:
+- v0.2.4 HTTP Foundation: review middleware, shutdown, error behavior, headers, static-cache
+  policy, and timeout scope before auth work.

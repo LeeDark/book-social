@@ -25,18 +25,22 @@ HTTP handler
 - `internal/storage/sqlite`: SQLite implementation of repository interfaces.
 - `internal/storage/postgresql`: PostgreSQL connection and repository implementation.
 - `internal/http`: renderer, response helpers, middleware, shared page/navigation views.
-- `internal/web`: server templates, static assets, and rendering experiments.
+- `internal/web`: server templates and static assets.
 
 ## Current Decisions
 
 - Keep the project simple and educational.
 - Prefer clear Go code over framework-heavy abstractions.
 - Keep `html/template` as the primary rendering path.
-- Keep Templ and gomponents as experiments until there is a stronger reason to migrate.
+- Keep Templ and gomponents out of executable code after the completed comparison spikes; their
+  revisit conditions live in `docs/backlog.md`.
 - Use SQLite for `APP_ENV=dev`.
 - Use PostgreSQL for `APP_ENV=stage` and `APP_ENV=prod`.
-- Keep the v0.1 catalog repository behavior aligned between SQLite and PostgreSQL.
-- Introduce migrations later, after the v0.1 baseline is documented.
+- Keep the normalized v0.2 catalog read contract aligned between SQLite and PostgreSQL.
+- Use migrations for schema evolution; reset and local Compose bootstrap apply migrations before
+  deterministic seed data.
+- Keep catalog cards and details on explicit view models: authors and genres are collections, and
+  details may select a `front` cover from cover metadata.
 
 ## Package Boundaries
 

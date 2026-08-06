@@ -6,7 +6,7 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-Current v0.2.2 database foundation with v0.1 read-side:
+Current v0.2.3 normalized catalog read-side:
 - Home and About pages.
 - Book catalog page.
 - Book details page.
@@ -17,14 +17,16 @@ Current v0.2.2 database foundation with v0.1 read-side:
 - Unit tests and small HTTP/integration-style tests.
 - HTMX catalog filter spike as progressive enhancement.
 - Environment-based database selection: SQLite for `dev`, PostgreSQL for `stage` and `prod`.
-- v0.1 catalog repository behavior is implemented for both SQLite and PostgreSQL.
+- SQLite and PostgreSQL implement the same normalized catalog read contract.
 - `golang-migrate` CLI wiring and v0.1/v0.2 migrations for SQLite and PostgreSQL.
 - Normalized catalog tables for many-to-many authors/genres and URL-only cover metadata.
+- Catalog cards and book details render all related authors and genres.
+- Book details display the `front` cover URL when available and a CSS placeholder otherwise.
+- The home page uses the shared catalog-card read model for a deterministic featured selection.
 - Migration-first reset and Docker/Compose bootstrap followed by development seed data.
 - Local migration/seed smoke checks and v0.2 SQLite/PostgreSQL test helpers.
 
 Not current production direction:
-- Templ and gomponents routes are experiments only.
 - Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
 - Authentication, user libraries, search, pagination, and social features are planned later.
 
@@ -38,7 +40,6 @@ Not current production direction:
 - `golang-migrate` CLI for schema migrations, built with SQLite and PostgreSQL drivers
 - Pico CSS plus project CSS
 - HTMX vendored locally for a small catalog filter spike
-- Templ and gomponents as rendering experiments
 
 ## Run Locally
 
@@ -150,7 +151,7 @@ internal/modules/books/  books/catalog module
 internal/storage/sqlite/ SQLite repository implementation
 internal/storage/postgresql/ PostgreSQL connection and repository implementation
 internal/http/           rendering, response helpers, middleware, view models
-internal/web/            templates, static assets, rendering experiments
+internal/web/            server templates and static assets
 db/sqlite/               local SQLite schema, migrations, seed, reset script
 db/postgresql/           PostgreSQL schema, migrations, seed, reset script
 docs/                    project documentation
@@ -167,16 +168,17 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Database v0.2](docs/database_v0_2.md)
 - [Testing](docs/testing.md)
 - [Roadmap](docs/roadmap.md)
+- [Technical backlog](docs/backlog.md)
 - [AI project context](docs/ai/project-context.md)
 
 ## Roadmap Summary
 
 Near-term work:
-- Start the dependent v0.2.3 branch to adapt catalog read models and repositories.
+- Start v0.2.4 HTTP Foundation.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:
 - Quality baseline: format/test/lint/CI.
 - Database strategy: migrations and schema evolution (v0.2.2 complete).
-- Catalog read model updates for the v0.2 schema (v0.2.3 next).
+- Catalog read model updates for the v0.2 schema (v0.2.3 complete).
 - Authentication and user flows after the data foundation is clearer.

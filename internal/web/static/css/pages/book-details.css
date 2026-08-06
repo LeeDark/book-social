@@ -34,6 +34,12 @@
     text-decoration: none;
 }
 
+.book-details__cover--image {
+    display: block;
+    padding: 0;
+    object-fit: cover;
+}
+
 .book-details__body {
     min-width: 0;
 }

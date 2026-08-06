@@ -78,7 +78,7 @@ func newRoutesTestApp(t *testing.T) *App {
 		Renderer: renderer,
 	}
 
-	return New(deps, NewHomeHandler(renderer, logger), fakeCatalogHandler{})
+	return New(deps, NewHomeHandler(fakeFeaturedBooksProvider{}, renderer, logger), fakeCatalogHandler{})
 }
 
 var _ CatalogHandler = fakeCatalogHandler{}

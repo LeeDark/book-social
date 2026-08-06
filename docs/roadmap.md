@@ -2,6 +2,9 @@
 
 This roadmap is a working guide, not a release promise.
 
+Unprioritized technical ideas and revisit conditions live in [backlog.md](backlog.md). The backlog
+does not change the active priority or release scope until an item is explicitly promoted here.
+
 ## Planning Principles
 
 - Each release should deliver an observable user or operator outcome, not only introduce
@@ -137,20 +140,25 @@ Definition of Done:
 
 Goal: restore and improve catalog reads after the schema change.
 
-- [ ] Add read models for book cards with multiple authors and genres.
-- [ ] Add a book details read model with authors, genres, and covers.
-- [ ] Add author details read model with the author's books.
-- [ ] Update catalog page.
-- [ ] Update book details page.
-- [ ] Update author details page.
-- [ ] Update the home page to use the new read model.
-- [ ] Update MPA endpoint documentation in `docs/routes.md` or a focused endpoint doc.
+Status: closed. The next release is [v0.2.4 HTTP Foundation](#v024-http-foundation).
+
+- [x] Remove executable Templ/gomponents spikes after recording their findings; keep
+  `html/template` as the application rendering path and defer reconsideration to the backlog.
+- [x] Add read models for book cards with multiple authors and genres.
+- [x] Add a book details read model with authors, genres, and covers.
+- [x] Add author details read model with the author's books.
+- [x] Update catalog page.
+- [x] Update book details page.
+- [x] Update author details page.
+- [x] Update the home page to use the new read model.
+- [x] Update MPA endpoint documentation in `docs/routes.md` or a focused endpoint doc.
 
 Definition of Done:
 
-- [ ] Stable routes still work where possible: `/`, `/books`, `/books/{slug}`, `/authors/{slug}`.
-- [ ] Repository and handler tests cover the new catalog read shape.
-- [ ] Templates still use view/page models rather than raw database structs.
+- [x] Stable routes still work: `/`, `/books`, `/books/{slug}`, `/authors/{slug}`.
+- [x] Repository and handler tests cover the new catalog read shape, including opt-in PostgreSQL
+  parity against a disposable DSN.
+- [x] Templates still use view/page models rather than raw database structs.
 
 ## v0.2.4 HTTP Foundation
 

@@ -15,8 +15,8 @@ func TestSQLiteCatalogV2TestDBUsesNormalizedRelationships(t *testing.T) {
 	}{
 		{name: "books", query: `SELECT COUNT(*) FROM books`, want: 2},
 		{name: "book authors", query: `SELECT COUNT(*) FROM book_authors`, want: 3},
-		{name: "book genres", query: `SELECT COUNT(*) FROM book_genres`, want: 2},
-		{name: "covers", query: `SELECT COUNT(*) FROM covers`, want: 1},
+		{name: "book genres", query: `SELECT COUNT(*) FROM book_genres`, want: 3},
+		{name: "covers", query: `SELECT COUNT(*) FROM covers`, want: 2},
 	}
 
 	for _, check := range checks {
@@ -41,6 +41,45 @@ func TestSQLiteCatalogV2TestDBUsesNormalizedRelationships(t *testing.T) {
 	}
 	if columns != 0 {
 		t.Fatalf("legacy relationship columns = %d, want 0", columns)
+	}
+
+	relationshipChecks := []struct {
+		name  string
+		query string
+		want  int
+	}{
+		{
+			name:  "book with multiple authors",
+			query: `SELECT COUNT(*) FROM book_authors WHERE book_id = 1`,
+			want:  2,
+		},
+		{
+			name:  "book with multiple genres",
+			query: `SELECT COUNT(*) FROM book_genres WHERE book_id = 1`,
+			want:  2,
+		},
+		{
+			name:  "book with front cover",
+			query: `SELECT COUNT(*) FROM covers WHERE book_id = 1 AND variant = 'front'`,
+			want:  1,
+		},
+		{
+			name:  "book without cover",
+			query: `SELECT COUNT(*) FROM covers WHERE book_id = 2`,
+			want:  0,
+		},
+	}
+
+	for _, check := range relationshipChecks {
+		t.Run(check.name, func(t *testing.T) {
+			var got int
+			if err := db.QueryRowContext(context.Background(), check.query).Scan(&got); err != nil {
+				t.Fatalf("query relationship count: %v", err)
+			}
+			if got != check.want {
+				t.Fatalf("count = %d, want %d", got, check.want)
+			}
+		})
 	}
 }
 

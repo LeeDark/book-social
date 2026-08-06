@@ -22,8 +22,7 @@ func NewSQLiteCatalogTestDB(t *testing.T, ctx context.Context) *sql.DB {
 }
 
 // NewSQLiteCatalogV2TestDB creates the normalized catalog schema used by the
-// v0.2 migration and seed checks. Repository tests that still exercise the
-// v0.1 read-side keep using NewSQLiteCatalogTestDB until v0.2.3.
+// v0.2 read-side, migration, and seed checks.
 func NewSQLiteCatalogV2TestDB(t *testing.T, ctx context.Context) *sql.DB {
 	t.Helper()
 
@@ -207,16 +206,38 @@ func SeedSQLiteCatalogV2TestData(t *testing.T, ctx context.Context, db *sql.DB) 
 			(3, 'Mary', '', 'Shelley', 'mary-shelley', 'English writer.');`,
 		`INSERT INTO genres(id, name, slug, description) VALUES
 			(1, 'Classic', 'classic', 'Enduring literature.'),
-			(2, 'Horror', 'horror', 'Fiction intended to unsettle.');`,
+			(2, 'Horror', 'horror', 'Fiction intended to unsettle.'),
+			(3, 'Romance', 'romance', 'Love and relationships.');`,
 		`INSERT INTO books(id, title, slug, description) VALUES
 			(1, 'Pride and Prejudice', 'pride-and-prejudice', 'A novel of manners.'),
 			(2, 'Dracula', 'dracula', 'A gothic horror novel.');`,
 		`INSERT INTO book_authors(book_id, author_id) VALUES
 			(1, 1), (1, 3), (2, 2);`,
 		`INSERT INTO book_genres(book_id, genre_id) VALUES
-			(1, 1), (2, 2);`,
-		`INSERT INTO covers(book_id, variant, url, mime_type, width, height) VALUES
-			(1, 'front', 'https://example.test/covers/pride-and-prejudice.jpg', 'image/jpeg', 600, 900);`,
+			(1, 1), (1, 3), (2, 2);`,
+		`INSERT INTO covers(
+			book_id, variant, url, mime_type, byte_size, width, height, checksum_sha256
+		) VALUES
+			(
+				1,
+				'back',
+				'https://example.test/covers/pride-and-prejudice-back.jpg',
+				NULL,
+				NULL,
+				NULL,
+				NULL,
+				NULL
+			),
+			(
+				1,
+				'front',
+				'https://example.test/covers/pride-and-prejudice.jpg',
+				'image/jpeg',
+				245760,
+				600,
+				900,
+				'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+			);`,
 	}
 
 	execStatements(t, ctx, db, statements)

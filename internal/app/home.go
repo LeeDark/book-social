@@ -8,34 +8,21 @@ import (
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/http/response"
 	"github.com/LeeDark/book-social/internal/http/view"
+	"github.com/LeeDark/book-social/internal/modules/books"
 )
 
 type HomeHandler struct {
 	renderer *render.Renderer
 	logger   *slog.Logger
+	books    books.FeaturedBooksProvider
 }
 
 type HomePageData struct {
 	view.Page
-	LatestBooks []HomeBookCardData
-	Genres      []HomeGenreData
-	Benefits    []HomeFeatureData
-	ComingSoon  []HomeFeatureData
-}
-
-type HomeBookCardData struct {
-	Title           string
-	Slug            string
-	Description     string
-	AuthorName      string
-	AuthorURL       string
-	AuthorFilterURL string
-	GenreName       string
-	GenreURL        string
-	BookURL         string
-	CoverClass      string
-	ShowDetailsLink bool
-	UseHTMXFilters  bool
+	FeaturedBooks []books.BookCardView
+	Genres        []HomeGenreData
+	Benefits      []HomeFeatureData
+	ComingSoon    []HomeFeatureData
 }
 
 type HomeGenreData struct {
@@ -50,14 +37,21 @@ type HomeFeatureData struct {
 	Description string
 }
 
-func NewHomeHandler(renderer *render.Renderer, logger *slog.Logger) *HomeHandler {
+func NewHomeHandler(booksProvider books.FeaturedBooksProvider, renderer *render.Renderer, logger *slog.Logger) *HomeHandler {
 	return &HomeHandler{
 		renderer: renderer,
 		logger:   logger,
+		books:    booksProvider,
 	}
 }
 
 func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
+	featuredBooks, err := h.books.FeaturedBooks(r.Context())
+	if err != nil {
+		response.ServerError(w, r, h.logger, fmt.Errorf("get featured books: %w", err))
+		return
+	}
+
 	data := HomePageData{
 		Page: view.Page{
 			Title:       "Book Social",
@@ -65,53 +59,15 @@ func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
 			ActiveNav:   "home",
 			Nav:         view.MainNavigation(),
 		},
-		LatestBooks: latestHomeBooks(),
-		Genres:      homeGenres(),
-		Benefits:    homeBenefits(),
-		ComingSoon:  homeComingSoon(),
+		FeaturedBooks: featuredBooks,
+		Genres:        homeGenres(),
+		Benefits:      homeBenefits(),
+		ComingSoon:    homeComingSoon(),
 	}
 
 	if err := h.renderer.Render(w, http.StatusOK, "home.tmpl", data); err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("render home page: %w", err))
 		return
-	}
-}
-
-func latestHomeBooks() []HomeBookCardData {
-	return []HomeBookCardData{
-		{
-			Title:       "Pride and Prejudice",
-			Slug:        "pride-and-prejudice",
-			Description: "Elizabeth Bennet navigates family expectations, social pressure, and her changing judgment of the proud Mr. Darcy.",
-			AuthorName:  "Jane Austen",
-			AuthorURL:   "/authors/jane-austen",
-			GenreName:   "Romance",
-			GenreURL:    "/books?genre=romance",
-			BookURL:     "/books/pride-and-prejudice",
-			CoverClass:  "cover-1",
-		},
-		{
-			Title:       "Frankenstein",
-			Slug:        "frankenstein",
-			Description: "Victor Frankenstein creates a living being through scientific ambition, then recoils from the consequences.",
-			AuthorName:  "Mary Shelley",
-			AuthorURL:   "/authors/mary-shelley",
-			GenreName:   "Horror",
-			GenreURL:    "/books?genre=horror",
-			BookURL:     "/books/frankenstein",
-			CoverClass:  "cover-2",
-		},
-		{
-			Title:       "The Time Machine",
-			Slug:        "the-time-machine",
-			Description: "A scientist travels far into the future and discovers strange societies that reveal unsettling possibilities for humanity.",
-			AuthorName:  "H. G. Wells",
-			AuthorURL:   "/authors/h-g-wells",
-			GenreName:   "Science Fiction",
-			GenreURL:    "/books?genre=science-fiction",
-			BookURL:     "/books/the-time-machine",
-			CoverClass:  "cover-3",
-		},
 	}
 }
 

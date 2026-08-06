@@ -65,16 +65,16 @@ func TestCatalogServiceCatalogPageReturnsBooksFromRepository(t *testing.T) {
 				Title:       "Signal in the Stacks",
 				Slug:        "signal-in-the-stacks",
 				Description: "A library mystery.",
-				Author:      Author{ID: 2, FirstName: "Jon", SecondName: "A.", SurName: "Vale", Slug: "jon-a-vale"},
-				Genre:       Genre{Name: "Mystery", Slug: "mystery"},
+				Authors:     []Author{{ID: 2, FirstName: "Jon", SecondName: "A.", SurName: "Vale", Slug: "jon-a-vale"}},
+				Genres:      []Genre{{ID: 1, Name: "Mystery", Slug: "mystery"}},
 			},
 			{
 				ID:          7,
 				Title:       "A Field Guide to Tomorrow",
 				Slug:        "a-field-guide-to-tomorrow",
 				Description: "Hopeful science fiction.",
-				Author:      Author{ID: 3, FirstName: "Ada", SecondName: "M.", SurName: "Kern", Slug: "ada-m-kern"},
-				Genre:       Genre{Name: "Science Fiction", Slug: "science-fiction"},
+				Authors:     []Author{{ID: 3, FirstName: "Ada", SecondName: "M.", SurName: "Kern", Slug: "ada-m-kern"}},
+				Genres:      []Genre{{ID: 2, Name: "Science Fiction", Slug: "science-fiction"}},
 			},
 		},
 	})
@@ -98,11 +98,11 @@ func TestCatalogServiceCatalogPageReturnsBooksFromRepository(t *testing.T) {
 	if first.BookURL != "/books/signal-in-the-stacks" {
 		t.Errorf("first BookURL = %q", first.BookURL)
 	}
-	if first.AuthorName != "Jon A. Vale" {
-		t.Errorf("first AuthorName = %q", first.AuthorName)
+	if got, want := first.Authors[0].Name, "Jon A. Vale"; got != want {
+		t.Errorf("first author name = %q, want %q", got, want)
 	}
-	if first.GenreURL != "/books?genre=mystery" {
-		t.Errorf("first GenreURL = %q", first.GenreURL)
+	if got, want := first.Genres[0].URL, "/books?genre=mystery"; got != want {
+		t.Errorf("first genre URL = %q, want %q", got, want)
 	}
 	if !first.UseHTMXFilters {
 		t.Errorf("first UseHTMXFilters = false, want true")
@@ -131,15 +131,45 @@ func TestCatalogServiceCatalogPagePassesFilterToRepository(t *testing.T) {
 	}
 }
 
+func TestCatalogServiceFeaturedBooksReturnsLimitedSharedCardViews(t *testing.T) {
+	service := NewCatalogService(fakeBookRepository{
+		books: []Book{
+			{ID: 1, Title: "Alpha", Slug: "alpha", Authors: []Author{{FirstName: "Ada", Slug: "ada"}}, Genres: []Genre{{Name: "Classic", Slug: "classic"}}},
+			{ID: 2, Title: "Bravo", Slug: "bravo", Authors: []Author{{FirstName: "Bea", Slug: "bea"}}},
+			{ID: 3, Title: "Charlie", Slug: "charlie", Genres: []Genre{{Name: "Drama", Slug: "drama"}}},
+			{ID: 4, Title: "Delta", Slug: "delta"},
+		},
+	})
+
+	featured, err := service.FeaturedBooks(context.Background())
+	if err != nil {
+		t.Fatalf("FeaturedBooks() error = %v", err)
+	}
+	if got, want := len(featured), 3; got != want {
+		t.Fatalf("len(featured) = %d, want %d", got, want)
+	}
+	if featured[0].BookURL != "/books/alpha" || featured[0].UseHTMXFilters {
+		t.Errorf("first featured book = %#v", featured[0])
+	}
+	if got, want := featured[0].Authors[0].Name, "Ada"; got != want {
+		t.Errorf("first author = %q, want %q", got, want)
+	}
+	if got, want := featured[0].Genres[0].URL, "/books?genre=classic"; got != want {
+		t.Errorf("first genre URL = %q, want %q", got, want)
+	}
+}
+
 func TestCatalogServiceBookDetailsPageReturnsBookBySlug(t *testing.T) {
+	frontCoverURL := "https://example.test/covers/the-quiet-atlas.jpg"
 	service := NewCatalogService(fakeBookRepository{
 		book: Book{
 			ID:          8,
 			Title:       "The Quiet Atlas",
 			Slug:        "the-quiet-atlas",
 			Description: "A reflective journey.",
-			Author:      Author{ID: 1, FirstName: "Mira", SecondName: "L.", SurName: "Stone", Slug: "mira-l-stone"},
-			Genre:       Genre{Name: "Literary Fiction", Slug: "literary-fiction"},
+			Authors:     []Author{{ID: 1, FirstName: "Mira", SecondName: "L.", SurName: "Stone", Slug: "mira-l-stone"}},
+			Genres:      []Genre{{ID: 1, Name: "Literary Fiction", Slug: "literary-fiction"}},
+			Covers:      []Cover{{ID: 1, Variant: "front", URL: frontCoverURL}},
 		},
 	})
 
@@ -163,6 +193,9 @@ func TestCatalogServiceBookDetailsPageReturnsBookBySlug(t *testing.T) {
 	if got, want := data.Book.Genres[0].URL, "/books?genre=literary-fiction"; got != want {
 		t.Errorf("genre URL = %q, want %q", got, want)
 	}
+	if data.Book.FrontCover == nil || data.Book.FrontCover.URL != frontCoverURL {
+		t.Errorf("front cover = %#v", data.Book.FrontCover)
+	}
 }
 
 func TestCatalogServiceAuthorPageReturnsAuthorAndBooks(t *testing.T) {
@@ -181,8 +214,8 @@ func TestCatalogServiceAuthorPageReturnsAuthorAndBooks(t *testing.T) {
 				Title:       "Pride and Prejudice",
 				Slug:        "pride-and-prejudice",
 				Description: "A romance of manners.",
-				Author:      Author{ID: 3, FirstName: "Jane", SurName: "Austen", Slug: "jane-austen"},
-				Genre:       Genre{Name: "Romance", Slug: "romance"},
+				Authors:     []Author{{ID: 3, FirstName: "Jane", SurName: "Austen", Slug: "jane-austen"}},
+				Genres:      []Genre{{ID: 1, Name: "Romance", Slug: "romance"}},
 			},
 		},
 	})
@@ -192,7 +225,7 @@ func TestCatalogServiceAuthorPageReturnsAuthorAndBooks(t *testing.T) {
 		t.Fatalf("AuthorPage() error = %v", err)
 	}
 
-	if data.Title != "Jane  Austen" {
+	if data.Title != "Jane Austen" {
 		t.Errorf("page title = %q", data.Title)
 	}
 	if data.Author.Slug != "jane-austen" {

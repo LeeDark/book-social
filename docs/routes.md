@@ -29,6 +29,16 @@ Unknown filter slugs return an empty catalog result, not a 404.
 
 - Unknown book slugs return 404.
 - Unknown author slugs return 404.
+- Book details render all related authors and genres. When no `front` cover metadata exists, the
+  page renders its CSS cover placeholder.
+- Author pages show the selected author's details and catalog cards with each book's complete
+  author and genre lists.
+
+## Home Page
+
+`GET /` renders a small deterministic featured selection through the same catalog card read model
+as the other pages. It does not claim a chronological "Recently added" order because books do not
+currently have `created_at`.
 
 ## HTMX Catalog Filter Spike
 
@@ -42,8 +52,7 @@ When present, it renders only the book list partial.
 
 Normal links still use `href`, so catalog filters remain usable without JavaScript.
 
-## Experimental Rendering Routes
+## Historical Rendering Experiments
 
-The codebase currently has experimental routes for Templ and gomponents catalog rendering.
-
-These are documented in `docs/ai/` spike notes and are not part of the main user-facing route contract.
+The former `/books-templ` and `/books-gomponents` spike routes have been removed. Their findings
+remain in `docs/ai/`, and possible reconsideration is tracked in `docs/backlog.md`.

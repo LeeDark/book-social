@@ -9,6 +9,24 @@ import (
 	"github.com/LeeDark/book-social/internal/testutil"
 )
 
+func TestBookRepositoryListBooksReturnsNormalizedRelationships(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBookRepository(newTestBookRepositoryDB(t, ctx))
+
+	bookList, err := repo.ListBooks(ctx)
+	if err != nil {
+		t.Fatalf("ListBooks() error = %v", err)
+	}
+	assertStrings(t, bookSlugs(bookList), []string{"dracula", "pride-and-prejudice"})
+
+	book := findBookBySlug(t, bookList, "pride-and-prejudice")
+	assertAuthorSlugs(t, book.Authors, []string{"jane-austen", "mary-shelley"})
+	assertGenreSlugs(t, book.Genres, []string{"classic", "romance"})
+	if len(book.Covers) != 0 {
+		t.Fatalf("list book Covers = %#v, want details-only data omitted", book.Covers)
+	}
+}
+
 func TestBookRepositoryListBooksFiltered(t *testing.T) {
 	ctx := context.Background()
 	db := newTestBookRepositoryDB(t, ctx)
@@ -22,17 +40,17 @@ func TestBookRepositoryListBooksFiltered(t *testing.T) {
 		{
 			name:   "author slug",
 			filter: books.BookFilter{AuthorSlug: "jane-austen"},
-			want:   []string{"emma", "pride-and-prejudice"},
+			want:   []string{"pride-and-prejudice"},
 		},
 		{
 			name:   "genre slug",
-			filter: books.BookFilter{GenreSlug: "science-fiction"},
-			want:   []string{"frankenstein", "the-time-machine"},
+			filter: books.BookFilter{GenreSlug: "horror"},
+			want:   []string{"dracula"},
 		},
 		{
 			name:   "author and genre slug",
-			filter: books.BookFilter{AuthorSlug: "mary-shelley", GenreSlug: "science-fiction"},
-			want:   []string{"frankenstein"},
+			filter: books.BookFilter{AuthorSlug: "mary-shelley", GenreSlug: "romance"},
+			want:   []string{"pride-and-prejudice"},
 		},
 		{
 			name:   "unknown author slug",
@@ -63,6 +81,117 @@ func TestBookRepositoryListBooksFiltered(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestBookRepositoryListBooksFilteredKeepsAllBookRelationships(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBookRepository(newTestBookRepositoryDB(t, ctx))
+
+	bookList, err := repo.ListBooksFiltered(ctx, books.BookFilter{AuthorSlug: "mary-shelley"})
+	if err != nil {
+		t.Fatalf("ListBooksFiltered() error = %v", err)
+	}
+	if len(bookList) != 1 {
+		t.Fatalf("len(books) = %d, want 1", len(bookList))
+	}
+
+	assertAuthorSlugs(t, bookList[0].Authors, []string{"jane-austen", "mary-shelley"})
+	assertGenreSlugs(t, bookList[0].Genres, []string{"classic", "romance"})
+}
+
+func TestBookRepositoryUsesDeterministicBinaryOrder(t *testing.T) {
+	ctx := context.Background()
+	db := newTestBookRepositoryDB(t, ctx)
+	seedMixedCaseOrderData(t, ctx, db)
+	repo := NewBookRepository(db)
+
+	bookList, err := repo.ListBooks(ctx)
+	if err != nil {
+		t.Fatalf("ListBooks() error = %v", err)
+	}
+	assertStrings(t, bookSlugs(bookList), []string{"bravo", "dracula", "pride-and-prejudice", "alpha"})
+
+	book, err := repo.GetBookBySlug(ctx, "alpha")
+	if err != nil {
+		t.Fatalf("GetBookBySlug() error = %v", err)
+	}
+	assertAuthorSlugs(t, book.Authors, []string{"amy-banana", "zoe-apple"})
+	assertGenreSlugs(t, book.Genres, []string{"alpha-genre", "zebra"})
+	assertStrings(t, coverVariants(book.Covers), []string{"Zoo", "alpha"})
+}
+
+func TestBookRepositoryGetBookBySlugReturnsRelationshipsAndCovers(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBookRepository(newTestBookRepositoryDB(t, ctx))
+
+	book, err := repo.GetBookBySlug(ctx, "pride-and-prejudice")
+	if err != nil {
+		t.Fatalf("GetBookBySlug() error = %v", err)
+	}
+
+	assertAuthorSlugs(t, book.Authors, []string{"jane-austen", "mary-shelley"})
+	assertGenreSlugs(t, book.Genres, []string{"classic", "romance"})
+	if len(book.Covers) != 2 {
+		t.Fatalf("len(Covers) = %d, want 2", len(book.Covers))
+	}
+
+	cover := book.Covers[0]
+	if cover.Variant != "front" {
+		t.Errorf("Cover.Variant = %q, want %q", cover.Variant, "front")
+	}
+	if cover.URL != "https://example.test/covers/pride-and-prejudice.jpg" {
+		t.Errorf("Cover.URL = %q", cover.URL)
+	}
+	if cover.MIMEType == nil || *cover.MIMEType != "image/jpeg" {
+		t.Errorf("Cover.MIMEType = %v, want %q", cover.MIMEType, "image/jpeg")
+	}
+	if cover.ByteSize == nil || *cover.ByteSize != 245760 {
+		t.Errorf("Cover.ByteSize = %v, want 245760", cover.ByteSize)
+	}
+	if cover.Width == nil || *cover.Width != 600 {
+		t.Errorf("Cover.Width = %v, want 600", cover.Width)
+	}
+	if cover.Height == nil || *cover.Height != 900 {
+		t.Errorf("Cover.Height = %v, want 900", cover.Height)
+	}
+	wantChecksum := "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	if cover.ChecksumSHA256 == nil || *cover.ChecksumSHA256 != wantChecksum {
+		t.Errorf("Cover.ChecksumSHA256 = %v, want %q", cover.ChecksumSHA256, wantChecksum)
+	}
+
+	backCover := book.Covers[1]
+	if backCover.Variant != "back" {
+		t.Errorf("second Cover.Variant = %q, want %q", backCover.Variant, "back")
+	}
+	if backCover.URL != "https://example.test/covers/pride-and-prejudice-back.jpg" {
+		t.Errorf("second Cover.URL = %q", backCover.URL)
+	}
+	if backCover.MIMEType != nil || backCover.ByteSize != nil || backCover.Width != nil || backCover.Height != nil || backCover.ChecksumSHA256 != nil {
+		t.Errorf("second Cover optional metadata = %#v, want nil values", backCover)
+	}
+}
+
+func TestBookRepositoryGetBookBySlugReturnsEmptyCoversWhenAbsent(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBookRepository(newTestBookRepositoryDB(t, ctx))
+
+	book, err := repo.GetBookBySlug(ctx, "dracula")
+	if err != nil {
+		t.Fatalf("GetBookBySlug() error = %v", err)
+	}
+	if len(book.Covers) != 0 {
+		t.Fatalf("Covers = %#v, want empty", book.Covers)
+	}
+}
+
+func TestBookRepositoryGetBookBySlugReturnsNotFound(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBookRepository(newTestBookRepositoryDB(t, ctx))
+
+	_, err := repo.GetBookBySlug(ctx, "missing-book")
+	if err != books.ErrBookNotFound {
+		t.Fatalf("GetBookBySlug() error = %v, want %v", err, books.ErrBookNotFound)
 	}
 }
 
@@ -98,38 +227,34 @@ func TestBookRepositoryGetAuthorBySlugReturnsNotFound(t *testing.T) {
 func newTestBookRepositoryDB(t *testing.T, ctx context.Context) *sql.DB {
 	t.Helper()
 
-	db, err := Open(ctx, "file:book_repository_test?mode=memory&cache=shared")
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	t.Cleanup(func() {
-		_ = db.Close()
-	})
+	return testutil.NewSQLiteCatalogV2TestDB(t, ctx)
+}
 
-	testutil.ApplySQLiteCatalogTestSchema(t, ctx, db)
+func seedMixedCaseOrderData(t *testing.T, ctx context.Context, db *sql.DB) {
+	t.Helper()
 
 	statements := []string{
-		`INSERT INTO authors(id, first_name, second_name, sur_name, slug, description) VALUES
-			(1, 'Jane', '', 'Austen', 'jane-austen', 'English novelist.'),
-			(2, 'Mary', '', 'Shelley', 'mary-shelley', 'English writer.'),
-			(3, 'H. G.', '', 'Wells', 'h-g-wells', 'English writer.');`,
-		`INSERT INTO genres(id, name, slug, description) VALUES
-			(1, 'Romance', 'romance', 'Love and relationships.'),
-			(2, 'Science Fiction', 'science-fiction', 'Speculative fiction.');`,
-		`INSERT INTO books(id, title, slug, description, book_author_id, book_genre_id) VALUES
-			(1, 'Pride and Prejudice', 'pride-and-prejudice', 'A romance of manners.', 1, 1),
-			(2, 'Emma', 'emma', 'A social comedy.', 1, 1),
-			(3, 'Frankenstein', 'frankenstein', 'A created being.', 2, 2),
-			(4, 'The Time Machine', 'the-time-machine', 'A journey into the future.', 3, 2);`,
+		`INSERT INTO authors(id, first_name, sur_name, slug) VALUES
+			(4, 'Zoe', 'apple', 'zoe-apple'),
+			(5, 'Amy', 'Banana', 'amy-banana');`,
+		`INSERT INTO genres(id, name, slug) VALUES
+			(4, 'zebra', 'zebra'),
+			(5, 'Alpha', 'alpha-genre');`,
+		`INSERT INTO books(id, title, slug) VALUES
+			(3, 'alpha', 'alpha'),
+			(4, 'Bravo', 'bravo');`,
+		`INSERT INTO book_authors(book_id, author_id) VALUES (3, 4), (3, 5);`,
+		`INSERT INTO book_genres(book_id, genre_id) VALUES (3, 4), (3, 5);`,
+		`INSERT INTO covers(book_id, variant, url) VALUES
+			(3, 'alpha', 'https://example.test/covers/alpha.jpg'),
+			(3, 'Zoo', 'https://example.test/covers/zoo.jpg');`,
 	}
 
 	for _, statement := range statements {
 		if _, err := db.ExecContext(ctx, statement); err != nil {
-			t.Fatalf("exec test seed statement: %v", err)
+			t.Fatalf("exec mixed-case test data: %v", err)
 		}
 	}
-
-	return db
 }
 
 func bookSlugs(bookList []books.Book) []string {
@@ -138,4 +263,58 @@ func bookSlugs(bookList []books.Book) []string {
 		slugs = append(slugs, book.Slug)
 	}
 	return slugs
+}
+
+func findBookBySlug(t *testing.T, bookList []books.Book, slug string) books.Book {
+	t.Helper()
+
+	for _, book := range bookList {
+		if book.Slug == slug {
+			return book
+		}
+	}
+
+	t.Fatalf("book %q not found in %#v", slug, bookList)
+	return books.Book{}
+}
+
+func assertAuthorSlugs(t *testing.T, authors []books.Author, want []string) {
+	t.Helper()
+
+	got := make([]string, 0, len(authors))
+	for _, author := range authors {
+		got = append(got, author.Slug)
+	}
+	assertStrings(t, got, want)
+}
+
+func assertGenreSlugs(t *testing.T, genres []books.Genre, want []string) {
+	t.Helper()
+
+	got := make([]string, 0, len(genres))
+	for _, genre := range genres {
+		got = append(got, genre.Slug)
+	}
+	assertStrings(t, got, want)
+}
+
+func coverVariants(covers []books.Cover) []string {
+	variants := make([]string, 0, len(covers))
+	for _, cover := range covers {
+		variants = append(variants, cover.Variant)
+	}
+	return variants
+}
+
+func assertStrings(t *testing.T, got, want []string) {
+	t.Helper()
+
+	if len(got) != len(want) {
+		t.Fatalf("values = %v, want %v", got, want)
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			t.Fatalf("values = %v, want %v", got, want)
+		}
+	}
 }
