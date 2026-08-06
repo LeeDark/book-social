@@ -16,7 +16,7 @@ func TestSQLiteCatalogV2TestDBUsesNormalizedRelationships(t *testing.T) {
 		{name: "books", query: `SELECT COUNT(*) FROM books`, want: 2},
 		{name: "book authors", query: `SELECT COUNT(*) FROM book_authors`, want: 3},
 		{name: "book genres", query: `SELECT COUNT(*) FROM book_genres`, want: 3},
-		{name: "covers", query: `SELECT COUNT(*) FROM covers`, want: 1},
+		{name: "covers", query: `SELECT COUNT(*) FROM covers`, want: 2},
 	}
 
 	for _, check := range checks {

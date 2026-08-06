@@ -17,10 +17,14 @@ func TestBookRepositoryListBooksReturnsNormalizedRelationships(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListBooks() error = %v", err)
 	}
+	assertStrings(t, bookSlugs(bookList), []string{"dracula", "pride-and-prejudice"})
 
 	book := findBookBySlug(t, bookList, "pride-and-prejudice")
 	assertAuthorSlugs(t, book.Authors, []string{"jane-austen", "mary-shelley"})
 	assertGenreSlugs(t, book.Genres, []string{"classic", "romance"})
+	if len(book.Covers) != 0 {
+		t.Fatalf("list book Covers = %#v, want details-only data omitted", book.Covers)
+	}
 }
 
 func TestBookRepositoryListBooksFiltered(t *testing.T) {
@@ -107,8 +111,8 @@ func TestBookRepositoryGetBookBySlugReturnsRelationshipsAndCovers(t *testing.T) 
 
 	assertAuthorSlugs(t, book.Authors, []string{"jane-austen", "mary-shelley"})
 	assertGenreSlugs(t, book.Genres, []string{"classic", "romance"})
-	if len(book.Covers) != 1 {
-		t.Fatalf("len(Covers) = %d, want 1", len(book.Covers))
+	if len(book.Covers) != 2 {
+		t.Fatalf("len(Covers) = %d, want 2", len(book.Covers))
 	}
 
 	cover := book.Covers[0]
@@ -134,6 +138,17 @@ func TestBookRepositoryGetBookBySlugReturnsRelationshipsAndCovers(t *testing.T) 
 	if cover.ChecksumSHA256 == nil || *cover.ChecksumSHA256 != wantChecksum {
 		t.Errorf("Cover.ChecksumSHA256 = %v, want %q", cover.ChecksumSHA256, wantChecksum)
 	}
+
+	backCover := book.Covers[1]
+	if backCover.Variant != "back" {
+		t.Errorf("second Cover.Variant = %q, want %q", backCover.Variant, "back")
+	}
+	if backCover.URL != "https://example.test/covers/pride-and-prejudice-back.jpg" {
+		t.Errorf("second Cover.URL = %q", backCover.URL)
+	}
+	if backCover.MIMEType != nil || backCover.ByteSize != nil || backCover.Width != nil || backCover.Height != nil || backCover.ChecksumSHA256 != nil {
+		t.Errorf("second Cover optional metadata = %#v, want nil values", backCover)
+	}
 }
 
 func TestBookRepositoryGetBookBySlugReturnsEmptyCoversWhenAbsent(t *testing.T) {
@@ -146,6 +161,16 @@ func TestBookRepositoryGetBookBySlugReturnsEmptyCoversWhenAbsent(t *testing.T) {
 	}
 	if len(book.Covers) != 0 {
 		t.Fatalf("Covers = %#v, want empty", book.Covers)
+	}
+}
+
+func TestBookRepositoryGetBookBySlugReturnsNotFound(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBookRepository(newTestBookRepositoryDB(t, ctx))
+
+	_, err := repo.GetBookBySlug(ctx, "missing-book")
+	if err != books.ErrBookNotFound {
+		t.Fatalf("GetBookBySlug() error = %v, want %v", err, books.ErrBookNotFound)
 	}
 }
 

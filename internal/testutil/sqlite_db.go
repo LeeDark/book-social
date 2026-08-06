@@ -217,16 +217,27 @@ func SeedSQLiteCatalogV2TestData(t *testing.T, ctx context.Context, db *sql.DB) 
 			(1, 1), (1, 3), (2, 2);`,
 		`INSERT INTO covers(
 			book_id, variant, url, mime_type, byte_size, width, height, checksum_sha256
-		) VALUES (
-			1,
-			'front',
-			'https://example.test/covers/pride-and-prejudice.jpg',
-			'image/jpeg',
-			245760,
-			600,
-			900,
-			'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-		);`,
+		) VALUES
+			(
+				1,
+				'back',
+				'https://example.test/covers/pride-and-prejudice-back.jpg',
+				NULL,
+				NULL,
+				NULL,
+				NULL,
+				NULL
+			),
+			(
+				1,
+				'front',
+				'https://example.test/covers/pride-and-prejudice.jpg',
+				'image/jpeg',
+				245760,
+				600,
+				900,
+				'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+			);`,
 	}
 
 	execStatements(t, ctx, db, statements)
