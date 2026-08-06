@@ -167,7 +167,7 @@ func newIntegrationTestApp(t *testing.T) http.Handler {
 
 	bookRepo := sqlite.NewBookRepository(db)
 	catalogService := books.NewCatalogService(bookRepo)
-	homeHandler := NewHomeHandler(renderer, logger)
+	homeHandler := NewHomeHandler(catalogService, renderer, logger)
 	catalogHandler := books.NewCatalogHandler(catalogService, renderer, logger)
 
 	return New(deps, homeHandler, catalogHandler).Router

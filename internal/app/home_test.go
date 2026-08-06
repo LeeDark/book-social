@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -9,11 +11,38 @@ import (
 	"testing"
 
 	"github.com/LeeDark/book-social/internal/http/render"
+	"github.com/LeeDark/book-social/internal/modules/books"
 	"github.com/LeeDark/book-social/internal/testutil"
 )
 
-func TestHomeHandlerIndexReturnsOK(t *testing.T) {
-	handler := newTestHomeHandler(t)
+type fakeFeaturedBooksProvider struct {
+	books []books.BookCardView
+	err   error
+}
+
+func (p fakeFeaturedBooksProvider) FeaturedBooks(ctx context.Context) ([]books.BookCardView, error) {
+	if p.err != nil {
+		return nil, p.err
+	}
+
+	return p.books, nil
+}
+
+func TestHomeHandlerIndexReturnsFeaturedBooksFromProvider(t *testing.T) {
+	handler := newTestHomeHandler(t, fakeFeaturedBooksProvider{
+		books: []books.BookCardView{{
+			Title:   "Pride and Prejudice",
+			BookURL: "/books/pride-and-prejudice",
+			Authors: []books.AuthorLinkView{
+				{Name: "Jane Austen", URL: "/authors/jane-austen"},
+				{Name: "Mary Shelley", URL: "/authors/mary-shelley"},
+			},
+			Genres: []books.GenreLinkView{
+				{Name: "Classic", URL: "/books?genre=classic"},
+				{Name: "Romance", URL: "/books?genre=romance"},
+			},
+		}},
+	})
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
@@ -26,13 +55,34 @@ func TestHomeHandlerIndexReturnsOK(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), "Discover books worth talking about.") {
 		t.Fatalf("body does not contain home heading: %q", rec.Body.String())
 	}
+	for _, fragment := range []string{"Featured books", "Pride and Prejudice", "Jane Austen", "Mary Shelley", "Classic", "Romance"} {
+		if !strings.Contains(rec.Body.String(), fragment) {
+			t.Fatalf("body does not contain %q: %q", fragment, rec.Body.String())
+		}
+	}
+	if strings.Contains(rec.Body.String(), "Recently added") {
+		t.Fatalf("body contains stale recently-added claim: %q", rec.Body.String())
+	}
 	if strings.Contains(rec.Body.String(), "hx-target=\"#book-list\"") {
 		t.Fatalf("home page contains catalog-only HTMX filter attributes: %q", rec.Body.String())
 	}
 }
 
+func TestHomeHandlerIndexReturnsServerErrorWhenFeaturedBooksFail(t *testing.T) {
+	handler := newTestHomeHandler(t, fakeFeaturedBooksProvider{err: errors.New("database unavailable")})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+
+	handler.Index(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
+	}
+}
+
 func TestHomeHandlerAboutReturnsOK(t *testing.T) {
-	handler := newTestHomeHandler(t)
+	handler := newTestHomeHandler(t, fakeFeaturedBooksProvider{})
 
 	req := httptest.NewRequest(http.MethodGet, "/about", nil)
 	rec := httptest.NewRecorder()
@@ -47,7 +97,7 @@ func TestHomeHandlerAboutReturnsOK(t *testing.T) {
 	}
 }
 
-func newTestHomeHandler(t *testing.T) *HomeHandler {
+func newTestHomeHandler(t *testing.T, booksProvider books.FeaturedBooksProvider) *HomeHandler {
 	t.Helper()
 
 	testutil.ChdirProjectRoot(t)
@@ -59,5 +109,5 @@ func newTestHomeHandler(t *testing.T) *HomeHandler {
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	return NewHomeHandler(renderer, logger)
+	return NewHomeHandler(booksProvider, renderer, logger)
 }

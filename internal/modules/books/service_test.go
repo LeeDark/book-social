@@ -131,6 +131,34 @@ func TestCatalogServiceCatalogPagePassesFilterToRepository(t *testing.T) {
 	}
 }
 
+func TestCatalogServiceFeaturedBooksReturnsLimitedSharedCardViews(t *testing.T) {
+	service := NewCatalogService(fakeBookRepository{
+		books: []Book{
+			{ID: 1, Title: "Alpha", Slug: "alpha", Authors: []Author{{FirstName: "Ada", Slug: "ada"}}, Genres: []Genre{{Name: "Classic", Slug: "classic"}}},
+			{ID: 2, Title: "Bravo", Slug: "bravo", Authors: []Author{{FirstName: "Bea", Slug: "bea"}}},
+			{ID: 3, Title: "Charlie", Slug: "charlie", Genres: []Genre{{Name: "Drama", Slug: "drama"}}},
+			{ID: 4, Title: "Delta", Slug: "delta"},
+		},
+	})
+
+	featured, err := service.FeaturedBooks(context.Background())
+	if err != nil {
+		t.Fatalf("FeaturedBooks() error = %v", err)
+	}
+	if got, want := len(featured), 3; got != want {
+		t.Fatalf("len(featured) = %d, want %d", got, want)
+	}
+	if featured[0].BookURL != "/books/alpha" || featured[0].UseHTMXFilters {
+		t.Errorf("first featured book = %#v", featured[0])
+	}
+	if got, want := featured[0].Authors[0].Name, "Ada"; got != want {
+		t.Errorf("first author = %q, want %q", got, want)
+	}
+	if got, want := featured[0].Genres[0].URL, "/books?genre=classic"; got != want {
+		t.Errorf("first genre URL = %q, want %q", got, want)
+	}
+}
+
 func TestCatalogServiceBookDetailsPageReturnsBookBySlug(t *testing.T) {
 	frontCoverURL := "https://example.test/covers/the-quiet-atlas.jpg"
 	service := NewCatalogService(fakeBookRepository{

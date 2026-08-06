@@ -12,6 +12,10 @@ type CatalogPageProvider interface {
 	AuthorPage(ctx context.Context, slug string) (AuthorPageData, error)
 }
 
+type FeaturedBooksProvider interface {
+	FeaturedBooks(ctx context.Context) ([]BookCardView, error)
+}
+
 type CatalogService struct {
 	repo BookRepository
 }
@@ -41,6 +45,20 @@ func (s *CatalogService) CatalogPage(ctx context.Context, filter BookFilter) (Ca
 		},
 		Books: enableHTMXFilters(mapBooksToCards(books)),
 	}, nil
+}
+
+func (s *CatalogService) FeaturedBooks(ctx context.Context) ([]BookCardView, error) {
+	bookList, err := s.repo.ListBooks(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	const featuredBooksLimit = 3
+	if len(bookList) > featuredBooksLimit {
+		bookList = bookList[:featuredBooksLimit]
+	}
+
+	return mapBooksToCards(bookList), nil
 }
 
 func (s *CatalogService) BookDetailsPage(ctx context.Context, slug string) (BookDetailsPageData, error) {
