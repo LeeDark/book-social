@@ -27,16 +27,36 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 		wantAbsent    []string
 	}{
 		{
-			name:          "catalog",
-			path:          "/books",
-			wantStatus:    http.StatusOK,
-			wantFragments: []string{"Pride and Prejudice", "jane-austen", "Classic"},
+			name:       "catalog",
+			path:       "/books",
+			wantStatus: http.StatusOK,
+			wantFragments: []string{
+				"Pride and Prejudice",
+				"jane-austen",
+				"mary-shelley",
+				"Classic",
+				"Romance",
+			},
 		},
 		{
-			name:          "existing book details",
-			path:          "/books/pride-and-prejudice",
+			name:       "book details with multiple links and front cover",
+			path:       "/books/pride-and-prejudice",
+			wantStatus: http.StatusOK,
+			wantFragments: []string{
+				"Pride and Prejudice",
+				"jane-austen",
+				"mary-shelley",
+				"Classic",
+				"Romance",
+				`src="https://example.test/covers/pride-and-prejudice.jpg"`,
+			},
+		},
+		{
+			name:          "book details without cover use placeholder",
+			path:          "/books/dracula",
 			wantStatus:    http.StatusOK,
-			wantFragments: []string{"Pride and Prejudice", "jane-austen", "Classic"},
+			wantFragments: []string{"Dracula", "bram-stoker", "Horror", "book-details__cover"},
+			wantAbsent:    []string{"<img"},
 		},
 		{
 			name:       "missing book details",
@@ -45,16 +65,30 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 		},
 		{
 			name:          "author filtered catalog",
-			path:          "/books?author=jane-austen",
+			path:          "/books?author=mary-shelley",
 			wantStatus:    http.StatusOK,
-			wantFragments: []string{"Pride and Prejudice", "jane-austen"},
+			wantFragments: []string{"Pride and Prejudice", "jane-austen", "mary-shelley"},
 			wantAbsent:    []string{"Dracula"},
 		},
 		{
 			name:          "genre filtered catalog",
-			path:          "/books?genre=classic",
+			path:          "/books?genre=romance",
 			wantStatus:    http.StatusOK,
-			wantFragments: []string{"Pride and Prejudice", "Classic"},
+			wantFragments: []string{"Pride and Prejudice", "Classic", "Romance"},
+			wantAbsent:    []string{"Dracula"},
+		},
+		{
+			name:          "combined filters keep all relationships",
+			path:          "/books?author=mary-shelley&genre=romance",
+			wantStatus:    http.StatusOK,
+			wantFragments: []string{"Pride and Prejudice", "jane-austen", "mary-shelley", "Classic", "Romance"},
+			wantAbsent:    []string{"Dracula"},
+		},
+		{
+			name:          "author page keeps all book relationships",
+			path:          "/authors/mary-shelley",
+			wantStatus:    http.StatusOK,
+			wantFragments: []string{"Mary Shelley", "Pride and Prejudice", "jane-austen", "mary-shelley", "Classic", "Romance"},
 			wantAbsent:    []string{"Dracula"},
 		},
 	}
@@ -88,7 +122,7 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 func TestCatalogRouteReturnsPartialForHTMXRequest(t *testing.T) {
 	handler := newIntegrationTestApp(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/books?genre=classic", nil)
+	req := httptest.NewRequest(http.MethodGet, "/books?genre=romance", nil)
 	req.Header.Set("HX-Request", "true")
 	rec := httptest.NewRecorder()
 
@@ -99,7 +133,7 @@ func TestCatalogRouteReturnsPartialForHTMXRequest(t *testing.T) {
 	}
 
 	body := rec.Body.String()
-	for _, fragment := range []string{"Pride and Prejudice", "Classic"} {
+	for _, fragment := range []string{"Pride and Prejudice", "Classic", "Romance"} {
 		if !strings.Contains(body, fragment) {
 			t.Fatalf("body does not contain %q: %q", fragment, body)
 		}
@@ -117,7 +151,7 @@ func newIntegrationTestApp(t *testing.T) http.Handler {
 	testutil.ChdirProjectRoot(t)
 
 	ctx := context.Background()
-	db := testutil.NewSQLiteCatalogTestDB(t, ctx)
+	db := testutil.NewSQLiteCatalogV2TestDB(t, ctx)
 
 	renderer, err := render.NewRenderer()
 	if err != nil {
