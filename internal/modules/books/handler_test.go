@@ -265,6 +265,40 @@ func TestCatalogHandlerBookDetailsReturnsNotFoundForMissingBook(t *testing.T) {
 	}
 }
 
+func TestCatalogHandlerBookDetailsUsesPlaceholderWithoutFrontCover(t *testing.T) {
+	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
+		detailsData: BookDetailsPageData{
+			Page: view.Page{Title: "The Quiet Atlas"},
+			Book: BookDetailsView{
+				Title:      "The Quiet Atlas",
+				CoverClass: "cover-3",
+				Covers: []CoverView{{
+					Variant: "back",
+					URL:     "https://example.test/covers/the-quiet-atlas-back.jpg",
+				}},
+			},
+		},
+	})
+
+	router := chi.NewRouter()
+	router.Get("/books/{slug}", handler.BookDetails)
+	req := httptest.NewRequest(http.MethodGet, "/books/the-quiet-atlas", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, `class="book-details__cover cover-3"`) {
+		t.Fatalf("body does not contain cover placeholder: %q", body)
+	}
+	if strings.Contains(body, "<img") {
+		t.Fatalf("body contains image without front cover: %q", body)
+	}
+}
+
 func TestCatalogHandlerAuthorReturnsOKForExistingAuthor(t *testing.T) {
 	var gotSlug string
 	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{

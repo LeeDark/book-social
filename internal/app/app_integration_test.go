@@ -27,6 +27,21 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 		wantAbsent    []string
 	}{
 		{
+			name:       "home uses normalized catalog cards",
+			path:       "/",
+			wantStatus: http.StatusOK,
+			wantFragments: []string{
+				"Featured books",
+				"Dracula",
+				"Pride and Prejudice",
+				"jane-austen",
+				"mary-shelley",
+				"Classic",
+				"Romance",
+			},
+			wantAbsent: []string{`hx-target="#book-list"`},
+		},
+		{
 			name:       "catalog",
 			path:       "/books",
 			wantStatus: http.StatusOK,
@@ -61,6 +76,16 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 		{
 			name:       "missing book details",
 			path:       "/books/missing-book",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "removed templ spike route",
+			path:       "/books-templ",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "removed gomponents spike route",
+			path:       "/books-gomponents",
 			wantStatus: http.StatusNotFound,
 		},
 		{

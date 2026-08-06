@@ -55,7 +55,7 @@ func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.Boo
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
-	query += " ORDER BY b.title ASC, b.id ASC;"
+	query += ` ORDER BY b.title COLLATE "C" ASC, b.id ASC;`
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -140,7 +140,7 @@ func (r *BookRepository) hydrateBookAuthors(
 		FROM book_authors ba
 		JOIN authors a ON a.id = ba.author_id
 		WHERE ba.book_id IN (` + placeholders + `)
-		ORDER BY ba.book_id ASC, COALESCE(a.sur_name, '') ASC, a.first_name ASC, a.id ASC;
+		ORDER BY ba.book_id ASC, COALESCE(a.sur_name, '') COLLATE "C" ASC, a.first_name COLLATE "C" ASC, a.id ASC;
 	`
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -183,7 +183,7 @@ func (r *BookRepository) hydrateBookGenres(
 		FROM book_genres bg
 		JOIN genres g ON g.id = bg.genre_id
 		WHERE bg.book_id IN (` + placeholders + `)
-		ORDER BY bg.book_id ASC, g.name ASC, g.id ASC;
+		ORDER BY bg.book_id ASC, g.name COLLATE "C" ASC, g.id ASC;
 	`
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -221,7 +221,7 @@ func (r *BookRepository) hydrateBookCovers(ctx context.Context, bookList []books
 		SELECT c.book_id, c.id, c.variant, c.url, c.mime_type, c.byte_size, c.width, c.height, c.checksum_sha256
 		FROM covers c
 		WHERE c.book_id IN (` + queryPlaceholders(len(args)) + `)
-		ORDER BY c.book_id ASC, CASE WHEN c.variant = 'front' THEN 0 ELSE 1 END ASC, c.variant ASC, c.id ASC;
+		ORDER BY c.book_id ASC, CASE WHEN c.variant = 'front' THEN 0 ELSE 1 END ASC, c.variant COLLATE "C" ASC, c.id ASC;
 	`
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {

@@ -100,6 +100,27 @@ func TestBookRepositoryListBooksFilteredKeepsAllBookRelationships(t *testing.T) 
 	assertGenreSlugs(t, bookList[0].Genres, []string{"classic", "romance"})
 }
 
+func TestBookRepositoryUsesDeterministicBinaryOrder(t *testing.T) {
+	ctx := context.Background()
+	db := newTestBookRepositoryDB(t, ctx)
+	seedMixedCaseOrderData(t, ctx, db)
+	repo := NewBookRepository(db)
+
+	bookList, err := repo.ListBooks(ctx)
+	if err != nil {
+		t.Fatalf("ListBooks() error = %v", err)
+	}
+	assertStrings(t, bookSlugs(bookList), []string{"bravo", "dracula", "pride-and-prejudice", "alpha"})
+
+	book, err := repo.GetBookBySlug(ctx, "alpha")
+	if err != nil {
+		t.Fatalf("GetBookBySlug() error = %v", err)
+	}
+	assertAuthorSlugs(t, book.Authors, []string{"amy-banana", "zoe-apple"})
+	assertGenreSlugs(t, book.Genres, []string{"alpha-genre", "zebra"})
+	assertStrings(t, coverVariants(book.Covers), []string{"Zoo", "alpha"})
+}
+
 func TestBookRepositoryGetBookBySlugReturnsRelationshipsAndCovers(t *testing.T) {
 	ctx := context.Background()
 	repo := NewBookRepository(newTestBookRepositoryDB(t, ctx))
@@ -209,6 +230,33 @@ func newTestBookRepositoryDB(t *testing.T, ctx context.Context) *sql.DB {
 	return testutil.NewSQLiteCatalogV2TestDB(t, ctx)
 }
 
+func seedMixedCaseOrderData(t *testing.T, ctx context.Context, db *sql.DB) {
+	t.Helper()
+
+	statements := []string{
+		`INSERT INTO authors(id, first_name, sur_name, slug) VALUES
+			(4, 'Zoe', 'apple', 'zoe-apple'),
+			(5, 'Amy', 'Banana', 'amy-banana');`,
+		`INSERT INTO genres(id, name, slug) VALUES
+			(4, 'zebra', 'zebra'),
+			(5, 'Alpha', 'alpha-genre');`,
+		`INSERT INTO books(id, title, slug) VALUES
+			(3, 'alpha', 'alpha'),
+			(4, 'Bravo', 'bravo');`,
+		`INSERT INTO book_authors(book_id, author_id) VALUES (3, 4), (3, 5);`,
+		`INSERT INTO book_genres(book_id, genre_id) VALUES (3, 4), (3, 5);`,
+		`INSERT INTO covers(book_id, variant, url) VALUES
+			(3, 'alpha', 'https://example.test/covers/alpha.jpg'),
+			(3, 'Zoo', 'https://example.test/covers/zoo.jpg');`,
+	}
+
+	for _, statement := range statements {
+		if _, err := db.ExecContext(ctx, statement); err != nil {
+			t.Fatalf("exec mixed-case test data: %v", err)
+		}
+	}
+}
+
 func bookSlugs(bookList []books.Book) []string {
 	slugs := make([]string, 0, len(bookList))
 	for _, book := range bookList {
@@ -248,6 +296,14 @@ func assertGenreSlugs(t *testing.T, genres []books.Genre, want []string) {
 		got = append(got, genre.Slug)
 	}
 	assertStrings(t, got, want)
+}
+
+func coverVariants(covers []books.Cover) []string {
+	variants := make([]string, 0, len(covers))
+	for _, cover := range covers {
+		variants = append(variants, cover.Variant)
+	}
+	return variants
 }
 
 func assertStrings(t *testing.T, got, want []string) {

@@ -63,7 +63,7 @@ func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.Boo
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
-	query += " ORDER BY b.title COLLATE NOCASE ASC, b.id ASC;"
+	query += " ORDER BY b.title COLLATE BINARY ASC, b.id ASC;"
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -182,8 +182,8 @@ func (r *BookRepository) hydrateBookAuthors(
 		WHERE ba.book_id IN (` + placeholders + `)
 		ORDER BY
 			ba.book_id ASC,
-			COALESCE(a.sur_name, '') COLLATE NOCASE ASC,
-			a.first_name COLLATE NOCASE ASC,
+			COALESCE(a.sur_name, '') COLLATE BINARY ASC,
+			a.first_name COLLATE BINARY ASC,
 			a.id ASC;
 	`
 
@@ -248,7 +248,7 @@ func (r *BookRepository) hydrateBookGenres(
 		WHERE bg.book_id IN (` + placeholders + `)
 		ORDER BY
 			bg.book_id ASC,
-			g.name COLLATE NOCASE ASC,
+			g.name COLLATE BINARY ASC,
 			g.id ASC;
 	`
 
@@ -312,7 +312,7 @@ func (r *BookRepository) hydrateBookCovers(ctx context.Context, bookList []books
 		ORDER BY
 			c.book_id ASC,
 			CASE WHEN c.variant = 'front' THEN 0 ELSE 1 END ASC,
-			c.variant COLLATE NOCASE ASC,
+			c.variant COLLATE BINARY ASC,
 			c.id ASC;
 	`
 

@@ -178,6 +178,22 @@ func TestMapBookToDetailsViewSelectsFrontCover(t *testing.T) {
 	}
 }
 
+func TestMapBookToDetailsViewLeavesFrontCoverEmptyForOtherVariants(t *testing.T) {
+	details := mapBookToDetailsView(Book{
+		Covers: []Cover{{
+			Variant: "back",
+			URL:     "https://example.test/covers/back.jpg",
+		}},
+	})
+
+	if details.FrontCover != nil {
+		t.Fatalf("FrontCover = %#v, want nil", details.FrontCover)
+	}
+	if got, want := len(details.Covers), 1; got != want {
+		t.Fatalf("len(Covers) = %d, want %d", got, want)
+	}
+}
+
 func TestCoverClassForBook(t *testing.T) {
 	tests := []struct {
 		name string
