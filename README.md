@@ -24,7 +24,6 @@ Current v0.2.2 database foundation with v0.1 read-side:
 - Local migration/seed smoke checks and v0.2 SQLite/PostgreSQL test helpers.
 
 Not current production direction:
-- Templ and gomponents routes are experiments only.
 - Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
 - Authentication, user libraries, search, pagination, and social features are planned later.
 
@@ -38,7 +37,6 @@ Not current production direction:
 - `golang-migrate` CLI for schema migrations, built with SQLite and PostgreSQL drivers
 - Pico CSS plus project CSS
 - HTMX vendored locally for a small catalog filter spike
-- Templ and gomponents as rendering experiments
 
 ## Run Locally
 
@@ -150,7 +148,7 @@ internal/modules/books/  books/catalog module
 internal/storage/sqlite/ SQLite repository implementation
 internal/storage/postgresql/ PostgreSQL connection and repository implementation
 internal/http/           rendering, response helpers, middleware, view models
-internal/web/            templates, static assets, rendering experiments
+internal/web/            server templates and static assets
 db/sqlite/               local SQLite schema, migrations, seed, reset script
 db/postgresql/           PostgreSQL schema, migrations, seed, reset script
 docs/                    project documentation
@@ -167,6 +165,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Database v0.2](docs/database_v0_2.md)
 - [Testing](docs/testing.md)
 - [Roadmap](docs/roadmap.md)
+- [Technical backlog](docs/backlog.md)
 - [AI project context](docs/ai/project-context.md)
 
 ## Roadmap Summary

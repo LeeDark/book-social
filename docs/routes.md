@@ -42,8 +42,7 @@ When present, it renders only the book list partial.
 
 Normal links still use `href`, so catalog filters remain usable without JavaScript.
 
-## Experimental Rendering Routes
+## Historical Rendering Experiments
 
-The codebase currently has experimental routes for Templ and gomponents catalog rendering.
-
-These are documented in `docs/ai/` spike notes and are not part of the main user-facing route contract.
+The former `/books-templ` and `/books-gomponents` spike routes have been removed. Their findings
+remain in `docs/ai/`, and possible reconsideration is tracked in `docs/backlog.md`.

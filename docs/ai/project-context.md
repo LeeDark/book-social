@@ -37,7 +37,9 @@ Current catalog behavior:
 Current rendering direction:
 - `html/template` is the primary rendering path.
 - HTMX is present as a small progressive-enhancement spike for catalog filters.
-- Templ and gomponents routes are experiments documented in spike notes, not the main frontend direction.
+- Completed Templ and gomponents experiments remain documented in spike notes, but their routes,
+  dependencies, and executable code have been removed. Revisit conditions live in
+  `docs/backlog.md`.
 
 Current infrastructure caveat:
 - `APP_ENV=dev` uses SQLite and is the active local database path.

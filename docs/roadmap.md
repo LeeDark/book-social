@@ -2,6 +2,9 @@
 
 This roadmap is a working guide, not a release promise.
 
+Unprioritized technical ideas and revisit conditions live in [backlog.md](backlog.md). The backlog
+does not change the active priority or release scope until an item is explicitly promoted here.
+
 ## Planning Principles
 
 - Each release should deliver an observable user or operator outcome, not only introduce
@@ -137,6 +140,8 @@ Definition of Done:
 
 Goal: restore and improve catalog reads after the schema change.
 
+- [x] Remove executable Templ/gomponents spikes after recording their findings; keep
+  `html/template` as the application rendering path and defer reconsideration to the backlog.
 - [ ] Add read models for book cards with multiple authors and genres.
 - [ ] Add a book details read model with authors, genres, and covers.
 - [ ] Add author details read model with the author's books.

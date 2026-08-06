@@ -489,3 +489,19 @@ Validation:
 - `git diff --check`
 - PostgreSQL tests pass with a disposable DSN when run sequentially (`go test -p 1 ./...`); they
   skip when `BOOK_SOCIAL_POSTGRES_TEST_DSN` is unset.
+
+## 2026-08-06 — Retire executable Templ and gomponents spikes
+
+Result:
+- Removed the `/books-templ` and `/books-gomponents` routes, handlers, adapters, render helpers,
+  component/page implementations, generated Templ files, and their positive route tests.
+- Removed Templ and gomponents dependencies and the Templ generation target.
+- Kept `html/template` as the application rendering path and preserved the existing HTMX catalog
+  partial-response behavior.
+- Preserved the original spike notes as historical evidence.
+- Added `docs/backlog.md` for unprioritized technical ideas and recorded explicit conditions for
+  reconsidering typed server-side rendering.
+
+Decision:
+- The roadmap remains the source of truth for current priority and accepted release scope.
+- Backlog entries are candidates, not commitments, and move to the roadmap only after review.

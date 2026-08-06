@@ -27,12 +27,6 @@ Test:
 make test
 ```
 
-Generate Templ files:
-
-```bash
-make templ/generate
-```
-
 Reset local SQLite database:
 
 ```bash
