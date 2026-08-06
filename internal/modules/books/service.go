@@ -49,16 +49,21 @@ func (s *CatalogService) BookDetailsPage(ctx context.Context, slug string) (Book
 		return BookDetailsPageData{}, err
 	}
 
+	pageLabel := book.Title
+	if len(book.Genres) > 0 {
+		pageLabel = book.Genres[0].Name + ": " + book.Title
+	}
+
 	return BookDetailsPageData{
 		Page: view.Page{
-			Title:       book.Genre.Name + ": " + book.Title,
+			Title:       pageLabel,
 			Description: "Book Details page",
 			ActiveNav:   "catalog",
 			Nav:         view.MainNavigation(),
 			Breadcrumbs: []view.Breadcrumb{
 				{Label: "Home", Href: "/"},
 				{Label: "Catalog", Href: "/books"},
-				{Label: book.Genre.Name + ": " + book.Title},
+				{Label: pageLabel},
 			},
 		},
 		Book: mapBookToDetailsView(book),
@@ -76,7 +81,7 @@ func (s *CatalogService) AuthorPage(ctx context.Context, slug string) (AuthorPag
 		return AuthorPageData{}, err
 	}
 
-	authorName := author.FirstName + " " + author.SecondName + " " + author.SurName
+	authorName := authorFullName(author)
 
 	return AuthorPageData{
 		Page: view.Page{

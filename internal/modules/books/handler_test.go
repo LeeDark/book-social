@@ -61,14 +61,15 @@ func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {
 		catalogData: CatalogPageData{
 			Page: view.Page{Title: "Books"},
 			Books: []BookCardView{{
-				Title:           "Signal in the Stacks",
-				BookURL:         "/books/signal-in-the-stacks",
-				AuthorName:      "Jon A. Vale",
-				AuthorURL:       "/authors/jon-a-vale",
-				AuthorFilterURL: "/books?author=jon-a-vale",
-				GenreName:       "Mystery",
-				GenreURL:        "/books?genre=mystery",
-				UseHTMXFilters:  true,
+				Title:   "Signal in the Stacks",
+				BookURL: "/books/signal-in-the-stacks",
+				Authors: []AuthorLinkView{{
+					Name:      "Jon A. Vale",
+					URL:       "/authors/jon-a-vale",
+					FilterURL: "/books?author=jon-a-vale",
+				}},
+				Genres:         []GenreLinkView{{Name: "Mystery", URL: "/books?genre=mystery"}},
+				UseHTMXFilters: true,
 			}},
 		},
 	})
@@ -96,14 +97,15 @@ func TestCatalogHandlerCatalogReturnsPartialForHTMXRequest(t *testing.T) {
 		catalogData: CatalogPageData{
 			Page: view.Page{Title: "Books"},
 			Books: []BookCardView{{
-				Title:           "Signal in the Stacks",
-				BookURL:         "/books/signal-in-the-stacks",
-				AuthorName:      "Jon A. Vale",
-				AuthorURL:       "/authors/jon-a-vale",
-				AuthorFilterURL: "/books?author=jon-a-vale",
-				GenreName:       "Mystery",
-				GenreURL:        "/books?genre=mystery",
-				UseHTMXFilters:  true,
+				Title:   "Signal in the Stacks",
+				BookURL: "/books/signal-in-the-stacks",
+				Authors: []AuthorLinkView{{
+					Name:      "Jon A. Vale",
+					URL:       "/authors/jon-a-vale",
+					FilterURL: "/books?author=jon-a-vale",
+				}},
+				Genres:         []GenreLinkView{{Name: "Mystery", URL: "/books?genre=mystery"}},
+				UseHTMXFilters: true,
 			}},
 		},
 	})
@@ -119,11 +121,20 @@ func TestCatalogHandlerCatalogReturnsPartialForHTMXRequest(t *testing.T) {
 	}
 
 	body := rec.Body.String()
-	if !strings.Contains(body, "Signal in the Stacks") {
-		t.Fatalf("body does not contain rendered book title: %q", body)
+	for _, fragment := range []string{
+		"Signal in the Stacks",
+		`hx-get="/books?author=jon-a-vale"`,
+		`hx-get="/books?genre=mystery"`,
+	} {
+		if !strings.Contains(body, fragment) {
+			t.Fatalf("body does not contain %q: %q", fragment, body)
+		}
 	}
 	if strings.Contains(body, "<!doctype html>") || strings.Contains(body, "<main class=\"container\">") {
 		t.Fatalf("body contains full layout markup: %q", body)
+	}
+	if strings.Contains(body, "internal server error") {
+		t.Fatalf("body contains render error: %q", body)
 	}
 }
 
@@ -259,7 +270,16 @@ func TestCatalogHandlerAuthorReturnsOKForExistingAuthor(t *testing.T) {
 		authorData: AuthorPageData{
 			Page:   view.Page{Title: "Jane Austen"},
 			Author: AuthorView{Name: "Jane Austen", Slug: "jane-austen"},
-			Books:  []BookCardView{{Title: "Pride and Prejudice", BookURL: "/books/pride-and-prejudice"}},
+			Books: []BookCardView{{
+				Title:   "Pride and Prejudice",
+				BookURL: "/books/pride-and-prejudice",
+				Authors: []AuthorLinkView{{
+					Name:      "Jane Austen",
+					URL:       "/authors/jane-austen",
+					FilterURL: "/books?author=jane-austen",
+				}},
+				Genres: []GenreLinkView{{Name: "Romance", URL: "/books?genre=romance"}},
+			}},
 		},
 	})
 
@@ -277,8 +297,13 @@ func TestCatalogHandlerAuthorReturnsOKForExistingAuthor(t *testing.T) {
 	if gotSlug != "jane-austen" {
 		t.Fatalf("author slug = %q, want %q", gotSlug, "jane-austen")
 	}
-	if !strings.Contains(rec.Body.String(), "Pride and Prejudice") {
-		t.Fatalf("body does not contain author book: %q", rec.Body.String())
+	for _, fragment := range []string{"Pride and Prejudice", "Jane Austen", "Romance"} {
+		if !strings.Contains(rec.Body.String(), fragment) {
+			t.Fatalf("body does not contain %q: %q", fragment, rec.Body.String())
+		}
+	}
+	if strings.Contains(rec.Body.String(), "internal server error") {
+		t.Fatalf("body contains render error: %q", rec.Body.String())
 	}
 }
 

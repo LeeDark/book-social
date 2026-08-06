@@ -84,11 +84,11 @@ func TestBookRepositoryGetBookBySlug(t *testing.T) {
 	if book.Title != "Frankenstein" {
 		t.Fatalf("Title = %q, want %q", book.Title, "Frankenstein")
 	}
-	if book.Author.Slug != "mary-shelley" {
-		t.Fatalf("Author.Slug = %q, want %q", book.Author.Slug, "mary-shelley")
+	if len(book.Authors) != 1 || book.Authors[0].Slug != "mary-shelley" {
+		t.Fatalf("Authors = %#v, want mary-shelley", book.Authors)
 	}
-	if book.Genre.Slug != "science-fiction" {
-		t.Fatalf("Genre.Slug = %q, want %q", book.Genre.Slug, "science-fiction")
+	if len(book.Genres) != 1 || book.Genres[0].Slug != "science-fiction" {
+		t.Fatalf("Genres = %#v, want science-fiction", book.Genres)
 	}
 }
 
