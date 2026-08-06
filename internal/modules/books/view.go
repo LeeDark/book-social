@@ -48,9 +48,10 @@ type BookDetailsView struct {
 	Description string
 	CoverClass  string
 
-	Authors []AuthorLinkView
-	Genres  []GenreLinkView
-	Covers  []CoverView
+	Authors    []AuthorLinkView
+	Genres     []GenreLinkView
+	Covers     []CoverView
+	FrontCover *CoverView
 }
 
 type AuthorLinkView struct {
@@ -117,6 +118,7 @@ func mapBookToDetailsView(book Book) BookDetailsView {
 		Genres:      mapGenresToLinks(book.Genres),
 		Covers:      mapCoversToViews(book.Covers),
 	}
+	details.FrontCover = frontCover(details.Covers)
 
 	return details
 }
@@ -166,6 +168,16 @@ func mapCoversToViews(covers []Cover) []CoverView {
 		})
 	}
 	return views
+}
+
+func frontCover(covers []CoverView) *CoverView {
+	for index := range covers {
+		if covers[index].Variant == "front" {
+			return &covers[index]
+		}
+	}
+
+	return nil
 }
 
 func authorFullName(author Author) string {

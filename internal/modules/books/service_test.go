@@ -132,6 +132,7 @@ func TestCatalogServiceCatalogPagePassesFilterToRepository(t *testing.T) {
 }
 
 func TestCatalogServiceBookDetailsPageReturnsBookBySlug(t *testing.T) {
+	frontCoverURL := "https://example.test/covers/the-quiet-atlas.jpg"
 	service := NewCatalogService(fakeBookRepository{
 		book: Book{
 			ID:          8,
@@ -140,6 +141,7 @@ func TestCatalogServiceBookDetailsPageReturnsBookBySlug(t *testing.T) {
 			Description: "A reflective journey.",
 			Authors:     []Author{{ID: 1, FirstName: "Mira", SecondName: "L.", SurName: "Stone", Slug: "mira-l-stone"}},
 			Genres:      []Genre{{ID: 1, Name: "Literary Fiction", Slug: "literary-fiction"}},
+			Covers:      []Cover{{ID: 1, Variant: "front", URL: frontCoverURL}},
 		},
 	})
 
@@ -162,6 +164,9 @@ func TestCatalogServiceBookDetailsPageReturnsBookBySlug(t *testing.T) {
 	}
 	if got, want := data.Book.Genres[0].URL, "/books?genre=literary-fiction"; got != want {
 		t.Errorf("genre URL = %q, want %q", got, want)
+	}
+	if data.Book.FrontCover == nil || data.Book.FrontCover.URL != frontCoverURL {
+		t.Errorf("front cover = %#v", data.Book.FrontCover)
 	}
 }
 

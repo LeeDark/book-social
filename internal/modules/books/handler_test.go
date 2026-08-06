@@ -211,6 +211,7 @@ func TestCatalogHandlerCatalogPassesFilters(t *testing.T) {
 }
 
 func TestCatalogHandlerBookDetailsReturnsOKForExistingBook(t *testing.T) {
+	frontCoverURL := "https://example.test/covers/the-quiet-atlas.jpg"
 	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
 		detailsData: BookDetailsPageData{
 			Page: view.Page{Title: "The Quiet Atlas"},
@@ -219,6 +220,7 @@ func TestCatalogHandlerBookDetailsReturnsOKForExistingBook(t *testing.T) {
 				Description: "A reflective journey.",
 				Authors:     []AuthorLinkView{{Name: "Mira L. Stone", URL: "/authors/mira-l-stone"}},
 				Genres:      []GenreLinkView{{Name: "Literary Fiction", URL: "/books?genre=literary-fiction"}},
+				FrontCover:  &CoverView{Variant: "front", URL: frontCoverURL},
 			},
 		},
 	})
@@ -235,7 +237,7 @@ func TestCatalogHandlerBookDetailsReturnsOKForExistingBook(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 	}
 	body := rec.Body.String()
-	for _, fragment := range []string{"The Quiet Atlas", "Mira L. Stone", "Literary Fiction"} {
+	for _, fragment := range []string{"The Quiet Atlas", "Mira L. Stone", "Literary Fiction", `src="https://example.test/covers/the-quiet-atlas.jpg"`} {
 		if !strings.Contains(body, fragment) {
 			t.Fatalf("body does not contain %q: %q", fragment, body)
 		}

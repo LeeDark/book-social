@@ -7,11 +7,15 @@
         </p>
 
         <div class="book-details__layout">
-            <div class="book-details__cover {{.Book.CoverClass}}" aria-label="Book cover for {{.Book.Title}}">
-                <span class="book-cover__brand">Book Social</span>
-                <span class="book-cover__title">{{.Book.Title}}</span>
-                <span class="book-cover__rule"></span>
-            </div>
+            {{if .Book.FrontCover}}
+                <img class="book-details__cover book-details__cover--image" src="{{.Book.FrontCover.URL}}" alt="Cover of {{.Book.Title}}">
+            {{else}}
+                <div class="book-details__cover {{.Book.CoverClass}}" aria-label="Book cover for {{.Book.Title}}">
+                    <span class="book-cover__brand">Book Social</span>
+                    <span class="book-cover__title">{{.Book.Title}}</span>
+                    <span class="book-cover__rule"></span>
+                </div>
+            {{end}}
 
             <div class="book-details__body">
                 <header class="book-details__header">

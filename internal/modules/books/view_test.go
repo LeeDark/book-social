@@ -135,6 +135,9 @@ func TestMapBookToDetailsViewMapsRelationshipsAndCovers(t *testing.T) {
 	if got, want := details.Covers[0].URL, "https://example.test/covers/the-quiet-atlas.jpg"; got != want {
 		t.Errorf("cover URL = %q, want %q", got, want)
 	}
+	if details.FrontCover == nil || details.FrontCover.URL != "https://example.test/covers/the-quiet-atlas.jpg" {
+		t.Errorf("FrontCover = %#v", details.FrontCover)
+	}
 	if details.Covers[0].MIMEType != &mimeType {
 		t.Errorf("cover MIMEType pointer was not preserved")
 	}
@@ -149,13 +152,29 @@ func TestMapBookToDetailsViewMapsRelationshipsAndCovers(t *testing.T) {
 func TestMapBookToDetailsViewHandlesMissingRelationships(t *testing.T) {
 	details := mapBookToDetailsView(Book{ID: 1, Title: "Unlinked Book", Slug: "unlinked-book"})
 
-	if len(details.Authors) != 0 || len(details.Genres) != 0 || len(details.Covers) != 0 {
+	if len(details.Authors) != 0 || len(details.Genres) != 0 || len(details.Covers) != 0 || details.FrontCover != nil {
 		t.Fatalf(
 			"relationship lengths = %d/%d/%d, want 0/0/0",
 			len(details.Authors),
 			len(details.Genres),
 			len(details.Covers),
 		)
+	}
+}
+
+func TestMapBookToDetailsViewSelectsFrontCover(t *testing.T) {
+	details := mapBookToDetailsView(Book{
+		Covers: []Cover{
+			{Variant: "back", URL: "https://example.test/covers/back.jpg"},
+			{Variant: "front", URL: "https://example.test/covers/front.jpg"},
+		},
+	})
+
+	if details.FrontCover == nil {
+		t.Fatal("FrontCover = nil")
+	}
+	if details.FrontCover.URL != "https://example.test/covers/front.jpg" {
+		t.Errorf("FrontCover.URL = %q", details.FrontCover.URL)
 	}
 }
 

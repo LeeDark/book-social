@@ -14,18 +14,27 @@
             </h2>
 
             <p class="book-card__meta">
-                by <a href="{{.AuthorURL}}">{{.AuthorName}}</a>
-                {{if and .UseHTMXFilters .AuthorFilterURL}}
-                    <a href="{{.AuthorFilterURL}}" hx-get="{{.AuthorFilterURL}}" hx-target="#book-list" hx-swap="innerHTML" hx-push-url="true" aria-label="Filter catalog by {{.AuthorName}}">Filter</a>
+                {{if .Authors}}
+                    by
+                    {{range $index, $author := .Authors}}
+                        {{if $index}}, {{end}}
+                        <a href="{{$author.URL}}">{{$author.Name}}</a>
+                        {{if and $.UseHTMXFilters $author.FilterURL}}
+                            <a href="{{$author.FilterURL}}" hx-get="{{$author.FilterURL}}" hx-target="#book-list" hx-swap="innerHTML" hx-push-url="true" aria-label="Filter catalog by {{$author.Name}}">Filter</a>
+                        {{end}}
+                    {{end}}
                 {{end}}
             </p>
 
-            {{if .GenreName}}
+            {{if .Genres}}
                 <p class="book-card__genre">
-                    {{if .UseHTMXFilters}}
-                        <a href="{{.GenreURL}}" hx-get="{{.GenreURL}}" hx-target="#book-list" hx-swap="innerHTML" hx-push-url="true">{{.GenreName}}</a>
-                    {{else}}
-                        <a href="{{.GenreURL}}">{{.GenreName}}</a>
+                    {{range $index, $genre := .Genres}}
+                        {{if $index}}, {{end}}
+                        {{if $.UseHTMXFilters}}
+                            <a href="{{$genre.URL}}" hx-get="{{$genre.URL}}" hx-target="#book-list" hx-swap="innerHTML" hx-push-url="true">{{$genre.Name}}</a>
+                        {{else}}
+                            <a href="{{$genre.URL}}">{{$genre.Name}}</a>
+                        {{end}}
                     {{end}}
                 </p>
             {{end}}
