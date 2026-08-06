@@ -1,5 +1,5 @@
 ARG GO_VERSION=1.26
-ARG ALPINE_VERSION=3.24
+ARG DEBIAN_VERSION=bookworm-slim
 ARG APP_NAME=book-social
 ARG APP_DIR=/app
 
@@ -26,7 +26,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
     ./cmd/web
 
 
-FROM alpine:${ALPINE_VERSION}
+FROM debian:${DEBIAN_VERSION}
 
 ARG APP_NAME
 ARG APP_DIR
@@ -35,7 +35,7 @@ LABEL authors="lee"
 
 WORKDIR ${APP_DIR}
 
-RUN addgroup -S app && adduser -S -G app app
+RUN groupadd --system app && useradd --system --gid app app
 
 COPY --from=build /out/${APP_NAME} ${APP_DIR}/${APP_NAME}
 COPY --from=build /go/bin/migrate /usr/local/bin/migrate
@@ -44,8 +44,10 @@ COPY db/sqlite/ ${APP_DIR}/db/sqlite/
 COPY db/postgresql/ ${APP_DIR}/db/postgresql/
 COPY docker/entrypoint.sh ${APP_DIR}/docker-entrypoint.sh
 
-RUN apk add --no-cache postgresql-client sqlite \
-    && chmod +x ${APP_DIR}/docker-entrypoint.sh
+RUN apt-get update \
+	&& apt-get install --no-install-recommends --yes postgresql-client sqlite3 \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& chmod +x ${APP_DIR}/docker-entrypoint.sh
 
 EXPOSE 8080
 
