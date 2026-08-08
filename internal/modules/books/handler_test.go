@@ -2,6 +2,7 @@ package books
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -89,6 +90,18 @@ func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {
 		if !strings.Contains(rec.Body.String(), fragment) {
 			t.Fatalf("body does not contain %q: %q", fragment, rec.Body.String())
 		}
+	}
+}
+
+func TestCatalogHandlerCatalogReturnsServerErrorWhenServiceFails(t *testing.T) {
+	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{catalogErr: errors.New("repository unavailable")})
+
+	req := httptest.NewRequest(http.MethodGet, "/books", nil)
+	rec := httptest.NewRecorder()
+	handler.Catalog(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
 	}
 }
 
@@ -265,6 +278,20 @@ func TestCatalogHandlerBookDetailsReturnsNotFoundForMissingBook(t *testing.T) {
 	}
 }
 
+func TestCatalogHandlerBookDetailsReturnsServerErrorWhenServiceFails(t *testing.T) {
+	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{detailsErr: errors.New("repository unavailable")})
+
+	router := chi.NewRouter()
+	router.Get("/books/{slug}", handler.BookDetails)
+	req := httptest.NewRequest(http.MethodGet, "/books/known-book", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
+	}
+}
+
 func TestCatalogHandlerBookDetailsUsesPlaceholderWithoutFrontCover(t *testing.T) {
 	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{
 		detailsData: BookDetailsPageData{
@@ -361,6 +388,20 @@ func TestCatalogHandlerAuthorReturnsNotFoundForMissingAuthor(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "Browse catalog") {
 		t.Fatalf("body does not contain Browse catalog: %q", rec.Body.String())
+	}
+}
+
+func TestCatalogHandlerAuthorReturnsServerErrorWhenServiceFails(t *testing.T) {
+	handler := newTestCatalogHandler(t, fakeCatalogPageProvider{authorErr: errors.New("repository unavailable")})
+
+	router := chi.NewRouter()
+	router.Get("/authors/{slug}", handler.Author)
+	req := httptest.NewRequest(http.MethodGet, "/authors/jane-austen", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
 	}
 }
 

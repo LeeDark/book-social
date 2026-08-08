@@ -25,6 +25,8 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 		wantStatus    int
 		wantFragments []string
 		wantAbsent    []string
+		wantExact     []string
+		wantCardCount int
 	}{
 		{
 			name:       "home uses normalized catalog cards",
@@ -39,7 +41,9 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 				"Classic",
 				"Romance",
 			},
-			wantAbsent: []string{`hx-target="#book-list"`},
+			wantAbsent:    []string{`hx-target="#book-list"`},
+			wantExact:     []string{`<a href="/authors/jane-austen">Jane Austen</a>`},
+			wantCardCount: 2,
 		},
 		{
 			name:       "catalog",
@@ -52,6 +56,8 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 				"Classic",
 				"Romance",
 			},
+			wantExact:     []string{`<a href="/authors/jane-austen">Jane Austen</a>`},
+			wantCardCount: 2,
 		},
 		{
 			name:       "book details with multiple links and front cover",
@@ -65,6 +71,7 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 				"Romance",
 				`src="https://example.test/covers/pride-and-prejudice.jpg"`,
 			},
+			wantExact: []string{`<img class="book-details__cover book-details__cover--image" src="https://example.test/covers/pride-and-prejudice.jpg" alt="Cover of Pride and Prejudice">`},
 		},
 		{
 			name:          "book details without cover use placeholder",
@@ -94,6 +101,7 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 			wantStatus:    http.StatusOK,
 			wantFragments: []string{"Pride and Prejudice", "jane-austen", "mary-shelley"},
 			wantAbsent:    []string{"Dracula"},
+			wantCardCount: 1,
 		},
 		{
 			name:          "genre filtered catalog",
@@ -101,6 +109,7 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 			wantStatus:    http.StatusOK,
 			wantFragments: []string{"Pride and Prejudice", "Classic", "Romance"},
 			wantAbsent:    []string{"Dracula"},
+			wantCardCount: 1,
 		},
 		{
 			name:          "combined filters keep all relationships",
@@ -108,6 +117,7 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 			wantStatus:    http.StatusOK,
 			wantFragments: []string{"Pride and Prejudice", "jane-austen", "mary-shelley", "Classic", "Romance"},
 			wantAbsent:    []string{"Dracula"},
+			wantCardCount: 1,
 		},
 		{
 			name:          "author page keeps all book relationships",
@@ -115,6 +125,8 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 			wantStatus:    http.StatusOK,
 			wantFragments: []string{"Mary Shelley", "Pride and Prejudice", "jane-austen", "mary-shelley", "Classic", "Romance"},
 			wantAbsent:    []string{"Dracula"},
+			wantExact:     []string{`<a href="/books?author=mary-shelley">View in catalog</a>`},
+			wantCardCount: 1,
 		},
 	}
 
@@ -138,6 +150,16 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 			for _, fragment := range tt.wantAbsent {
 				if strings.Contains(body, fragment) {
 					t.Fatalf("body contains unwanted fragment %q: %q", fragment, body)
+				}
+			}
+			for _, fragment := range tt.wantExact {
+				if !strings.Contains(body, fragment) {
+					t.Fatalf("body does not contain structural fragment %q: %q", fragment, body)
+				}
+			}
+			if tt.wantCardCount > 0 {
+				if got := strings.Count(body, `<article class="book-card">`); got != tt.wantCardCount {
+					t.Fatalf("book card count = %d, want %d; body = %q", got, tt.wantCardCount, body)
 				}
 			}
 		})
@@ -167,6 +189,20 @@ func TestCatalogRouteReturnsPartialForHTMXRequest(t *testing.T) {
 		if strings.Contains(body, fragment) {
 			t.Fatalf("body contains unwanted fragment %q: %q", fragment, body)
 		}
+	}
+	for _, fragment := range []string{`<section class="catalog-results"`, "<html", "<head", "<body"} {
+		if fragment == `<section class="catalog-results"` {
+			if !strings.Contains(body, fragment) {
+				t.Fatalf("partial body does not contain results section: %q", body)
+			}
+			continue
+		}
+		if strings.Contains(body, fragment) {
+			t.Fatalf("partial body contains layout fragment %q: %q", fragment, body)
+		}
+	}
+	if got := strings.Count(body, `<article class="book-card">`); got != 1 {
+		t.Fatalf("partial book card count = %d, want 1; body = %q", got, body)
 	}
 }
 

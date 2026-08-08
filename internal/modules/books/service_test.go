@@ -7,24 +7,27 @@ import (
 )
 
 type fakeBookRepository struct {
-	books          []Book
-	book           Book
-	author         Author
-	receivedFilter *BookFilter
-	err            error
+	books           []Book
+	book            Book
+	author          Author
+	receivedFilter  *BookFilter
+	listErr         error
+	listFilteredErr error
+	bookErr         error
+	authorErr       error
 }
 
 func (r fakeBookRepository) ListBooks(ctx context.Context) ([]Book, error) {
-	if r.err != nil {
-		return nil, r.err
+	if r.listErr != nil {
+		return nil, r.listErr
 	}
 
 	return r.books, nil
 }
 
 func (r fakeBookRepository) ListBooksFiltered(ctx context.Context, filter BookFilter) ([]Book, error) {
-	if r.err != nil {
-		return nil, r.err
+	if r.listFilteredErr != nil {
+		return nil, r.listFilteredErr
 	}
 	if r.receivedFilter != nil {
 		*r.receivedFilter = filter
@@ -34,8 +37,8 @@ func (r fakeBookRepository) ListBooksFiltered(ctx context.Context, filter BookFi
 }
 
 func (r fakeBookRepository) GetBookBySlug(ctx context.Context, slug string) (Book, error) {
-	if r.err != nil {
-		return Book{}, r.err
+	if r.bookErr != nil {
+		return Book{}, r.bookErr
 	}
 
 	if r.book.Slug != slug {
@@ -46,8 +49,8 @@ func (r fakeBookRepository) GetBookBySlug(ctx context.Context, slug string) (Boo
 }
 
 func (r fakeBookRepository) GetAuthorBySlug(ctx context.Context, slug string) (Author, error) {
-	if r.err != nil {
-		return Author{}, r.err
+	if r.authorErr != nil {
+		return Author{}, r.authorErr
 	}
 
 	if r.author.Slug != slug {
@@ -128,6 +131,68 @@ func TestCatalogServiceCatalogPagePassesFilterToRepository(t *testing.T) {
 
 	if gotFilter != filter {
 		t.Fatalf("repository filter = %+v, want %+v", gotFilter, filter)
+	}
+}
+
+func TestCatalogServicePropagatesRepositoryErrors(t *testing.T) {
+	repositoryErr := errors.New("repository unavailable")
+	tests := []struct {
+		name string
+		repo fakeBookRepository
+		call func(*CatalogService) error
+	}{
+		{
+			name: "catalog page",
+			repo: fakeBookRepository{listFilteredErr: repositoryErr},
+			call: func(service *CatalogService) error {
+				_, err := service.CatalogPage(context.Background(), BookFilter{})
+				return err
+			},
+		},
+		{
+			name: "featured books",
+			repo: fakeBookRepository{listErr: repositoryErr},
+			call: func(service *CatalogService) error {
+				_, err := service.FeaturedBooks(context.Background())
+				return err
+			},
+		},
+		{
+			name: "book details",
+			repo: fakeBookRepository{bookErr: repositoryErr},
+			call: func(service *CatalogService) error {
+				_, err := service.BookDetailsPage(context.Background(), "the-quiet-atlas")
+				return err
+			},
+		},
+		{
+			name: "author lookup",
+			repo: fakeBookRepository{authorErr: repositoryErr},
+			call: func(service *CatalogService) error {
+				_, err := service.AuthorPage(context.Background(), "jane-austen")
+				return err
+			},
+		},
+		{
+			name: "author books",
+			repo: fakeBookRepository{
+				author:          Author{Slug: "jane-austen"},
+				listFilteredErr: repositoryErr,
+			},
+			call: func(service *CatalogService) error {
+				_, err := service.AuthorPage(context.Background(), "jane-austen")
+				return err
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.call(NewCatalogService(tt.repo))
+			if !errors.Is(err, repositoryErr) {
+				t.Fatalf("service error = %v, want repository error", err)
+			}
+		})
 	}
 }
 
