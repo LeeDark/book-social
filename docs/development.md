@@ -151,8 +151,10 @@ BOOK_SOCIAL_POSTGRES_TEST_DSN='postgres://user:password@localhost:5432/book_soci
   GOCACHE=/tmp/book-social-go-cache go test -p 1 ./internal/storage/postgresql
 ```
 
-The test helper resets the database's `public` schema; never point this variable at non-disposable
-data.
+The test helper resets the database's `public` schema only after confirming that the connected
+database is exactly `book_social_test` (and has the required `_test` suffix); it refuses any other
+database without printing the DSN or credentials. Never point this variable at non-disposable data.
+When one test database is shared across packages, include `-p 1` in the test command.
 
 ## Docker And Compose
 

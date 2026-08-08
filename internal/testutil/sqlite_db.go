@@ -64,118 +64,12 @@ func NewSQLiteTestDB(t *testing.T, ctx context.Context, dsn string) *sql.DB {
 
 func ApplySQLiteCatalogTestSchema(t *testing.T, ctx context.Context, db *sql.DB) {
 	t.Helper()
-
-	statements := []string{
-		// Keep this test schema in sync with db/sqlite/schema_v0_1.sql
-		// until the project introduces migrations.
-		`CREATE TABLE authors (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			first_name TEXT NOT NULL,
-			second_name TEXT NULL,
-			sur_name TEXT NULL,
-			slug TEXT NOT NULL UNIQUE,
-			description TEXT NULL
-		);`,
-		`CREATE INDEX idx_authors_name ON authors(sur_name, first_name);`,
-		`CREATE TABLE genres (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL,
-			slug TEXT NOT NULL UNIQUE,
-			description TEXT NULL,
-			CONSTRAINT uq_genres_name UNIQUE (name)
-		);`,
-		`CREATE TABLE books (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			title TEXT NOT NULL,
-			slug TEXT NOT NULL UNIQUE,
-			description TEXT NULL,
-			book_author_id INTEGER NULL,
-			book_genre_id INTEGER NULL,
-			CONSTRAINT fk_books_author
-				FOREIGN KEY (book_author_id) REFERENCES authors(id)
-					ON UPDATE CASCADE
-					ON DELETE SET NULL,
-			CONSTRAINT fk_books_genre
-				FOREIGN KEY (book_genre_id) REFERENCES genres(id)
-					ON UPDATE CASCADE
-					ON DELETE SET NULL
-		);`,
-		`CREATE INDEX idx_books_author ON books(book_author_id);`,
-		`CREATE INDEX idx_books_genre ON books(book_genre_id);`,
-	}
-
-	execStatements(t, ctx, db, statements)
+	applySQLiteCatalogTestMigrations(t, ctx, db, "000001")
 }
 
 func ApplySQLiteCatalogV2TestSchema(t *testing.T, ctx context.Context, db *sql.DB) {
 	t.Helper()
-
-	statements := []string{
-		`CREATE TABLE authors (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			first_name TEXT NOT NULL,
-			second_name TEXT NULL,
-			sur_name TEXT NULL,
-			slug TEXT NOT NULL UNIQUE,
-			description TEXT NULL
-		);`,
-		`CREATE INDEX idx_authors_name ON authors(sur_name, first_name);`,
-		`CREATE TABLE genres (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL,
-			slug TEXT NOT NULL UNIQUE,
-			description TEXT NULL,
-			CONSTRAINT uq_genres_name UNIQUE (name)
-		);`,
-		`CREATE TABLE books (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			title TEXT NOT NULL,
-			slug TEXT NOT NULL UNIQUE,
-			description TEXT NULL
-		);`,
-		`CREATE TABLE book_authors (
-			book_id INTEGER NOT NULL,
-			author_id INTEGER NOT NULL,
-			PRIMARY KEY (book_id, author_id),
-			CONSTRAINT fk_book_authors_book
-				FOREIGN KEY (book_id) REFERENCES books(id)
-					ON UPDATE CASCADE ON DELETE CASCADE,
-			CONSTRAINT fk_book_authors_author
-				FOREIGN KEY (author_id) REFERENCES authors(id)
-					ON UPDATE CASCADE ON DELETE CASCADE
-		);`,
-		`CREATE INDEX idx_book_authors_author ON book_authors(author_id);`,
-		`CREATE TABLE book_genres (
-			book_id INTEGER NOT NULL,
-			genre_id INTEGER NOT NULL,
-			PRIMARY KEY (book_id, genre_id),
-			CONSTRAINT fk_book_genres_book
-				FOREIGN KEY (book_id) REFERENCES books(id)
-					ON UPDATE CASCADE ON DELETE CASCADE,
-			CONSTRAINT fk_book_genres_genre
-				FOREIGN KEY (genre_id) REFERENCES genres(id)
-					ON UPDATE CASCADE ON DELETE CASCADE
-		);`,
-		`CREATE INDEX idx_book_genres_genre ON book_genres(genre_id);`,
-		`CREATE TABLE covers (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			book_id INTEGER NOT NULL,
-			variant TEXT NOT NULL,
-			url TEXT NOT NULL,
-			mime_type TEXT NULL,
-			byte_size INTEGER NULL CHECK (byte_size IS NULL OR byte_size >= 0),
-			width INTEGER NULL CHECK (width IS NULL OR width >= 0),
-			height INTEGER NULL CHECK (height IS NULL OR height >= 0),
-			checksum_sha256 TEXT NULL,
-			CONSTRAINT uq_covers_book_variant UNIQUE (book_id, variant),
-			CONSTRAINT fk_covers_book
-				FOREIGN KEY (book_id) REFERENCES books(id)
-					ON UPDATE CASCADE ON DELETE CASCADE
-		);`,
-		`CREATE INDEX idx_covers_book ON covers(book_id);`,
-	}
-
-	execStatements(t, ctx, db, statements)
+	applySQLiteCatalogTestMigrations(t, ctx, db, "")
 }
 
 func SeedSQLiteCatalogTestData(t *testing.T, ctx context.Context, db *sql.DB) {

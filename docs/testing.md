@@ -46,21 +46,24 @@ Current repository and HTTP integration tests create disposable SQLite databases
 - HTTP integration tests use temporary SQLite files from `t.TempDir()`
 - tests insert minimal deterministic data needed by the behavior under test
 
-Shared helpers in `internal/testutil` provide minimal SQLite and PostgreSQL catalog test schemas.
-The SQLite helper can also seed a small catalog fixture. Tests can still keep scenario-specific
-fixture rows locally when they need more data than the default helper provides.
+Shared helpers in `internal/testutil` build SQLite and PostgreSQL catalog test schemas by applying
+the checked-in migrations, then seed a small deterministic catalog fixture. Tests can still keep
+scenario-specific fixture rows locally when they need more data than the default helper provides.
 
 PostgreSQL repository tests are opt-in because they require a real PostgreSQL database. By default
 they skip unless `BOOK_SOCIAL_POSTGRES_TEST_DSN` is set.
 
-The PostgreSQL test DSN must point at a disposable database. The repository tests drop and recreate
-the `public` schema before loading their minimal fixture data.
+The PostgreSQL test DSN must connect to the exact disposable database `book_social_test`. Before
+every schema reset, the helper queries `current_database()` and refuses to run unless it equals
+`book_social_test` and ends in `_test`. It never prints the DSN or credentials. The repository
+tests then drop and recreate only that database's `public` schema before loading fixture data.
+When packages share this database, run PostgreSQL tests sequentially with `-p 1`.
 
 Example:
 
 ```bash
 BOOK_SOCIAL_POSTGRES_TEST_DSN='postgres://book_social:book_social@localhost:5432/book_social_test?sslmode=disable' \
-  go test ./internal/storage/postgresql
+  go test -p 1 ./internal/storage/postgresql
 ```
 
 Do not use the full development seed dataset in ordinary unit or handler tests. Use full seed data

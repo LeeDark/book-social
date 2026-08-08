@@ -5,6 +5,27 @@ import (
 	"testing"
 )
 
+func TestIsExpectedPostgresTestDatabase(t *testing.T) {
+	tests := []struct {
+		name         string
+		databaseName string
+		want         bool
+	}{
+		{name: "expected disposable database", databaseName: PostgresTestDatabaseName, want: true},
+		{name: "different test database", databaseName: "book_social_integration_test", want: false},
+		{name: "development database", databaseName: "book_social", want: false},
+		{name: "test suffix only", databaseName: "production_test", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isExpectedPostgresTestDatabase(tt.databaseName); got != tt.want {
+				t.Fatalf("isExpectedPostgresTestDatabase(%q) = %t, want %t", tt.databaseName, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestPostgresCatalogV2TestDBUsesNormalizedRelationships(t *testing.T) {
 	db := NewPostgresCatalogV2TestDB(t, context.Background())
 
