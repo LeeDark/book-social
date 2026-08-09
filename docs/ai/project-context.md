@@ -25,6 +25,7 @@ Current focus:
 - clean package boundaries
 - small incremental tasks
 - current documentation should describe implemented behavior, not planned behavior
+- v0.2.4 HTTP foundation is complete; the next active release is v0.2.5 Auth Foundation.
 
 Current catalog behavior:
 - `/books` lists books.
@@ -59,7 +60,14 @@ Current infrastructure caveat:
   deferred to v0.3.
 - Docker/Compose are supported as local environment workflows for SQLite dev and PostgreSQL stage/prod.
 - Docker/Compose are not production-ready infrastructure.
+- HTTP lifecycle uses signal-aware graceful shutdown with a five-second deadline.
+- Dynamic MPA routes use a 30-second application timeout; static, health, and fallback routes keep
+  their existing semantics.
+- Security headers, static cache policy, buffered rendering failures, and structured panic recovery
+  are implemented and covered by focused HTTP tests.
+- `APP_TRUSTED_PROXY_CIDRS` conditionally enables forwarded client-IP handling; it is disabled when
+  unset.
 
 Next planned release:
-- v0.2.4 HTTP Foundation: review middleware, shutdown, error behavior, headers, static-cache
-  policy, and timeout scope before auth work.
+- v0.2.5 Auth Foundation: sessions, password hashing, user repository/service foundations, current
+  user middleware, CSRF strategy, and minimal auth validation.

@@ -6,7 +6,7 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-Current v0.2.3 normalized catalog read-side:
+Current v0.2.4 HTTP foundation on top of the normalized v0.2.3 catalog read-side:
 - Home and About pages.
 - Book catalog page.
 - Book details page.
@@ -25,6 +25,10 @@ Current v0.2.3 normalized catalog read-side:
 - The home page uses the shared catalog-card read model for a deterministic featured selection.
 - Migration-first reset and Docker/Compose bootstrap followed by development seed data.
 - Local migration/seed smoke checks and v0.2 SQLite/PostgreSQL test helpers.
+- Graceful shutdown on `SIGINT`/`SIGTERM` with bounded active-request draining.
+- Request IDs, structured access logs, trusted-proxy-aware client IP handling, panic recovery, and
+  conservative security headers.
+- Dynamic-route timeout, static asset cache policy, and buffered template error handling.
 
 Not current production direction:
 - Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
@@ -67,6 +71,9 @@ Local development defaults to:
 APP_ENV=dev
 APP_DB_DSN=./data/book_social_dev.db
 ```
+
+`APP_TRUSTED_PROXY_CIDRS` is optional. When set to comma-separated trusted proxy networks, forwarded
+client-IP headers are accepted only from an immediate peer in one of those networks.
 
 Set environment variables before the command when you need a different configuration:
 
@@ -174,11 +181,12 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Start v0.2.4 HTTP Foundation.
+- Start v0.2.5 Auth Foundation.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:
 - Quality baseline: format/test/lint/CI.
 - Database strategy: migrations and schema evolution (v0.2.2 complete).
 - Catalog read model updates for the v0.2 schema (v0.2.3 complete).
-- Authentication and user flows after the data foundation is clearer.
+- HTTP foundation: lifecycle, middleware, security, caching, recovery, and timeout policy (v0.2.4 complete).
+- Authentication and user flows are the next active scope (v0.2.5 Auth Foundation).

@@ -32,7 +32,10 @@ Current tests cover:
 - renderer behavior
 - response helpers
 - navigation view helpers
-- logging middleware, including recovered panic status
+- logging middleware, including recovered panic status and structured panic diagnostics
+- trusted-proxy client IP handling, including trusted, untrusted, and disabled configurations
+- graceful shutdown lifecycle and `http.ErrServerClosed` handling with fake servers
+- dynamic timeout cancellation and `504 Gateway Timeout` behavior
 - security headers and static cache policy
 - renderer failure before response status commit
 
