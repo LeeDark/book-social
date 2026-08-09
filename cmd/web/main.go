@@ -6,6 +6,8 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/LeeDark/book-social/internal/app"
 	"github.com/LeeDark/book-social/internal/buildinfo"
@@ -19,7 +21,8 @@ import (
 
 func main() {
 	// wiring/bootstrap
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	cfg, err := config.Load()
 	if err != nil {
