@@ -24,6 +24,10 @@ content type sniffing and framing are disabled, referrers are reduced to origin 
 requests, unused browser capabilities are disabled, and the content policy allows self-hosted
 assets plus HTTPS/data cover images. HSTS is intentionally not enabled for the local HTTP workflow.
 
+Static assets use `Cache-Control: public, max-age=3600` for successful responses. Missing or failed
+static responses use `Cache-Control: no-store`. HTML pages, 404 pages, and HTMX partial responses
+do not receive a public long-lived cache policy.
+
 ## Pages
 
 ```text

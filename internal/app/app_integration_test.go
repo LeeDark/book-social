@@ -140,6 +140,9 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 			if rec.Code != tt.wantStatus {
 				t.Fatalf("status = %d, want %d; body = %q", rec.Code, tt.wantStatus, rec.Body.String())
 			}
+			if cacheControl := rec.Header().Get("Cache-Control"); strings.Contains(cacheControl, "public") {
+				t.Fatalf("HTML response has public cache policy %q", cacheControl)
+			}
 
 			body := rec.Body.String()
 			for _, fragment := range tt.wantFragments {
@@ -177,6 +180,9 @@ func TestCatalogRouteReturnsPartialForHTMXRequest(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d; body = %q", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	if cacheControl := rec.Header().Get("Cache-Control"); strings.Contains(cacheControl, "public") {
+		t.Fatalf("HTMX partial has public cache policy %q", cacheControl)
 	}
 
 	body := rec.Body.String()

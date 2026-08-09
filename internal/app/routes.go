@@ -3,6 +3,7 @@ package app
 import (
 	"net/http"
 
+	appmiddleware "github.com/LeeDark/book-social/internal/http/middleware"
 	"github.com/LeeDark/book-social/internal/http/response"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -11,9 +12,9 @@ import (
 func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 	dynamic := r.With(chimiddleware.Timeout(applicationTimeout))
 
-	r.Handle("/static/*", http.StripPrefix(
+	r.Handle("/static/*", appmiddleware.StaticCache(http.StripPrefix(
 		"/static/",
-		http.FileServer(http.Dir("./internal/web/static"))))
+		http.FileServer(http.Dir("./internal/web/static")))))
 
 	r.Get("/healthz", healthz)
 	dynamic.Get("/", app.HomeHandler.Index)

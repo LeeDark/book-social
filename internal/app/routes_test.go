@@ -70,6 +70,25 @@ func TestAppHealthzReturnsOK(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 	}
+	if got := rec.Header().Get("Cache-Control"); got != "" {
+		t.Fatalf("Cache-Control = %q, want empty", got)
+	}
+}
+
+func TestAppMissingStaticAssetIsNotCached(t *testing.T) {
+	app := newRoutesTestApp(t)
+
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/static/missing.css", nil)
+	rec := httptest.NewRecorder()
+
+	app.Router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want %q", got, "no-store")
+	}
 }
 
 func TestAppStaticAssetReturnsOK(t *testing.T) {
@@ -82,6 +101,9 @@ func TestAppStaticAssetReturnsOK(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "public, max-age=3600" {
+		t.Fatalf("Cache-Control = %q, want %q", got, "public, max-age=3600")
 	}
 }
 
