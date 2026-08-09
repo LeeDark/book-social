@@ -48,8 +48,10 @@ func New(deps Deps,
 }
 
 func (app *App) RegisterMiddleware(r chi.Router, deps Deps) {
-	// Middleware order is intentional: request context setup comes first, logging wraps
-	// recovery, and route-level application timeouts are registered in RegisterRoutes.
+	// Middleware order is intentional: security headers wrap every response, request context
+	// setup comes next, logging wraps recovery, and route-level application timeouts are
+	// registered in RegisterRoutes.
+	r.Use(appmiddleware.SecurityHeaders)
 	r.Use(chimiddleware.RequestID)
 	r.Use(chimiddleware.RealIP)
 	r.Use(appmiddleware.RequestLogger(deps.Logger))
