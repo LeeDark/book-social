@@ -164,6 +164,8 @@ Definition of Done:
 
 Goal: prepare the HTTP layer for auth and user workflows.
 
+Status: closed. The next release is [v0.2.5 Auth Foundation](#v025-auth-foundation).
+
 - [x] Add or review a graceful shutdown.
 - [x] Confirm a base middleware chain.
 - [x] Add request ID if useful.

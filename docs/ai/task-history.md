@@ -555,10 +555,15 @@ Result:
 Validation:
 - `GOCACHE=/tmp/book-social-go-cache make test` passed.
 - Focused middleware, renderer, response, and app tests passed.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
 - `git diff --check` passed.
 - PostgreSQL tests skipped when `BOOK_SOCIAL_POSTGRES_TEST_DSN` was not set.
+- Real server startup was not used; HTTP behavior was verified with `httptest` in accordance with
+  the Codex sandbox constraint.
 
 Decisions:
 - Keep the current simple `html/template` and chi-based HTTP foundation.
 - Defer HSTS, TLS/reverse-proxy policy, auth middleware, rate limiting, CORS, and production
   deployment hardening.
+
+Status: v0.2.4 closed. The next planned release is v0.2.5 Auth Foundation.
