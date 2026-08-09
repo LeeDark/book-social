@@ -32,7 +32,9 @@ Current tests cover:
 - renderer behavior
 - response helpers
 - navigation view helpers
-- logging middleware
+- logging middleware, including recovered panic status
+- security headers and static cache policy
+- renderer failure before response status commit
 
 There are also small integration-style HTTP tests that use `httptest` and a temporary SQLite database.
 
@@ -77,6 +79,11 @@ only for an explicit seed smoke test or database setup check.
 - Avoid browser/e2e tests for now.
 - Avoid large HTML snapshot tests.
 - Avoid database integration tests unless the task explicitly needs them.
+- Test HTTP middleware with `httptest` and exact header/status assertions.
+- Use fake servers for shutdown lifecycle tests; do not open a real listener for unit tests.
+- Cover both successful and failed static assets, and verify HTML/HTMX responses do not receive a
+  public long-lived cache policy.
+- Verify panic responses do not expose panic values and that access logs record status 500.
 
 ## Codex Sandbox Note
 
