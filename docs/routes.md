@@ -28,6 +28,14 @@ Static assets use `Cache-Control: public, max-age=3600` for successful responses
 static responses use `Cache-Control: no-store`. HTML pages, 404 pages, and HTMX partial responses
 do not receive a public long-lived cache policy.
 
+## Error Responses
+
+The recovery middleware converts handler panics into a generic 500 response; panic values are not
+sent to clients. Service and repository failures use the same generic `internal server error`
+body, while the detailed error is written only to the server logger. Domain not-found and invalid
+input errors retain their 404 and 400 status contracts. Template rendering is buffered before the
+status is committed, so a rendering failure can still become a correct 500 response.
+
 ## Pages
 
 ```text
