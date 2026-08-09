@@ -2,6 +2,23 @@
 
 Current MPA routes are registered in `internal/app/routes.go`.
 
+## HTTP Middleware
+
+The router applies middleware in this order:
+
+```text
+RequestID -> RealIP -> request logger -> Recoverer -> route handler
+```
+
+The application timeout is added only to dynamic MPA page routes:
+
+```text
+GET /, /about, /books, /books/{slug}, /authors/{slug} -> Timeout(30s)
+```
+
+`/healthz`, `/static/*`, and the fallback 404 handler do not use the application timeout. Server
+transport timeouts remain configured separately in `internal/app/server.go`.
+
 ## Pages
 
 ```text

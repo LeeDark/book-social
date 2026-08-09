@@ -26,6 +26,8 @@ type App struct {
 	CatalogHandler CatalogHandler
 }
 
+const applicationTimeout = 30 * time.Second
+
 func New(deps Deps,
 	homeHandler *HomeHandler,
 	catalogHandler CatalogHandler) *App {
@@ -46,9 +48,10 @@ func New(deps Deps,
 }
 
 func (app *App) RegisterMiddleware(r chi.Router, deps Deps) {
+	// Middleware order is intentional: request context setup comes first, logging wraps
+	// recovery, and route-level application timeouts are registered in RegisterRoutes.
 	r.Use(chimiddleware.RequestID)
 	r.Use(chimiddleware.RealIP)
 	r.Use(appmiddleware.RequestLogger(deps.Logger))
 	r.Use(chimiddleware.Recoverer)
-	r.Use(chimiddleware.Timeout(30 * time.Second))
 }
