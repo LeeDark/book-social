@@ -41,6 +41,14 @@ HTTP handler
   deterministic seed data.
 - Keep catalog cards and details on explicit view models: authors and genres are collections, and
   details may select a `front` cover from cover metadata.
+- Keep HTTP lifecycle policy in `internal/app` and reusable response middleware in
+  `internal/http/middleware`.
+- Use `signal.NotifyContext` for process shutdown, a five-second HTTP graceful-shutdown deadline,
+  and treat `http.ErrServerClosed` as normal completion.
+- Apply request/security middleware globally, route-level timeouts only to dynamic MPA pages, and
+  static cache middleware only to `/static/*`.
+- Keep generic 500 response bodies free of internal error details; log the detailed error on the
+  server side. Buffer template output before committing its status.
 
 ## Package Boundaries
 

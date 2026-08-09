@@ -164,20 +164,22 @@ Definition of Done:
 
 Goal: prepare the HTTP layer for auth and user workflows.
 
-- [ ] Add or review a graceful shutdown.
-- [ ] Confirm a base middleware chain.
-- [ ] Add request ID if useful.
-- [ ] Confirm logging middleware behavior.
-- [ ] Add panic recovery/error page behavior if missing.
-- [ ] Add secure headers' policy.
-- [ ] Add a static / cache headers policy.
-- [ ] Decide timeout middleware scope.
+Status: closed. The next release is [v0.2.5 Auth Foundation](#v025-auth-foundation).
+
+- [x] Add or review a graceful shutdown.
+- [x] Confirm a base middleware chain.
+- [x] Add request ID if useful.
+- [x] Confirm logging middleware behavior.
+- [x] Add panic recovery/error page behavior if missing.
+- [x] Add secure headers' policy.
+- [x] Add a static / cache headers policy.
+- [x] Decide timeout middleware scope.
 
 Definition of Done:
 
-- [ ] HTTP middleware order is documented or obvious in code.
-- [ ] Handler tests cover important error/status behavior.
-- [ ] No real server startup is required for Codex verification; use `httptest`.
+- [x] HTTP middleware order is documented or obvious in code.
+- [x] Handler tests cover important error/status behavior.
+- [x] No real server startup is required for Codex verification; use `httptest`.
 
 ## v0.2.5 Auth Foundation
 

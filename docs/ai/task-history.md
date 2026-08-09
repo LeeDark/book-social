@@ -533,3 +533,37 @@ Validation:
 Decision:
 - Keep external cover URLs as read metadata only. File upload, proxying, caching, galleries,
   search, sorting, pagination, auth, and user-library behavior remain outside v0.2.3.
+
+## 2026-08-09 — v0.2.4 HTTP Foundation implementation
+
+Result:
+- Connected `SIGINT` and `SIGTERM` to the web process root context and implemented graceful HTTP
+  shutdown with a five-second deadline.
+- Treated `http.ErrServerClosed` as normal completion and preserved unexpected listener errors after
+  shutdown.
+- Documented middleware order: security headers, request ID, trusted real IP, request logger, recovery,
+  then route handler.
+- Applied the 30-second application timeout only to dynamic MPA routes; health, static, and 404
+  routes keep their existing semantics.
+- Added conservative security headers and a CSP compatible with self-hosted assets and external
+  HTTPS/data cover images. Disabled unused HTMX inline indicator styles to avoid `unsafe-inline`.
+- Added a one-hour public cache for successful static assets and `no-store` for missing/failed
+  assets. HTML and HTMX partial responses do not receive a public long-lived cache policy.
+- Hardened template rendering by buffering output before committing the response status. Panic and
+  internal failures remain generic to clients while detailed errors stay in logs.
+
+Validation:
+- `GOCACHE=/tmp/book-social-go-cache make test` passed.
+- Focused middleware, renderer, response, and app tests passed.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
+- `git diff --check` passed.
+- PostgreSQL tests skipped when `BOOK_SOCIAL_POSTGRES_TEST_DSN` was not set.
+- Real server startup was not used; HTTP behavior was verified with `httptest` in accordance with
+  the Codex sandbox constraint.
+
+Decisions:
+- Keep the current simple `html/template` and chi-based HTTP foundation.
+- Defer HSTS, TLS/reverse-proxy policy, auth middleware, rate limiting, CORS, and production
+  deployment hardening.
+
+Status: v0.2.4 closed. The next planned release is v0.2.5 Auth Foundation.

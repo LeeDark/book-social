@@ -34,6 +34,9 @@ func TestClientErrorWritesStatus(t *testing.T) {
 			if !strings.Contains(rec.Body.String(), tt.body) {
 				t.Fatalf("body = %q, want fragment %q", rec.Body.String(), tt.body)
 			}
+			if tt.name == "server error" && strings.Contains(rec.Body.String(), "database unavailable") {
+				t.Fatalf("body leaks internal error: %q", rec.Body.String())
+			}
 		})
 	}
 }

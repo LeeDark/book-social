@@ -8,23 +8,36 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/LeeDark/book-social/internal/config"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/testutil"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 )
 
-type fakeCatalogHandler struct{}
+type fakeCatalogHandler struct {
+	observeContext func(context.Context)
+}
 
-func (fakeCatalogHandler) Catalog(w http.ResponseWriter, r *http.Request) {
+func (h fakeCatalogHandler) Catalog(w http.ResponseWriter, r *http.Request) {
+	if h.observeContext != nil {
+		h.observeContext(r.Context())
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
-func (fakeCatalogHandler) BookDetails(w http.ResponseWriter, r *http.Request) {
+func (h fakeCatalogHandler) BookDetails(w http.ResponseWriter, r *http.Request) {
+	if h.observeContext != nil {
+		h.observeContext(r.Context())
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
-func (fakeCatalogHandler) Author(w http.ResponseWriter, r *http.Request) {
+func (h fakeCatalogHandler) Author(w http.ResponseWriter, r *http.Request) {
+	if h.observeContext != nil {
+		h.observeContext(r.Context())
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -59,9 +72,97 @@ func TestAppHealthzReturnsOK(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 	}
+	if got := rec.Header().Get("Cache-Control"); got != "" {
+		t.Fatalf("Cache-Control = %q, want empty", got)
+	}
+}
+
+func TestAppMissingStaticAssetIsNotCached(t *testing.T) {
+	app := newRoutesTestApp(t)
+
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/static/missing.css", nil)
+	rec := httptest.NewRecorder()
+
+	app.Router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want %q", got, "no-store")
+	}
+}
+
+func TestAppStaticAssetReturnsOK(t *testing.T) {
+	app := newRoutesTestApp(t)
+
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/static/css/app.css", nil)
+	rec := httptest.NewRecorder()
+
+	app.Router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "public, max-age=3600" {
+		t.Fatalf("Cache-Control = %q, want %q", got, "public, max-age=3600")
+	}
+}
+
+func TestAppDynamicRoutesReceiveApplicationTimeout(t *testing.T) {
+	deadlineSeen := make(chan bool, 1)
+	app := newRoutesTestAppWithCatalog(t, fakeCatalogHandler{
+		observeContext: func(ctx context.Context) {
+			_, ok := ctx.Deadline()
+			deadlineSeen <- ok
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/books", nil)
+	rec := httptest.NewRecorder()
+
+	app.Router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	select {
+	case seen := <-deadlineSeen:
+		if !seen {
+			t.Fatal("dynamic route context has no application timeout deadline")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for dynamic route context")
+	}
+}
+
+func TestTimeoutCancelsContextAndReturnsGatewayTimeout(t *testing.T) {
+	cancelled := make(chan struct{})
+	handler := chimiddleware.Timeout(10 * time.Millisecond)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+		close(cancelled)
+	}))
+
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/slow", nil))
+
+	select {
+	case <-cancelled:
+	case <-time.After(time.Second):
+		t.Fatal("handler context was not cancelled")
+	}
+	if response.Code != http.StatusGatewayTimeout {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusGatewayTimeout)
+	}
 }
 
 func newRoutesTestApp(t *testing.T) *App {
+	t.Helper()
+
+	return newRoutesTestAppWithCatalog(t, fakeCatalogHandler{})
+}
+
+func newRoutesTestAppWithCatalog(t *testing.T, catalogHandler CatalogHandler) *App {
 	t.Helper()
 
 	testutil.ChdirProjectRoot(t)
@@ -78,7 +179,7 @@ func newRoutesTestApp(t *testing.T) *App {
 		Renderer: renderer,
 	}
 
-	return New(deps, NewHomeHandler(fakeFeaturedBooksProvider{}, renderer, logger), fakeCatalogHandler{})
+	return New(deps, NewHomeHandler(fakeFeaturedBooksProvider{}, renderer, logger), catalogHandler)
 }
 
 var _ CatalogHandler = fakeCatalogHandler{}

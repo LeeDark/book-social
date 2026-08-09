@@ -26,6 +26,8 @@ type App struct {
 	CatalogHandler CatalogHandler
 }
 
+const applicationTimeout = 30 * time.Second
+
 func New(deps Deps,
 	homeHandler *HomeHandler,
 	catalogHandler CatalogHandler) *App {
@@ -46,9 +48,13 @@ func New(deps Deps,
 }
 
 func (app *App) RegisterMiddleware(r chi.Router, deps Deps) {
+	// Middleware order is intentional: security headers wrap every response, request context
+	// setup comes next, logging wraps recovery, and route-level application timeouts are
+	// registered in RegisterRoutes. Forwarded client IP headers are handled only when the
+	// immediate peer matches the explicitly configured trusted proxy networks.
+	r.Use(appmiddleware.SecurityHeaders)
 	r.Use(chimiddleware.RequestID)
-	r.Use(chimiddleware.RealIP)
+	r.Use(appmiddleware.TrustedRealIP(deps.Config.HTTP.TrustedProxyCIDRs))
 	r.Use(appmiddleware.RequestLogger(deps.Logger))
-	r.Use(chimiddleware.Recoverer)
-	r.Use(chimiddleware.Timeout(30 * time.Second))
+	r.Use(appmiddleware.Recoverer(deps.Logger))
 }

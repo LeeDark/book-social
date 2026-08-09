@@ -1,6 +1,7 @@
 package render
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -29,13 +30,16 @@ func (r *Renderer) Render(w http.ResponseWriter, status int, page string, data a
 		return fmt.Errorf("the template %s does not exist", page)
 	}
 
-	w.WriteHeader(status)
-	err := ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
+	var body bytes.Buffer
+	if err := ts.ExecuteTemplate(&body, "base", data); err != nil {
 		//http.Error(w, "template error", http.StatusInternalServerError)
 		return fmt.Errorf("template error: %w", err)
 	}
 
+	w.WriteHeader(status)
+	if _, err := w.Write(body.Bytes()); err != nil {
+		return fmt.Errorf("write template: %w", err)
+	}
 	return nil
 }
 
@@ -45,10 +49,14 @@ func (r *Renderer) RenderPartial(w http.ResponseWriter, status int, page string,
 		return fmt.Errorf("the template %s does not exist", page)
 	}
 
-	w.WriteHeader(status)
-	if err := ts.ExecuteTemplate(w, partial, data); err != nil {
+	var body bytes.Buffer
+	if err := ts.ExecuteTemplate(&body, partial, data); err != nil {
 		return fmt.Errorf("template error: %w", err)
 	}
 
+	w.WriteHeader(status)
+	if _, err := w.Write(body.Bytes()); err != nil {
+		return fmt.Errorf("write template: %w", err)
+	}
 	return nil
 }

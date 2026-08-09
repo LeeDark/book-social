@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -65,5 +66,36 @@ func TestRequestLoggerLogsRoutePatternWithoutSource(t *testing.T) {
 	}
 	if _, ok := entry["source"]; ok {
 		t.Error("log field \"source\" is present, want omitted for request logs")
+	}
+}
+
+func TestRequestLoggerLogsRecoveredPanicAsServerError(t *testing.T) {
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&logs, nil))
+
+	router := chi.NewRouter()
+	router.Use(chimiddleware.RequestID)
+	router.Use(RequestLogger(logger))
+	router.Use(chimiddleware.Recoverer)
+	router.Get("/panic", func(http.ResponseWriter, *http.Request) {
+		panic("secret panic value")
+	})
+
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/panic", nil))
+
+	if response.Code != http.StatusInternalServerError {
+		t.Fatalf("response status = %d, want %d", response.Code, http.StatusInternalServerError)
+	}
+	if strings.Contains(response.Body.String(), "secret panic value") {
+		t.Fatalf("response leaks panic value: %q", response.Body.String())
+	}
+
+	var entry map[string]any
+	if err := json.Unmarshal(logs.Bytes(), &entry); err != nil {
+		t.Fatalf("unmarshal log entry: %v\nlog output: %s", err, logs.String())
+	}
+	if entry["status"] != float64(http.StatusInternalServerError) {
+		t.Fatalf("log status = %v, want %d", entry["status"], http.StatusInternalServerError)
 	}
 }

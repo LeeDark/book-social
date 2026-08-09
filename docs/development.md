@@ -27,6 +27,40 @@ Test:
 make test
 ```
 
+## HTTP Lifecycle And Response Policy
+
+The web process listens for `SIGINT` and `SIGTERM` through a root `signal.NotifyContext`. On
+shutdown it stops accepting new connections and waits up to five seconds for the HTTP server to
+finish active requests. `http.ErrServerClosed` is treated as a normal result; listener and
+shutdown errors are returned to the process entrypoint.
+
+The HTTP server keeps these transport timeouts:
+
+- read timeout: 10 seconds;
+- write timeout: 35 seconds (application timeout plus a five-second response margin);
+- idle timeout: 60 seconds.
+
+Router middleware is applied in this order:
+
+```text
+SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> route handler
+```
+
+`TrustedRealIP` is disabled unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured, it
+accepts forwarded client-IP headers only from an immediate peer in those networks.
+
+The 30-second application timeout is applied only to dynamic MPA pages. Health checks, static
+files, and the fallback 404 route do not use it. Static assets have a one-hour public cache on
+successful responses; missing or failed assets use `no-store`. HTML and HTMX partial responses do
+not receive a public long-lived cache policy.
+
+Responses include conservative browser security headers. The CSP allows self-hosted assets and
+HTTPS/data cover images, while HSTS is intentionally omitted because local development uses HTTP.
+Recovered panics produce a generic 500 response and structured diagnostics in the application log.
+Panic and internal failures return generic 500 responses; details are written to server logs only.
+Template output is buffered before its status is committed so rendering failures can become 500
+responses safely.
+
 Reset local SQLite database:
 
 ```bash
@@ -80,6 +114,8 @@ Current environment variables:
 
 - `APP_ENV`, allowed values `dev`, `stage`, `prod`; default `dev`
 - `APP_HTTP_ADDR`, default `:8080`
+- `APP_TRUSTED_PROXY_CIDRS`, optional comma-separated trusted proxy networks (for example
+  `10.0.0.0/8,192.168.0.0/16`); forwarded client-IP headers are ignored when unset
 - `APP_DB_DSN`, default `./data/book_social_dev.db`; use a SQLite DSN for `dev` and a PostgreSQL DSN for `stage` or `prod`
 - `APP_LOG_LEVEL`, default `debug`
 - `APP_LOG_FORMAT`, default `text`
