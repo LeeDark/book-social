@@ -56,6 +56,7 @@ not receive a public long-lived cache policy.
 
 Responses include conservative browser security headers. The CSP allows self-hosted assets and
 HTTPS/data cover images, while HSTS is intentionally omitted because local development uses HTTP.
+Recovered panics produce a generic 500 response and structured diagnostics in the application log.
 Panic and internal failures return generic 500 responses; details are written to server logs only.
 Template output is buffered before its status is committed so rendering failures can become 500
 responses safely.

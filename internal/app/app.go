@@ -56,5 +56,5 @@ func (app *App) RegisterMiddleware(r chi.Router, deps Deps) {
 	r.Use(chimiddleware.RequestID)
 	r.Use(appmiddleware.TrustedRealIP(deps.Config.HTTP.TrustedProxyCIDRs))
 	r.Use(appmiddleware.RequestLogger(deps.Logger))
-	r.Use(chimiddleware.Recoverer)
+	r.Use(appmiddleware.Recoverer(deps.Logger))
 }
