@@ -12,10 +12,11 @@ import (
 
 func Run(ctx context.Context, cfg config.Config, logger *slog.Logger, handler http.Handler) error {
 	srv := &http.Server{
-		Addr:         cfg.HTTP.Addr,
-		Handler:      handler,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		Addr:        cfg.HTTP.Addr,
+		Handler:     handler,
+		ReadTimeout: 10 * time.Second,
+		// Leave enough time for the dynamic route timeout to produce a response.
+		WriteTimeout: applicationTimeout + 5*time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
