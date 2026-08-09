@@ -44,6 +44,12 @@ func runServer(ctx context.Context, logger *slog.Logger, srv httpServer) error {
 			return err
 		}
 
+		err := <-errCh
+		if !errors.Is(err, http.ErrServerClosed) {
+			logger.Info("http server stopped", slog.Any("error", err))
+			return err
+		}
+
 		logger.Info("http server stopped")
 		return nil
 

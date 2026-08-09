@@ -108,6 +108,36 @@ func TestRunServerReturnsShutdownError(t *testing.T) {
 	}
 }
 
+func TestRunServerReturnsListenerErrorAfterShutdown(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	wantErr := errors.New("listener failed while shutting down")
+	listenStarted := make(chan struct{})
+	stopListening := make(chan struct{})
+	server := fakeHTTPServer{
+		listenAndServe: func() error {
+			close(listenStarted)
+			<-stopListening
+			return wantErr
+		},
+		shutdown: func(context.Context) error {
+			close(stopListening)
+			return nil
+		},
+	}
+
+	result := make(chan error, 1)
+	go func() {
+		result <- runServer(ctx, testServerLogger(), server)
+	}()
+
+	<-listenStarted
+	cancel()
+
+	if err := <-result; !errors.Is(err, wantErr) {
+		t.Fatalf("runServer() error = %v, want %v", err, wantErr)
+	}
+}
+
 type fakeHTTPServer struct {
 	listenAndServe func() error
 	shutdown       func(context.Context) error
