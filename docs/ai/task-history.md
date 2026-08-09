@@ -541,7 +541,7 @@ Result:
   shutdown with a five-second deadline.
 - Treated `http.ErrServerClosed` as normal completion and preserved unexpected listener errors after
   shutdown.
-- Documented middleware order: security headers, request ID, real IP, request logger, recovery,
+- Documented middleware order: security headers, request ID, trusted real IP, request logger, recovery,
   then route handler.
 - Applied the 30-second application timeout only to dynamic MPA routes; health, static, and 404
   routes keep their existing semantics.

@@ -7,8 +7,12 @@ Current MPA routes are registered in `internal/app/routes.go`.
 The router applies middleware in this order:
 
 ```text
-SecurityHeaders -> RequestID -> RealIP -> request logger -> Recoverer -> route handler
+SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> route handler
 ```
+
+`TrustedRealIP` is a no-op unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured, forwarded
+client-IP headers are accepted only from an immediate peer inside one of those networks; otherwise
+the logger uses the connection `RemoteAddr`.
 
 The application timeout is added only to dynamic MPA page routes:
 

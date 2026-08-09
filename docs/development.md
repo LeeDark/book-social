@@ -37,14 +37,17 @@ shutdown errors are returned to the process entrypoint.
 The HTTP server keeps these transport timeouts:
 
 - read timeout: 10 seconds;
-- write timeout: 10 seconds;
+- write timeout: 35 seconds (application timeout plus a five-second response margin);
 - idle timeout: 60 seconds.
 
 Router middleware is applied in this order:
 
 ```text
-SecurityHeaders -> RequestID -> RealIP -> request logger -> Recoverer -> route handler
+SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> route handler
 ```
+
+`TrustedRealIP` is disabled unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured, it
+accepts forwarded client-IP headers only from an immediate peer in those networks.
 
 The 30-second application timeout is applied only to dynamic MPA pages. Health checks, static
 files, and the fallback 404 route do not use it. Static assets have a one-hour public cache on
@@ -110,6 +113,8 @@ Current environment variables:
 
 - `APP_ENV`, allowed values `dev`, `stage`, `prod`; default `dev`
 - `APP_HTTP_ADDR`, default `:8080`
+- `APP_TRUSTED_PROXY_CIDRS`, optional comma-separated trusted proxy networks (for example
+  `10.0.0.0/8,192.168.0.0/16`); forwarded client-IP headers are ignored when unset
 - `APP_DB_DSN`, default `./data/book_social_dev.db`; use a SQLite DSN for `dev` and a PostgreSQL DSN for `stage` or `prod`
 - `APP_LOG_LEVEL`, default `debug`
 - `APP_LOG_FORMAT`, default `text`
