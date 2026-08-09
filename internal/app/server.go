@@ -20,7 +20,7 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger, handler ht
 		IdleTimeout:  60 * time.Second,
 	}
 
-	logger.Info("http server started", slog.String("addr", cfg.HTTP.Addr))
+	logger.Info("http server starting", slog.String("addr", cfg.HTTP.Addr))
 	return runServer(ctx, logger, srv)
 }
 
@@ -47,7 +47,6 @@ func runServer(ctx context.Context, logger *slog.Logger, srv httpServer) error {
 
 		err := <-errCh
 		if !errors.Is(err, http.ErrServerClosed) {
-			logger.Info("http server stopped", slog.Any("error", err))
 			return err
 		}
 
@@ -60,7 +59,6 @@ func runServer(ctx context.Context, logger *slog.Logger, srv httpServer) error {
 			return nil
 		}
 
-		logger.Info("http server stopped", slog.Any("error", err))
 		return err
 	}
 }

@@ -8,10 +8,12 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/LeeDark/book-social/internal/config"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/testutil"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 )
 
 type fakeCatalogHandler struct {
@@ -124,8 +126,33 @@ func TestAppDynamicRoutesReceiveApplicationTimeout(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 	}
-	if !<-deadlineSeen {
-		t.Fatal("dynamic route context has no application timeout deadline")
+	select {
+	case seen := <-deadlineSeen:
+		if !seen {
+			t.Fatal("dynamic route context has no application timeout deadline")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for dynamic route context")
+	}
+}
+
+func TestTimeoutCancelsContextAndReturnsGatewayTimeout(t *testing.T) {
+	cancelled := make(chan struct{})
+	handler := chimiddleware.Timeout(10 * time.Millisecond)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+		close(cancelled)
+	}))
+
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/slow", nil))
+
+	select {
+	case <-cancelled:
+	case <-time.After(time.Second):
+		t.Fatal("handler context was not cancelled")
+	}
+	if response.Code != http.StatusGatewayTimeout {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusGatewayTimeout)
 	}
 }
 
