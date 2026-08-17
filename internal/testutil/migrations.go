@@ -10,17 +10,17 @@ import (
 	"testing"
 )
 
-func applySQLiteCatalogTestMigrations(t *testing.T, ctx context.Context, db *sql.DB, throughVersion string) {
+func applySQLiteCatalogTestMigrations(t *testing.T, ctx context.Context, db *sql.DB, throughVersion string) string {
 	t.Helper()
-	applyCatalogTestMigrations(t, ctx, db, "sqlite", throughVersion)
+	return applyCatalogTestMigrations(t, ctx, db, "sqlite", throughVersion)
 }
 
-func applyPostgresCatalogTestMigrations(t *testing.T, ctx context.Context, db *sql.DB, throughVersion string) {
+func applyPostgresCatalogTestMigrations(t *testing.T, ctx context.Context, db *sql.DB, throughVersion string) string {
 	t.Helper()
-	applyCatalogTestMigrations(t, ctx, db, "postgresql", throughVersion)
+	return applyCatalogTestMigrations(t, ctx, db, "postgresql", throughVersion)
 }
 
-func applyCatalogTestMigrations(t *testing.T, ctx context.Context, db *sql.DB, dialect, throughVersion string) {
+func applyCatalogTestMigrations(t *testing.T, ctx context.Context, db *sql.DB, dialect, throughVersion string) string {
 	t.Helper()
 
 	migrationsDir := filepath.Join(projectRoot(t), "db", dialect, "migrations")
@@ -47,6 +47,7 @@ func applyCatalogTestMigrations(t *testing.T, ctx context.Context, db *sql.DB, d
 		t.Fatalf("no %s test migrations found", dialect)
 	}
 
+	latestVersion := ""
 	for _, filename := range filenames {
 		migration, err := os.ReadFile(filepath.Join(migrationsDir, filename))
 		if err != nil {
@@ -55,7 +56,10 @@ func applyCatalogTestMigrations(t *testing.T, ctx context.Context, db *sql.DB, d
 		if _, err := db.ExecContext(ctx, string(migration)); err != nil {
 			t.Fatalf("apply %s test migration %s: %v", dialect, filename, err)
 		}
+		latestVersion, _, _ = strings.Cut(filename, "_")
 	}
+
+	return latestVersion
 }
 
 func projectRoot(t *testing.T) string {

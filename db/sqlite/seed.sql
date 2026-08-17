@@ -4,6 +4,11 @@
 PRAGMA foreign_keys = ON;
 
 -- References
+-- Roles
+INSERT INTO roles(role_name, is_admin)
+VALUES ('user', 0)
+ON CONFLICT (role_name) DO NOTHING;
+
 -- Genres
 INSERT INTO genres(id, name, slug, description)
 VALUES (1, 'Adventure', 'adventure', 'Stories focused on journeys, exploration, danger, and exciting challenges.'),

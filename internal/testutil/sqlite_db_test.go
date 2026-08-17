@@ -83,6 +83,104 @@ func TestSQLiteCatalogV2TestDBUsesNormalizedRelationships(t *testing.T) {
 	}
 }
 
+func TestSQLiteAuthMigrationOnFreshDatabase(t *testing.T) {
+	ctx := context.Background()
+	db := NewSQLiteMemoryTestDB(t, ctx)
+
+	if got := applySQLiteCatalogTestMigrations(t, ctx, db, ""); got != "000003" {
+		t.Fatalf("latest migration version = %q, want %q", got, "000003")
+	}
+
+	checks := []struct {
+		name  string
+		query string
+		want  int
+	}{
+		{
+			name:  "normal user role",
+			query: `SELECT COUNT(*) FROM roles WHERE role_name = 'user' AND is_admin = 0`,
+			want:  1,
+		},
+		{
+			name:  "sessions table",
+			query: `SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'sessions'`,
+			want:  1,
+		},
+		{
+			name:  "expiry index",
+			query: `SELECT COUNT(*) FROM pragma_index_list('sessions') WHERE name = 'idx_sessions_expires_at'`,
+			want:  1,
+		},
+		{
+			name:  "user foreign key",
+			query: `SELECT COUNT(*) FROM pragma_foreign_key_list('sessions') WHERE "table" = 'users' AND on_delete = 'CASCADE'`,
+			want:  1,
+		},
+	}
+
+	for _, check := range checks {
+		t.Run(check.name, func(t *testing.T) {
+			var got int
+			if err := db.QueryRowContext(ctx, check.query).Scan(&got); err != nil {
+				t.Fatalf("query migration check: %v", err)
+			}
+			if got != check.want {
+				t.Fatalf("count = %d, want %d", got, check.want)
+			}
+		})
+	}
+
+	if _, err := db.ExecContext(ctx, `
+		INSERT INTO users(first_name, login, password_hash, email, user_role_id)
+		VALUES ('Migration', 'migration-user', 'hash', 'migration@example.test',
+			(SELECT id FROM roles WHERE role_name = 'user'))
+	`); err != nil {
+		t.Fatalf("insert migration test user: %v", err)
+	}
+
+	if _, err := db.ExecContext(ctx, `
+		INSERT INTO sessions(user_id, token_hash, created_at, expires_at)
+		VALUES (1, X'01', '2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
+	`); err != nil {
+		t.Fatalf("insert valid session: %v", err)
+	}
+
+	constraintChecks := []struct {
+		name  string
+		query string
+	}{
+		{
+			name: "duplicate token hash",
+			query: `
+				INSERT INTO sessions(user_id, token_hash, created_at, expires_at)
+				VALUES (1, X'01', '2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
+			`,
+		},
+		{
+			name: "expiry before creation",
+			query: `
+				INSERT INTO sessions(user_id, token_hash, created_at, expires_at)
+				VALUES (1, X'02', '2026-01-02T00:00:00Z', '2026-01-01T00:00:00Z')
+			`,
+		},
+		{
+			name: "unknown user",
+			query: `
+				INSERT INTO sessions(user_id, token_hash, created_at, expires_at)
+				VALUES (999, X'03', '2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
+			`,
+		},
+	}
+
+	for _, check := range constraintChecks {
+		t.Run(check.name, func(t *testing.T) {
+			if _, err := db.ExecContext(ctx, check.query); err == nil {
+				t.Fatal("invalid session insert succeeded")
+			}
+		})
+	}
+}
+
 func TestSQLiteCatalogV2TestDBRejectsDuplicateCoverVariant(t *testing.T) {
 	db := NewSQLiteCatalogV2TestDB(t, context.Background())
 

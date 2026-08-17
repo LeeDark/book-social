@@ -2,6 +2,11 @@
 -- PostgreSQL version
 
 -- References
+-- Roles
+INSERT INTO roles(role_name, is_admin)
+VALUES ('user', FALSE)
+ON CONFLICT (role_name) DO NOTHING;
+
 -- Genres
 INSERT INTO genres(id, name, slug, description)
 VALUES (1, 'Adventure', 'adventure', 'Stories focused on journeys, exploration, danger, and exciting challenges.'),
