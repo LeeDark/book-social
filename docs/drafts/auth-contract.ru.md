@@ -1,10 +1,10 @@
 # Черновик контракта MPA-аутентификации v0.2.5–v0.2.6
 
-> **Статус: принятый implementation draft; поведение ещё не реализовано.**
+> **Статус: принятый черновик реализации; поведение ещё не реализовано.**
 >
-> Этот документ — точная переносимая копия двух контрактных блоков из прежней private-заметки:
-> нового «Шаг 0–7» и прежнего «Scope и account → Definition of Done v0.2.5».
-> Он предназначен для review и последующей чистки. Текущее реализованное поведение описывают
+> Этот документ — точная переносимая копия двух контрактных блоков из прежней приватной заметки:
+> нового «Шаг 0–7» и прежнего «Область и учётная запись → критерии готовности v0.2.5».
+> Он предназначен для проверки и последующей чистки. Текущее реализованное поведение описывают
 > `docs/routes.md`, `docs/domain.md`, `docs/database.md` и `docs/development.md`.
 
 ## Принятые решения
@@ -15,44 +15,48 @@
 
 - MPA остаётся основным интерфейсом; актуальная HTTP-цепочка зафиксирована в `docs/routes.md` и
   `internal/app/app.go`/`internal/app/routes.go`.
-- `v0.2.4` HTTP Foundation закрыта: `/healthz`, `/static/*`, recovery, request ID, trusted real IP,
-  request logging, security headers и route-scoped timeout не относятся к auth/session scope.
-- Источник истины для auth scope — существующие `users`/`roles` schema foundations, roadmap v0.2.5 и
-  решения ниже; Greenlight/Snippetbox examples используются только как study reference.
-- Первый slice ограничен registration, login, logout и `GET /me`; не добавляются profile,
-  activation, recovery, API auth, roles/RBAC routes, CORS, rate limiting, JWT или OpenAPI.
-- Для каждого asset и actor заранее определены границы: password/hash, user record, session token и
-  store row, CSRF token, flash message и private resource. Secrets и opaque session IDs не попадают
-  в response, page model или structured log.
+- `v0.2.4` HTTP-основа закрыта: `/healthz`, `/static/*`, восстановление после panic, идентификатор
+  запроса, доверенный реальный IP, журналирование запросов, защитные заголовки и тайм-ауты маршрутов
+  не относятся к области аутентификации и сессий.
+- Источник истины для области аутентификации — существующая основа схемы `users`/`roles`, roadmap
+  v0.2.5 и решения ниже; примеры Greenlight/Snippetbox используются только для изучения.
+- Первый этап ограничен регистрацией, входом, выходом и `GET /me`; не добавляются профиль,
+  активация, восстановление доступа, API-аутентификация, маршруты ролей/RBAC, CORS, ограничение
+  частоты, JWT или OpenAPI.
+- Для каждого актива и участника заранее определены границы: пароль/хеш, запись пользователя, токен
+  сессии и строка хранилища, CSRF-токен, одноразовое сообщение и private resource. Секреты и
+  непрозрачные идентификаторы сессии не попадают в ответ, модель страницы или структурированный
+  журнал.
 
-**Результат шага 0:** входной scope и существующие boundaries подтверждены до изменения schema,
-dependency list или application code. Открытые decisions не скрываются выбором library; следующие
-подразделы фиксируют их как contract.
+**Результат шага 0:** входная область и существующие границы подтверждены до изменения схемы, списка
+зависимостей или кода приложения. Открытые решения не скрываются выбором библиотеки; следующие
+подразделы фиксируют их как контракт.
 
-### Шаг 1 — actors и authorization model
+### Шаг 1 — участники и модель авторизации
 
-Для первого slice не вводится generic RBAC. Нужны два фактических actor-а и один явный default-deny
-boundary:
+Для первого этапа не вводится общий RBAC. Нужны два фактических участника и одна явная граница
+«запрещено по умолчанию»:
 
-| Actor                    | Может                                                                                                        | Не может / outcome                                                                                                                  |
-|--------------------------|--------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| `anonymous`              | Читать public MPA pages, открыть registration/login forms, отправить auth form с валидным CSRF.              | Открыть `GET /me` или любую будущую private action; получает redirect на `/login` или другой принятый MPA refusal.                  |
-| `authenticated user`     | Открыть `GET /me`, видеть только собственную minimal identity и завершить свою session через `POST /logout`. | Передать identity через query/header, получить admin access или чужой private resource; при отсутствии owner rule получает refusal. |
-| `admin` / elevated actor | Не входит в v0.2.5–v0.2.6.                                                                                   | `is_admin` не открывает routes и не меняет authorization model этого release.                                                       |
+| Участник                            | Может                                                                                               | Не может / результат                                                                                                                      |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| Анонимный посетитель                | Читать публичные MPA-страницы, открыть формы регистрации/входа, отправить форму с валидным CSRF.    | Открыть `GET /me` или любое будущее частное действие; получает перенаправление на `/login` или другой принятый MPA-отказ.                 |
+| Аутентифицированный пользователь    | Открыть `GET /me`, видеть только свою минимальную identity и завершить сессию через `POST /logout`. | Передать identity через query/header, получить доступ администратора или к чужому private resource; без правила владельца получает отказ. |
+| Администратор / повышенный участник | Не входит в v0.2.5–v0.2.6.                                                                          | `is_admin` не открывает маршруты и не меняет модель авторизации этого релиза.                                                             |
 
 #### Что нужно сделать
 
-- [x] Записать actor × action matrix для всех принятых routes: `/register`, `/login`, `/logout`,
-  `/me`, включая method, authentication requirement, CSRF requirement и expected outcome.
-- [x] Явно разделить authentication и authorization: current-user middleware устанавливает minimal
-  identity, но решение о праве на private action принимает use case/authorization boundary.
-- [x] Зафиксировать, что navigation links не являются security control: скрытие `/me` или Logout в
-  template не заменяет route guard и server-side identity check.
+- [x] Записать матрицу «участник × действие» для `/register`, `/login`, `/logout`, `/me`, включая
+  метод, требование аутентификации, CSRF и ожидаемый результат.
+- [x] Явно разделить аутентификацию и авторизацию: middleware текущего пользователя устанавливает
+  минимальную identity, но право на private action определяет use case/граница авторизации.
+- [x] Зафиксировать, что ссылки навигации не являются security control: скрытие `/me` или Logout в
+  шаблоне не заменяет guard маршрута и server-side проверку identity.
 - [x] Для `GET /me` записать минимальный data boundary: handler получает только identity текущего
   user; password/hash, session token, role internals и private future-library data не входят в page
   model.
-- [x] Зафиксировать default-deny behavior для missing, invalid и expired session: anonymous state,
-  предсказуемый MPA redirect, отсутствие 500 и отсутствие disclosure существования private resource.
+- [x] Зафиксировать поведение «запрещено по умолчанию» для отсутствующей, неверной и истёкшей
+  сессии: анонимное состояние, предсказуемое MPA-перенаправление, отсутствие `500` и раскрытия
+  существования private resource.
 - [x] Не добавлять owner/non-owner branch в v0.2.5–v0.2.6 там, где private resource ещё не входит в
   release. Для будущей private action отдельно записать owner source, allowed operation и refusal
   outcome до её реализации.
@@ -63,14 +67,14 @@ boundary:
 
 #### Принятые решения для текущего release
 
-| Route            | Anonymous                                                                                      | Authenticated user                            | Admin/elevated actor       |
-|------------------|------------------------------------------------------------------------------------------------|-----------------------------------------------|----------------------------|
-| `GET /register`  | `200` form                                                                                     | `303 /me`                                     | Не выделяется отдельно     |
-| `POST /register` | CSRF + validation; success creates user/session and `303 /me`                                  | Не является обычным path; `303 /me`           | Не выделяется отдельно     |
-| `GET /login`     | `200` form                                                                                     | `303 /me`                                     | Не выделяется отдельно     |
-| `POST /login`    | CSRF + credentials; success creates session and `303 /me`; invalid credentials → neutral `422` | Не является обычным path; `303 /me`           | Не выделяется отдельно     |
-| `POST /logout`   | CSRF policy выполняется; stale/missing session очищается и `303 /`                             | Invalidate own session, clear cookie, `303 /` | Не выделяется отдельно     |
-| `GET /me`        | `303 /login`; no resource existence disclosure                                                 | `200`, minimal current-user identity only     | Не имеет отдельного bypass |
+| Маршрут          | Анонимный посетитель                                                                           | Аутентифицированный пользователь              | Администратор/повышенный участник |
+|------------------|------------------------------------------------------------------------------------------------|-----------------------------------------------|-----------------------------------|
+| `GET /register`  | `200` form                                                                                     | `303 /me`                                     | Не выделяется отдельно            |
+| `POST /register` | CSRF + validation; success creates user/session and `303 /me`                                  | Не является обычным path; `303 /me`           | Не выделяется отдельно            |
+| `GET /login`     | `200` form                                                                                     | `303 /me`                                     | Не выделяется отдельно            |
+| `POST /login`    | CSRF + credentials; success creates session and `303 /me`; invalid credentials → neutral `422` | Не является обычным path; `303 /me`           | Не выделяется отдельно            |
+| `POST /logout`   | CSRF policy выполняется; stale/missing session очищается и `303 /`                             | Invalidate own session, clear cookie, `303 /` | Не выделяется отдельно            |
+| `GET /me`        | `303 /login`; no resource existence disclosure                                                 | `200`, minimal current-user identity only     | Не имеет отдельного bypass        |
 
 `GET /register` и `GET /login` не создают session state. `POST /register`, `POST /login` и
 `POST /logout` являются browser state-changing routes и защищаются CSRF. Ни один route не принимает
@@ -93,14 +97,14 @@ private resources пока deferred». Ни один route не полагает
 Первый auth slice использует только эти routes; параметр `next` сознательно не принимается, поэтому
 после успешной registration или login target всегда `/me`.
 
-| Method/path      | Actor и CSRF                                                                          | Success outcome                                                              | Failure outcome / side effect                                                                                                                      |
-|------------------|---------------------------------------------------------------------------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `GET /register`  | Anonymous; CSRF token выдаётся в form.                                                | `200`, accessible registration form.                                         | Authenticated user получает `303 /me`; session state не создаётся.                                                                                 |
-| `POST /register` | Anonymous form submit; CSRF required.                                                 | Validate fields, atomically create user + default role + session, `303 /me`. | Invalid/duplicate input → `422` с safe field errors; password не repopulate. Store/internal failure → generic `500`, redacted log.                 |
-| `GET /login`     | Anonymous; CSRF token выдаётся в form.                                                | `200`, login form.                                                           | Authenticated user получает `303 /me`; session state не создаётся.                                                                                 |
-| `POST /login`    | Anonymous form submit; CSRF required.                                                 | Verify credentials, create a new session, `303 /me`.                         | Invalid credentials → `422` и neutral `Invalid login or password`; CSRF/store failure — safe error outcome, technical detail only in redacted log. |
-| `POST /logout`   | Authenticated or stale/anonymous browser state; CSRF required by browser POST policy. | Invalidate own session if present, clear cookie, `303 /`.                    | Missing/stale session is idempotent: cookie is still cleared and response is `303 /`; no `GET /logout`.                                            |
-| `GET /me`        | Authenticated current user only; no state change.                                     | `200`, minimal current-user identity.                                        | Missing/invalid/expired session → `303 /login`; no private-resource disclosure and no `500`.                                                       |
+| Method/path      | Actor и CSRF                                                                                | Success outcome                                                              | Failure outcome / side effect                                                                                                                      |
+|------------------|---------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `GET /register`  | Anonymous; CSRF token выдаётся в form.                                                      | `200`, accessible registration form.                                         | Authenticated user получает `303 /me`; session state не создаётся.                                                                                 |
+| `POST /register` | Anonymous form submit; CSRF required.                                                       | Validate fields, atomically create user + default role + session, `303 /me`. | Invalid/duplicate input → `422` с safe field errors; password не repopulate. Store/internal failure → generic `500`, redacted log.                 |
+| `GET /login`     | Anonymous; CSRF token выдаётся в form.                                                      | `200`, login form.                                                           | Authenticated user получает `303 /me`; session state не создаётся.                                                                                 |
+| `POST /login`    | Anonymous form submit; CSRF required.                                                       | Verify credentials, create a new session, `303 /me`.                         | Invalid credentials → `422` и neutral `Invalid login or password`; CSRF/store failure — safe error outcome, technical detail only in redacted log. |
+| `POST /logout`   | Аутентифицированное либо устаревшее/анонимное состояние браузера; CSRF обязателен для POST. | Инвалидировать свою сессию, очистить cookie, `303 /`.                        | Отсутствующая/устаревшая сессия идемпотентна: cookie очищается, ответ `303 /`; `GET /logout` отсутствует.                                          |
+| `GET /me`        | Только текущий аутентифицированный пользователь; состояние не меняется.                     | `200`, только минимальная identity текущего пользователя.                    | Отсутствующая/неверная/истёкшая сессия → `303 /login`; без раскрытия private resource и без `500`.                                                 |
 
 #### Что нужно сделать
 
@@ -128,7 +132,7 @@ private resources пока deferred». Ни один route не полагает
 пользователя. Поэтому ownership rule для library не реализуется искусственно, но boundary для
 следующей private action фиксируется заранее.
 
-| Protected boundary             | Anonymous                             | Authenticated current user                      | Non-owner / elevated actor                                                                                          |
+| Защищённая граница             | Анонимный посетитель                  | Текущий аутентифицированный пользователь        | Не-владелец / повышенный участник                                                                                   |
 |--------------------------------|---------------------------------------|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
 | `GET /me`                      | `303 /login`, без disclosure resource | `200`, только собственная minimal identity      | Не применимо: route не принимает target user/resource и не имеет admin bypass                                       |
 | Будущая private library action | Предсказуемый MPA refusal             | Только owner, если operation разрешена contract | Non-owner получает generic refusal без disclosure; elevated actor появится только после отдельного product decision |
@@ -161,14 +165,14 @@ private resource явно deferred с test template и security boundary, а gen
 payload: она содержит только cryptographically random raw token, а database — только его
 cryptographic hash и минимальные lifecycle fields.
 
-| Состояние/событие                | Session state                                                                                      | Cookie/outcome                                                                        |
-|----------------------------------|----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| Anonymous GET form/static/health | No authenticated session; no unnecessary store write.                                              | No auth cookie required; `/static/*` и `/healthz` остаются вне session middleware.    |
-| Successful registration/login    | Create a new session; authentication always creates/rotates the ID.                                | `Set-Cookie` only after success; cookie contains raw opaque token, never user data.   |
-| Authenticated request            | Load by token hash, verify not expired, attach minimal current user through typed request context. | Existing valid cookie remains; raw token не попадает в logs.                          |
-| Missing/invalid/expired token    | Treat as anonymous, not as internal error.                                                         | Protected `/me` redirects to `/login`; invalid/expired session may be removed lazily. |
-| Logout                           | Delete/invalidate own DB session; operation is idempotent for stale/missing session.               | Expire/clear `book_social_session` even when DB row is already absent; `303 /`.       |
-| Expired records                  | Lazy cleanup on load/delete is sufficient for this release.                                        | No cleanup worker or background session task.                                         |
+| Состояние/событие                     | Session state                                                                                      | Cookie/outcome                                                                                 |
+|---------------------------------------|----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| Anonymous GET form/static/health      | No authenticated session; no unnecessary store write.                                              | No auth cookie required; `/static/*` и `/healthz` остаются вне session middleware.             |
+| Успешная регистрация/вход             | Создать новую сессию; аутентификация всегда создаёт/обновляет идентификатор.                       | `Set-Cookie` только после успеха; cookie содержит raw opaque token, но не данные пользователя. |
+| Authenticated request                 | Load by token hash, verify not expired, attach minimal current user through typed request context. | Existing valid cookie remains; raw token не попадает в logs.                                   |
+| Отсутствующий/неверный/истёкший токен | Считать анонимным состоянием, не внутренней ошибкой.                                               | Защищённый `/me` перенаправляет на `/login`; неверную/истёкшую сессию можно удалить лениво.    |
+| Выход                                 | Удалить/инвалидировать свою DB-сессию; действие идемпотентно для устаревшей/отсутствующей сессии.  | Очистить `book_social_session`, даже если строка БД отсутствует; `303 /`.                      |
+| Истёкшие записи                       | Для этого релиза достаточно ленивой очистки при загрузке/удалении.                                 | Не нужен отдельный worker или фоновая задача очистки.                                          |
 
 #### Что нужно сделать
 
@@ -222,20 +226,21 @@ Password policy относится к одному auth/password package и не
 **Результат шага 5:** password policy reviewable до кода; persistence, runtime, errors и logs не
 имеют неявного plaintext/hash path, а deferred password features явно отделены от auth foundation.
 
-### Шаг 6 — abuse, error и logging policy
+### Шаг 6 — защита от злоупотреблений, ошибки и журналирование
 
-Auth errors разделяются на client-visible outcome и server diagnostic. Клиент получает стабильное
-безопасное поведение; logger — только redacted operation context и request ID, без секретов.
+Ошибки аутентификации разделяются на видимый клиенту результат и серверную диагностику. Клиент
+получает стабильное безопасное поведение; журнал содержит только обезличенный контекст операции и
+идентификатор запроса, без секретов.
 
-| Failure/event                                     | Client-visible outcome                                             | Allowed server log fields                                                                             |
-|---------------------------------------------------|--------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| Invalid registration input                        | `422` с safe field errors; password не repopulate.                 | Request ID, route, validation/error class, field names without values.                                |
-| Duplicate login/email                             | `422` с safe field error согласно registration contract.           | Request ID, operation, conflict class; no existing account details beyond required operational class. |
-| Unknown login/email or wrong password             | Same neutral `422`, `Invalid login or password`.                   | Request ID, route, `invalid_credentials` class; never submitted login/email, password or hash.        |
-| Missing/invalid/expired session                   | `/me` → `303 /login`; logout remains idempotent and clears cookie. | Request ID, route, anonymous/expired outcome class; no raw token or cookie header.                    |
-| Missing/invalid CSRF                              | Generic safe MPA refusal/error; no token details.                  | Request ID, route, `csrf_rejected` class; never CSRF value or cookie contents.                        |
-| Store/hash/unexpected internal failure            | Generic `500` body/page; no DB, stack or credential detail.        | Request ID, operation, typed internal error class and safe wrapped cause; no secrets.                 |
-| Successful auth/logout or denied protected action | Normal redirect/refusal; no sensitive data in page model.          | Request ID, route, outcome class, safe actor state; no password, hash, token or private content.      |
+| Сбой/событие                                     | Видимый клиенту результат                                          | Разрешённые поля серверного журнала                                                                    |
+|--------------------------------------------------|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| Неверные данные регистрации                      | `422` с безопасными ошибками полей; password не возвращается.      | Идентификатор запроса, маршрут, класс проверки/ошибки, имена полей без значений.                       |
+| Повторный login/email                            | `422` с безопасной ошибкой поля по контракту регистрации.          | Идентификатор запроса, операция, класс конфликта; без сведений об учётной записи.                      |
+| Неизвестный login/email или неверный password    | Одинаковый нейтральный `422`, `Invalid login or password`.         | Идентификатор запроса, маршрут, класс `invalid_credentials`; без отправленных данных и хеша.           |
+| Отсутствующая/неверная/истёкшая сессия           | `/me` → `303 /login`; logout идемпотентен и очищает cookie.        | Идентификатор запроса, маршрут, класс anonymous/expired; без raw token и заголовка cookie.             |
+| Отсутствующий/неверный CSRF                      | Общее безопасное MPA-отклонение/ошибка.                            | Идентификатор запроса, маршрут, класс `csrf_rejected`; без CSRF и содержимого cookie.                  |
+| Ошибка хранилища/хеширования/неожиданная ошибка  | Общий `500`; без деталей БД, стека или credentials.                | Идентификатор запроса, операция, типизированный внутренний класс и безопасная причина; без секретов.   |
+| Успешная аутентификация/выход или отказ действия | Обычное перенаправление/отказ; без чувствительных данных страницы. | Идентификатор запроса, маршрут, класс результата, безопасное состояние участника; без private content. |
 
 #### Что нужно сделать
 
@@ -270,16 +275,16 @@ Review проверяет именно согласованность решен
   отсутствует, GET/HEAD не меняют state.
 - **Authorization:** `/me` доступен только current authenticated identity; future owner/non-owner
   action требует отдельного resource contract and test triple.
-- **Session:** DB-backed opaque token, hash-only lookup, 7-day absolute lifetime, rotation after
-  authentication, invalidation/clear cookie at logout, lazy expiry cleanup, no session work for
-  static/health routes.
-- **Password:** bcrypt, 12–128 characters, matching confirmation, adaptive hash only, no plaintext
-  or hash disclosure, neutral invalid-credentials outcome.
-- **Errors/logs:** stable safe client outcomes, generic internal errors, request-ID/error-class logs
-  only, denylist for all credentials/tokens/private data; abuse controls outside accepted scope
-  remain explicitly deferred.
+- **Сессия:** непрозрачный токен в БД, поиск только по хешу, абсолютный срок 7 дней, обновление
+  после аутентификации, инвалидация/очистка cookie при выходе, ленивая очистка истёкших записей;
+  static/health-маршруты не работают с сессией.
+- **Пароль:** bcrypt, 12–128 символов, совпадающее подтверждение, только адаптивный хеш, без
+  plaintext или раскрытия хеша, нейтральный результат неверных credentials.
+- **Ошибки/журналы:** стабильные безопасные результаты для клиента, общие внутренние ошибки, журнал
+  только с request ID и классом ошибки, denylist для credentials/tokens/private data; controls от
+  злоупотреблений вне принятой области явно отложены.
 
-#### Review checklist and outcome
+#### Проверочный список и результат
 
 - [x] Собрать actor/authorization matrix, route/form table, session/cookie policy, password policy,
   error/log matrix и test matrix в один reviewable contract.
@@ -366,7 +371,7 @@ Review проверяет именно согласованность решен
   `SecurityHeaders -> RequestID -> TrustedRealIP -> RequestLogger -> Recoverer`; dynamic MPA routes
   сохраняют application timeout.
 
-### Route/form contract
+### Контракт маршрутов и форм
 
 | Route            | Contract                                                                                                                                                                               |
 |------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -396,7 +401,7 @@ Review проверяет именно согласованность решен
    PostgreSQL parity запускается отдельно на disposable DSN и сообщается как environment-dependent
    evidence.
 
-### Definition of Done v0.2.5
+### Критерии готовности v0.2.5
 
 - Auth core создаёт user с password hash, verifies credentials, создаёт/загружает/удаляет DB
   sessions и устанавливает current-user request context.
