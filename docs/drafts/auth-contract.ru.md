@@ -69,7 +69,8 @@ disclosure. Admin case появляется только после отдель
 | `GET /me`        | Authenticated current user only; no state change.                | `200`, minimal current-user identity.                                        | Missing/invalid/expired session → `303 /login`; no disclosure and no `500`.                                        |
 
 GET/HEAD не меняют state. Все browser POST routes защищены единым server-side CSRF mechanism; token
-передаётся только в forms и не попадает в logs.
+передаётся только в forms и не попадает в logs. `SameSite` — дополнительная защита cookie, но не
+замена серверной CSRF-проверки.
 
 ## 4. Учётная запись, validation и domain errors
 
@@ -90,8 +91,9 @@ Duplicate registration получает safe field errors. Unknown login/email �
 
 ## 5. Password policy
 
-Используется bcrypt как maintained adaptive hash; cost находится в одном auth package. Хранится
-только hash: custom hashing, reversible encryption, plaintext comparison и plaintext storage
+Используется bcrypt как maintained adaptive hash; cost находится в одном auth package и выбирается
+по допустимой пользовательской задержке и нагрузке, а не копируется как непроверенная константа.
+Хранится только hash: custom hashing, reversible encryption, plaintext comparison и plaintext storage
 запрещены. Plaintext существует только в form input и narrow hash/verify path; password/hash не
 попадают в DTO, template, response, error, log, metric или fixture.
 
@@ -127,7 +129,8 @@ Service/use case владеет transaction, когда меняется нес�
 
 Middleware order сохраняет v0.2.4:
 `SecurityHeaders → RequestID → TrustedRealIP → RequestLogger → Recoverer → session/current-user → CSRF → route guard`.
-Application timeout динамических MPA routes сохраняется.
+Application timeout динамических MPA routes сохраняется. Защищённые HTML-ответы не получают
+публичный cache policy: для них устанавливается `Cache-Control: no-store`.
 
 ## 8. Ошибки, журналирование и злоупотребления
 
@@ -159,6 +162,18 @@ limiting — Stage 7B; login throttling/account lockout требуют отде�
    `GOCACHE=/tmp/book-social-go-cache go vet ./...`, `git diff --check` и
    `git status --short --branch`. HTTP проверяется через `httptest`, не real listener; PostgreSQL —
    отдельно на disposable DSN как environment-dependent evidence.
+
+## 10. Review перед реализацией
+
+Review завершён до изменения schema, dependency list или application code:
+
+- Chapter 8 и Chapter 10 *Let's Go* использованы как source study, без переноса Snippetbox routes,
+  MySQL schema, 12-hour lifetime или готового session manager.
+- Contract определяет actors, authorization boundary, route/form outcomes, password policy,
+  session/cookie lifecycle, CSRF, error/logging policy и verification; security-affecting `TBD` нет.
+- Продуктовая граница сохранена: private library ownership, roles/RBAC, API security и account
+  recovery отложены до своих trigger.
+- Следующий шаг — v0.2.5 persistence/service foundation; UI/forms остаются задачей v0.2.6.
 
 ## Definition of Done v0.2.5
 
