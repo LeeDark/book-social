@@ -64,6 +64,25 @@ func (s *Service) Register(ctx context.Context, input RegistrationInput) (User, 
 	return created, nil
 }
 
+func (s *Service) Authenticate(ctx context.Context, identifier, password string) (User, error) {
+	identifier = strings.ToLower(strings.TrimSpace(identifier))
+	if identifier == "" || password == "" {
+		return User{}, ErrInvalidCredentials
+	}
+
+	credentials, err := s.repo.FindCredentials(ctx, identifier)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) || errors.Is(err, ErrInvalidCredentials) {
+			return User{}, ErrInvalidCredentials
+		}
+		return User{}, ErrInternal
+	}
+	if err := s.policy.Verify(credentials.PasswordHash, password); err != nil {
+		return User{}, ErrInvalidCredentials
+	}
+	return credentials.User, nil
+}
+
 func normalizeRegistrationInput(input RegistrationInput) (RegistrationInput, error) {
 	input.FirstName = strings.TrimSpace(input.FirstName)
 	input.Login = strings.ToLower(strings.TrimSpace(input.Login))

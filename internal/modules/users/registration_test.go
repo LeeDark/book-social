@@ -7,13 +7,15 @@ import (
 )
 
 type recordingUserRepository struct {
-	role        Role
-	created     CreateUserParams
-	createdUser User
-	roleLookup  string
-	txCalls     int
-	roleErr     error
-	createErr   error
+	role           Role
+	created        CreateUserParams
+	createdUser    User
+	roleLookup     string
+	txCalls        int
+	roleErr        error
+	createErr      error
+	credentials    Credentials
+	credentialsErr error
 }
 
 func (r *recordingUserRepository) CreateUser(ctx context.Context, params CreateUserParams) (User, error) {
@@ -33,7 +35,10 @@ func (r *recordingUserRepository) FindRoleByName(ctx context.Context, name strin
 }
 
 func (r *recordingUserRepository) FindCredentials(ctx context.Context, identifier string) (Credentials, error) {
-	return Credentials{}, nil
+	if r.credentialsErr != nil {
+		return Credentials{}, r.credentialsErr
+	}
+	return r.credentials, nil
 }
 
 func (r *recordingUserRepository) FindByID(ctx context.Context, id int) (User, error) {
@@ -163,6 +168,68 @@ func TestRegistrationMapsRepositoryFailureToInternalError(t *testing.T) {
 	}
 	if err.Error() != ErrInternal.Error() {
 		t.Fatalf("Register() error = %q, want generic %q", err, ErrInternal)
+	}
+}
+
+func TestAuthenticateReturnsMinimalUserForValidCredentials(t *testing.T) {
+	password := "correct horse battery staple"
+	hash, err := NewPasswordPolicy().Hash(password)
+	if err != nil {
+		t.Fatalf("Hash() error = %v", err)
+	}
+	wantUser := User{ID: 42, FirstName: "Ada", Login: "ada", Email: "ada@example.test", RoleID: 9}
+	repo := &recordingUserRepository{credentials: Credentials{User: wantUser, PasswordHash: hash}}
+
+	got, err := NewService(repo, NewPasswordPolicy()).Authenticate(context.Background(), "ada", password)
+	if err != nil {
+		t.Fatalf("Authenticate() error = %v", err)
+	}
+	if got != wantUser {
+		t.Fatalf("Authenticate() user = %+v, want %+v", got, wantUser)
+	}
+}
+
+func TestAuthenticateUsesNeutralRefusalForInvalidOrMissingCredentials(t *testing.T) {
+	password := "correct horse battery staple"
+	hash, err := NewPasswordPolicy().Hash(password)
+	if err != nil {
+		t.Fatalf("Hash() error = %v", err)
+	}
+	tests := []struct {
+		name           string
+		credentials    Credentials
+		credentialsErr error
+		inputPassword  string
+	}{
+		{
+			name:          "wrong password",
+			credentials:   Credentials{User: User{ID: 42, Login: "ada"}, PasswordHash: hash},
+			inputPassword: "wrong password",
+		},
+		{
+			name:           "missing user",
+			credentialsErr: ErrUserNotFound,
+			inputPassword:  password,
+		},
+	}
+
+	var firstErr error
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &recordingUserRepository{credentials: tt.credentials, credentialsErr: tt.credentialsErr}
+			got, err := NewService(repo, NewPasswordPolicy()).Authenticate(context.Background(), "ada", tt.inputPassword)
+			if got != (User{}) {
+				t.Fatalf("Authenticate() user = %+v, want zero User", got)
+			}
+			if !errors.Is(err, ErrInvalidCredentials) {
+				t.Fatalf("Authenticate() error = %v, want ErrInvalidCredentials", err)
+			}
+			if firstErr == nil {
+				firstErr = err
+			} else if err.Error() != firstErr.Error() {
+				t.Fatalf("Authenticate() refusal = %q, want neutral %q", err, firstErr)
+			}
+		})
 	}
 }
 
