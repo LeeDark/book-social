@@ -1,10 +1,12 @@
 package sqlite
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/LeeDark/book-social/internal/modules/users"
 	"github.com/LeeDark/book-social/internal/testutil"
@@ -55,6 +57,62 @@ func TestUserRepositoryCreateAndLookupCredentials(t *testing.T) {
 
 	if _, err := repo.FindCredentials(ctx, "missing"); !errors.Is(err, users.ErrUserNotFound) {
 		t.Fatalf("FindCredentials() missing error = %v, want ErrUserNotFound", err)
+	}
+}
+
+func TestUserRepositorySessionLifecycle(t *testing.T) {
+	ctx := context.Background()
+	db := newUserRepositoryTestDB(t, ctx)
+	userRepo := NewUserRepository(db)
+	sessionRepo := NewSessionRepository(db)
+
+	var roleID int
+	if err := db.QueryRowContext(ctx, `SELECT id FROM roles WHERE role_name = 'user'`).Scan(&roleID); err != nil {
+		t.Fatalf("lookup default role: %v", err)
+	}
+	createdUser, err := userRepo.CreateUser(ctx, users.CreateUserParams{
+		FirstName:    "Ada",
+		Login:        "ada",
+		Email:        "ada@example.test",
+		PasswordHash: "$2a$10$test-hash",
+		RoleID:       roleID,
+	})
+	if err != nil {
+		t.Fatalf("CreateUser() error = %v", err)
+	}
+
+	now := time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
+	tokenHash := []byte("valid-token-hash")
+	created, err := sessionRepo.CreateSession(ctx, users.CreateSessionParams{
+		UserID:    createdUser.ID,
+		TokenHash: tokenHash,
+		CreatedAt: now,
+		ExpiresAt: now.Add(time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("CreateSession() error = %v", err)
+	}
+	if created.ID == 0 || created.UserID != createdUser.ID || !bytes.Equal(created.TokenHash, tokenHash) {
+		t.Fatalf("created session = %+v", created)
+	}
+
+	loaded, err := sessionRepo.LoadSession(ctx, tokenHash, now.Add(30*time.Minute))
+	if err != nil {
+		t.Fatalf("LoadSession() current error = %v", err)
+	}
+	if loaded.ID != created.ID || loaded.UserID != createdUser.ID || !bytes.Equal(loaded.TokenHash, tokenHash) {
+		t.Fatalf("loaded session = %+v", loaded)
+	}
+
+	if _, err := sessionRepo.LoadSession(ctx, tokenHash, now.Add(time.Hour)); !errors.Is(err, users.ErrUnauthenticated) {
+		t.Fatalf("LoadSession() expired error = %v, want ErrUnauthenticated", err)
+	}
+
+	if err := sessionRepo.DeleteSession(ctx, tokenHash); err != nil {
+		t.Fatalf("DeleteSession() error = %v", err)
+	}
+	if _, err := sessionRepo.LoadSession(ctx, tokenHash, now); !errors.Is(err, users.ErrUnauthenticated) {
+		t.Fatalf("LoadSession() after delete error = %v, want ErrUnauthenticated", err)
 	}
 }
 

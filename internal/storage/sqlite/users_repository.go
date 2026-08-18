@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/LeeDark/book-social/internal/modules/users"
 	moderncsqlite "modernc.org/sqlite"
@@ -152,4 +153,81 @@ func mapRepositoryError(err error) error {
 	default:
 		return fmt.Errorf("repository operation: %w", err)
 	}
+}
+
+type SessionRepository struct {
+	db sqlQueryer
+}
+
+func NewSessionRepository(db *sql.DB) *SessionRepository {
+	return &SessionRepository{db: db}
+}
+
+func (r *SessionRepository) CreateSession(ctx context.Context, params users.CreateSessionParams) (users.Session, error) {
+	result, err := r.db.ExecContext(ctx, `
+		INSERT INTO sessions(user_id, token_hash, created_at, expires_at)
+		VALUES (?, ?, ?, ?)
+	`, params.UserID, params.TokenHash, formatSQLiteTime(params.CreatedAt), formatSQLiteTime(params.ExpiresAt))
+	if err != nil {
+		return users.Session{}, users.ErrInternal
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return users.Session{}, users.ErrInternal
+	}
+	return users.Session{
+		ID:        int(id),
+		UserID:    params.UserID,
+		TokenHash: append([]byte(nil), params.TokenHash...),
+		CreatedAt: params.CreatedAt.UTC(),
+		ExpiresAt: params.ExpiresAt.UTC(),
+	}, nil
+}
+
+func (r *SessionRepository) LoadSession(ctx context.Context, tokenHash []byte, now time.Time) (users.Session, error) {
+	var session users.Session
+	var createdAt, expiresAt string
+	if err := r.db.QueryRowContext(ctx, `
+		SELECT s.id, s.user_id, s.token_hash, s.created_at, s.expires_at
+		FROM sessions s
+		JOIN users u ON u.id = s.user_id
+		WHERE s.token_hash = ? AND s.expires_at > ?
+		LIMIT 1
+	`, tokenHash, formatSQLiteTime(now)).Scan(
+		&session.ID,
+		&session.UserID,
+		&session.TokenHash,
+		&createdAt,
+		&expiresAt,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return users.Session{}, users.ErrUnauthenticated
+		}
+		return users.Session{}, users.ErrInternal
+	}
+
+	var err error
+	if session.CreatedAt, err = parseSQLiteTime(createdAt); err != nil {
+		return users.Session{}, users.ErrInternal
+	}
+	if session.ExpiresAt, err = parseSQLiteTime(expiresAt); err != nil {
+		return users.Session{}, users.ErrInternal
+	}
+	return session, nil
+}
+
+func (r *SessionRepository) DeleteSession(ctx context.Context, tokenHash []byte) error {
+	if _, err := r.db.ExecContext(ctx, `DELETE FROM sessions WHERE token_hash = ?`, tokenHash); err != nil {
+		return users.ErrInternal
+	}
+	return nil
+}
+
+func formatSQLiteTime(value time.Time) string {
+	return value.UTC().Format(time.RFC3339Nano)
+}
+
+func parseSQLiteTime(value string) (time.Time, error) {
+	return time.Parse(time.RFC3339Nano, value)
 }
