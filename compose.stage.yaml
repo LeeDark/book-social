@@ -11,6 +11,8 @@ services:
   postgres:
     image: postgres:18-alpine
     container_name: booksocial-stage-postgres
+    ports:
+      - "127.0.0.1:5433:5432"
     environment:
       POSTGRES_DB: book_social_stage
       POSTGRES_USER: book_social
