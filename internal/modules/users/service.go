@@ -1,6 +1,11 @@
 package users
 
-import "context"
+import (
+	"context"
+	"errors"
+	"strings"
+	"unicode/utf8"
+)
 
 type RegistrationInput struct {
 	FirstName            string
@@ -20,9 +25,17 @@ func NewService(repo RegistrationRepository, policy PasswordPolicy) *Service {
 }
 
 func (s *Service) Register(ctx context.Context, input RegistrationInput) (User, error) {
-	passwordHash, err := s.policy.Hash(input.Password)
+	input, err := normalizeRegistrationInput(input)
 	if err != nil {
 		return User{}, err
+	}
+
+	passwordHash, err := s.policy.Hash(input.Password)
+	if err != nil {
+		if errors.Is(err, ErrPasswordTooShort) || errors.Is(err, ErrPasswordTooLong) {
+			return User{}, ValidationError{Field: "password", Message: err.Error()}
+		}
+		return User{}, ErrInternal
 	}
 
 	var created User
@@ -30,6 +43,9 @@ func (s *Service) Register(ctx context.Context, input RegistrationInput) (User, 
 		role, err := tx.FindRoleByName(ctx, "user")
 		if err != nil {
 			return err
+		}
+		if role.ID == 0 || role.Name != "user" {
+			return ErrInternal
 		}
 
 		created, err = tx.CreateUser(ctx, CreateUserParams{
@@ -42,8 +58,53 @@ func (s *Service) Register(ctx context.Context, input RegistrationInput) (User, 
 		return err
 	})
 	if err != nil {
-		return User{}, err
+		return User{}, mapRegistrationError(err)
 	}
 
 	return created, nil
+}
+
+func normalizeRegistrationInput(input RegistrationInput) (RegistrationInput, error) {
+	input.FirstName = strings.TrimSpace(input.FirstName)
+	input.Login = strings.ToLower(strings.TrimSpace(input.Login))
+	input.Email = strings.ToLower(strings.TrimSpace(input.Email))
+
+	validations := []struct {
+		field   string
+		value   string
+		maximum int
+	}{
+		{field: "first_name", value: input.FirstName, maximum: 100},
+		{field: "login", value: input.Login, maximum: 64},
+		{field: "email", value: input.Email, maximum: 254},
+	}
+	for _, validation := range validations {
+		if validation.value == "" {
+			return RegistrationInput{}, ValidationError{Field: validation.field, Message: "is required"}
+		}
+		if utf8.RuneCountInString(validation.value) > validation.maximum {
+			return RegistrationInput{}, ValidationError{Field: validation.field, Message: "is too long"}
+		}
+	}
+	if !strings.Contains(input.Email, "@") {
+		return RegistrationInput{}, ValidationError{Field: "email", Message: "is invalid"}
+	}
+	if input.Password != input.PasswordConfirmation {
+		return RegistrationInput{}, ValidationError{Field: "password_confirmation", Message: "does not match password"}
+	}
+
+	return input, nil
+}
+
+func mapRegistrationError(err error) error {
+	switch {
+	case errors.Is(err, ErrLoginTaken):
+		return ErrLoginTaken
+	case errors.Is(err, ErrEmailTaken):
+		return ErrEmailTaken
+	case errors.Is(err, ErrInternal):
+		return ErrInternal
+	default:
+		return ErrInternal
+	}
 }

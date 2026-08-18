@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"errors"
 	"testing"
 )
 
@@ -11,15 +12,23 @@ type recordingUserRepository struct {
 	createdUser User
 	roleLookup  string
 	txCalls     int
+	roleErr     error
+	createErr   error
 }
 
 func (r *recordingUserRepository) CreateUser(ctx context.Context, params CreateUserParams) (User, error) {
 	r.created = params
+	if r.createErr != nil {
+		return User{}, r.createErr
+	}
 	return r.createdUser, nil
 }
 
 func (r *recordingUserRepository) FindRoleByName(ctx context.Context, name string) (Role, error) {
 	r.roleLookup = name
+	if r.roleErr != nil {
+		return Role{}, r.roleErr
+	}
 	return r.role, nil
 }
 
@@ -75,5 +84,94 @@ func TestRegistrationCreatesUserWithDefaultRoleAndPasswordHash(t *testing.T) {
 	}
 	if err := NewPasswordPolicy().Verify(repo.created.PasswordHash, input.Password); err != nil {
 		t.Fatalf("created password hash does not verify: %v", err)
+	}
+}
+
+func TestRegistrationRejectsInvalidInput(t *testing.T) {
+	tests := []struct {
+		name  string
+		input RegistrationInput
+	}{
+		{
+			name: "missing first name",
+			input: RegistrationInput{
+				Login:                "ada",
+				Email:                "ada@example.test",
+				Password:             "correct horse battery staple",
+				PasswordConfirmation: "correct horse battery staple",
+			},
+		},
+		{
+			name: "password confirmation mismatch",
+			input: RegistrationInput{
+				FirstName:            "Ada",
+				Login:                "ada",
+				Email:                "ada@example.test",
+				Password:             "correct horse battery staple",
+				PasswordConfirmation: "different password",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &recordingUserRepository{role: Role{ID: 9, Name: "user"}}
+			_, err := NewService(repo, NewPasswordPolicy()).Register(context.Background(), tt.input)
+			var validationErr ValidationError
+			if !errors.As(err, &validationErr) {
+				t.Fatalf("Register() error = %v, want ValidationError", err)
+			}
+			if repo.txCalls != 0 {
+				t.Fatalf("transaction calls = %d, want 0", repo.txCalls)
+			}
+		})
+	}
+}
+
+func TestRegistrationMapsDuplicateIdentityErrors(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{name: "duplicate login", err: ErrLoginTaken},
+		{name: "duplicate email", err: ErrEmailTaken},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &recordingUserRepository{
+				role:      Role{ID: 9, Name: "user"},
+				createErr: tt.err,
+			}
+			_, err := NewService(repo, NewPasswordPolicy()).Register(context.Background(), validRegistrationInput())
+			if !errors.Is(err, tt.err) {
+				t.Fatalf("Register() error = %v, want %v", err, tt.err)
+			}
+		})
+	}
+}
+
+func TestRegistrationMapsRepositoryFailureToInternalError(t *testing.T) {
+	repo := &recordingUserRepository{
+		role:      Role{ID: 9, Name: "user"},
+		createErr: errors.New("database connection details must not escape"),
+	}
+
+	_, err := NewService(repo, NewPasswordPolicy()).Register(context.Background(), validRegistrationInput())
+	if !errors.Is(err, ErrInternal) {
+		t.Fatalf("Register() error = %v, want ErrInternal", err)
+	}
+	if err.Error() != ErrInternal.Error() {
+		t.Fatalf("Register() error = %q, want generic %q", err, ErrInternal)
+	}
+}
+
+func validRegistrationInput() RegistrationInput {
+	return RegistrationInput{
+		FirstName:            "Ada",
+		Login:                "ada",
+		Email:                "ada@example.test",
+		Password:             "correct horse battery staple",
+		PasswordConfirmation: "correct horse battery staple",
 	}
 }
