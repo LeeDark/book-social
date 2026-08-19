@@ -369,10 +369,19 @@ regularly even without a social graph.
 - [ ] Add one controlled personal-library import with preview, idempotency, and conflict reporting.
 - [ ] Enforce privacy in services and queries, not only in templates.
 
+### Account Lifecycle Preparation
+
+- [ ] Define the complete account-data inventory and the export contract for library, notes, ratings,
+  shelves, tags, reading history, and profile data.
+- [ ] Define deletion semantics and dependencies for the account, library data, private notes, and
+  future social data; implementation of public account deletion is reserved for v0.6.
+- [ ] Keep email activation, password recovery, and account deletion out of v0.5 unless a closed-user
+  cohort demonstrates a concrete need; record the deferred boundary for v0.6 public-beta readiness.
+
 ### UX and Localization Foundation
 
 - [ ] Check the main library flows at mobile widths and with keyboard navigation.
-- [ ] Keep catalog language separate from UI locale.
+- [ ] Keep the catalog language separate from the UI locale.
 - [ ] Move UI messages to stable keys/catalogs outside templates.
 - [ ] Add locale resolution, explicit language selection, persisted preference, and fallback.
 - [ ] Localize dates, numbers, and plural forms.
@@ -442,6 +451,11 @@ publish an explicitly public reading action
 - [ ] Add rate limits for authentication and social mutations.
 - [ ] Publish community rules, privacy policy, terms, and a support contact.
 - [ ] Provide account/data export and deletion, or a documented manual beta process.
+- [ ] Add email verification and secure activation-token flow before public access.
+- [ ] Add password reset/account recovery with expiring, single-use tokens and safe failure messages.
+- [ ] Add self-service account deletion, or keep the documented manual beta process until it is
+  implemented; define its effect on a library, private notes, public activity, and social relations.
+- [ ] Re-verify the email address when it changes if email is used as a trusted account identifier.
 - [ ] Audit moderation actions.
 - [ ] Verify that private notes and activities never leak through profiles, feeds, events, logs, or
   notifications.
