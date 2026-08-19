@@ -18,6 +18,22 @@ type recordingUserRepository struct {
 	credentialsErr error
 }
 
+type recordingPasswordBoundary struct {
+	verifyCalls int
+	verifyHash  string
+	verifyErr   error
+}
+
+func (p *recordingPasswordBoundary) Hash(string) (string, error) {
+	return "unused-test-hash", nil
+}
+
+func (p *recordingPasswordBoundary) Verify(hash, _ string) error {
+	p.verifyCalls++
+	p.verifyHash = hash
+	return p.verifyErr
+}
+
 func (r *recordingUserRepository) CreateUser(ctx context.Context, params CreateUserParams) (User, error) {
 	r.created = params
 	if r.createErr != nil {
@@ -230,6 +246,47 @@ func TestAuthenticateUsesNeutralRefusalForInvalidOrMissingCredentials(t *testing
 				t.Fatalf("Authenticate() refusal = %q, want neutral %q", err, firstErr)
 			}
 		})
+	}
+}
+
+func TestAuthenticateVerifiesDummyHashForMissingUser(t *testing.T) {
+	repo := &recordingUserRepository{credentialsErr: ErrUserNotFound}
+	policy := &recordingPasswordBoundary{verifyErr: ErrInvalidCredentials}
+
+	got, err := NewService(repo, policy).Authenticate(
+		context.Background(),
+		"missing@example.test",
+		"correct horse battery staple",
+	)
+	if got != (User{}) {
+		t.Fatal("Authenticate() returned a user for a missing account")
+	}
+	if !errors.Is(err, ErrInvalidCredentials) {
+		t.Fatalf("Authenticate() error = %v, want ErrInvalidCredentials", err)
+	}
+	if policy.verifyCalls != 1 {
+		t.Fatalf("password verification calls = %d, want 1", policy.verifyCalls)
+	}
+	if policy.verifyHash == "" {
+		t.Fatal("missing account did not use a dummy password hash")
+	}
+}
+
+func TestAuthenticateMapsInvalidStoredHashToInternalError(t *testing.T) {
+	repo := &recordingUserRepository{
+		credentials: Credentials{User: User{ID: 42}, PasswordHash: "invalid stored hash"},
+	}
+
+	got, err := NewService(repo, NewPasswordPolicy()).Authenticate(
+		context.Background(),
+		"ada",
+		"correct horse battery staple",
+	)
+	if got != (User{}) {
+		t.Fatal("Authenticate() returned a user for an invalid stored hash")
+	}
+	if !errors.Is(err, ErrInternal) {
+		t.Fatalf("Authenticate() error = %v, want ErrInternal", err)
 	}
 }
 

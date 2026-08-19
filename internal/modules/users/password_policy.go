@@ -9,7 +9,7 @@ import (
 
 const (
 	PasswordMinLength = 12
-	PasswordMaxLength = 128
+	PasswordMaxBytes  = 72
 	passwordHashCost  = bcrypt.DefaultCost
 )
 
@@ -39,7 +39,19 @@ func (p PasswordPolicy) Hash(password string) (string, error) {
 }
 
 func (p PasswordPolicy) Verify(hash, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err := validatePasswordLength(password); err != nil {
+		return err
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	switch {
+	case err == nil:
+		return nil
+	case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
+		return ErrInvalidCredentials
+	default:
+		return ErrInternal
+	}
 }
 
 func validatePasswordLength(password string) error {
@@ -47,7 +59,7 @@ func validatePasswordLength(password string) error {
 	if length < PasswordMinLength {
 		return ErrPasswordTooShort
 	}
-	if length > PasswordMaxLength {
+	if len(password) > PasswordMaxBytes {
 		return ErrPasswordTooLong
 	}
 	return nil

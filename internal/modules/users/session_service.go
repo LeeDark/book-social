@@ -9,13 +9,31 @@ import (
 type SessionService struct {
 	users    UserRepository
 	sessions SessionRepository
+	lifetime time.Duration
+	now      func() time.Time
 }
 
-func NewSessionService(users UserRepository, sessions SessionRepository) *SessionService {
-	return &SessionService{users: users, sessions: sessions}
+func NewSessionService(users UserRepository, sessions SessionRepository, lifetime time.Duration) *SessionService {
+	return &SessionService{
+		users:    users,
+		sessions: sessions,
+		lifetime: lifetime,
+		now:      time.Now,
+	}
 }
 
-func (s *SessionService) CreateSession(ctx context.Context, params CreateSessionParams) error {
+func (s *SessionService) CreateSession(ctx context.Context, userID int, tokenHash []byte) error {
+	if s == nil || s.sessions == nil || s.lifetime <= 0 || userID <= 0 || len(tokenHash) != SessionTokenHashSize {
+		return ErrInternal
+	}
+
+	createdAt := s.now().UTC()
+	params := CreateSessionParams{
+		UserID:    userID,
+		TokenHash: append([]byte(nil), tokenHash...),
+		CreatedAt: createdAt,
+		ExpiresAt: createdAt.Add(s.lifetime),
+	}
 	if _, err := s.sessions.CreateSession(ctx, params); err != nil {
 		return mapSessionServiceError(err)
 	}

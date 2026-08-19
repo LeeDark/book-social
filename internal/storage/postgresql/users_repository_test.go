@@ -34,8 +34,11 @@ func TestUserRepositoryContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindCredentials() error = %v", err)
 	}
-	if credentials.User != created || credentials.PasswordHash != "$2a$10$test-hash" {
-		t.Fatalf("credentials = %+v, want user and hash", credentials)
+	if credentials.User != created {
+		t.Fatal("credentials lookup returned an unexpected user")
+	}
+	if credentials.PasswordHash != "$2a$10$test-hash" {
+		t.Fatal("credentials lookup returned an unexpected password hash")
 	}
 	if _, err := repo.FindByID(ctx, created.ID); err != nil {
 		t.Fatalf("FindByID() error = %v", err)
@@ -67,19 +70,27 @@ func TestSessionRepositoryContract(t *testing.T) {
 	}
 
 	now := time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
-	tokenHash := []byte("valid-token-hash")
+	tokenHash := bytes.Repeat([]byte{0x42}, users.SessionTokenHashSize)
 	created, err := sessionRepo.CreateSession(ctx, users.CreateSessionParams{
 		UserID: createdUser.ID, TokenHash: tokenHash, CreatedAt: now, ExpiresAt: now.Add(time.Hour),
 	})
 	if err != nil {
 		t.Fatalf("CreateSession() error = %v", err)
 	}
+	if _, err := sessionRepo.CreateSession(ctx, users.CreateSessionParams{
+		UserID: createdUser.ID, TokenHash: []byte{0x01}, CreatedAt: now, ExpiresAt: now.Add(time.Hour),
+	}); !errors.Is(err, users.ErrInternal) {
+		t.Fatalf("CreateSession() short hash error = %v, want ErrInternal", err)
+	}
 	loaded, err := sessionRepo.LoadSession(ctx, tokenHash, now.Add(30*time.Minute))
 	if err != nil {
 		t.Fatalf("LoadSession() error = %v", err)
 	}
-	if loaded.ID != created.ID || loaded.UserID != createdUser.ID || !bytes.Equal(loaded.TokenHash, tokenHash) {
-		t.Fatalf("loaded session = %+v", loaded)
+	if loaded.ID != created.ID || loaded.UserID != createdUser.ID {
+		t.Fatal("loaded session has an unexpected identity")
+	}
+	if !bytes.Equal(loaded.TokenHash, tokenHash) {
+		t.Fatal("loaded session has an unexpected token hash")
 	}
 	if _, err := sessionRepo.LoadSession(ctx, tokenHash, now.Add(time.Hour)); !errors.Is(err, users.ErrUnauthenticated) {
 		t.Fatalf("expired session error = %v, want ErrUnauthenticated", err)

@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func TestCookieManagerIssueUsesOpaqueEntropyAndPolicy(t *testing.T) {
+func TestCookieManagerGeneratesOpaqueTokenAndSetsPolicy(t *testing.T) {
 	manager := NewCookieManager(CookieConfig{
 		Name:     "book_social_session_test",
 		Path:     "/",
@@ -20,34 +20,45 @@ func TestCookieManagerIssueUsesOpaqueEntropyAndPolicy(t *testing.T) {
 		Lifetime: 7 * 24 * time.Hour,
 	})
 
-	firstRecorder := httptest.NewRecorder()
-	firstToken, err := manager.Issue(firstRecorder)
+	firstToken, err := manager.GenerateToken()
 	if err != nil {
-		t.Fatalf("Issue() first error = %v", err)
+		t.Fatalf("GenerateToken() first error = %v", err)
 	}
-	secondRecorder := httptest.NewRecorder()
-	secondToken, err := manager.Issue(secondRecorder)
+	secondToken, err := manager.GenerateToken()
 	if err != nil {
-		t.Fatalf("Issue() second error = %v", err)
+		t.Fatalf("GenerateToken() second error = %v", err)
 	}
 	if firstToken == secondToken {
-		t.Fatal("Issue() generated identical opaque tokens")
+		t.Fatal("GenerateToken() generated identical opaque tokens")
 	}
 
 	decoded, err := base64.RawURLEncoding.DecodeString(firstToken)
 	if err != nil {
-		t.Fatalf("Issue() token is not raw URL-safe base64: %v", err)
+		t.Fatalf("GenerateToken() result is not raw URL-safe base64: %v", err)
 	}
 	if len(decoded) != defaultTokenBytes {
-		t.Fatalf("Issue() entropy bytes = %d, want %d", len(decoded), defaultTokenBytes)
+		t.Fatalf("GenerateToken() entropy bytes = %d, want %d", len(decoded), defaultTokenBytes)
 	}
 
-	cookie := firstRecorder.Result().Cookies()[0]
-	if cookie.Name != "book_social_session_test" || cookie.Value != firstToken {
-		t.Fatalf("cookie identity = %q=%q, want configured name and issued token", cookie.Name, cookie.Value)
+	firstRecorder := httptest.NewRecorder()
+	if err := manager.Set(firstRecorder, firstToken); err != nil {
+		t.Fatalf("Set() error = %v", err)
 	}
-	if cookie.Path != "/" || !cookie.HttpOnly || !cookie.Secure || cookie.SameSite != http.SameSiteLaxMode || cookie.MaxAge != 7*24*60*60 {
-		t.Fatalf("cookie policy = %#v, want path=/ HttpOnly Secure SameSite=Lax MaxAge=7d", cookie)
+	cookie := firstRecorder.Result().Cookies()[0]
+	if cookie.Name != "book_social_session_test" {
+		t.Fatalf("cookie name = %q, want configured name", cookie.Name)
+	}
+	if cookie.Value != firstToken {
+		t.Fatal("cookie value differs from the issued token")
+	}
+	if cookie.Path != "/" {
+		t.Fatalf("cookie path = %q, want /", cookie.Path)
+	}
+	if !cookie.HttpOnly || !cookie.Secure || cookie.SameSite != http.SameSiteLaxMode {
+		t.Fatal("cookie is missing the configured security attributes")
+	}
+	if cookie.MaxAge != 7*24*60*60 {
+		t.Fatalf("cookie MaxAge = %d, want %d", cookie.MaxAge, 7*24*60*60)
 	}
 
 	if bytes.Contains(firstRecorder.Body.Bytes(), []byte(firstToken)) {
@@ -62,15 +73,15 @@ func TestCookieManagerClearInvalidatesCookie(t *testing.T) {
 	manager.Clear(recorder)
 
 	if got := recorder.Header().Get("Set-Cookie"); got != "book_social_session_test=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" {
-		t.Fatalf("clear Set-Cookie = %q, want secure deletion policy", got)
+		t.Fatal("Clear() wrote an unexpected deletion header")
 	}
 
 	cookie := recorder.Result().Cookies()[0]
 	if cookie.Name != "book_social_session_test" || cookie.Value != "" || cookie.MaxAge != -1 {
-		t.Fatalf("clear cookie = %#v, want empty value and MaxAge=-1", cookie)
+		t.Fatal("Clear() wrote an unexpected cookie identity or lifetime")
 	}
 	if !cookie.HttpOnly || !cookie.Secure || cookie.Path != "/" || cookie.SameSite != http.SameSiteLaxMode {
-		t.Fatalf("clear cookie policy = %#v, want same security policy", cookie)
+		t.Fatal("Clear() omitted configured security attributes")
 	}
 }
 
@@ -78,8 +89,12 @@ func TestCookieManagerDefaultsToSevenDayLifetime(t *testing.T) {
 	manager := NewCookieManager(CookieConfig{Name: "book_social_session_test"})
 	recorder := httptest.NewRecorder()
 
-	if _, err := manager.Issue(recorder); err != nil {
-		t.Fatalf("Issue() error = %v", err)
+	token, err := manager.GenerateToken()
+	if err != nil {
+		t.Fatalf("GenerateToken() error = %v", err)
+	}
+	if err := manager.Set(recorder, token); err != nil {
+		t.Fatalf("Set() error = %v", err)
 	}
 
 	cookie := recorder.Result().Cookies()[0]
@@ -95,26 +110,34 @@ func TestCookieManagerDoesNotLogRawToken(t *testing.T) {
 	t.Cleanup(func() { slog.SetDefault(previous) })
 
 	manager := NewCookieManager(CookieConfig{Name: "book_social_session_test"})
-	if _, err := manager.Issue(httptest.NewRecorder()); err != nil {
-		t.Fatalf("Issue() error = %v", err)
+	if _, err := manager.GenerateToken(); err != nil {
+		t.Fatalf("GenerateToken() error = %v", err)
 	}
 	if logs.Len() != 0 {
-		t.Fatalf("cookie manager emitted logs: %q", logs.String())
+		t.Fatal("cookie manager emitted logs")
 	}
 }
 
-func TestCookieManagerDoesNotSetCookieWhenEntropyFails(t *testing.T) {
+func TestCookieManagerTokenGenerationFailureCannotSetCookie(t *testing.T) {
 	manager := NewCookieManager(CookieConfig{
 		Name:   "book_social_session_test",
 		Random: errorReader{err: errors.New("entropy unavailable")},
 	})
+
+	if _, err := manager.GenerateToken(); err == nil {
+		t.Fatal("GenerateToken() error = nil, want entropy error")
+	}
+}
+
+func TestCookieManagerRejectsEmptyUnpersistedToken(t *testing.T) {
+	manager := NewCookieManager(CookieConfig{Name: "book_social_session_test"})
 	recorder := httptest.NewRecorder()
 
-	if _, err := manager.Issue(recorder); err == nil {
-		t.Fatal("Issue() error = nil, want entropy error")
+	if err := manager.Set(recorder, ""); err == nil {
+		t.Fatal("Set() error = nil, want empty-token error")
 	}
 	if recorder.Header().Get("Set-Cookie") != "" {
-		t.Fatal("Issue() set a cookie after entropy failure")
+		t.Fatal("Set() wrote a cookie for an empty token")
 	}
 }
 

@@ -140,7 +140,7 @@ func TestSQLiteAuthMigrationOnFreshDatabase(t *testing.T) {
 
 	if _, err := db.ExecContext(ctx, `
 		INSERT INTO sessions(user_id, token_hash, created_at, expires_at)
-		VALUES (1, X'01', '2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
+		VALUES (1, zeroblob(32), '2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
 	`); err != nil {
 		t.Fatalf("insert valid session: %v", err)
 	}
@@ -153,6 +153,13 @@ func TestSQLiteAuthMigrationOnFreshDatabase(t *testing.T) {
 			name: "duplicate token hash",
 			query: `
 				INSERT INTO sessions(user_id, token_hash, created_at, expires_at)
+				VALUES (1, zeroblob(32), '2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
+			`,
+		},
+		{
+			name: "invalid token hash length",
+			query: `
+				INSERT INTO sessions(user_id, token_hash, created_at, expires_at)
 				VALUES (1, X'01', '2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
 			`,
 		},
@@ -160,14 +167,16 @@ func TestSQLiteAuthMigrationOnFreshDatabase(t *testing.T) {
 			name: "expiry before creation",
 			query: `
 				INSERT INTO sessions(user_id, token_hash, created_at, expires_at)
-				VALUES (1, X'02', '2026-01-02T00:00:00Z', '2026-01-01T00:00:00Z')
+				VALUES (1, X'0202020202020202020202020202020202020202020202020202020202020202',
+					'2026-01-02T00:00:00Z', '2026-01-01T00:00:00Z')
 			`,
 		},
 		{
 			name: "unknown user",
 			query: `
 				INSERT INTO sessions(user_id, token_hash, created_at, expires_at)
-				VALUES (999, X'03', '2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
+				VALUES (999, X'0303030303030303030303030303030303030303030303030303030303030303',
+					'2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
 			`,
 		},
 	}

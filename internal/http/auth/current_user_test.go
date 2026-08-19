@@ -44,16 +44,19 @@ func TestCurrentUserMiddlewareTreatsMissingCookieAsAnonymous(t *testing.T) {
 func TestCurrentUserMiddlewareAddsMinimalIdentityForValidSession(t *testing.T) {
 	cookies := NewCookieManager(CookieConfig{Name: "book_social_session_test"})
 	seedResponse := httptest.NewRecorder()
-	rawToken, err := cookies.Issue(seedResponse)
+	rawToken, err := cookies.GenerateToken()
 	if err != nil {
-		t.Fatalf("Issue() error = %v", err)
+		t.Fatalf("GenerateToken() error = %v", err)
+	}
+	if err := cookies.Set(seedResponse, rawToken); err != nil {
+		t.Fatalf("Set() error = %v", err)
 	}
 	wantUser := users.User{ID: 7, FirstName: "Ada", Login: "ada", Email: "ada@example.test", RoleID: 99}
 	wantHash := HashToken(rawToken)
 	fixedNow := time.Date(2026, 8, 19, 12, 0, 0, 0, time.UTC)
 	loader := currentUserLoaderFunc(func(_ context.Context, gotHash []byte, gotNow time.Time) (users.User, error) {
 		if string(gotHash) != string(wantHash) {
-			t.Fatalf("token hash = %x, want %x", gotHash, wantHash)
+			t.Fatal("current-user loader received an unexpected token hash")
 		}
 		if !gotNow.Equal(fixedNow) {
 			t.Fatalf("now = %s, want %s", gotNow, fixedNow)

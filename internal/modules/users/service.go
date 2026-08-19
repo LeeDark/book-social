@@ -17,10 +17,23 @@ type RegistrationInput struct {
 
 type Service struct {
 	repo   RegistrationRepository
-	policy PasswordPolicy
+	policy passwordBoundary
 }
 
-func NewService(repo RegistrationRepository, policy PasswordPolicy) *Service {
+type passwordBoundary interface {
+	Hash(password string) (string, error)
+	Verify(hash, password string) error
+}
+
+var nonexistentUserHash = func() string {
+	hash, err := NewPasswordPolicy().Hash("nonexistent-account-password")
+	if err != nil {
+		panic("users: generate nonexistent-account password hash")
+	}
+	return hash
+}()
+
+func NewService(repo RegistrationRepository, policy passwordBoundary) *Service {
 	return &Service{repo: repo, policy: policy}
 }
 
@@ -73,11 +86,17 @@ func (s *Service) Authenticate(ctx context.Context, identifier, password string)
 	credentials, err := s.repo.FindCredentials(ctx, identifier)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) || errors.Is(err, ErrInvalidCredentials) {
+			// Keep the expensive verification path for an unknown account so the
+			// lookup result is not exposed through an obvious timing difference.
+			_ = s.policy.Verify(nonexistentUserHash, password)
 			return User{}, ErrInvalidCredentials
 		}
 		return User{}, ErrInternal
 	}
 	if err := s.policy.Verify(credentials.PasswordHash, password); err != nil {
+		if errors.Is(err, ErrInternal) {
+			return User{}, ErrInternal
+		}
 		return User{}, ErrInvalidCredentials
 	}
 	return credentials.User, nil

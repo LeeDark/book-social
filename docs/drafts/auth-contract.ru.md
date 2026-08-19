@@ -103,8 +103,9 @@ role в corrupted/manual DB — internal error. v0.2.6 отображает эт
 создавая второй набор validation rules.
 
 `first_name`, `login` и `email` trim-ятся; login/email сравниваются в canonical форме. Максимумы:
-`first_name` 100, `login` 64, `email` 254. Password — 12–128 символов, confirmation совпадает;
-complexity rules не вводятся и password никогда не повторно отображается.
+`first_name` 100, `login` 64, `email` 254. Password — минимум 12 Unicode-символов и максимум
+72 UTF-8 bytes из-за boundary bcrypt; confirmation совпадает. Complexity rules не вводятся и
+password никогда не повторно отображается.
 
 Domain boundary v0.2.5 определяет `ValidationError`, `ErrLoginTaken`, `ErrEmailTaken`,
 `ErrInvalidCredentials`, `ErrUnauthenticated` и internal error. Handler v0.2.6 сопоставляет их с

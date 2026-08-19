@@ -14,8 +14,7 @@ import (
 
 const defaultTokenBytes = 32
 
-// CookieConfig contains a browser-facing session cookie policy. The raw token is
-// returned to the caller so the session service can hash it before persistence.
+// CookieConfig contains a browser-facing session cookie policy.
 type CookieConfig struct {
 	Name     string
 	Path     string
@@ -25,8 +24,10 @@ type CookieConfig struct {
 	Random   io.Reader
 }
 
-// CookieManager issues opaque session cookies. It deliberately has no logger:
-// raw session tokens must never be logged by this boundary.
+// CookieManager generates opaque tokens and writes session cookies. Generation
+// and Set are deliberately separate so callers can persist the token hash before
+// exposing the raw token to the browser. The manager has no logger because raw
+// session tokens must never be logged by this boundary.
 type CookieManager struct {
 	config CookieConfig
 }
@@ -50,9 +51,8 @@ func NewCookieManager(policy CookieConfig) *CookieManager {
 	return &CookieManager{config: policy}
 }
 
-// Issue writes a new session cookie and returns its raw opaque token. Callers
-// must hash the token before passing it to session persistence.
-func (m *CookieManager) Issue(w http.ResponseWriter) (string, error) {
+// GenerateToken returns a new raw opaque token without writing a response.
+func (m *CookieManager) GenerateToken() (string, error) {
 	if m == nil {
 		return "", fmt.Errorf("nil cookie manager")
 	}
@@ -61,7 +61,21 @@ func (m *CookieManager) Issue(w http.ResponseWriter) (string, error) {
 	if _, err := io.ReadFull(m.config.Random, raw); err != nil {
 		return "", fmt.Errorf("generate session token: %w", err)
 	}
-	token := base64.RawURLEncoding.EncodeToString(raw)
+	return base64.RawURLEncoding.EncodeToString(raw), nil
+}
+
+// Set writes a previously persisted session token to the response.
+func (m *CookieManager) Set(w http.ResponseWriter, token string) error {
+	if m == nil {
+		return fmt.Errorf("nil cookie manager")
+	}
+	if w == nil {
+		return fmt.Errorf("nil response writer")
+	}
+	if token == "" {
+		return fmt.Errorf("empty session token")
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     m.config.Name,
 		Value:    token,
@@ -71,7 +85,7 @@ func (m *CookieManager) Issue(w http.ResponseWriter) (string, error) {
 		SameSite: m.config.SameSite,
 		MaxAge:   int(m.config.Lifetime / time.Second),
 	})
-	return token, nil
+	return nil
 }
 
 func (m *CookieManager) Clear(w http.ResponseWriter) {

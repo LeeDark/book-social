@@ -43,8 +43,11 @@ func TestUserRepositoryCreateAndLookupCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindCredentials() by login error = %v", err)
 	}
-	if byLogin.User != created || byLogin.PasswordHash != "$2a$10$test-hash" {
-		t.Fatalf("credentials by login = %+v, want user and stored hash", byLogin)
+	if byLogin.User != created {
+		t.Fatal("credentials lookup returned an unexpected user")
+	}
+	if byLogin.PasswordHash != "$2a$10$test-hash" {
+		t.Fatal("credentials lookup returned an unexpected password hash")
 	}
 
 	byEmail, err := repo.FindCredentials(ctx, "ada@example.test")
@@ -82,7 +85,7 @@ func TestUserRepositorySessionLifecycle(t *testing.T) {
 	}
 
 	now := time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
-	tokenHash := []byte("valid-token-hash")
+	tokenHash := bytes.Repeat([]byte{0x42}, users.SessionTokenHashSize)
 	created, err := sessionRepo.CreateSession(ctx, users.CreateSessionParams{
 		UserID:    createdUser.ID,
 		TokenHash: tokenHash,
@@ -92,16 +95,27 @@ func TestUserRepositorySessionLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession() error = %v", err)
 	}
-	if created.ID == 0 || created.UserID != createdUser.ID || !bytes.Equal(created.TokenHash, tokenHash) {
-		t.Fatalf("created session = %+v", created)
+	if created.ID == 0 || created.UserID != createdUser.ID {
+		t.Fatal("created session has an unexpected identity")
+	}
+	if !bytes.Equal(created.TokenHash, tokenHash) {
+		t.Fatal("created session has an unexpected token hash")
+	}
+	if _, err := sessionRepo.CreateSession(ctx, users.CreateSessionParams{
+		UserID: createdUser.ID, TokenHash: []byte{0x01}, CreatedAt: now, ExpiresAt: now.Add(time.Hour),
+	}); !errors.Is(err, users.ErrInternal) {
+		t.Fatalf("CreateSession() short hash error = %v, want ErrInternal", err)
 	}
 
 	loaded, err := sessionRepo.LoadSession(ctx, tokenHash, now.Add(30*time.Minute))
 	if err != nil {
 		t.Fatalf("LoadSession() current error = %v", err)
 	}
-	if loaded.ID != created.ID || loaded.UserID != createdUser.ID || !bytes.Equal(loaded.TokenHash, tokenHash) {
-		t.Fatalf("loaded session = %+v", loaded)
+	if loaded.ID != created.ID || loaded.UserID != createdUser.ID {
+		t.Fatal("loaded session has an unexpected identity")
+	}
+	if !bytes.Equal(loaded.TokenHash, tokenHash) {
+		t.Fatal("loaded session has an unexpected token hash")
 	}
 
 	if _, err := sessionRepo.LoadSession(ctx, tokenHash, now.Add(time.Hour)); !errors.Is(err, users.ErrUnauthenticated) {

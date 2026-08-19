@@ -2,6 +2,8 @@ package users
 
 import "time"
 
+const SessionTokenHashSize = 32
+
 // User is the identity exposed to application services after authentication.
 // It deliberately does not contain a password or password hash.
 type User struct {

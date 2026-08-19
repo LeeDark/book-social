@@ -13,6 +13,7 @@ CREATE TABLE sessions (
     expires_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT uq_sessions_token_hash UNIQUE (token_hash),
+    CONSTRAINT ck_sessions_token_hash_length CHECK (octet_length(token_hash) = 32),
     CONSTRAINT ck_sessions_expiry_after_created CHECK (expires_at > created_at),
 
     CONSTRAINT fk_sessions_user
