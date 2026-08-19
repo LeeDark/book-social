@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestLoadDefaultsToDevEnv(t *testing.T) {
@@ -17,6 +18,17 @@ func TestLoadDefaultsToDevEnv(t *testing.T) {
 
 	if cfg.Env != EnvDev {
 		t.Fatalf("Env = %q, want %q", cfg.Env, EnvDev)
+	}
+}
+
+func TestLoadDefaultsToSevenDaySessionLifetime(t *testing.T) {
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Auth.SessionLifetime != 7*24*time.Hour {
+		t.Fatalf("Auth.SessionLifetime = %s, want 168h", cfg.Auth.SessionLifetime)
 	}
 }
 

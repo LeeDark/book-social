@@ -5,12 +5,15 @@ import (
 	"net/netip"
 	"os"
 	"strings"
+	"time"
 )
 
 const (
 	EnvDev   = "dev"
 	EnvStage = "stage"
 	EnvProd  = "prod"
+
+	DefaultSessionLifetime = 7 * 24 * time.Hour
 )
 
 type Config struct {
@@ -23,6 +26,10 @@ type Config struct {
 
 	DB struct {
 		DSN string
+	}
+
+	Auth struct {
+		SessionLifetime time.Duration
 	}
 
 	Log struct {
@@ -47,6 +54,7 @@ func Load() (Config, error) {
 	cfg.HTTP.TrustedProxyCIDRs = trustedProxyCIDRs
 
 	cfg.DB.DSN = getEnv("APP_DB_DSN", "./data/book_social_dev.db")
+	cfg.Auth.SessionLifetime = DefaultSessionLifetime
 
 	cfg.Log.Level = getEnv("APP_LOG_LEVEL", "debug")
 	cfg.Log.Format = getEnv("APP_LOG_FORMAT", "text")
