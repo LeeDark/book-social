@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -86,4 +87,20 @@ func (m *CookieManager) Clear(w http.ResponseWriter) {
 		Secure:   m.config.Secure,
 		SameSite: m.config.SameSite,
 	})
+}
+
+func (m *CookieManager) ReadToken(r *http.Request) (string, bool) {
+	if m == nil || r == nil {
+		return "", false
+	}
+	cookie, err := r.Cookie(m.config.Name)
+	if err != nil || cookie.Value == "" {
+		return "", false
+	}
+	return cookie.Value, true
+}
+
+func HashToken(raw string) []byte {
+	digest := sha256.Sum256([]byte(raw))
+	return digest[:]
 }
