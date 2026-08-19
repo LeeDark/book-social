@@ -124,3 +124,67 @@ func TestCurrentUserMiddlewareReturnsGeneric500OnLoaderFailure(t *testing.T) {
 		t.Fatalf("body = %q, want generic error", recorder.Body.String())
 	}
 }
+
+func TestRequireAuthenticationRedirectsAnonymousRequest(t *testing.T) {
+	nextCalled := false
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/me", nil)
+
+	RequireAuthentication(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		nextCalled = true
+	})).ServeHTTP(recorder, req)
+
+	if nextCalled {
+		t.Fatal("protected handler called for anonymous request")
+	}
+	if recorder.Code != http.StatusSeeOther {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusSeeOther)
+	}
+	if got := recorder.Header().Get("Location"); got != "/login" {
+		t.Fatalf("Location = %q, want /login", got)
+	}
+	if got := recorder.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want no-store", got)
+	}
+}
+
+func TestRequireAuthenticationPassesAuthenticatedRequest(t *testing.T) {
+	identity := Identity{ID: 7, FirstName: "Ada", Login: "ada", Email: "ada@example.test"}
+	ctx := context.WithValue(context.Background(), contextKey{}, identity)
+	req := httptest.NewRequest(http.MethodGet, "/me", nil).WithContext(ctx)
+	recorder := httptest.NewRecorder()
+	nextCalled := false
+
+	RequireAuthentication(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+		got, ok := CurrentUserFromRequest(r)
+		if !ok || got != identity {
+			t.Fatalf("current identity = %+v, present = %v, want %+v", got, ok, identity)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})).ServeHTTP(recorder, req)
+
+	if !nextCalled {
+		t.Fatal("protected handler was not called for authenticated request")
+	}
+	if recorder.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusNoContent)
+	}
+	if got := recorder.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want no-store", got)
+	}
+}
+
+func TestRequireAuthenticationRejectsWrongContextValue(t *testing.T) {
+	ctx := context.WithValue(context.Background(), contextKey{}, "not an identity")
+	req := httptest.NewRequest(http.MethodGet, "/me", nil).WithContext(ctx)
+	recorder := httptest.NewRecorder()
+
+	RequireAuthentication(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Fatal("protected handler called for invalid context value")
+	})).ServeHTTP(recorder, req)
+
+	if recorder.Code != http.StatusSeeOther || recorder.Header().Get("Location") != "/login" {
+		t.Fatalf("invalid context response = %d %q, want 303 /login", recorder.Code, recorder.Header().Get("Location"))
+	}
+}

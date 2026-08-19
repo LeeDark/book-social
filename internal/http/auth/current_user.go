@@ -28,6 +28,17 @@ type CurrentUserMiddleware struct {
 	now     func() time.Time
 }
 
+func RequireAuthentication(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		if _, ok := CurrentUserFromRequest(r); !ok {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func NewCurrentUserMiddleware(cookies *CookieManager, loader CurrentUserLoader) *CurrentUserMiddleware {
 	return &CurrentUserMiddleware{
 		cookies: cookies,
