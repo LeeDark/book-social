@@ -77,6 +77,20 @@ func TestAppHealthzReturnsOK(t *testing.T) {
 	}
 }
 
+func TestAppRejectsUnsafeCrossOriginRequest(t *testing.T) {
+	app := newRoutesTestApp(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/future-action", nil)
+	req.Header.Set("Sec-Fetch-Site", "cross-site")
+	rec := httptest.NewRecorder()
+
+	app.Router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusForbidden)
+	}
+}
+
 func TestAppMissingStaticAssetIsNotCached(t *testing.T) {
 	app := newRoutesTestApp(t)
 
