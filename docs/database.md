@@ -4,14 +4,16 @@ Database docs are split by project stage:
 
 - [Database v0.1](database_v0_1.md): baseline schema created by migration `000001`.
 - [Database v0.2](database_v0_2.md): normalized catalog schema created by migration `000002`.
+- Auth Foundation v0.2.5 is described below and created by migration `000003`.
 
 Current state:
 
 - `APP_ENV=dev` uses SQLite and is the active local development path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
-- Baseline and catalog-normalization migration files exist and can be applied with the
-  `golang-migrate` CLI.
+- Baseline, catalog-normalization, and auth-foundation migration files exist and can be applied
+  with the `golang-migrate` CLI.
 - SQLite and PostgreSQL implement the normalized v0.2 catalog read-side.
+- SQLite and PostgreSQL implement equivalent user and opaque-session persistence contracts.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
 ## Migration Layout
@@ -32,7 +34,8 @@ Migration files use matching sequence numbers where they represent the same doma
 ```
 
 The first migration pair is the v0.1 baseline schema. Migration `000002` normalizes catalog
-relationships and adds cover metadata without editing the baseline migration.
+relationships and adds cover metadata without editing the baseline migration. Migration `000003`
+adds the ordinary `user` role and session storage for v0.2.5 without adding demo accounts.
 
 Run pending SQLite migrations against the default local database:
 
@@ -74,6 +77,26 @@ go install -tags 'sqlite postgres' github.com/golang-migrate/migrate/v4/cmd/migr
 
 The PostgreSQL baseline migration contains multiple SQL statements, so the PostgreSQL migration
 URL should include `x-multi-statement=true`.
+
+## Auth Foundation Schema
+
+Migration `000003_add_user_role_and_sessions` has matching SQLite and PostgreSQL variants. It:
+
+- ensures the non-administrator `user` role exists;
+- creates `sessions` with `user_id`, `token_hash`, `created_at`, and `expires_at`;
+- stores only a 32-byte SHA-256 token hash, never the raw browser token;
+- enforces unique token hashes and `expires_at > created_at`;
+- cascades session deletion when its user is deleted;
+- indexes `expires_at` for lazy expiry cleanup.
+
+The down migration removes sessions and the reference role, but refuses rollback when user rows
+still depend on that role. SQLite stores UTC timestamps in the repository's RFC3339Nano format;
+PostgreSQL uses `TIMESTAMPTZ`. Both repositories treat missing or expired sessions as an
+unauthenticated state and map unexpected database failures to the domain's internal error.
+
+Migration `000003` creates the ordinary role as reference data; the seed repeats it with
+`ON CONFLICT DO NOTHING` for a migrated database. The development seed does not create a user or
+session.
 
 CI runs Go tests, `go vet`, and lint. It does not run database migrations or Docker Compose
 The local migration and seed smoke check is:
@@ -150,11 +173,13 @@ psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 Tests do not use the local development database file.
 
 Current SQLite repository and HTTP integration tests create temporary or in-memory SQLite
-databases inside the test process and exercise the normalized v0.2 catalog read-side. The shared
-v0.2 helper creates the normalized catalog schema and a deterministic multi-relation fixture.
+databases inside the test process and exercise the normalized catalog plus v0.2.5 auth persistence.
+The shared helper applies migrations through `000003`, creates a deterministic catalog fixture,
+and verifies the ordinary role and session constraints.
 
 This keeps tests fast and isolated without depending on the full development seed dataset.
-PostgreSQL repository tests are opt-in and exercise the same normalized v0.2 catalog read-side.
+PostgreSQL repository tests are opt-in and exercise the same catalog and user/session repository
+contracts.
 The helper opens the configured disposable database, resets `public`, and applies the normalized
 catalog fixture. Set `BOOK_SOCIAL_POSTGRES_TEST_DSN` to run PostgreSQL tests. Because helpers
 reset one shared schema, run packages sequentially with `go test -p 1 ./...` when using one DSN.

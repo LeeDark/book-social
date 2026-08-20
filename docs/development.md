@@ -43,11 +43,16 @@ The HTTP server keeps these transport timeouts:
 Router middleware is applied in this order:
 
 ```text
-SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> route handler
+SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> CrossOriginProtection -> route handler
 ```
 
 `TrustedRealIP` is disabled unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured, it
 accepts forwarded client-IP headers only from an immediate peer in those networks.
+
+`CrossOriginProtection` rejects unsafe cross-origin browser requests before route handlers and does
+not use insecure bypass patterns. The v0.2.5 route tree still contains no auth form handlers;
+current-user middleware and the route guard are foundations for v0.2.6 rather than global session
+work on static and health requests.
 
 The 30-second application timeout is applied only to dynamic MPA pages. Health checks, static
 files, and the fallback 404 route do not use it. Static assets have a one-hour public cache on
@@ -120,8 +125,34 @@ Current environment variables:
 - `APP_LOG_LEVEL`, default `debug`
 - `APP_LOG_FORMAT`, default `text`
 
+Auth foundation configuration currently has one central non-environment setting:
+
+- `Config.Auth.SessionLifetime`, fixed to the seven-day `DefaultSessionLifetime`.
+
+The cookie manager uses the same seven-day default when no explicit lifetime is supplied. Its
+policy defaults to `book_social_session`, `Path=/`, `HttpOnly`, and `SameSite=Lax`. `Secure` remains
+an explicit environment/wiring decision: it must be enabled for HTTPS stage/prod, while local HTTP
+development is the documented exception. Production cookie wiring begins with v0.2.6.
+
 `APP_ENV=test` is not a supported runtime environment. Tests build their own configuration
 and temporary SQLite databases where needed.
+
+## Auth Foundation Lifecycle
+
+The v0.2.5 token and session sequence is deliberately split:
+
+```text
+GenerateToken
+  -> SHA-256 hash
+  -> persist DB session with seven-day absolute expiry
+  -> Set browser cookie
+```
+
+If token generation or persistence fails, no cookie should be exposed. Current-user middleware
+hashes the cookie value before lookup and puts only minimal identity into typed request context.
+Invalid or expired sessions clear browser state and continue anonymously; unexpected store failures
+return a generic `500`. Logout/session invalidation and the real register/login handlers remain
+v0.2.6 work.
 
 Set variables for one command:
 

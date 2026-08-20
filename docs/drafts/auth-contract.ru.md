@@ -2,8 +2,8 @@
 
 > **Статус: принятый versioned contract.**
 >
-> Foundation v0.2.5 находится на финальном implementation review; user-facing workflow v0.2.6 ещё
-> не реализован. Текущее принятое поведение описывают `docs/routes.md`, `docs/domain.md`,
+> Foundation v0.2.5 закрыт на принятой implementation revision `41a8ddb`; user-facing workflow
+> v0.2.6 ещё не реализован. Текущее принятое поведение описывают `docs/routes.md`, `docs/domain.md`,
 > `docs/database.md` и `docs/development.md`. Пошаговые планы разделены на
 > `docs/private/plan-v0_2_5.ru.md` и `docs/private/plan-v0_2_6.ru.md`.
 
@@ -219,8 +219,8 @@ code:
   session/cookie lifecycle, CSRF, error/logging policy и verification; security-affecting `TBD` нет.
 - Продуктовая граница сохранена: private library ownership, roles/RBAC, API security и account
   recovery отложены до своих trigger.
-- v0.2.5 implementation проходит собственный финальный review; UI/forms остаются задачей v0.2.6 и не
-  используются для преждевременного закрытия foundation.
+- v0.2.5 implementation прошёл отдельный финальный review на revision `41a8ddb`; UI/forms остаются
+  задачей v0.2.6 и не использовались для закрытия foundation.
 
 ## Definition of Done v0.2.5
 

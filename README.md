@@ -6,7 +6,8 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-Current v0.2.4 HTTP foundation on top of the normalized v0.2.3 catalog read-side:
+Current v0.2.5 Auth Foundation on top of the v0.2.4 HTTP foundation and normalized catalog:
+
 - Home and About pages.
 - Book catalog page.
 - Book details page.
@@ -29,10 +30,22 @@ Current v0.2.4 HTTP foundation on top of the normalized v0.2.3 catalog read-side
 - Request IDs, structured access logs, trusted-proxy-aware client IP handling, panic recovery, and
   conservative security headers.
 - Dynamic-route timeout, static asset cache policy, and buffered template error handling.
+- SQLite and PostgreSQL migration `000003` add the ordinary `user` role and DB-backed opaque
+  sessions with 32-byte token hashes and absolute expiry.
+- The `users` module provides registration validation, bcrypt password hashing and verification,
+  neutral credential refusal, and SQLite/PostgreSQL user/session repositories.
+- Session creation, loading, expiry, and invalidation use a seven-day absolute lifetime; only the
+  token hash reaches persistence.
+- The HTTP auth foundation provides two-phase token/cookie handling, typed current-user context,
+  and a testable protected-route guard.
+- Global `http.CrossOriginProtection` rejects unsafe cross-origin browser requests without adding
+  CSRF tokens to forms.
 
 Not current production direction:
 - Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
-- Authentication, user libraries, search, pagination, and social features are planned later.
+- User-facing registration/login/logout, production `/me`, auth navigation, and flashes are planned
+  for v0.2.6; the current UI does not claim that authentication is available.
+- User libraries, search, pagination, and social features are planned later.
 
 ## Tech Stack
 
@@ -41,6 +54,7 @@ Not current production direction:
 - `html/template`
 - SQLite via `modernc.org/sqlite`
 - PostgreSQL driver via `github.com/lib/pq`
+- bcrypt via `golang.org/x/crypto/bcrypt`
 - `golang-migrate` CLI for schema migrations, built with SQLite and PostgreSQL drivers
 - Pico CSS plus project CSS
 - HTMX vendored locally for a small catalog filter spike
@@ -155,8 +169,10 @@ In constrained environments, this command is preferred over starting a real web 
 cmd/web/                 application entrypoint
 internal/app/            app wiring, routes, home handler
 internal/modules/books/  books/catalog module
+internal/modules/users/  auth/user/session service and repository contracts
 internal/storage/sqlite/ SQLite repository implementation
 internal/storage/postgresql/ PostgreSQL connection and repository implementation
+internal/http/auth/      session cookie, current-user context, and route-guard foundation
 internal/http/           rendering, response helpers, middleware, view models
 internal/web/            server templates and static assets
 db/sqlite/               local SQLite schema, migrations, seed, reset script
@@ -173,6 +189,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Domain model](docs/domain.md)
 - [Database v0.1](docs/database_v0_1.md)
 - [Database v0.2](docs/database_v0_2.md)
+- [MPA auth contract](docs/drafts/auth-contract.ru.md)
 - [Testing](docs/testing.md)
 - [Roadmap](docs/roadmap.md)
 - [Technical backlog](docs/backlog.md)
@@ -181,7 +198,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Start v0.2.5 Auth Foundation.
+- Start v0.2.6 Registration/Login/Logout on the accepted v0.2.5 foundation.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:
@@ -189,4 +206,7 @@ v0.2 direction:
 - Database strategy: migrations and schema evolution (v0.2.2 complete).
 - Catalog read model updates for the v0.2 schema (v0.2.3 complete).
 - HTTP foundation: lifecycle, middleware, security, caching, recovery, and timeout policy (v0.2.4 complete).
-- Authentication and user flows are the next active scope (v0.2.5 Auth Foundation).
+- Auth foundation: password policy, DB sessions, current-user/guard boundary, and cross-origin
+  browser protection (v0.2.5 complete).
+- Registration/login/logout forms, production `/me`, navigation, and flashes are the next active
+  scope (v0.2.6).

@@ -22,8 +22,12 @@ HTTP handler
 - `cmd/web`: application bootstrap.
 - `internal/app`: app wiring, middleware, routes, home/about pages.
 - `internal/modules/books`: catalog domain models, service, handler, views.
+- `internal/modules/users`: user/auth domain models, password policy, registration/authentication
+  services, session service, and repository contracts. It has no HTTP imports.
 - `internal/storage/sqlite`: SQLite implementation of repository interfaces.
 - `internal/storage/postgresql`: PostgreSQL connection and repository implementation.
+- `internal/http/auth`: cookie/token boundary, typed current-user request context, and testable
+  authentication guard. Production auth-route wiring is deferred to v0.2.6.
 - `internal/http`: renderer, response helpers, middleware, shared page/navigation views.
 - `internal/web`: server templates and static assets.
 
@@ -47,6 +51,15 @@ HTTP handler
   and treat `http.ErrServerClosed` as normal completion.
 - Apply request/security middleware globally, route-level timeouts only to dynamic MPA pages, and
   static cache middleware only to `/static/*`.
+- Apply `http.CrossOriginProtection` globally after recovery. It rejects unsafe cross-origin
+  browser requests without form CSRF tokens; bypass patterns are not configured.
+- Keep password hashing and credential verification inside `internal/modules/users`; store only
+  bcrypt hashes and return neutral invalid-credential outcomes without skipping the expensive
+  verification path for an unknown account.
+- Use DB-backed opaque sessions. The browser receives a random raw token only after its 32-byte
+  SHA-256 hash is persisted; services own the seven-day absolute lifetime.
+- Services own transaction boundaries for multi-table use cases. v0.2.5 keeps default-role lookup
+  and user creation in one transaction; atomic registration plus session is a v0.2.6 prerequisite.
 - Keep generic 500 response bodies free of internal error details; log the detailed error on the
   server side. Buffer template output before committing its status.
 
@@ -62,4 +75,5 @@ HTTP handler
 - Large frontend framework.
 - Full API/OpenAPI surface.
 - Production Docker/Kubernetes setup.
-- Authentication and user library features.
+- User-facing registration/login/logout, production `/me`, auth navigation, and flashes.
+- User library features.

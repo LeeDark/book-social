@@ -164,7 +164,8 @@ Definition of Done:
 
 Goal: prepare the HTTP layer for auth and user workflows.
 
-Status: closed. The next release is [v0.2.5 Auth Foundation](#v025-auth-foundation).
+Status: closed. Its dependent [v0.2.5 Auth Foundation](#v025-auth-foundation) is also closed; the
+current next release is [v0.2.6 Registration/Login/Logout](#v026-registrationloginlogout).
 
 - [x] Add or review a graceful shutdown.
 - [x] Confirm a base middleware chain.
@@ -185,23 +186,29 @@ Definition of Done:
 
 Goal: create the minimal auth/session core before building forms.
 
-- [ ] Decide session strategy; prefer minimal DB-backed sessions for this project.
-- [ ] Add `sessions` table or equivalent session storage.
-- [ ] Define password hashing policy: hash only, no plaintext password storage or logging.
-- [ ] Add user repository/service foundations.
-- [ ] Add a session create/delete/load behavior.
-- [ ] Add current-user middleware.
-- [ ] Define minimal transaction rule: services own transactions for use cases touching multiple
+Status: closed at accepted implementation commit `41a8ddb`. The next release is
+[v0.2.6 Registration/Login/Logout](#v026-registrationloginlogout). v0.2.5 does not add auth pages,
+production `/me`, navigation, or flashes.
+
+- [x] Decide session strategy; use minimal DB-backed opaque sessions for this project.
+- [x] Add equivalent SQLite/PostgreSQL `sessions` storage with hashed-token lookup and expiry.
+- [x] Define password hashing policy: bcrypt hash only, no plaintext password storage or logging.
+- [x] Add user repository/service foundations.
+- [x] Add session create/delete/load behavior with a seven-day absolute lifetime.
+- [x] Add typed current-user middleware and a testable route-guard foundation.
+- [x] Define minimal transaction rule: services own transactions for use cases touching multiple
   tables.
-- [ ] Decide CSRF strategy for MPA forms.
-- [ ] Define a minimal validation strategy for auth inputs.
+- [x] Decide and install the browser CSRF strategy: global `http.CrossOriginProtection`, no form
+  token, and no insecure bypass patterns.
+- [x] Define a minimal validation strategy for auth inputs, including bcrypt's 72-byte boundary.
 
 Definition of Done:
 
-- [ ] Auth core can create users, verify passwords, create sessions, delete sessions, and load the
+- [x] Auth core can create users, verify passwords, create sessions, delete sessions, and load the
   current user.
-- [ ] Unit tests cover success and failure paths.
-- [ ] Password and session behavior are documented enough for future maintenance.
+- [x] Unit, repository, middleware, and migration tests cover success and refusal paths.
+- [x] Password, session, cookie, request-identity, and cross-origin behavior are documented enough
+  for future maintenance.
 
 ## v0.2.6 Registration/Login/Logout
 

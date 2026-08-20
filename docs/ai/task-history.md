@@ -567,3 +567,47 @@ Decisions:
   deployment hardening.
 
 Status: v0.2.4 closed. The next planned release is v0.2.5 Auth Foundation.
+
+## 2026-08-19 — v0.2.5 Auth Foundation closure
+
+Result:
+- Added equivalent SQLite/PostgreSQL migration `000003` for the ordinary `user` role and DB-backed
+  sessions with unique 32-byte token hashes, absolute expiry, and reversible rollback rules.
+- Added the `internal/modules/users` password, registration/authentication, user repository, and
+  session-service boundaries without HTTP imports.
+- Kept default-role lookup and user creation transactional; normalized duplicate login/email and
+  unexpected persistence failures into typed safe domain outcomes.
+- Adopted bcrypt with a 12-character minimum and its 72-byte input boundary. Unknown accounts use
+  a dummy bcrypt verification path, while malformed stored hashes become internal errors.
+- Added SQLite/PostgreSQL user and session repositories, SQLite migration smoke coverage, and
+  opt-in PostgreSQL parity tests.
+- Added the two-phase HTTP token/cookie boundary: generate the raw token, persist its SHA-256 hash,
+  and only then expose the cookie. The central absolute session lifetime is seven days.
+- Added typed current-user request context and a testable authentication guard. Production `/me`
+  and auth dependency wiring remain v0.2.6 work.
+- Added global `http.CrossOriginProtection` after recovery without bypass patterns; focused tests
+  cover unsafe cross-origin refusal and same-origin success without form CSRF tokens.
+- Reviewed test diagnostics so password hashes, raw session tokens, token hashes, and issued cookie
+  values are not printed on failure.
+
+Accepted implementation evidence:
+- `book-social` commit `41a8ddb` (`fix(auth): harden password and session boundaries`) is the accepted
+  v0.2.5 foundation revision and includes the complete preceding branch history.
+- Stage 7A records this as foundation-only evidence; registration/login/logout, production `/me`,
+  navigation, flashes, and the full browser flow remain planned for v0.2.6.
+
+Validation:
+- Focused users, auth HTTP, config, SQLite/PostgreSQL repository, and migration-helper tests passed.
+- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
+- `GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-golangci-cache make lint`
+  passed with zero issues.
+- `make db/migrate/smoke` passed for SQLite migration, seed, legacy data, and rollback paths.
+- `git diff --check` passed.
+- PostgreSQL opt-in tests were skipped in the final default run because
+  `BOOK_SOCIAL_POSTGRES_TEST_DSN` was not set; earlier Stage parity evidence remains recorded in the
+  private implementation plan.
+
+Decision:
+- Close v0.2.5 without user-facing auth routes. The next release is v0.2.6
+  Registration/Login/Logout, which consumes this foundation and completes the applied MPA flow.

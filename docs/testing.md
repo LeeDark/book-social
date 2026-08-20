@@ -38,6 +38,15 @@ Current tests cover:
 - dynamic timeout cancellation and `504 Gateway Timeout` behavior
 - security headers and static cache policy
 - renderer failure before response status commit
+- bcrypt hashing/verification, byte limits, invalid stored hashes, and a dummy verification path
+  for unknown accounts
+- registration normalization, validation, duplicate identity mapping, transaction ownership, and
+  safe internal errors
+- DB-backed session create/load/delete, absolute expiry, 32-byte token-hash constraints, and
+  invalidation
+- two-phase token/cookie policy, current-user typed context, anonymous behavior, and test-only route
+  guard behavior
+- unsafe cross-origin refusal and same-origin success through `http.CrossOriginProtection`
 
 There are also small integration-style HTTP tests that use `httptest` and a temporary SQLite database.
 
@@ -51,9 +60,10 @@ Current repository and HTTP integration tests create disposable SQLite databases
 - HTTP integration tests use temporary SQLite files from `t.TempDir()`
 - tests insert minimal deterministic data needed by the behavior under test
 
-Shared helpers in `internal/testutil` build SQLite and PostgreSQL catalog test schemas by applying
-the checked-in migrations, then seed a small deterministic catalog fixture. Tests can still keep
-scenario-specific fixture rows locally when they need more data than the default helper provides.
+Shared helpers in `internal/testutil` build SQLite and PostgreSQL test schemas by applying the
+checked-in migrations through auth migration `000003`, then seed a small deterministic catalog
+fixture and ordinary user role. Tests can still keep scenario-specific fixture rows locally when
+they need more data than the default helper provides.
 
 PostgreSQL repository tests are opt-in because they require a real PostgreSQL database. By default
 they skip unless `BOOK_SOCIAL_POSTGRES_TEST_DSN` is set.
@@ -61,8 +71,9 @@ they skip unless `BOOK_SOCIAL_POSTGRES_TEST_DSN` is set.
 The PostgreSQL test DSN must connect to the exact disposable database `book_social_test`. Before
 every schema reset, the helper queries `current_database()` and refuses to run unless it equals
 `book_social_test` and ends in `_test`. It never prints the DSN or credentials. The repository
-tests then drop and recreate only that database's `public` schema before loading fixture data.
-When packages share this database, run PostgreSQL tests sequentially with `-p 1`.
+tests then drop and recreate only that database's `public` schema before loading fixture data. The
+opt-in suite includes user and session repository parity, including the 32-byte token-hash
+constraint. When packages share this database, run PostgreSQL tests sequentially with `-p 1`.
 
 Example:
 
@@ -87,6 +98,8 @@ only for an explicit seed smoke test or database setup check.
 - Cover both successful and failed static assets, and verify HTML/HTMX responses do not receive a
   public long-lived cache policy.
 - Verify panic responses do not expose panic values and that access logs record status 500.
+- Do not format credentials, password hashes, raw session tokens, token hashes, or issued cookie
+  values into test failure messages.
 
 ## Codex Sandbox Note
 
