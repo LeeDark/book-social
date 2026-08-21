@@ -370,6 +370,46 @@ features, a full monitoring stack, a frontend framework, message brokers, gRPC, 
 Goal: let users find real books beyond the curated demo catalog and let an operator safely import
 one missing book from a controlled external source.
 
+### Sub-releases
+
+#### v0.4.0 — Catalog Identity Contract
+
+- [ ] Decide work versus edition, identifiers, languages, provenance, duplicate/merge rules, and
+  the migration path for existing catalog references.
+- [ ] Add the minimum schema, repository contracts, and operator error/review outcomes required by
+  those decisions.
+
+Outcome: every future search or import operation has a stable catalog identity and correction model.
+
+#### v0.4.1 — Search and Navigation
+
+- [ ] Search by title, author, and ISBN; add stable sorting, pagination, and retained useful filters.
+- [ ] Add canonical URLs, redirects, sitemap behavior, zero-result feedback, and conversion events.
+- [ ] Measure indexed-query behavior before selecting PostgreSQL full-text search.
+
+Outcome: a user reliably finds an existing catalog record and can add it to their private library.
+
+#### v0.4.2 — First Controlled Import
+
+- [ ] Implement one source-specific lookup/import by ISBN or external ID, started only by an
+  authenticated operator.
+- [ ] Add source provenance, rate/timeout controls, idempotency, conflict review, and explicit
+  metadata/cover-rights handling.
+- [ ] Add a small PostgreSQL job table only if retry or asynchronous work is actually required.
+
+Outcome: an operator can safely resolve one missing book without making an external API part of
+ordinary catalog reads.
+
+#### v0.4.3 — Import Operations Closure
+
+- [ ] Add focused migration, search, import, conflict, and failure tests; document source rules and
+  manual correction paths.
+- [ ] Expose HTTP, PostgreSQL, search, import, retry, and failed-job metrics with focused Grafana
+  dashboards; add tracing or centralized logs only when the stated conditions are met.
+
+Outcome: the first import path is measurable, repeatable, and ready to become the foundation for
+v0.5 batch supply.
+
 ### Catalog Model
 
 - [ ] Make an ADR for the distinction between a work and an edition before external import.
@@ -426,6 +466,48 @@ rights, operator control, and media handling explicit.
 The public bulk import in this release means an operator-started import of an openly available or
 licensed catalog dataset with visible progress and results. It is not an anonymous endpoint that
 fetches arbitrary URLs, and it is not the later personal-library CSV import.
+
+### Sub-releases
+
+#### v0.5.0 — Source and Asset Contracts
+
+- [ ] Define the source registry, shared adapter contract, normalized import record, source-health
+  policy, and field-level provenance/license model.
+- [ ] Add the asset model and storage boundary, including rights/attribution records, content
+  validation, hash-based deduplication, local development storage, and a production storage adapter.
+
+Outcome: source and media decisions are enforceable data contracts rather than conventions in an
+import script.
+
+#### v0.5.1 — Managed Batch Pilot
+
+- [ ] Build the shared job lifecycle: dry run, validation report, operator review, idempotent apply,
+  pause/resume, bounded retry, and audit.
+- [ ] Run one bounded, isolated bulk pilot using an accepted source/dataset and measure quality,
+  duplicates, identifiers, languages, rejected rows, and review rate.
+
+Outcome: the team can prove a batch-import workflow without modifying the public catalog.
+
+#### v0.5.2 — Reviewed Publication and Licensed Covers
+
+- [ ] Promote accepted staging records only through an explicit operator decision; provide a
+  read-only public progress/result page with source, version, scope, and limitations.
+- [ ] Add failure isolation, back-pressure, and resumability so repeated or interrupted batches keep
+  catalog consistency.
+- [ ] Store and serve one class of explicitly permitted cover assets with recorded usage rights and
+  attribution; reject invalid or unlicensed assets.
+
+Outcome: a reviewed batch can safely enrich the public catalog and use rights-cleared covers.
+
+#### v0.5.3 — Supply-Chain Release Closure
+
+- [ ] Test source admission, batch failure/retry/resume, corrections, media validation, and public
+  result visibility; perform a security review for raw files and external fetches.
+- [ ] Document source terms, quality/license evidence, retention, operator procedures, and metrics
+  for the accepted source.
+
+Outcome: the first scalable catalog-supply and media path is operable without claiming a general
+purpose importer or media platform.
 
 ### Import Platform
 
