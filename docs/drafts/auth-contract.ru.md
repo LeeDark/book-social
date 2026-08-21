@@ -4,8 +4,8 @@
 >
 > Foundation v0.2.5 закрыт на принятой implementation revision `41a8ddb`; user-facing workflow
 > v0.2.6 ещё не реализован. Текущее принятое поведение описывают `docs/routes.md`, `docs/domain.md`,
-> `docs/database.md` и `docs/development.md`. Пошаговые планы разделены на
-> `docs/private/plan-v0_2_5.ru.md` и `docs/private/plan-v0_2_6.ru.md`.
+> `docs/database.md` и `docs/development.md`. Пошаговые планы ведутся отдельно от этого
+> versioned contract.
 
 ## 1. Цель, граница и существующая основа
 

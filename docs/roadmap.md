@@ -5,6 +5,13 @@ This roadmap is a working guide, not a release promise.
 Unprioritized technical ideas and revisit conditions live in [backlog.md](backlog.md). The backlog
 does not change the active priority or release scope until an item is explicitly promoted here.
 
+## Current Planning Status
+
+Active release: **v0.2.6 Registration/Login/Logout**. v0.2.1 through v0.2.5 are closed. The
+release exposes the already accepted auth foundation through the first browser-facing flow; it does
+not start personal-library work. Planning checklists are not evidence of completed behavior;
+completion requires implementation and verification.
+
 ## Planning Principles
 
 - Each release should deliver an observable user or operator outcome, not only introduce
@@ -214,6 +221,8 @@ Definition of Done:
 
 Goal: expose the minimal user-facing auth workflow.
 
+Status: active. This is the current development priority.
+
 - [ ] Add a registration form and handler.
 - [ ] Add login form and handler.
 - [ ] Add a logout handler.
@@ -373,6 +382,10 @@ regularly even without a social graph.
 - [ ] Add library search, filters, sorting, and pagination.
 - [ ] Add useful empty, loading, validation, and conflict states.
 - [ ] Add a user-data export.
+- [ ] Expose the settled private-library export as a small authenticated, read-only JSON API slice
+  (`GET /api/v1/me/library/export`), with a versioned schema, `no-store` caching, contract tests,
+  and focused OpenAPI alignment; keep it same-origin and do not add CORS, bearer tokens, or rate
+  limiting without a concrete need.
 - [ ] Add one controlled personal-library import with preview, idempotency, and conflict reporting.
 - [ ] Enforce privacy in services and queries, not only in templates.
 
@@ -450,6 +463,9 @@ publish an explicitly public reading action
 - [ ] Add one simple reaction: like.
 - [ ] Add minimal in-app notifications with mark-as-read and basic preferences.
 - [ ] Model a public review separately from a private note.
+- [ ] Decide during implementation whether one same-origin JSON enhancement for an idempotent social
+  action is justified by user interaction; retain MPA forms as the baseline and do not introduce an
+  API mutation merely to demonstrate technology.
 
 ### Safety, Privacy, and Moderation
 

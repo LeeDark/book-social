@@ -21,6 +21,24 @@ Each item should record:
 Remove resolved items or keep their final decision in the relevant architecture/task-history
 document. Do not use this file as an unbounded duplicate of the roadmap.
 
+## Current planning boundary
+
+Active roadmap work is v0.2.6 Registration/Login/Logout. No backlog item is promoted by this
+document; defer unrelated API, rendering, and infrastructure ideas until the active release is
+closed or a concrete revisit condition is met.
+
+## Public catalog JSON API
+
+Status: deferred; no active implementation.
+
+Current decision: the catalog remains MPA-first. A public, read-only `/api/v1/books` slice is not
+roadmap work until a concrete consumer exists.
+
+Revisit only when a named same-origin interactive feature, partner integration, or other external
+consumer needs machine-readable public catalog data. Define the exact read contract, pagination,
+error model, compatibility policy, tests, and OpenAPI scope then. Do not add CORS, client tokens,
+or rate limiting in anticipation of that use case.
+
 ## Typed server-side rendering: Templ or gomponents
 
 Status: deferred; no active implementation.
