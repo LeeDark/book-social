@@ -304,6 +304,41 @@ without direct SQL.
 
 Outcome: the complete private-library flow is releasable and operable as a curated demonstration.
 
+#### v0.3.4 — Public Demo Polish
+
+- [ ] Polish the shared MPA interface: typography, layout, responsive behavior, form states, empty
+  states, contrast, and keyboard navigation.
+- [ ] Expand the home and About pages with the learning project's purpose, implemented
+  capabilities, technical approach, and honest curated-demo-catalog limitations.
+- [ ] Add one shared footer with internal pages and only confirmed external links: source code,
+  documentation, roadmap, and an available contact method.
+- [ ] Add baseline public-page metadata; canonical URLs, redirects, and sitemap behavior remain
+  v0.4 work.
+
+Outcome: Book Social can be shown as a clear, polished public demonstration without claiming a
+public beta or a finished social service.
+
+#### v0.3.5 — Hetzner Cloud Hosted Stage
+
+- [ ] Record an ADR: SQLite remains the local development, test, and disposable-preview path;
+  hosted stage and future production use PostgreSQL. Render and other managed PaaS options remain
+  evaluated alternatives, not this release's selected path.
+- [ ] Deploy one reproducible Hetzner Cloud stage: Caddy with HTTPS, one application container,
+  and one PostgreSQL container on a non-public internal connection; expose only required HTTP/HTTPS
+  ports and limit SSH to trusted sources.
+- [ ] Keep secrets outside the repository; apply the production cookie policy, trusted-proxy
+  configuration, migrations, and health/readiness checks.
+- [ ] Verify the critical browser flow after deployment; document manual application deployment and
+  rollback without automating production delivery.
+- [ ] Establish backups: server backups as a secondary layer, a daily PostgreSQL backup to storage
+  separate from the VM, and a verified restore using disposable data.
+- [ ] Record actual cost, CPU/RAM/latency, and growth boundaries; do not add Prometheus, Grafana,
+  Loki, or OpenTelemetry before their v0.4 and v0.7 work.
+
+Outcome: a low-cost, reproducible PostgreSQL stage environment runs on Hetzner Cloud with verified
+deployment, migration, backup, and restore behavior; it can accommodate later observability
+components without changing the application architecture.
+
 ### Product Scope
 
 - [ ] Introduce a focused `library` module with handler, service/use-case, and repository
@@ -363,7 +398,8 @@ Outcome: the complete private-library flow is releasable and operable as a curat
   checks.
 
 Not in v0.3: external catalog import, ratings, notes, reading progress, custom shelves/tags, social
-features, a full monitoring stack, a frontend framework, message brokers, gRPC, or microservices.
+features, a public beta, production SLOs, automated production deployment, a full monitoring stack,
+a frontend framework, message brokers, gRPC, or microservices.
 
 ## v0.4 — Live Catalog and Search
 
@@ -772,7 +808,7 @@ Kubernetes/Helm without an operational requirement.
 | Product       | Minimal private library                  | Live catalog and search           | Catalog supply and media foundation     | Deep personal reading system           | Social beta, retention validation                 |
 | Data          | Library rules and demo data              | Work/edition, IDs, provenance     | Source registry, batches, asset rights  | Reading history, shelves/tags          | Social graph, events, moderation                  |
 | Observability | Logs, request ID, health, product events | Prometheus and Grafana            | Batch/media job evidence                | Loki/OTel when useful, retention views | Alerts, runbook, production policy                |
-| Delivery      | Release checklist                        | Staging-friendly jobs/imports     | Resumable, reviewed batch publication   | Operational correlation                | Versioned deploy, rollback, restore               |
+| Delivery      | Release checklist and Hetzner hosted stage | Staging-friendly jobs/imports   | Resumable, reviewed batch publication   | Operational correlation                | Versioned deploy, rollback, restore               |
 | Frontend      | MPA                                      | MPA                               | MPA progress and batch-result pages     | Optional bounded React spike           | Evidence-based MPA/hybrid decision                |
 | Localization  | Avoid blockers                           | Language-aware catalog            | Preserve imported language/source data  | i18n-ready UI                          | Supported locales after market validation         |
 | Architecture  | Modular monolith                         | Modular monolith + jobs if needed | Import adapters and asset storage edge  | Internal events where useful           | Outbox/worker; external services only by evidence |
