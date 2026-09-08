@@ -47,6 +47,8 @@ Current tests cover:
 - two-phase token/cookie policy, current-user typed context, anonymous behavior, and test-only route
   guard behavior
 - unsafe cross-origin refusal and same-origin success through `http.CrossOriginProtection`
+- registration/login/logout handlers, safe `422` form outcomes, session cookies, and password
+  non-repopulation in rendered forms
 
 There are also small integration-style HTTP tests that use `httptest` and a temporary SQLite database.
 
