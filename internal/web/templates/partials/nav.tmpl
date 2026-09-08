@@ -19,5 +19,19 @@
             <li><a href="/">Home</a></li>
         </ul>
     {{end}}
+
+    <ul class="site-nav__items">
+        {{if .CurrentUser}}
+            <li><a href="/me">{{.CurrentUser.DisplayName}}</a></li>
+            <li>
+                <form method="post" action="/logout">
+                    <button type="submit" class="secondary">Logout</button>
+                </form>
+            </li>
+        {{else}}
+            <li><a href="/login">Login</a></li>
+            <li><a href="/register">Register</a></li>
+        {{end}}
+    </ul>
 </nav>
 {{end}}

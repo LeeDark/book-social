@@ -1,0 +1,14 @@
+{{define "title"}}{{.Title}}{{end}}
+{{define "main"}}
+<section aria-labelledby="login-heading">
+    <h1 id="login-heading">Login</h1>
+    <form method="post" action="/login" novalidate>
+        <label for="identifier">Login or email</label>
+        <input id="identifier" name="identifier" autocomplete="username" value="{{.Form.Identifier}}" aria-describedby="credentials-error">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" aria-describedby="credentials-error">
+        {{with index .Form.Errors "credentials"}}<small id="credentials-error">{{.}}</small>{{end}}
+        <button type="submit">Login</button>
+    </form>
+</section>
+{{end}}

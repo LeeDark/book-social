@@ -6,12 +6,17 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/LeeDark/book-social/internal/config"
+	httpauth "github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/modules/books"
+	"github.com/LeeDark/book-social/internal/modules/users"
 	"github.com/LeeDark/book-social/internal/storage/sqlite"
 	"github.com/LeeDark/book-social/internal/testutil"
 )
@@ -167,6 +172,129 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAuthRoutesWithSQLite(t *testing.T) {
+	handler := newAuthIntegrationTestApp(t)
+	register := url.Values{"first_name": {"Ada"}, "login": {"ada"}, "email": {"ada@example.test"}, "password": {"correct horse battery staple"}, "password_confirmation": {"correct horse battery staple"}}
+
+	t.Run("cross-origin registration is refused without mutation", func(t *testing.T) {
+		req := formRequest(http.MethodPost, "/register", register)
+		req.Header.Set("Origin", "https://evil.example")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusForbidden {
+			t.Fatalf("status = %d, want 403", rec.Code)
+		}
+	})
+
+	registration := httptest.NewRecorder()
+	handler.ServeHTTP(registration, formRequest(http.MethodPost, "/register", register))
+	if registration.Code != http.StatusSeeOther || registration.Header().Get("Location") != "/me" {
+		t.Fatalf("registration = %d %q, want 303 /me", registration.Code, registration.Header().Get("Location"))
+	}
+	session := cookieNamed(t, registration.Result().Cookies(), "book_social_session")
+
+	t.Run("registered session opens protected account", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/me", nil)
+		req.AddCookie(session)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Signed in as Ada.") {
+			t.Fatalf("protected page = %d %q", rec.Code, rec.Body.String())
+		}
+	})
+	t.Run("anonymous account redirects to login", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/me", nil))
+		if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/login" {
+			t.Fatalf("anonymous /me = %d %q", rec.Code, rec.Header().Get("Location"))
+		}
+	})
+	t.Run("duplicate registration returns safe field error", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, formRequest(http.MethodPost, "/register", register))
+		if rec.Code != http.StatusUnprocessableEntity || !strings.Contains(rec.Body.String(), "is already in use") {
+			t.Fatalf("duplicate = %d %q", rec.Code, rec.Body.String())
+		}
+		if strings.Contains(rec.Body.String(), register.Get("password")) {
+			t.Fatal("duplicate response contains password")
+		}
+	})
+	t.Run("cross-origin logout preserves session", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+		req.Header.Set("Origin", "https://evil.example")
+		req.AddCookie(session)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusForbidden {
+			t.Fatalf("status = %d, want 403", rec.Code)
+		}
+		check := httptest.NewRequest(http.MethodGet, "/me", nil)
+		check.AddCookie(session)
+		checkRec := httptest.NewRecorder()
+		handler.ServeHTTP(checkRec, check)
+		if checkRec.Code != http.StatusOK {
+			t.Fatalf("session was mutated by rejected logout: %d", checkRec.Code)
+		}
+	})
+	t.Run("logout invalidates old token", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+		req.AddCookie(session)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/" {
+			t.Fatalf("logout = %d %q", rec.Code, rec.Header().Get("Location"))
+		}
+		if cookieNamed(t, rec.Result().Cookies(), "book_social_session").MaxAge >= 0 {
+			t.Fatal("logout did not clear session cookie")
+		}
+		check := httptest.NewRequest(http.MethodGet, "/me", nil)
+		check.AddCookie(session)
+		checkRec := httptest.NewRecorder()
+		handler.ServeHTTP(checkRec, check)
+		if checkRec.Code != http.StatusSeeOther || checkRec.Header().Get("Location") != "/login" {
+			t.Fatalf("reused token = %d %q", checkRec.Code, checkRec.Header().Get("Location"))
+		}
+	})
+}
+
+func formRequest(method, path string, values url.Values) *http.Request {
+	req := httptest.NewRequest(method, path, strings.NewReader(values.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	return req
+}
+
+func cookieNamed(t *testing.T, cookies []*http.Cookie, name string) *http.Cookie {
+	t.Helper()
+	for _, cookie := range cookies {
+		if cookie.Name == name {
+			return cookie
+		}
+	}
+	t.Fatalf("cookie %q not found", name)
+	return nil
+}
+
+func newAuthIntegrationTestApp(t *testing.T) http.Handler {
+	t.Helper()
+	testutil.ChdirProjectRoot(t)
+	ctx := context.Background()
+	db := testutil.NewSQLiteCatalogV2TestDB(t, ctx)
+	renderer, err := render.NewRenderer()
+	if err != nil {
+		t.Fatalf("render.NewRenderer() error = %v", err)
+	}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	userRepo := sqlite.NewUserRepository(db)
+	sessionRepo := sqlite.NewSessionRepository(db)
+	cookies := httpauth.NewCookieManager(httpauth.CookieConfig{Lifetime: time.Hour})
+	flashes := flash.NewManager(false)
+	userService := users.NewService(userRepo, users.NewPasswordPolicy())
+	sessionService := users.NewSessionService(userRepo, sessionRepo, time.Hour)
+	deps := Deps{Config: config.Config{Env: config.EnvDev}, Logger: logger, Renderer: renderer, CurrentUserMiddleware: httpauth.NewCurrentUserMiddleware(cookies, sessionService), FlashManager: flashes, AuthHandler: NewAuthHandler(userService, sessionService, cookies, flashes, renderer, logger, time.Hour)}
+	catalogService := books.NewCatalogService(sqlite.NewBookRepository(db))
+	return New(deps, NewHomeHandler(catalogService, renderer, logger), books.NewCatalogHandler(catalogService, renderer, logger)).Router
 }
 
 func TestCatalogRouteReturnsPartialForHTMXRequest(t *testing.T) {

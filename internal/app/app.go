@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/LeeDark/book-social/internal/config"
+	httpauth "github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/flash"
 	appmiddleware "github.com/LeeDark/book-social/internal/http/middleware"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -22,8 +24,11 @@ type App struct {
 	Logger *slog.Logger
 	Router http.Handler
 
-	HomeHandler    *HomeHandler
-	CatalogHandler CatalogHandler
+	HomeHandler           *HomeHandler
+	CatalogHandler        CatalogHandler
+	AuthHandler           *AuthHandler
+	CurrentUserMiddleware *httpauth.CurrentUserMiddleware
+	FlashManager          *flash.Manager
 }
 
 const applicationTimeout = 30 * time.Second
@@ -34,11 +39,14 @@ func New(deps Deps,
 	r := chi.NewRouter()
 
 	app := &App{
-		Config:         deps.Config,
-		Logger:         deps.Logger,
-		Router:         r,
-		HomeHandler:    homeHandler,
-		CatalogHandler: catalogHandler,
+		Config:                deps.Config,
+		Logger:                deps.Logger,
+		Router:                r,
+		HomeHandler:           homeHandler,
+		CatalogHandler:        catalogHandler,
+		AuthHandler:           deps.AuthHandler,
+		CurrentUserMiddleware: deps.CurrentUserMiddleware,
+		FlashManager:          deps.FlashManager,
 	}
 
 	app.RegisterMiddleware(r, deps)
@@ -50,7 +58,8 @@ func New(deps Deps,
 func (app *App) RegisterMiddleware(r chi.Router, deps Deps) {
 	// Middleware order is intentional: security headers wrap every response, request context
 	// setup comes next, logging wraps recovery, then CrossOriginProtection rejects unsafe
-	// cross-origin browser requests. Route-level application timeouts are registered in
+	// cross-origin browser requests before the route tree. Dynamic routes subsequently load
+	// current-user and flash request state. Route-level application timeouts are registered in
 	// RegisterRoutes. Forwarded client IP headers are handled only when the immediate peer
 	// matches the explicitly configured trusted proxy networks.
 	r.Use(appmiddleware.SecurityHeaders)
