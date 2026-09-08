@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/hex"
 	"io"
 	"log/slog"
 	"net/http"
@@ -176,7 +177,9 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 
 func TestAuthRoutesWithSQLite(t *testing.T) {
 	handler := newAuthIntegrationTestApp(t)
-	register := url.Values{"first_name": {"Ada"}, "login": {"ada"}, "email": {"ada@example.test"}, "password": {"correct horse battery staple"}, "password_confirmation": {"correct horse battery staple"}}
+	password := "correct horse battery staple"
+	staleToken := "invalid-session-token"
+	register := url.Values{"first_name": {"Ada"}, "login": {"ada"}, "email": {"ada@example.test"}, "password": {password}, "password_confirmation": {password}}
 
 	t.Run("cross-origin registration is refused without mutation", func(t *testing.T) {
 		req := formRequest(http.MethodPost, "/register", register)
@@ -187,6 +190,24 @@ func TestAuthRoutesWithSQLite(t *testing.T) {
 			t.Fatalf("status = %d, want 403", rec.Code)
 		}
 	})
+	t.Run("anonymous navigation contains only anonymous actions and no secrets", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/login", nil))
+		body := rec.Body.String()
+		for _, fragment := range []string{`href="/login"`, `href="/register"`} {
+			if !strings.Contains(body, fragment) {
+				t.Fatalf("anonymous navigation missing %q: %q", fragment, body)
+			}
+		}
+		if strings.Contains(body, `action="/logout"`) {
+			t.Fatalf("anonymous navigation contains logout: %q", body)
+		}
+		for _, unwanted := range []string{password, staleToken, hex.EncodeToString(httpauth.HashToken(staleToken))} {
+			if strings.Contains(body, unwanted) {
+				t.Fatalf("anonymous page contains secret %q: %q", unwanted, body)
+			}
+		}
+	})
 
 	registration := httptest.NewRecorder()
 	handler.ServeHTTP(registration, formRequest(http.MethodPost, "/register", register))
@@ -195,13 +216,35 @@ func TestAuthRoutesWithSQLite(t *testing.T) {
 	}
 	session := cookieNamed(t, registration.Result().Cookies(), "book_social_session")
 
+	t.Run("invalid existing session opens login anonymously and clears only stale cookie", func(t *testing.T) {
+		stale := &http.Cookie{Name: "book_social_session", Value: staleToken}
+		req := httptest.NewRequest(http.MethodGet, "/login", nil)
+		req.AddCookie(stale)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK || strings.Contains(rec.Body.String(), "Signed in as") {
+			t.Fatalf("stale session login response = %d %q", rec.Code, rec.Body.String())
+		}
+		cleared := cookieNamed(t, rec.Result().Cookies(), "book_social_session")
+		if cleared.MaxAge >= 0 || cleared.Value != "" {
+			t.Fatalf("stale session cookie was not cleared: %+v", cleared)
+		}
+	})
+
 	t.Run("registered session opens protected account", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/me", nil)
 		req.AddCookie(session)
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
-		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Signed in as Ada.") || !strings.Contains(rec.Body.String(), `action="/logout"`) {
+		body := rec.Body.String()
+		if rec.Code != http.StatusOK || !strings.Contains(body, "Signed in as Ada.") || !strings.Contains(body, `action="/logout"`) {
 			t.Fatalf("protected page = %d %q", rec.Code, rec.Body.String())
+		}
+		for _, unwanted := range []string{`href="/login"`, `href="/register"`, password, session.Value, hex.EncodeToString(httpauth.HashToken(session.Value))} {
+			if strings.Contains(body, unwanted) {
+				t.Fatalf("authenticated page contains secret or anonymous navigation %q: %q", unwanted, body)
+			}
 		}
 	})
 	t.Run("anonymous account redirects to login", func(t *testing.T) {

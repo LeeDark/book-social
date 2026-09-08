@@ -74,7 +74,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cookies := httpauth.NewCookieManager(httpauth.CookieConfig{Secure: cfg.Env != config.EnvDev, Lifetime: cfg.Auth.SessionLifetime})
+	cookies := newSessionCookieManager(cfg)
 	flashes := flash.NewManager(cfg.Env != config.EnvDev)
 	userService := users.NewService(userRepo, users.NewPasswordPolicy())
 	sessionService := users.NewSessionService(userRepo, sessionRepo, cfg.Auth.SessionLifetime)
@@ -101,4 +101,11 @@ func main() {
 		logger.Error("run app", slog.Any("error", err))
 		os.Exit(1)
 	}
+}
+
+func newSessionCookieManager(cfg config.Config) *httpauth.CookieManager {
+	return httpauth.NewCookieManager(httpauth.CookieConfig{
+		Secure:   cfg.Env != config.EnvDev,
+		Lifetime: cfg.Auth.SessionLifetime,
+	})
 }
