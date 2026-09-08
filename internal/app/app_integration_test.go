@@ -18,6 +18,7 @@ import (
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/modules/books"
 	"github.com/LeeDark/book-social/internal/modules/users"
+	"github.com/LeeDark/book-social/internal/storage/postgresql"
 	"github.com/LeeDark/book-social/internal/storage/sqlite"
 	"github.com/LeeDark/book-social/internal/testutil"
 )
@@ -176,7 +177,21 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 }
 
 func TestAuthRoutesWithSQLite(t *testing.T) {
-	handler := newAuthIntegrationTestApp(t)
+	ctx := context.Background()
+	db := testutil.NewSQLiteCatalogV2TestDB(t, ctx)
+	handler := newAuthIntegrationTestApp(t, sqlite.NewUserRepository(db), sqlite.NewSessionRepository(db), sqlite.NewBookRepository(db))
+	testAuthRoutes(t, handler)
+}
+
+func TestAuthRoutesWithPostgreSQL(t *testing.T) {
+	ctx := context.Background()
+	db := testutil.NewPostgresCatalogV2TestDB(t, ctx)
+	handler := newAuthIntegrationTestApp(t, postgresql.NewUserRepository(db), postgresql.NewSessionRepository(db), postgresql.NewBookRepository(db))
+	testAuthRoutes(t, handler)
+}
+
+func testAuthRoutes(t *testing.T, handler http.Handler) {
+	t.Helper()
 	password := "correct horse battery staple"
 	staleToken := "invalid-session-token"
 	register := url.Values{"first_name": {"Ada"}, "login": {"ada"}, "email": {"ada@example.test"}, "password": {password}, "password_confirmation": {password}}
@@ -342,24 +357,20 @@ func cookieNamed(t *testing.T, cookies []*http.Cookie, name string) *http.Cookie
 	return nil
 }
 
-func newAuthIntegrationTestApp(t *testing.T) http.Handler {
+func newAuthIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepository, sessionRepo users.SessionRepository, bookRepo books.BookRepository) http.Handler {
 	t.Helper()
 	testutil.ChdirProjectRoot(t)
-	ctx := context.Background()
-	db := testutil.NewSQLiteCatalogV2TestDB(t, ctx)
 	renderer, err := render.NewRenderer()
 	if err != nil {
 		t.Fatalf("render.NewRenderer() error = %v", err)
 	}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	userRepo := sqlite.NewUserRepository(db)
-	sessionRepo := sqlite.NewSessionRepository(db)
 	cookies := httpauth.NewCookieManager(httpauth.CookieConfig{Lifetime: time.Hour})
 	flashes := flash.NewManager(false)
 	userService := users.NewService(userRepo, users.NewPasswordPolicy())
 	sessionService := users.NewSessionService(userRepo, sessionRepo, time.Hour)
 	deps := Deps{Config: config.Config{Env: config.EnvDev}, Logger: logger, Renderer: renderer, CurrentUserMiddleware: httpauth.NewCurrentUserMiddleware(cookies, sessionService), FlashManager: flashes, AuthHandler: NewAuthHandler(userService, sessionService, cookies, flashes, renderer, logger, time.Hour)}
-	catalogService := books.NewCatalogService(sqlite.NewBookRepository(db))
+	catalogService := books.NewCatalogService(bookRepo)
 	return New(deps, NewHomeHandler(catalogService, renderer, logger), books.NewCatalogHandler(catalogService, renderer, logger)).Router
 }
 

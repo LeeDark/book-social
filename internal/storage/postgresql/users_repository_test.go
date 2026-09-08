@@ -102,3 +102,31 @@ func TestSessionRepositoryContract(t *testing.T) {
 		t.Fatalf("deleted session error = %v, want ErrUnauthenticated", err)
 	}
 }
+
+func TestUserRepositoryRegistrationSessionTransactionRollsBackUserOnFailure(t *testing.T) {
+	ctx := context.Background()
+	db := testutil.NewPostgresCatalogV2TestDB(t, ctx)
+	repo := NewUserRepository(db)
+
+	err := repo.WithinRegistrationSessionTransaction(ctx, func(tx users.RegistrationSessionRepository) error {
+		role, err := tx.FindRoleByName(ctx, "user")
+		if err != nil {
+			return err
+		}
+		if _, err := tx.CreateUser(ctx, users.CreateUserParams{FirstName: "Ada", Login: "ada", Email: "ada@example.test", PasswordHash: "$2a$10$test-hash", RoleID: role.ID}); err != nil {
+			return err
+		}
+		return errors.New("simulate session persistence failure")
+	})
+	if err == nil {
+		t.Fatal("transaction error = nil, want failure")
+	}
+
+	var count int
+	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM users WHERE login = 'ada'`).Scan(&count); err != nil {
+		t.Fatalf("count rolled-back users: %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("rolled-back user count = %d, want 0", count)
+	}
+}

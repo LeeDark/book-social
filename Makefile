@@ -7,6 +7,8 @@ BIN_DIR     := ./bin
 GOLANGCI_LINT := $(BIN_DIR)/golangci-lint
 # Current version installed in the project
 GOLANGCI_LINT_VERSION := 2.12.2
+MIGRATE_BIN := $(BIN_DIR)/migrate
+MIGRATE_VERSION := v4.19.1
 
 # App settings
 DB_PATH ?= ./data/book_social_dev.db
@@ -16,6 +18,7 @@ MIGRATIONS_DATABASE_URL ?= sqlite://$(DB_PATH)
 COMPOSE_DEV := docker compose -f compose.yaml -f compose.dev.yaml
 COMPOSE_STAGE := docker compose -f compose.yaml -f compose.stage.yaml
 COMPOSE_PROD := docker compose -f compose.yaml -f compose.prod.yaml
+COMPOSE_INTEGRATION := docker compose -p book-social-integration -f compose.integration.yaml
 
 # --- Help ---
 
@@ -64,6 +67,23 @@ build:
 test:
 	go test -v -race -count=1 ./...
 
+.PHONY: test/integration
+## test/integration: run isolated PostgreSQL migration and auth integration checks
+test/integration: .install-migrate
+	@set -eu; \
+		cleanup() { $(COMPOSE_INTEGRATION) down -v --remove-orphans; }; \
+		trap cleanup EXIT INT TERM; \
+		$(COMPOSE_INTEGRATION) up -d --wait postgres; \
+		postgres_addr="$$( $(COMPOSE_INTEGRATION) port postgres 5432 )"; \
+		test -n "$$postgres_addr"; \
+		test_dsn="postgres://book_social:book_social@$$postgres_addr/book_social_test?sslmode=disable"; \
+		$(MIGRATE_BIN) -path ./db/postgresql/migrations -database "$$test_dsn&x-multi-statement=true" up; \
+		$(MIGRATE_BIN) -path ./db/postgresql/migrations -database "$$test_dsn&x-multi-statement=true" down 1; \
+		$(MIGRATE_BIN) -path ./db/postgresql/migrations -database "$$test_dsn&x-multi-statement=true" up; \
+		BOOK_SOCIAL_POSTGRES_TEST_DSN="$$test_dsn" GOCACHE=/tmp/book-social-go-cache \
+			go test -p 1 -race -count=1 ./internal/testutil ./internal/storage/postgresql ./internal/app; \
+		echo "PostgreSQL migration and auth integration checks passed"
+
 .PHONY: lint
 ## lint: run golangci-lint
 lint: .install-linter
@@ -81,6 +101,13 @@ lint/fix: .install-linter
 	@if [ ! -x "$(GOLANGCI_LINT)" ] || ! "$(GOLANGCI_LINT)" version | grep -q "$(GOLANGCI_LINT_VERSION)"; then \
 		echo "Installing golangci-lint v$(GOLANGCI_LINT_VERSION)..."; \
 		GOBIN="$(abspath $(BIN_DIR))" go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v$(GOLANGCI_LINT_VERSION); \
+	fi
+
+.PHONY: .install-migrate
+.install-migrate:
+	@if [ ! -x "$(MIGRATE_BIN)" ] || ! "$(MIGRATE_BIN)" -version | grep -q "$(MIGRATE_VERSION)"; then \
+		echo "Installing golang-migrate $(MIGRATE_VERSION)..."; \
+		GOCACHE=/tmp/book-social-go-cache GOBIN="$(abspath $(BIN_DIR))" go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@$(MIGRATE_VERSION); \
 	fi
 
 # --- Database ---
