@@ -98,6 +98,9 @@ Migration `000003` creates the ordinary role as reference data; the seed repeats
 `ON CONFLICT DO NOTHING` for a migrated database. The development seed does not create a user or
 session.
 
+In the v0.2.6 registration flow, user creation, ordinary-role lookup, and initial hashed-token
+session creation use one database transaction. A failed session write rolls back the user creation.
+
 CI runs Go tests, `go vet`, and lint. It does not run database migrations or Docker Compose
 The local migration and seed smoke check is:
 
