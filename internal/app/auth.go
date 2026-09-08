@@ -49,6 +49,8 @@ type AuthForm struct {
 	Errors     map[string]string
 }
 
+const maxAuthFormBytes = 64 << 10
+
 func NewAuthHandler(userService authUserService, sessionService sessionService, cookies *httpauth.CookieManager, flashes *flash.Manager, renderer *render.Renderer, logger *slog.Logger, lifetime time.Duration) *AuthHandler {
 	return &AuthHandler{users: userService, sessions: sessionService, cookies: cookies, flashes: flashes, renderer: renderer, logger: logger, lifetime: lifetime}
 }
@@ -63,6 +65,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method != http.MethodPost {
 		response.ClientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+	if !parseAuthForm(w, r) {
 		return
 	}
 
@@ -100,6 +105,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		response.ClientError(w, http.StatusMethodNotAllowed)
 		return
 	}
+	if !parseAuthForm(w, r) {
+		return
+	}
 
 	form := AuthForm{Identifier: r.FormValue("identifier")}
 	user, err := h.users.Authenticate(r.Context(), form.Identifier, r.FormValue("password"))
@@ -127,6 +135,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	h.flashes.Set(w, flash.SignedIn)
 	http.Redirect(w, r, "/me", http.StatusSeeOther)
+}
+
+func parseAuthForm(w http.ResponseWriter, r *http.Request) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, maxAuthFormBytes)
+	if err := r.ParseForm(); err != nil {
+		response.BadRequest(w)
+		return false
+	}
+	return true
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {

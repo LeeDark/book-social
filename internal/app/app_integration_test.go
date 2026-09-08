@@ -200,7 +200,7 @@ func TestAuthRoutesWithSQLite(t *testing.T) {
 		req.AddCookie(session)
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
-		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Signed in as Ada.") {
+		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Signed in as Ada.") || !strings.Contains(rec.Body.String(), `action="/logout"`) {
 			t.Fatalf("protected page = %d %q", rec.Code, rec.Body.String())
 		}
 	})
@@ -209,6 +209,29 @@ func TestAuthRoutesWithSQLite(t *testing.T) {
 		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/me", nil))
 		if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/login" {
 			t.Fatalf("anonymous /me = %d %q", rec.Code, rec.Header().Get("Location"))
+		}
+	})
+	t.Run("session identity cannot be replaced by query or header", func(t *testing.T) {
+		second := url.Values{"first_name": {"Bob"}, "login": {"bob"}, "email": {"bob@example.test"}, "password": {"another correct battery staple"}, "password_confirmation": {"another correct battery staple"}}
+		secondRec := httptest.NewRecorder()
+		handler.ServeHTTP(secondRec, formRequest(http.MethodPost, "/register", second))
+		secondSession := cookieNamed(t, secondRec.Result().Cookies(), "book_social_session")
+
+		firstReq := httptest.NewRequest(http.MethodGet, "/me?user_id=2", nil)
+		firstReq.Header.Set("X-User-ID", "2")
+		firstReq.AddCookie(session)
+		firstRec := httptest.NewRecorder()
+		handler.ServeHTTP(firstRec, firstReq)
+		if firstRec.Code != http.StatusOK || !strings.Contains(firstRec.Body.String(), "Signed in as Ada.") || strings.Contains(firstRec.Body.String(), "Signed in as Bob.") {
+			t.Fatalf("first identity response = %d %q", firstRec.Code, firstRec.Body.String())
+		}
+
+		secondReq := httptest.NewRequest(http.MethodGet, "/me", nil)
+		secondReq.AddCookie(secondSession)
+		secondIdentity := httptest.NewRecorder()
+		handler.ServeHTTP(secondIdentity, secondReq)
+		if secondIdentity.Code != http.StatusOK || !strings.Contains(secondIdentity.Body.String(), "Signed in as Bob.") {
+			t.Fatalf("second identity response = %d %q", secondIdentity.Code, secondIdentity.Body.String())
 		}
 	})
 	t.Run("duplicate registration returns safe field error", func(t *testing.T) {

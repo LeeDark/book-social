@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -55,6 +56,45 @@ func TestAuthHandlerRegistrationValidationDoesNotRenderPassword(t *testing.T) {
 	}
 }
 
+func TestAuthHandlerRegistrationRendersEachFieldErrorSafely(t *testing.T) {
+	for _, field := range []string{"first_name", "login", "email", "password", "password_confirmation"} {
+		t.Run(field, func(t *testing.T) {
+			h, userService := newAuthHandler(t)
+			userService.registerErr = users.ValidationError{Field: field, Message: "is invalid"}
+			form := url.Values{"first_name": {"Ada"}, "login": {"ada"}, "email": {"ada@example.test"}, "password": {"secret-value"}, "password_confirmation": {"secret-value"}}
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			h.Register(rec, req)
+			if rec.Code != http.StatusUnprocessableEntity || !strings.Contains(rec.Body.String(), "is invalid") || strings.Contains(rec.Body.String(), "secret-value") {
+				t.Fatalf("field %q response = %d %q", field, rec.Code, rec.Body.String())
+			}
+		})
+	}
+}
+
+func TestAuthHandlerGetFormsDoNotCreateSession(t *testing.T) {
+	h, _ := newAuthHandler(t)
+	for _, path := range []string{"/register", "/login"} {
+		t.Run(path, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			if path == "/register" {
+				h.Register(rec, httptest.NewRequest(http.MethodGet, path, nil))
+			} else {
+				h.Login(rec, httptest.NewRequest(http.MethodGet, path, nil))
+			}
+			if rec.Code != http.StatusOK || rec.Header().Get("Content-Type") == "" {
+				t.Fatalf("GET %s = %d content type %q", path, rec.Code, rec.Header().Get("Content-Type"))
+			}
+			for _, cookie := range rec.Result().Cookies() {
+				if cookie.Name == "book_social_session" {
+					t.Fatal("GET form created a session cookie")
+				}
+			}
+		})
+	}
+}
+
 func TestAuthHandlerLoginUsesNeutralFailure(t *testing.T) {
 	h, usersFake := newAuthHandler(t)
 	usersFake.authenticateErr = users.ErrInvalidCredentials
@@ -65,6 +105,66 @@ func TestAuthHandlerLoginUsesNeutralFailure(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "Invalid login or password.") || strings.Contains(rec.Body.String(), "secret-value") {
 		t.Fatal("login response did not keep the neutral safe outcome")
+	}
+}
+
+func TestAuthHandlerRejectsMalformedAndOversizedFormsBeforeService(t *testing.T) {
+	tests := []struct{ name, path, body string }{
+		{name: "malformed registration", path: "/register", body: "%"},
+		{name: "oversized login", path: "/login", body: "identifier=" + strings.Repeat("a", maxAuthFormBytes)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h, userService := newAuthHandler(t)
+			req := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			rec := httptest.NewRecorder()
+			if tt.path == "/register" {
+				h.Register(rec, req)
+			} else {
+				h.Login(rec, req)
+			}
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("status = %d, want 400", rec.Code)
+			}
+			if userService.registered != (users.RegistrationInput{}) {
+				t.Fatal("malformed registration reached service")
+			}
+		})
+	}
+}
+
+func TestAuthHandlerRegistrationInternalErrorIsGeneric(t *testing.T) {
+	h, userService := newAuthHandler(t)
+	userService.registerErr = errors.New("database password and DSN must not escape")
+	form := url.Values{"first_name": {"Ada"}, "login": {"ada"}, "email": {"ada@example.test"}, "password": {"correct horse battery staple"}, "password_confirmation": {"correct horse battery staple"}}
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	h.Register(rec, req)
+	if rec.Code != http.StatusInternalServerError || rec.Body.String() != "internal server error\n" {
+		t.Fatalf("internal registration response = %d %q", rec.Code, rec.Body.String())
+	}
+}
+
+func TestAuthTemplatesRenderAccessibleInputsAndSafeNavigation(t *testing.T) {
+	h, _ := newAuthHandler(t)
+	rec := httptest.NewRecorder()
+	h.Register(rec, httptest.NewRequest(http.MethodGet, "/register", nil))
+	body := rec.Body.String()
+	for _, fragment := range []string{`<label for="first_name">`, `autocomplete="new-password"`, `href="/login"`, `href="/register"`} {
+		if !strings.Contains(body, fragment) {
+			t.Fatalf("register page missing %q", fragment)
+		}
+	}
+	if strings.Contains(body, `value="password"`) {
+		t.Fatal("register page prepopulates a password")
+	}
+
+	login := httptest.NewRecorder()
+	h.Login(login, httptest.NewRequest(http.MethodGet, "/login", nil))
+	if login.Code != http.StatusOK || !strings.Contains(login.Body.String(), `<label for="identifier">`) || !strings.Contains(login.Body.String(), `autocomplete="current-password"`) {
+		t.Fatalf("login page does not render the expected accessible form: %d %q", login.Code, login.Body.String())
 	}
 }
 

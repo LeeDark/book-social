@@ -57,9 +57,9 @@ func New(deps Deps,
 
 func (app *App) RegisterMiddleware(r chi.Router, deps Deps) {
 	// Middleware order is intentional: security headers wrap every response, request context
-	// setup comes next, logging wraps recovery, then CrossOriginProtection rejects unsafe
-	// cross-origin browser requests before the route tree. Dynamic routes subsequently load
-	// current-user and flash request state. Route-level application timeouts are registered in
+	// setup comes next and logging wraps recovery. Dynamic MPA routes then load current-user and
+	// flash request state before CrossOriginProtection rejects unsafe browser requests. Route-level
+	// application timeouts are registered in
 	// RegisterRoutes. Forwarded client IP headers are handled only when the immediate peer
 	// matches the explicitly configured trusted proxy networks.
 	r.Use(appmiddleware.SecurityHeaders)
@@ -67,5 +67,4 @@ func (app *App) RegisterMiddleware(r chi.Router, deps Deps) {
 	r.Use(appmiddleware.TrustedRealIP(deps.Config.HTTP.TrustedProxyCIDRs))
 	r.Use(appmiddleware.RequestLogger(deps.Logger))
 	r.Use(appmiddleware.Recoverer(deps.Logger))
-	r.Use(http.NewCrossOriginProtection().Handler)
 }

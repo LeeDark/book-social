@@ -7,14 +7,14 @@ Current MPA routes are registered in `internal/app/routes.go`.
 The router applies middleware in this order:
 
 ```text
-SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> CrossOriginProtection -> dynamic current-user/flash -> route handler
+SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> dynamic timeout -> current-user -> flash -> CrossOriginProtection -> route guard/handler
 ```
 
 `TrustedRealIP` is a no-op unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured, forwarded
 client-IP headers are accepted only from an immediate peer inside one of those networks; otherwise
 the logger uses the connection `RemoteAddr`.
 
-`http.CrossOriginProtection` is global and has no insecure bypass patterns. Unsafe browser requests
+`http.CrossOriginProtection` is applied to dynamic MPA routes and has no insecure bypass patterns. Unsafe browser requests
 identified as cross-origin by Fetch Metadata or `Origin` receive `403` before reaching a handler;
 same-origin requests and safe methods continue normally. Requests without either browser signal are
 accepted as non-browser/unknown clients, so HTTPS and `SameSite=Lax` remain separate defenses.

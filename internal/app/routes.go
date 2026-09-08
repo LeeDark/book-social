@@ -24,6 +24,7 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 		if app.FlashManager != nil {
 			dynamic.Use(app.FlashManager.Handler)
 		}
+		dynamic.Use(http.NewCrossOriginProtection().Handler)
 		dynamic.Get("/", app.HomeHandler.Index)
 		dynamic.Get("/about", app.HomeHandler.About)
 		dynamic.Get("/books", app.CatalogHandler.Catalog)
