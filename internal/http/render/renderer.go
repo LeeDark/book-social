@@ -36,6 +36,7 @@ func (r *Renderer) Render(w http.ResponseWriter, status int, page string, data a
 		return fmt.Errorf("template error: %w", err)
 	}
 
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
 	if _, err := w.Write(body.Bytes()); err != nil {
 		return fmt.Errorf("write template: %w", err)
@@ -54,6 +55,7 @@ func (r *Renderer) RenderPartial(w http.ResponseWriter, status int, page string,
 		return fmt.Errorf("template error: %w", err)
 	}
 
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
 	if _, err := w.Write(body.Bytes()); err != nil {
 		return fmt.Errorf("write template: %w", err)

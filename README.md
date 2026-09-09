@@ -6,7 +6,7 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-Current v0.2.5 Auth Foundation on top of the v0.2.4 HTTP foundation and normalized catalog:
+Current v0.2.6 Registration/Login/Logout on top of the v0.2.5 auth foundation:
 
 - Home and About pages.
 - Book catalog page.
@@ -40,11 +40,12 @@ Current v0.2.5 Auth Foundation on top of the v0.2.4 HTTP foundation and normaliz
   and a testable protected-route guard.
 - Global `http.CrossOriginProtection` rejects unsafe cross-origin browser requests without adding
   CSRF tokens to forms.
+- Registration, login, idempotent POST logout, protected `/me`, auth navigation, and one-request
+  success flashes use the DB-backed opaque-session foundation.
 
 Not current production direction:
 - Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
-- User-facing registration/login/logout, production `/me`, auth navigation, and flashes are planned
-  for v0.2.6; the current UI does not claim that authentication is available.
+- Personal libraries, search, pagination, and social features are planned later.
 - User libraries, search, pagination, and social features are planned later.
 
 ## Tech Stack
@@ -198,7 +199,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Start v0.2.6 Registration/Login/Logout on the accepted v0.2.5 foundation.
+- Verify and close v0.2.6 Registration/Login/Logout before beginning the v0.3 personal library.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:

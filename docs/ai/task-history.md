@@ -611,3 +611,16 @@ Validation:
 Decision:
 - Close v0.2.5 without user-facing auth routes. The next release is v0.2.6
   Registration/Login/Logout, which consumes this foundation and completes the applied MPA flow.
+
+## v0.2.6 Registration/Login/Logout — implementation in progress
+
+Result:
+
+- Added registration, login, idempotent POST logout, protected `/me`, auth navigation, and fixed
+  one-request success flashes.
+- Registration creates the account, ordinary role assignment, and initial opaque session in one
+  SQLite/PostgreSQL transaction; login creates a new session after credential verification.
+- Added focused handler coverage and a SQLite HTTP flow for cross-origin refusal, protected access,
+  duplicate registration, logout, and rejected old-token reuse.
+- SQLite migration/seed smoke passed. Manual browser smoke, opt-in PostgreSQL environment evidence,
+  accepted commit/tag, and final release closure remain outstanding.

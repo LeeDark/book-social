@@ -12,9 +12,12 @@ import (
 	"github.com/LeeDark/book-social/internal/app"
 	"github.com/LeeDark/book-social/internal/buildinfo"
 	"github.com/LeeDark/book-social/internal/config"
+	httpauth "github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/logging"
 	"github.com/LeeDark/book-social/internal/modules/books"
+	"github.com/LeeDark/book-social/internal/modules/users"
 	"github.com/LeeDark/book-social/internal/storage/postgresql"
 	"github.com/LeeDark/book-social/internal/storage/sqlite"
 )
@@ -37,17 +40,23 @@ func main() {
 	)
 
 	var (
-		db       *sql.DB
-		bookRepo books.BookRepository
+		db          *sql.DB
+		bookRepo    books.BookRepository
+		userRepo    users.RegistrationRepository
+		sessionRepo users.SessionRepository
 	)
 
 	switch cfg.Env {
 	case config.EnvDev:
 		db, err = sqlite.Open(ctx, cfg.DB.DSN)
 		bookRepo = sqlite.NewBookRepository(db)
+		userRepo = sqlite.NewUserRepository(db)
+		sessionRepo = sqlite.NewSessionRepository(db)
 	case config.EnvStage, config.EnvProd:
 		db, err = postgresql.Open(ctx, cfg.DB.DSN)
 		bookRepo = postgresql.NewBookRepository(db)
+		userRepo = postgresql.NewUserRepository(db)
+		sessionRepo = postgresql.NewSessionRepository(db)
 	default:
 		logger.Error("unsupported app environment", slog.String("env", cfg.Env))
 		os.Exit(1)
@@ -65,10 +74,19 @@ func main() {
 		log.Fatal(err)
 	}
 
+	cookies := newSessionCookieManager(cfg)
+	flashes := flash.NewManager(cfg.Env != config.EnvDev)
+	userService := users.NewService(userRepo, users.NewPasswordPolicy())
+	sessionService := users.NewSessionService(userRepo, sessionRepo, cfg.Auth.SessionLifetime)
+	authHandler := app.NewAuthHandler(userService, sessionService, cookies, flashes, renderer, logger, cfg.Auth.SessionLifetime)
+
 	deps := app.Deps{
-		Config:   cfg,
-		Logger:   logger,
-		Renderer: renderer,
+		Config:                cfg,
+		Logger:                logger,
+		Renderer:              renderer,
+		CurrentUserMiddleware: httpauth.NewCurrentUserMiddleware(cookies, sessionService),
+		FlashManager:          flashes,
+		AuthHandler:           authHandler,
 	}
 
 	catalogService := books.NewCatalogService(bookRepo)
@@ -83,4 +101,11 @@ func main() {
 		logger.Error("run app", slog.Any("error", err))
 		os.Exit(1)
 	}
+}
+
+func newSessionCookieManager(cfg config.Config) *httpauth.CookieManager {
+	return httpauth.NewCookieManager(httpauth.CookieConfig{
+		Secure:   cfg.Env != config.EnvDev,
+		Lifetime: cfg.Auth.SessionLifetime,
+	})
 }

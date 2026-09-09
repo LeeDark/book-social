@@ -223,14 +223,14 @@ Goal: expose the minimal user-facing auth workflow.
 
 Status: active. This is the current development priority.
 
-- [ ] Add a registration form and handler.
-- [ ] Add login form and handler.
-- [ ] Add a logout handler.
-- [ ] Add `/me` or another minimal protected route.
-- [ ] Update navigation for anonymous and logged-in states.
-- [ ] Add flash messages for login/logout/register outcomes.
-- [ ] Add validation errors for duplicate login/email and invalid credentials.
-- [ ] Add handler tests with `httptest`.
+- [x] Add a registration form and handler.
+- [x] Add login form and handler.
+- [x] Add a logout handler.
+- [x] Add `/me` or another minimal protected route.
+- [x] Update navigation for anonymous and logged-in states.
+- [x] Add flash messages for login/logout/register outcomes.
+- [x] Add validation errors for duplicate login/email and invalid credentials.
+- [x] Add handler tests with `httptest`.
 
 Definition of Done:
 

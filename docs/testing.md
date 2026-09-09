@@ -47,6 +47,8 @@ Current tests cover:
 - two-phase token/cookie policy, current-user typed context, anonymous behavior, and test-only route
   guard behavior
 - unsafe cross-origin refusal and same-origin success through `http.CrossOriginProtection`
+- registration/login/logout handlers, safe `422` form outcomes, session cookies, and password
+  non-repopulation in rendered forms
 
 There are also small integration-style HTTP tests that use `httptest` and a temporary SQLite database.
 
@@ -66,7 +68,10 @@ fixture and ordinary user role. Tests can still keep scenario-specific fixture r
 they need more data than the default helper provides.
 
 PostgreSQL repository tests are opt-in because they require a real PostgreSQL database. By default
-they skip unless `BOOK_SOCIAL_POSTGRES_TEST_DSN` is set.
+they skip unless `BOOK_SOCIAL_POSTGRES_TEST_DSN` is set. The reproducible project check is
+`make test/integration`: it starts an isolated Docker Compose database, applies and rolls back the
+PostgreSQL migrations with a pinned `golang-migrate` binary, runs PostgreSQL repository and auth HTTP
+parity tests sequentially, then removes its own Compose resources.
 
 The PostgreSQL test DSN must connect to the exact disposable database `book_social_test`. Before
 every schema reset, the helper queries `current_database()` and refuses to run unless it equals
@@ -81,6 +86,15 @@ Example:
 BOOK_SOCIAL_POSTGRES_TEST_DSN='postgres://book_social:book_social@localhost:5432/book_social_test?sslmode=disable' \
   go test -p 1 ./internal/storage/postgresql
 ```
+
+For normal local and CI verification, prefer:
+
+```bash
+make test/integration
+```
+
+The target does not read a user-provided DSN and uses only its own disposable `book_social_test`
+database. Docker Compose is its only external prerequisite.
 
 Do not use the full development seed dataset in ordinary unit or handler tests. Use full seed data
 only for an explicit seed smoke test or database setup check.

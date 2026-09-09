@@ -80,7 +80,7 @@ func TestAppHealthzReturnsOK(t *testing.T) {
 func TestAppRejectsUnsafeCrossOriginRequest(t *testing.T) {
 	app := newRoutesTestApp(t)
 
-	req := httptest.NewRequest(http.MethodPost, "/future-action", nil)
+	req := httptest.NewRequest(http.MethodPost, "/register", nil)
 	req.Header.Set("Sec-Fetch-Site", "cross-site")
 	rec := httptest.NewRecorder()
 
@@ -188,9 +188,10 @@ func newRoutesTestAppWithCatalog(t *testing.T, catalogHandler CatalogHandler) *A
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	deps := Deps{
-		Config:   config.Config{},
-		Logger:   logger,
-		Renderer: renderer,
+		Config:      config.Config{},
+		Logger:      logger,
+		Renderer:    renderer,
+		AuthHandler: &AuthHandler{},
 	}
 
 	return New(deps, NewHomeHandler(fakeFeaturedBooksProvider{}, renderer, logger), catalogHandler)

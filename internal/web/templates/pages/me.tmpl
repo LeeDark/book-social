@@ -1,0 +1,8 @@
+{{define "title"}}{{.Title}}{{end}}
+{{define "main"}}
+<section aria-labelledby="account-heading">
+    <h1 id="account-heading">Your account</h1>
+    <p>Signed in as {{.CurrentUser.DisplayName}}.</p>
+    <p>Your library will be available in a future release.</p>
+</section>
+{{end}}

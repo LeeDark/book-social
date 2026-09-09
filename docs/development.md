@@ -223,6 +223,17 @@ database is exactly `book_social_test` (and has the required `_test` suffix); it
 database without printing the DSN or credentials. Never point this variable at non-disposable data.
 When one test database is shared across packages, include `-p 1` in the test command.
 
+For the full isolated PostgreSQL migration and v0.2.6 auth integration check, run:
+
+```bash
+make test/integration
+```
+
+It starts an independent Compose PostgreSQL container on an ephemeral host port, installs the pinned
+`golang-migrate` CLI into `./bin` when needed, verifies migration `up → down 1 → up`, runs the
+PostgreSQL test packages with `go test -p 1`, and removes the test container and volume even after a
+failure. It does not use `BOOK_SOCIAL_POSTGRES_TEST_DSN`; Docker Compose is the only prerequisite.
+
 ## Docker And Compose
 
 Docker and Compose are supported as local environment workflows for the v0.2 bootstrap.

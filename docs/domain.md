@@ -20,9 +20,9 @@ A book has:
 - zero or more genres
 - zero or more cover metadata records
 
-Catalog reads preserve deterministic ordering: books by title and ID; related authors, genres,
-and covers by their documented fields and ID. A catalog filter selects matching books without
-hiding the other authors or genres of a selected book.
+Catalog reads preserve deterministic ordering: books by title and ID; related authors, genres, and
+covers by their documented fields and ID. A catalog filter selects matching books without hiding the
+other authors or genres of a selected book.
 
 ### Author
 
@@ -65,9 +65,8 @@ The catalog can:
 ### Cover
 
 A cover is URL metadata associated with a book. Its variant and optional technical metadata are
-available to the read-side. Book details use the `front` variant when present; otherwise the UI
-uses a CSS placeholder. Uploading, proxying, or storing cover files is not part of the current
-model.
+available to the read-side. Book details use the `front` variant when present; otherwise the UI uses
+a CSS placeholder. Uploading, proxying, or storing cover files is not part of the current model.
 
 The normalized schema is described in [database_v0_2.md](database_v0_2.md).
 
@@ -87,14 +86,16 @@ Sessions have a seven-day absolute lifetime without sliding renewal. The raw hig
 browser-facing; persistence receives only its 32-byte SHA-256 hash. Missing, invalid, or expired
 sessions represent an anonymous request, not an internal server failure.
 
-The HTTP layer has a typed current-user context and a testable authentication guard. Registration,
-login, logout, production `/me`, auth navigation, and flashes are not current routes; they belong to
-v0.2.6.
+The HTTP layer exposes registration, login, logout, and protected `/me` MPA routes. Successful
+registration creates the user, ordinary role assignment, and the first hashed-token session
+atomically; successful login creates a new session. Navigation receives only the current user's
+display name. Passwords, hashes, tokens, role internals, and private-library data remain outside
+page models.
 
 ### Library, Shelves, Tags
 
-The schema still contains legacy/demo `library`, `shelves`, and `tags` structures. They are not
-the user-facing personal-library model. The user-facing authentication workflow and final
+The schema still contains legacy/demo `library`, `shelves`, and `tags` structures. They are not the
+user-facing personal-library model. The user-facing authentication workflow and final
 `library_items` model are deferred to v0.2.6 and v0.3 respectively.
 
 ## Current Design Rules

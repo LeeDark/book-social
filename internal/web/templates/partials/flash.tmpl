@@ -1,0 +1,5 @@
+{{define "flash"}}
+    {{range .Flash}}
+        <p role="status" class="flash flash--{{.Type}}">{{.Text}}</p>
+    {{end}}
+{{end}}

@@ -47,6 +47,30 @@ func (r *UserRepository) WithinTransaction(ctx context.Context, fn func(users.Us
 	return nil
 }
 
+func (r *UserRepository) WithinRegistrationSessionTransaction(ctx context.Context, fn func(users.RegistrationSessionRepository) error) error {
+	db, ok := r.db.(*sql.DB)
+	if !ok {
+		return users.ErrInternal
+	}
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return users.ErrInternal
+	}
+	txRepo := &UserRepository{db: tx}
+	if err := fn(txRepo); err != nil {
+		_ = tx.Rollback()
+		return mapRepositoryError(err)
+	}
+	if err := tx.Commit(); err != nil {
+		return users.ErrInternal
+	}
+	return nil
+}
+
+func (r *UserRepository) CreateSession(ctx context.Context, params users.CreateSessionParams) (users.Session, error) {
+	return (&SessionRepository{db: r.db}).CreateSession(ctx, params)
+}
+
 func (r *UserRepository) CreateUser(ctx context.Context, params users.CreateUserParams) (users.User, error) {
 	result, err := r.db.ExecContext(ctx, `
 		INSERT INTO users(first_name, login, password_hash, email, user_role_id)

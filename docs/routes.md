@@ -7,14 +7,14 @@ Current MPA routes are registered in `internal/app/routes.go`.
 The router applies middleware in this order:
 
 ```text
-SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> CrossOriginProtection -> route handler
+SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> dynamic timeout -> current-user -> flash -> CrossOriginProtection -> route guard/handler
 ```
 
 `TrustedRealIP` is a no-op unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured, forwarded
 client-IP headers are accepted only from an immediate peer inside one of those networks; otherwise
 the logger uses the connection `RemoteAddr`.
 
-`http.CrossOriginProtection` is global and has no insecure bypass patterns. Unsafe browser requests
+`http.CrossOriginProtection` is applied to dynamic MPA routes and has no insecure bypass patterns. Unsafe browser requests
 identified as cross-origin by Fetch Metadata or `Origin` receive `403` before reaching a handler;
 same-origin requests and safe methods continue normally. Requests without either browser signal are
 accepted as non-browser/unknown clients, so HTTPS and `SameSite=Lax` remain separate defenses.
@@ -57,10 +57,20 @@ GET /authors/{slug}      Author page
 GET /static/*            Static files
 ```
 
-There are no production registration, login, logout, or `/me` routes in v0.2.5. The current-user
-middleware and authentication guard are testable foundations but are intentionally not wired into
-the production route tree until v0.2.6 adds the corresponding dependencies and handlers. The UI and
-navigation therefore remain public-only.
+Authentication routes use the v0.2.5 opaque DB-backed session foundation:
+
+```text
+GET /register       registration form; signed-in users redirect to /me
+POST /register      create user, role, and first session atomically; 303 /me or 422 field errors
+GET /login          login form; signed-in users redirect to /me
+POST /login         authenticate and create a new session; 303 /me or neutral 422 refusal
+POST /logout        invalidate the current session, clear cookies, and 303 /
+GET /me             protected minimal identity page; anonymous users receive 303 /login
+```
+
+Unsafe browser POST requests remain protected by `http.CrossOriginProtection`. A cross-origin
+request receives `403` before mutation. Session and flash cookies are `HttpOnly`, `SameSite=Lax`,
+and use `Secure` outside development. `/me` responds with `Cache-Control: no-store`.
 
 ## Catalog Filters
 

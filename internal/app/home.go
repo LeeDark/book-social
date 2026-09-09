@@ -64,6 +64,7 @@ func (h *HomeHandler) Index(w http.ResponseWriter, r *http.Request) {
 		Benefits:      homeBenefits(),
 		ComingSoon:    homeComingSoon(),
 	}
+	view.ApplyRequestState(&data.Page, r)
 
 	if err := h.renderer.Render(w, http.StatusOK, "home.tmpl", data); err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("render home page: %w", err))
@@ -104,6 +105,7 @@ func (h *HomeHandler) About(w http.ResponseWriter, r *http.Request) {
 			ActiveNav: "about",
 		},
 	}
+	view.ApplyRequestState(&data.Page, r)
 
 	if err := h.renderer.Render(w, http.StatusOK, "about.tmpl", data); err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("render about page: %w", err))

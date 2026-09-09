@@ -8,6 +8,7 @@ import (
 
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/http/response"
+	"github.com/LeeDark/book-social/internal/http/view"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -36,6 +37,7 @@ func (h *CatalogHandler) Catalog(w http.ResponseWriter, r *http.Request) {
 		response.ServerError(w, r, h.logger, fmt.Errorf("get catalog page: %w", err))
 		return
 	}
+	view.ApplyRequestState(&data.Page, r)
 
 	//h.logger.Debug("Catalog page", slog.Any("data", data))
 
@@ -65,6 +67,7 @@ func (h *CatalogHandler) BookDetails(w http.ResponseWriter, r *http.Request) {
 		response.ServerError(w, r, h.logger, fmt.Errorf("get book details page: %w", err))
 		return
 	}
+	view.ApplyRequestState(&data.Page, r)
 
 	//h.logger.Debug("Book Details page", slog.Any("data", data))
 
@@ -87,6 +90,7 @@ func (h *CatalogHandler) Author(w http.ResponseWriter, r *http.Request) {
 		response.ServerError(w, r, h.logger, fmt.Errorf("get author page: %w", err))
 		return
 	}
+	view.ApplyRequestState(&data.Page, r)
 
 	if err := h.renderer.Render(w, http.StatusOK, "author.tmpl", data); err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("render author page: %w", err))

@@ -2,16 +2,23 @@ package app
 
 import (
 	"context"
+	"encoding/hex"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/LeeDark/book-social/internal/config"
+	httpauth "github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/modules/books"
+	"github.com/LeeDark/book-social/internal/modules/users"
+	"github.com/LeeDark/book-social/internal/storage/postgresql"
 	"github.com/LeeDark/book-social/internal/storage/sqlite"
 	"github.com/LeeDark/book-social/internal/testutil"
 )
@@ -167,6 +174,204 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAuthRoutesWithSQLite(t *testing.T) {
+	ctx := context.Background()
+	db := testutil.NewSQLiteCatalogV2TestDB(t, ctx)
+	handler := newAuthIntegrationTestApp(t, sqlite.NewUserRepository(db), sqlite.NewSessionRepository(db), sqlite.NewBookRepository(db))
+	testAuthRoutes(t, handler)
+}
+
+func TestAuthRoutesWithPostgreSQL(t *testing.T) {
+	ctx := context.Background()
+	db := testutil.NewPostgresCatalogV2TestDB(t, ctx)
+	handler := newAuthIntegrationTestApp(t, postgresql.NewUserRepository(db), postgresql.NewSessionRepository(db), postgresql.NewBookRepository(db))
+	testAuthRoutes(t, handler)
+}
+
+func testAuthRoutes(t *testing.T, handler http.Handler) {
+	t.Helper()
+	password := "correct horse battery staple"
+	staleToken := "invalid-session-token"
+	register := url.Values{"first_name": {"Ada"}, "login": {"ada"}, "email": {"ada@example.test"}, "password": {password}, "password_confirmation": {password}}
+
+	t.Run("cross-origin registration is refused without mutation", func(t *testing.T) {
+		req := formRequest(http.MethodPost, "/register", register)
+		req.Header.Set("Origin", "https://evil.example")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusForbidden {
+			t.Fatalf("status = %d, want 403", rec.Code)
+		}
+	})
+	t.Run("anonymous navigation contains only anonymous actions and no secrets", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/login", nil))
+		body := rec.Body.String()
+		for _, fragment := range []string{`href="/login"`, `href="/register"`} {
+			if !strings.Contains(body, fragment) {
+				t.Fatalf("anonymous navigation missing %q: %q", fragment, body)
+			}
+		}
+		if strings.Contains(body, `action="/logout"`) {
+			t.Fatalf("anonymous navigation contains logout: %q", body)
+		}
+		for _, unwanted := range []string{password, staleToken, hex.EncodeToString(httpauth.HashToken(staleToken))} {
+			if strings.Contains(body, unwanted) {
+				t.Fatalf("anonymous page contains secret %q: %q", unwanted, body)
+			}
+		}
+	})
+
+	registration := httptest.NewRecorder()
+	handler.ServeHTTP(registration, formRequest(http.MethodPost, "/register", register))
+	if registration.Code != http.StatusSeeOther || registration.Header().Get("Location") != "/me" {
+		t.Fatalf("registration = %d %q, want 303 /me", registration.Code, registration.Header().Get("Location"))
+	}
+	session := cookieNamed(t, registration.Result().Cookies(), "book_social_session")
+
+	t.Run("invalid existing session opens login anonymously and clears only stale cookie", func(t *testing.T) {
+		stale := &http.Cookie{Name: "book_social_session", Value: staleToken}
+		req := httptest.NewRequest(http.MethodGet, "/login", nil)
+		req.AddCookie(stale)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK || strings.Contains(rec.Body.String(), "Signed in as") {
+			t.Fatalf("stale session login response = %d %q", rec.Code, rec.Body.String())
+		}
+		cleared := cookieNamed(t, rec.Result().Cookies(), "book_social_session")
+		if cleared.MaxAge >= 0 || cleared.Value != "" {
+			t.Fatalf("stale session cookie was not cleared: %+v", cleared)
+		}
+	})
+
+	t.Run("registered session opens protected account", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/me", nil)
+		req.AddCookie(session)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		body := rec.Body.String()
+		if rec.Code != http.StatusOK || !strings.Contains(body, "Signed in as Ada.") || !strings.Contains(body, `action="/logout"`) {
+			t.Fatalf("protected page = %d %q", rec.Code, rec.Body.String())
+		}
+		for _, unwanted := range []string{`href="/login"`, `href="/register"`, password, session.Value, hex.EncodeToString(httpauth.HashToken(session.Value))} {
+			if strings.Contains(body, unwanted) {
+				t.Fatalf("authenticated page contains secret or anonymous navigation %q: %q", unwanted, body)
+			}
+		}
+	})
+	t.Run("anonymous account redirects to login", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/me", nil))
+		if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/login" {
+			t.Fatalf("anonymous /me = %d %q", rec.Code, rec.Header().Get("Location"))
+		}
+	})
+	t.Run("session identity cannot be replaced by query or header", func(t *testing.T) {
+		second := url.Values{"first_name": {"Bob"}, "login": {"bob"}, "email": {"bob@example.test"}, "password": {"another correct battery staple"}, "password_confirmation": {"another correct battery staple"}}
+		secondRec := httptest.NewRecorder()
+		handler.ServeHTTP(secondRec, formRequest(http.MethodPost, "/register", second))
+		secondSession := cookieNamed(t, secondRec.Result().Cookies(), "book_social_session")
+
+		firstReq := httptest.NewRequest(http.MethodGet, "/me?user_id=2", nil)
+		firstReq.Header.Set("X-User-ID", "2")
+		firstReq.AddCookie(session)
+		firstRec := httptest.NewRecorder()
+		handler.ServeHTTP(firstRec, firstReq)
+		if firstRec.Code != http.StatusOK || !strings.Contains(firstRec.Body.String(), "Signed in as Ada.") || strings.Contains(firstRec.Body.String(), "Signed in as Bob.") {
+			t.Fatalf("first identity response = %d %q", firstRec.Code, firstRec.Body.String())
+		}
+
+		secondReq := httptest.NewRequest(http.MethodGet, "/me", nil)
+		secondReq.AddCookie(secondSession)
+		secondIdentity := httptest.NewRecorder()
+		handler.ServeHTTP(secondIdentity, secondReq)
+		if secondIdentity.Code != http.StatusOK || !strings.Contains(secondIdentity.Body.String(), "Signed in as Bob.") {
+			t.Fatalf("second identity response = %d %q", secondIdentity.Code, secondIdentity.Body.String())
+		}
+	})
+	t.Run("duplicate registration returns safe field error", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, formRequest(http.MethodPost, "/register", register))
+		if rec.Code != http.StatusUnprocessableEntity || !strings.Contains(rec.Body.String(), "is already in use") {
+			t.Fatalf("duplicate = %d %q", rec.Code, rec.Body.String())
+		}
+		if strings.Contains(rec.Body.String(), register.Get("password")) {
+			t.Fatal("duplicate response contains password")
+		}
+	})
+	t.Run("cross-origin logout preserves session", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+		req.Header.Set("Origin", "https://evil.example")
+		req.AddCookie(session)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusForbidden {
+			t.Fatalf("status = %d, want 403", rec.Code)
+		}
+		check := httptest.NewRequest(http.MethodGet, "/me", nil)
+		check.AddCookie(session)
+		checkRec := httptest.NewRecorder()
+		handler.ServeHTTP(checkRec, check)
+		if checkRec.Code != http.StatusOK {
+			t.Fatalf("session was mutated by rejected logout: %d", checkRec.Code)
+		}
+	})
+	t.Run("logout invalidates old token", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+		req.AddCookie(session)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/" {
+			t.Fatalf("logout = %d %q", rec.Code, rec.Header().Get("Location"))
+		}
+		if cookieNamed(t, rec.Result().Cookies(), "book_social_session").MaxAge >= 0 {
+			t.Fatal("logout did not clear session cookie")
+		}
+		check := httptest.NewRequest(http.MethodGet, "/me", nil)
+		check.AddCookie(session)
+		checkRec := httptest.NewRecorder()
+		handler.ServeHTTP(checkRec, check)
+		if checkRec.Code != http.StatusSeeOther || checkRec.Header().Get("Location") != "/login" {
+			t.Fatalf("reused token = %d %q", checkRec.Code, checkRec.Header().Get("Location"))
+		}
+	})
+}
+
+func formRequest(method, path string, values url.Values) *http.Request {
+	req := httptest.NewRequest(method, path, strings.NewReader(values.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	return req
+}
+
+func cookieNamed(t *testing.T, cookies []*http.Cookie, name string) *http.Cookie {
+	t.Helper()
+	for _, cookie := range cookies {
+		if cookie.Name == name {
+			return cookie
+		}
+	}
+	t.Fatalf("cookie %q not found", name)
+	return nil
+}
+
+func newAuthIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepository, sessionRepo users.SessionRepository, bookRepo books.BookRepository) http.Handler {
+	t.Helper()
+	testutil.ChdirProjectRoot(t)
+	renderer, err := render.NewRenderer()
+	if err != nil {
+		t.Fatalf("render.NewRenderer() error = %v", err)
+	}
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	cookies := httpauth.NewCookieManager(httpauth.CookieConfig{Lifetime: time.Hour})
+	flashes := flash.NewManager(false)
+	userService := users.NewService(userRepo, users.NewPasswordPolicy())
+	sessionService := users.NewSessionService(userRepo, sessionRepo, time.Hour)
+	deps := Deps{Config: config.Config{Env: config.EnvDev}, Logger: logger, Renderer: renderer, CurrentUserMiddleware: httpauth.NewCurrentUserMiddleware(cookies, sessionService), FlashManager: flashes, AuthHandler: NewAuthHandler(userService, sessionService, cookies, flashes, renderer, logger, time.Hour)}
+	catalogService := books.NewCatalogService(bookRepo)
+	return New(deps, NewHomeHandler(catalogService, renderer, logger), books.NewCatalogHandler(catalogService, renderer, logger)).Router
 }
 
 func TestCatalogRouteReturnsPartialForHTMXRequest(t *testing.T) {

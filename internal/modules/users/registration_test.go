@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 type recordingUserRepository struct {
@@ -16,6 +17,22 @@ type recordingUserRepository struct {
 	createErr      error
 	credentials    Credentials
 	credentialsErr error
+	sessionErr     error
+	session        CreateSessionParams
+	sessionTxCalls int
+}
+
+func (r *recordingUserRepository) WithinRegistrationSessionTransaction(ctx context.Context, fn func(RegistrationSessionRepository) error) error {
+	r.sessionTxCalls++
+	return fn(r)
+}
+
+func (r *recordingUserRepository) CreateSession(_ context.Context, params CreateSessionParams) (Session, error) {
+	r.session = params
+	if r.sessionErr != nil {
+		return Session{}, r.sessionErr
+	}
+	return Session{ID: 1, UserID: params.UserID}, nil
 }
 
 type recordingPasswordBoundary struct {
@@ -105,6 +122,29 @@ func TestRegistrationCreatesUserWithDefaultRoleAndPasswordHash(t *testing.T) {
 	}
 	if err := NewPasswordPolicy().Verify(repo.created.PasswordHash, input.Password); err != nil {
 		t.Fatalf("created password hash does not verify: %v", err)
+	}
+}
+
+func TestRegistrationAndSessionAreCreatedThroughOneTransactionBoundary(t *testing.T) {
+	repo := &recordingUserRepository{role: Role{ID: 9, Name: "user"}, createdUser: User{ID: 42, FirstName: "Ada", Login: "ada", Email: "ada@example.test", RoleID: 9}}
+	tokenHash := make([]byte, SessionTokenHashSize)
+	got, err := NewService(repo, NewPasswordPolicy()).RegisterAndCreateSession(context.Background(), validRegistrationInput(), tokenHash, time.Hour)
+	if err != nil {
+		t.Fatalf("RegisterAndCreateSession() error = %v", err)
+	}
+	if got.ID != 42 || repo.sessionTxCalls != 1 || repo.session.UserID != 42 {
+		t.Fatalf("registration/session transaction = user %+v, calls %d, session %+v", got, repo.sessionTxCalls, repo.session)
+	}
+	if len(repo.session.TokenHash) != SessionTokenHashSize || repo.session.ExpiresAt.Sub(repo.session.CreatedAt) != time.Hour {
+		t.Fatal("session policy was not preserved")
+	}
+}
+
+func TestRegistrationAndSessionMapsSessionFailureToInternalError(t *testing.T) {
+	repo := &recordingUserRepository{role: Role{ID: 9, Name: "user"}, createdUser: User{ID: 42}, sessionErr: errors.New("store failure")}
+	_, err := NewService(repo, NewPasswordPolicy()).RegisterAndCreateSession(context.Background(), validRegistrationInput(), make([]byte, SessionTokenHashSize), time.Hour)
+	if !errors.Is(err, ErrInternal) || err.Error() != ErrInternal.Error() {
+		t.Fatalf("RegisterAndCreateSession() error = %v, want generic internal error", err)
 	}
 }
 

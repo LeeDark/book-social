@@ -48,6 +48,7 @@ func RenderNotFound(w http.ResponseWriter, r *http.Request, logger *slog.Logger,
 			},
 		},
 	}
+	view.ApplyRequestState(&data.Page, r)
 
 	if err := renderer.Render(w, http.StatusNotFound, "not_found.tmpl", data); err != nil {
 		ServerError(w, r, logger, err)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -13,6 +14,56 @@ type RegistrationInput struct {
 	Email                string
 	Password             string
 	PasswordConfirmation string
+}
+
+// RegisterAndCreateSession atomically creates the account, assigns its default
+// role, and stores the first opaque session. The raw token never reaches this
+// boundary; callers pass its hash only.
+func (s *Service) RegisterAndCreateSession(ctx context.Context, input RegistrationInput, tokenHash []byte, lifetime time.Duration) (User, error) {
+	store, ok := s.repo.(RegistrationSessionStore)
+	if !ok || len(tokenHash) != SessionTokenHashSize || lifetime <= 0 {
+		return User{}, ErrInternal
+	}
+
+	input, err := normalizeRegistrationInput(input)
+	if err != nil {
+		return User{}, err
+	}
+	passwordHash, err := s.policy.Hash(input.Password)
+	if err != nil {
+		if errors.Is(err, ErrPasswordTooShort) || errors.Is(err, ErrPasswordTooLong) {
+			return User{}, ValidationError{Field: "password", Message: err.Error()}
+		}
+		return User{}, ErrInternal
+	}
+
+	createdAt := time.Now().UTC()
+	var created User
+	err = store.WithinRegistrationSessionTransaction(ctx, func(tx RegistrationSessionRepository) error {
+		role, err := tx.FindRoleByName(ctx, "user")
+		if err != nil {
+			return err
+		}
+		if role.ID == 0 || role.Name != "user" {
+			return ErrInternal
+		}
+		created, err = tx.CreateUser(ctx, CreateUserParams{
+			FirstName: input.FirstName, Login: input.Login, Email: input.Email,
+			PasswordHash: passwordHash, RoleID: role.ID,
+		})
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateSession(ctx, CreateSessionParams{
+			UserID: created.ID, TokenHash: append([]byte(nil), tokenHash...),
+			CreatedAt: createdAt, ExpiresAt: createdAt.Add(lifetime),
+		})
+		return err
+	})
+	if err != nil {
+		return User{}, mapRegistrationError(err)
+	}
+	return created, nil
 }
 
 type Service struct {
