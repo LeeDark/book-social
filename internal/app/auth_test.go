@@ -102,12 +102,17 @@ func TestAuthHandlerLoginUsesNeutralFailure(t *testing.T) {
 	h, usersFake := newAuthHandler(t)
 	usersFake.authenticateErr = users.ErrInvalidCredentials
 	rec := httptest.NewRecorder()
-	h.Login(rec, httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("identifier=unknown&password=secret-value")))
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("identifier=unknown&password=secret-value"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	h.Login(rec, req)
 	if rec.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("status = %d, want 422", rec.Code)
 	}
 	if !strings.Contains(rec.Body.String(), "Invalid login or password.") || strings.Contains(rec.Body.String(), "secret-value") {
 		t.Fatal("login response did not keep the neutral safe outcome")
+	}
+	if usersFake.identifier != "unknown" || usersFake.password != "secret-value" {
+		t.Fatalf("credentials = %q, %q; want submitted values", usersFake.identifier, usersFake.password)
 	}
 }
 
@@ -202,11 +207,16 @@ func TestAuthTemplatesRenderAccessibleInputsAndSafeNavigation(t *testing.T) {
 }
 
 func TestAuthHandlerSuccessfulLoginCreatesCookieAndRedirects(t *testing.T) {
-	h, _ := newAuthHandler(t)
+	h, usersFake := newAuthHandler(t)
 	rec := httptest.NewRecorder()
-	h.Login(rec, httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("identifier=ada&password=valid-password")))
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("identifier=ada&password=valid-password"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	h.Login(rec, req)
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/me" {
 		t.Fatalf("login = %d %q, want 303 /me", rec.Code, rec.Header().Get("Location"))
+	}
+	if usersFake.identifier != "ada" || usersFake.password != "valid-password" {
+		t.Fatalf("credentials = %q, %q; want submitted values", usersFake.identifier, usersFake.password)
 	}
 	var session bool
 	for _, cookie := range rec.Result().Cookies() {
