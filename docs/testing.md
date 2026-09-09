@@ -115,6 +115,54 @@ only for an explicit seed smoke test or database setup check.
 - Do not format credentials, password hashes, raw session tokens, token hashes, or issued cookie
   values into test failure messages.
 
+## Manual Browser Smoke: v0.2.6 Auth Flow
+
+Run this smoke test on a local machine, outside the Codex sandbox. It is a release check for the
+server-rendered registration, login, logout, navigation, and accessibility flow; it does not replace
+the `httptest` coverage above.
+
+Start from a disposable local development database. The reset command deletes the configured SQLite
+database, so do not point it at data that must be kept:
+
+```bash
+make db/reset
+make run
+```
+
+Open `http://localhost:8080` in a private browser window or clear site data first. Use a unique login
+and email address for the test account if the database was not reset.
+
+1. Open `/me` while anonymous. It must redirect to `/login`; navigation must show Login and Register.
+2. Open `/register`. Use only the keyboard: `Tab` must reach every navigation link, form input, and
+   Register button in a sensible order; each focused control must have the visible focus outline.
+   Labels must describe the focused inputs.
+3. Submit the registration form with a required field empty, then with non-matching passwords. The
+   page must return a clear inline error next to the relevant field. Tabbing to that field must keep
+   its error associated through the accessible description; the error text is explanatory, not a
+   separate interactive control. First name, login, and email may remain populated, but neither
+   password field may be repopulated.
+4. Register with a valid first name, login, email, and matching password of at least 12 characters.
+   Expect `/me`, the "Registration complete." flash, the display name, and Logout navigation. Reload
+   `/me`: the flash must be gone.
+5. Open an unknown route such as `/missing-page`. Expect a 404 page that still shows the authenticated
+   navigation and no Login/Register links.
+6. Use Logout with the keyboard and confirm the redirect to `/`. Reopen `/me`; it must redirect to
+   `/login`. Navigation must again show Login and Register.
+7. On `/login`, submit an unknown login and then the registered login with a wrong password. Both
+   outcomes must show the same "Invalid login or password." message, leave the password blank, and
+   not expose whether the account exists. Submit the valid credentials and confirm `/me`, the
+   "You are signed in." flash, and authenticated navigation. Logout once more.
+8. In browser DevTools, inspect responses for `/register`, `/login`, `/me`, and `/missing-page`.
+   Each dynamic HTML response must include `Cache-Control: no-store`, `Content-Security-Policy`,
+   `Permissions-Policy`, `Referrer-Policy`, `X-Content-Type-Options: nosniff`, and
+   `X-Frame-Options: DENY`. In local `dev`, HSTS is not expected.
+9. Inspect cookies after successful registration or login. `book_social_session` must have `HttpOnly`,
+   `Path=/`, and `SameSite=Lax`; `Secure` is intentionally absent for local HTTP development. After
+   logout, the session cookie must be cleared. Do not copy cookie values into issue reports or logs.
+
+Record the date, browser/version, commands used, and any failed step in the release evidence. Mark
+plan item 66 complete only after this smoke test passes in a real local browser.
+
 ## Codex Sandbox Note
 
 Do not start the web server inside the Codex sandbox for verification.

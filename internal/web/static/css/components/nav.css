@@ -33,6 +33,26 @@
     justify-content: flex-end;
 }
 
+.site-nav__items > li {
+    display: flex;
+    padding: 0;
+}
+
+.site-nav__items form {
+    display: flex;
+    margin: 0;
+}
+
+.site-nav__items a,
+.site-nav__items button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.5rem;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    border-radius: 999px;
+}
+
 .site-nav__items a {
     border-radius: 999px;
     color: var(--pico-muted-color);
