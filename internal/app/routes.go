@@ -41,9 +41,16 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 		}
 	})
 
-	r.NotFound(appmiddleware.NoStore(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	notFound := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response.RenderNotFound(w, r, deps.Logger, deps.Renderer)
-	})).ServeHTTP)
+	}))
+	if app.FlashManager != nil {
+		notFound = app.FlashManager.Handler(notFound)
+	}
+	if app.CurrentUserMiddleware != nil {
+		notFound = app.CurrentUserMiddleware.Handler(notFound)
+	}
+	r.NotFound(appmiddleware.NoStore(notFound).ServeHTTP)
 }
 
 func healthz(w http.ResponseWriter, _ *http.Request) {

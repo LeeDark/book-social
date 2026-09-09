@@ -25,8 +25,9 @@ The application timeout is added only to dynamic MPA page routes:
 GET /, /about, /books, /books/{slug}, /authors/{slug} -> Timeout(30s)
 ```
 
-`/healthz`, `/static/*`, and the fallback 404 handler do not use the application timeout. Server
-transport timeouts remain configured separately in `internal/app/server.go`.
+`/healthz`, `/static/*`, and the fallback 404 handler do not use the application timeout. The 404
+handler still loads current-user and flash request state so its navigation matches dynamic pages.
+Server transport timeouts remain configured separately in `internal/app/server.go`.
 
 Every response receives the conservative browser policy from `internal/http/middleware/security.go`:
 content type sniffing and framing are disabled, referrers are reduced to origin on cross-origin

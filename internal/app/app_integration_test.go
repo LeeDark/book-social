@@ -262,6 +262,21 @@ func testAuthRoutes(t *testing.T, handler http.Handler) {
 			}
 		}
 	})
+	t.Run("registered session keeps authenticated navigation on not found page", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/missing-page", nil)
+		req.AddCookie(session)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		body := rec.Body.String()
+		if rec.Code != http.StatusNotFound || !strings.Contains(body, "Ada") || !strings.Contains(body, `action="/logout"`) {
+			t.Fatalf("authenticated not found page = %d %q", rec.Code, body)
+		}
+		for _, unwanted := range []string{`href="/login"`, `href="/register"`, session.Value, hex.EncodeToString(httpauth.HashToken(session.Value))} {
+			if strings.Contains(body, unwanted) {
+				t.Fatalf("authenticated not found page contains unwanted value %q: %q", unwanted, body)
+			}
+		}
+	})
 	t.Run("anonymous account redirects to login", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/me", nil))
