@@ -18,6 +18,7 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 	r.Get("/healthz", healthz)
 	r.Group(func(dynamic chi.Router) {
 		dynamic.Use(chimiddleware.Timeout(applicationTimeout))
+		dynamic.Use(appmiddleware.NoStore)
 		if app.CurrentUserMiddleware != nil {
 			dynamic.Use(app.CurrentUserMiddleware.Handler)
 		}
@@ -40,9 +41,9 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 		}
 	})
 
-	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+	r.NotFound(appmiddleware.NoStore(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response.RenderNotFound(w, r, deps.Logger, deps.Renderer)
-	})
+	})).ServeHTTP)
 }
 
 func healthz(w http.ResponseWriter, _ *http.Request) {
