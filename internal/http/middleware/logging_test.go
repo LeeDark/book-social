@@ -27,7 +27,7 @@ func TestRequestLoggerLogsRoutePatternWithoutSource(t *testing.T) {
 		_, _ = w.Write([]byte("created"))
 	})
 
-	request := httptest.NewRequest(http.MethodGet, "/books/dune?edition=first", nil)
+	request := httptest.NewRequest(http.MethodGet, "/books/dune?edition=first&password=secret-value", nil)
 	request.RemoteAddr = "192.0.2.1:1234"
 	response := httptest.NewRecorder()
 
@@ -45,7 +45,6 @@ func TestRequestLoggerLogsRoutePatternWithoutSource(t *testing.T) {
 	want := map[string]any{
 		"method":      http.MethodGet,
 		"path":        "/books/dune",
-		"query":       "edition=first",
 		"status":      float64(http.StatusCreated),
 		"bytes":       float64(len("created")),
 		"remote_addr": "192.0.2.1:1234",
@@ -56,6 +55,12 @@ func TestRequestLoggerLogsRoutePatternWithoutSource(t *testing.T) {
 		if entry[field] != value {
 			t.Errorf("log field %q = %v, want %v", field, entry[field], value)
 		}
+	}
+	if _, ok := entry["query"]; ok {
+		t.Error("log field \"query\" is present, want omitted to avoid recording credentials")
+	}
+	if strings.Contains(logs.String(), "secret-value") {
+		t.Fatal("request log contains a query credential")
 	}
 
 	if _, ok := entry["duration"]; !ok {

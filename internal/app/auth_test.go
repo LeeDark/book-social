@@ -22,13 +22,16 @@ import (
 type fakeAuthUsers struct {
 	registerErr, authenticateErr error
 	registered                   users.RegistrationInput
+	identifier, password         string
 }
 
 func (f *fakeAuthUsers) RegisterAndCreateSession(_ context.Context, input users.RegistrationInput, _ []byte, _ time.Duration) (users.User, error) {
 	f.registered = input
 	return users.User{ID: 1, FirstName: "Ada"}, f.registerErr
 }
-func (f *fakeAuthUsers) Authenticate(context.Context, string, string) (users.User, error) {
+func (f *fakeAuthUsers) Authenticate(_ context.Context, identifier, password string) (users.User, error) {
+	f.identifier = identifier
+	f.password = password
 	return users.User{ID: 1, FirstName: "Ada"}, f.authenticateErr
 }
 
@@ -105,6 +108,36 @@ func TestAuthHandlerLoginUsesNeutralFailure(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "Invalid login or password.") || strings.Contains(rec.Body.String(), "secret-value") {
 		t.Fatal("login response did not keep the neutral safe outcome")
+	}
+}
+
+func TestAuthHandlerReadsCredentialsOnlyFromPostBody(t *testing.T) {
+	h, usersFake := newAuthHandler(t)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/login?identifier=query-user&password=query-secret", strings.NewReader("identifier=body-user&password=body-secret"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	h.Login(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("status = %d, want 303", rec.Code)
+	}
+	if usersFake.identifier != "body-user" || usersFake.password != "body-secret" {
+		t.Fatalf("credentials = %q, %q; want values from request body", usersFake.identifier, usersFake.password)
+	}
+}
+
+func TestAuthHandlerIgnoresRegistrationFieldsInQuery(t *testing.T) {
+	h, usersFake := newAuthHandler(t)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/register?first_name=Ada&login=ada&email=ada%40example.test&password=query-secret&password_confirmation=query-secret", strings.NewReader("first_name=Body"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	h.Register(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("status = %d, want 303", rec.Code)
+	}
+	if usersFake.registered != (users.RegistrationInput{FirstName: "Body"}) {
+		t.Fatalf("registration input = %+v, want only request body values", usersFake.registered)
 	}
 }
 

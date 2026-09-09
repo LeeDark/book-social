@@ -71,7 +71,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := users.RegistrationInput{FirstName: r.FormValue("first_name"), Login: r.FormValue("login"), Email: r.FormValue("email"), Password: r.FormValue("password"), PasswordConfirmation: r.FormValue("password_confirmation")}
+	input := users.RegistrationInput{FirstName: r.PostForm.Get("first_name"), Login: r.PostForm.Get("login"), Email: r.PostForm.Get("email"), Password: r.PostForm.Get("password"), PasswordConfirmation: r.PostForm.Get("password_confirmation")}
 	form := AuthForm{FirstName: input.FirstName, Login: input.Login, Email: input.Email}
 	token, err := h.cookies.GenerateToken()
 	if err != nil {
@@ -109,8 +109,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	form := AuthForm{Identifier: r.FormValue("identifier")}
-	user, err := h.users.Authenticate(r.Context(), form.Identifier, r.FormValue("password"))
+	form := AuthForm{Identifier: r.PostForm.Get("identifier")}
+	user, err := h.users.Authenticate(r.Context(), form.Identifier, r.PostForm.Get("password"))
 	if err != nil {
 		if errors.Is(err, users.ErrInvalidCredentials) {
 			form.Errors = map[string]string{"credentials": "Invalid login or password."}
