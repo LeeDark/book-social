@@ -22,13 +22,16 @@ import (
 type fakeAuthUsers struct {
 	registerErr, authenticateErr error
 	registered                   users.RegistrationInput
+	identifier, password         string
 }
 
 func (f *fakeAuthUsers) RegisterAndCreateSession(_ context.Context, input users.RegistrationInput, _ []byte, _ time.Duration) (users.User, error) {
 	f.registered = input
 	return users.User{ID: 1, FirstName: "Ada"}, f.registerErr
 }
-func (f *fakeAuthUsers) Authenticate(context.Context, string, string) (users.User, error) {
+func (f *fakeAuthUsers) Authenticate(_ context.Context, identifier, password string) (users.User, error) {
+	f.identifier = identifier
+	f.password = password
 	return users.User{ID: 1, FirstName: "Ada"}, f.authenticateErr
 }
 
@@ -99,12 +102,47 @@ func TestAuthHandlerLoginUsesNeutralFailure(t *testing.T) {
 	h, usersFake := newAuthHandler(t)
 	usersFake.authenticateErr = users.ErrInvalidCredentials
 	rec := httptest.NewRecorder()
-	h.Login(rec, httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("identifier=unknown&password=secret-value")))
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("identifier=unknown&password=secret-value"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	h.Login(rec, req)
 	if rec.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("status = %d, want 422", rec.Code)
 	}
 	if !strings.Contains(rec.Body.String(), "Invalid login or password.") || strings.Contains(rec.Body.String(), "secret-value") {
 		t.Fatal("login response did not keep the neutral safe outcome")
+	}
+	if usersFake.identifier != "unknown" || usersFake.password != "secret-value" {
+		t.Fatalf("credentials = %q, %q; want submitted values", usersFake.identifier, usersFake.password)
+	}
+}
+
+func TestAuthHandlerReadsCredentialsOnlyFromPostBody(t *testing.T) {
+	h, usersFake := newAuthHandler(t)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/login?identifier=query-user&password=query-secret", strings.NewReader("identifier=body-user&password=body-secret"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	h.Login(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("status = %d, want 303", rec.Code)
+	}
+	if usersFake.identifier != "body-user" || usersFake.password != "body-secret" {
+		t.Fatalf("credentials = %q, %q; want values from request body", usersFake.identifier, usersFake.password)
+	}
+}
+
+func TestAuthHandlerIgnoresRegistrationFieldsInQuery(t *testing.T) {
+	h, usersFake := newAuthHandler(t)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/register?first_name=Ada&login=ada&email=ada%40example.test&password=query-secret&password_confirmation=query-secret", strings.NewReader("first_name=Body"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	h.Register(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("status = %d, want 303", rec.Code)
+	}
+	if usersFake.registered != (users.RegistrationInput{FirstName: "Body"}) {
+		t.Fatalf("registration input = %+v, want only request body values", usersFake.registered)
 	}
 }
 
@@ -169,11 +207,16 @@ func TestAuthTemplatesRenderAccessibleInputsAndSafeNavigation(t *testing.T) {
 }
 
 func TestAuthHandlerSuccessfulLoginCreatesCookieAndRedirects(t *testing.T) {
-	h, _ := newAuthHandler(t)
+	h, usersFake := newAuthHandler(t)
 	rec := httptest.NewRecorder()
-	h.Login(rec, httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("identifier=ada&password=valid-password")))
+	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader("identifier=ada&password=valid-password"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	h.Login(rec, req)
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/me" {
 		t.Fatalf("login = %d %q, want 303 /me", rec.Code, rec.Header().Get("Location"))
+	}
+	if usersFake.identifier != "ada" || usersFake.password != "valid-password" {
+		t.Fatalf("credentials = %q, %q; want submitted values", usersFake.identifier, usersFake.password)
 	}
 	var session bool
 	for _, cookie := range rec.Result().Cookies() {

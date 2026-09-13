@@ -262,6 +262,21 @@ func testAuthRoutes(t *testing.T, handler http.Handler) {
 			}
 		}
 	})
+	t.Run("registered session keeps authenticated navigation on not found page", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/missing-page", nil)
+		req.AddCookie(session)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		body := rec.Body.String()
+		if rec.Code != http.StatusNotFound || !strings.Contains(body, "Ada") || !strings.Contains(body, `action="/logout"`) {
+			t.Fatalf("authenticated not found page = %d %q", rec.Code, body)
+		}
+		for _, unwanted := range []string{`href="/login"`, `href="/register"`, session.Value, hex.EncodeToString(httpauth.HashToken(session.Value))} {
+			if strings.Contains(body, unwanted) {
+				t.Fatalf("authenticated not found page contains unwanted value %q: %q", unwanted, body)
+			}
+		}
+	})
 	t.Run("anonymous account redirects to login", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/me", nil))
@@ -302,6 +317,39 @@ func testAuthRoutes(t *testing.T, handler http.Handler) {
 			t.Fatal("duplicate response contains password")
 		}
 	})
+	t.Run("cross-origin login preserves the existing session", func(t *testing.T) {
+		login := url.Values{"identifier": {"ada"}, "password": {password}}
+		req := formRequest(http.MethodPost, "/login", login)
+		req.Header.Set("Origin", "https://evil.example")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusForbidden {
+			t.Fatalf("cross-origin login = %d, want 403", rec.Code)
+		}
+
+		check := httptest.NewRequest(http.MethodGet, "/me", nil)
+		check.AddCookie(session)
+		checkRec := httptest.NewRecorder()
+		handler.ServeHTTP(checkRec, check)
+		if checkRec.Code != http.StatusOK {
+			t.Fatalf("session was mutated by rejected login: %d", checkRec.Code)
+		}
+	})
+	t.Run("invalid login credentials return one safe outcome", func(t *testing.T) {
+		for _, login := range []url.Values{
+			{"identifier": {"missing"}, "password": {password}},
+			{"identifier": {"ada"}, "password": {"wrong password"}},
+		} {
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, formRequest(http.MethodPost, "/login", login))
+			if rec.Code != http.StatusUnprocessableEntity || !strings.Contains(rec.Body.String(), "Invalid login or password.") {
+				t.Fatalf("invalid login = %d %q", rec.Code, rec.Body.String())
+			}
+			if strings.Contains(rec.Body.String(), login.Get("password")) || cookieByName(rec.Result().Cookies(), "book_social_session") != nil {
+				t.Fatal("invalid login returned a password or session cookie")
+			}
+		}
+	})
 	t.Run("cross-origin logout preserves session", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/logout", nil)
 		req.Header.Set("Origin", "https://evil.example")
@@ -338,6 +386,26 @@ func testAuthRoutes(t *testing.T, handler http.Handler) {
 			t.Fatalf("reused token = %d %q", checkRec.Code, checkRec.Header().Get("Location"))
 		}
 	})
+	t.Run("login creates a new session after logout", func(t *testing.T) {
+		login := url.Values{"identifier": {"ada"}, "password": {password}}
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, formRequest(http.MethodPost, "/login", login))
+		if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/me" {
+			t.Fatalf("login = %d %q, want 303 /me", rec.Code, rec.Header().Get("Location"))
+		}
+		newSession := cookieNamed(t, rec.Result().Cookies(), "book_social_session")
+		if newSession.Value == session.Value || !newSession.HttpOnly || newSession.SameSite != http.SameSiteLaxMode {
+			t.Fatalf("new login session cookie = %+v", newSession)
+		}
+
+		account := httptest.NewRequest(http.MethodGet, "/me", nil)
+		account.AddCookie(newSession)
+		accountRec := httptest.NewRecorder()
+		handler.ServeHTTP(accountRec, account)
+		if accountRec.Code != http.StatusOK || !strings.Contains(accountRec.Body.String(), "Signed in as Ada.") {
+			t.Fatalf("new login account = %d %q", accountRec.Code, accountRec.Body.String())
+		}
+	})
 }
 
 func formRequest(method, path string, values url.Values) *http.Request {
@@ -348,12 +416,19 @@ func formRequest(method, path string, values url.Values) *http.Request {
 
 func cookieNamed(t *testing.T, cookies []*http.Cookie, name string) *http.Cookie {
 	t.Helper()
+	if cookie := cookieByName(cookies, name); cookie != nil {
+		return cookie
+	}
+	t.Fatalf("cookie %q not found", name)
+	return nil
+}
+
+func cookieByName(cookies []*http.Cookie, name string) *http.Cookie {
 	for _, cookie := range cookies {
 		if cookie.Name == name {
 			return cookie
 		}
 	}
-	t.Fatalf("cookie %q not found", name)
 	return nil
 }
 

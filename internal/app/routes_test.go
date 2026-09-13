@@ -52,6 +52,9 @@ func TestAppUnknownRouteRendersNotFoundPage(t *testing.T) {
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
 	}
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want no-store", got)
+	}
 
 	body := rec.Body.String()
 	for _, fragment := range []string{"Page not found", "Browse catalog", "Go home"} {
@@ -139,6 +142,9 @@ func TestAppDynamicRoutesReceiveApplicationTimeout(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want no-store", got)
 	}
 	select {
 	case seen := <-deadlineSeen:

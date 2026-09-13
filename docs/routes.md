@@ -7,7 +7,7 @@ Current MPA routes are registered in `internal/app/routes.go`.
 The router applies middleware in this order:
 
 ```text
-SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> dynamic timeout -> current-user -> flash -> CrossOriginProtection -> route guard/handler
+SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> dynamic timeout -> no-store -> current-user -> flash -> CrossOriginProtection -> route guard/handler
 ```
 
 `TrustedRealIP` is a no-op unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured, forwarded
@@ -25,8 +25,9 @@ The application timeout is added only to dynamic MPA page routes:
 GET /, /about, /books, /books/{slug}, /authors/{slug} -> Timeout(30s)
 ```
 
-`/healthz`, `/static/*`, and the fallback 404 handler do not use the application timeout. Server
-transport timeouts remain configured separately in `internal/app/server.go`.
+`/healthz`, `/static/*`, and the fallback 404 handler do not use the application timeout. The 404
+handler still loads current-user and flash request state so its navigation matches dynamic pages.
+Server transport timeouts remain configured separately in `internal/app/server.go`.
 
 Every response receives the conservative browser policy from `internal/http/middleware/security.go`:
 content type sniffing and framing are disabled, referrers are reduced to origin on cross-origin
@@ -34,8 +35,8 @@ requests, unused browser capabilities are disabled, and the content policy allow
 assets plus HTTPS/data cover images. HSTS is intentionally not enabled for the local HTTP workflow.
 
 Static assets use `Cache-Control: public, max-age=3600` for successful responses. Missing or failed
-static responses use `Cache-Control: no-store`. HTML pages, 404 pages, and HTMX partial responses
-do not receive a public long-lived cache policy.
+static responses use `Cache-Control: no-store`. Dynamic MPA pages, HTML 404 pages, and HTMX partial
+responses use `Cache-Control: no-store`, because navigation and flash state can be session-specific.
 
 ## Error Responses
 
@@ -70,7 +71,7 @@ GET /me             protected minimal identity page; anonymous users receive 303
 
 Unsafe browser POST requests remain protected by `http.CrossOriginProtection`. A cross-origin
 request receives `403` before mutation. Session and flash cookies are `HttpOnly`, `SameSite=Lax`,
-and use `Secure` outside development. `/me` responds with `Cache-Control: no-store`.
+and use `Secure` outside development. Dynamic pages respond with `Cache-Control: no-store`.
 
 ## Catalog Filters
 

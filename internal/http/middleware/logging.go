@@ -36,7 +36,6 @@ func RequestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 			accessLogger.Log(r.Context(), level, "http request",
 				"method", r.Method,
 				"path", r.URL.Path,
-				"query", r.URL.RawQuery,
 				"status", ww.Status(),
 				"bytes", ww.BytesWritten(),
 				"duration", time.Since(start).String(),
