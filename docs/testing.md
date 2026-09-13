@@ -117,6 +117,8 @@ only for an explicit seed smoke test or database setup check.
 
 ## Manual Browser Smoke: v0.2.6 Auth Flow
 
+Status: complete as part of v0.2.6 release closure.
+
 Run this smoke test on a local machine, outside the Codex sandbox. It is a release check for the
 server-rendered registration, login, logout, navigation, and accessibility flow; it does not replace
 the `httptest` coverage above.

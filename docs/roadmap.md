@@ -7,10 +7,11 @@ does not change the active priority or release scope until an item is explicitly
 
 ## Current Planning Status
 
-Active release: **v0.2.6 Registration/Login/Logout**. v0.2.1 through v0.2.5 are closed. The
-release exposes the already accepted auth foundation through the first browser-facing flow; it does
-not start personal-library work. Planning checklists are not evidence of completed behavior;
-completion requires implementation and verification.
+v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation through the first
+browser-facing flow: registration, login, idempotent logout, protected `/me`, auth navigation, and
+one-request success flashes. Its manual browser smoke and release closure are complete.
+
+Next planned scope: **v0.3.0 Private Library Foundation**. It is not active work.
 
 ## Planning Principles
 
@@ -221,7 +222,8 @@ Definition of Done:
 
 Goal: expose the minimal user-facing auth workflow.
 
-Status: active. This is the current development priority.
+Status: closed. Registration, login, idempotent POST logout, protected `/me`, auth navigation, and
+one-request success flashes are complete. Manual browser smoke and release closure are complete.
 
 - [x] Add a registration form and handler.
 - [x] Add login form and handler.
@@ -234,11 +236,11 @@ Status: active. This is the current development priority.
 
 Definition of Done:
 
-- [ ] Anonymous users can register and log in.
-- [ ] Logged-in users can log out.
-- [ ] Anonymous users are redirected from the protected route.
-- [ ] `make test` passes.
-- [ ] v0.2 release notes or task history are updated.
+- [x] Anonymous users can register and log in.
+- [x] Logged-in users can log out.
+- [x] Anonymous users are redirected from the protected route.
+- [x] `make test` passes.
+- [x] v0.2 release notes or task history are updated.
 
 ## v0.3 — Reliable User Core
 
@@ -260,6 +262,8 @@ The v0.3 scope is delivered in this dependency order. A sub-release is closed on
 acceptance criteria and relevant tests pass; unfinished work is not silently moved to the next one.
 
 #### v0.3.0 — Private Library Foundation
+
+Status: next planned scope; not active.
 
 - [ ] Confirm the closed v0.2.6 auth baseline and write the library use cases, permission rules,
   status-transition rules, application errors, and transaction boundaries.

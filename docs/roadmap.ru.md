@@ -4,10 +4,9 @@
 
 ## Текущий статус планирования
 
-Канонический источник очередности и принятого scope — `roadmap.md`. Активная версия:
-**v0.2.6 Registration/Login/Logout**. v0.2.1–v0.2.5 закрыты; v0.3 и последующие версии остаются
-планами. Planning checklist не является подтверждением реализованного поведения: завершение
-требует реализации и проверок.
+Канонический источник очередности и принятого scope — `roadmap.md`. v0.2.1–v0.2.6 закрыты;
+v0.3 и последующие версии остаются планами. Planning checklist не является подтверждением
+реализованного поведения: завершение требует реализации и проверок.
 
 ## Принципы планирования
 
@@ -108,20 +107,20 @@ v0.1 закрыт как основа следующего этапа.
 - [x] Browser cross-origin protection и минимальная validation policy.
 - [x] SQLite/PostgreSQL migration и тестовое покрытие foundation.
 
-### v0.2.6 Registration/Login/Logout — активна
+### v0.2.6 Registration/Login/Logout — закрыта
 
-- [ ] Registration и login формы/handlers.
-- [ ] `POST /logout` и минимальный защищённый `GET /me`.
-- [ ] Navigation для anonymous/authenticated и one-request flash messages.
-- [ ] Safe validation outcomes для duplicate identity и invalid credentials.
-- [ ] Handler tests через `httptest`, затем `make test` и обновление release/task documentation.
+- [x] Registration и login формы/handlers.
+- [x] `POST /logout` и минимальный защищённый `GET /me`.
+- [x] Navigation для anonymous/authenticated и one-request flash messages.
+- [x] Safe validation outcomes для duplicate identity и invalid credentials.
+- [x] Handler tests через `httptest`, manual browser smoke и release closure.
 
 Критерии готовности:
 
-- [ ] Гость может зарегистрироваться, войти и открыть `/me`.
-- [ ] Пользователь может выйти; anonymous получает redirect от защищённого маршрута.
-- [ ] Формы не возвращают и не логируют password, password hash или session token.
-- [ ] Реализованное поведение и маршруты документированы после проверок.
+- [x] Гость может зарегистрироваться, войти и открыть `/me`.
+- [x] Пользователь может выйти; anonymous получает redirect от защищённого маршрута.
+- [x] Формы не возвращают и не логируют password, password hash или session token.
+- [x] Реализованное поведение и маршруты документированы после проверок.
 
 ## v0.3 — Надёжное пользовательское ядро
 
@@ -135,8 +134,8 @@ v0.1 закрыт как основа следующего этапа.
 
 ### v0.3.0 — Фундамент личной библиотеки
 
-- [ ] Закрыть baseline v0.2.6 и согласовать library use cases, права, переходы статусов, ошибки и
-  транзакционные границы.
+- [ ] Использовать закрытый baseline v0.2.6 и согласовать library use cases, права, переходы
+  статусов, ошибки и транзакционные границы.
 - [ ] Добавить модуль `library`, миграцию `library_items`, уникальность `user_id + book_id` и
   `added_at`.
 - [ ] Добавление известной книги и приватная страница `/me/library`.

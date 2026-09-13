@@ -624,3 +624,17 @@ Result:
   duplicate registration, logout, and rejected old-token reuse.
 - SQLite migration/seed smoke passed. Manual browser smoke, opt-in PostgreSQL environment evidence,
   accepted commit/tag, and final release closure remain outstanding.
+
+## 2026-09-13 — v0.2.6 Registration/Login/Logout closure
+
+Result:
+
+- Closed v0.2.6 Registration/Login/Logout.
+- Confirmed the registration, login, idempotent logout, protected `/me`, navigation, and flash
+  workflow.
+- Completed the required manual browser smoke and release closure.
+
+Decision:
+
+- Keep v0.3.0 Private Library Foundation as the next planned scope; do not treat it as active work
+  until it receives a separate commitment.

@@ -27,8 +27,9 @@ Current focus:
 - clean package boundaries
 - small incremental tasks
 - current documentation should describe implemented behavior, not planned behavior
-- v0.2.5 Auth Foundation is complete at implementation commit `41a8ddb`; the next active release is
-  v0.2.6 Registration/Login/Logout.
+- v0.2.5 Auth Foundation is complete at implementation commit `41a8ddb`.
+- v0.2.6 Registration/Login/Logout is complete: registration, login, idempotent logout, protected
+  `/me`, auth navigation, and one-request success flashes.
 
 Current catalog behavior:
 - `/books` lists books.
@@ -70,11 +71,9 @@ Current infrastructure caveat:
 - Security headers, static cache policy, buffered rendering failures, and structured panic recovery
   are implemented and covered by focused HTTP tests.
 - Global `http.CrossOriginProtection` rejects unsafe cross-origin browser requests. DB-backed
-  session, cookie, current-user, and guard foundations are tested but production auth routes are not
-  registered yet.
+  session, cookie, current-user, and guard foundations support the production auth routes.
 - `APP_TRUSTED_PROXY_CIDRS` conditionally enables forwarded client-IP handling; it is disabled when
   unset.
 
-Next planned release:
-- v0.2.6 Registration/Login/Logout: forms and handlers, production auth dependency wiring,
-  protected `/me`, navigation, flashes, and the complete browser flow on the accepted foundation.
+Next planned scope:
+- v0.3.0 Private Library Foundation. It is not active work.

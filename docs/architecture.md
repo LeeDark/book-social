@@ -27,7 +27,7 @@ HTTP handler
 - `internal/storage/sqlite`: SQLite implementation of repository interfaces.
 - `internal/storage/postgresql`: PostgreSQL connection and repository implementation.
 - `internal/http/auth`: cookie/token boundary, typed current-user request context, and testable
-  authentication guard. Production auth-route wiring is deferred to v0.2.6.
+  authentication guard used by production auth routes.
 - `internal/http`: renderer, response helpers, middleware, shared page/navigation views.
 - `internal/web`: server templates and static assets.
 
@@ -58,8 +58,8 @@ HTTP handler
   verification path for an unknown account.
 - Use DB-backed opaque sessions. The browser receives a random raw token only after its 32-byte
   SHA-256 hash is persisted; services own the seven-day absolute lifetime.
-- Services own transaction boundaries for multi-table use cases. v0.2.5 keeps default-role lookup
-  and user creation in one transaction; atomic registration plus session is a v0.2.6 prerequisite.
+- Services own transaction boundaries for multi-table use cases. Registration creates the default
+  role user and first session atomically.
 - Keep generic 500 response bodies free of internal error details; log the detailed error on the
   server side. Buffer template output before committing its status.
 
@@ -75,5 +75,4 @@ HTTP handler
 - Large frontend framework.
 - Full API/OpenAPI surface.
 - Production Docker/Kubernetes setup.
-- User-facing registration/login/logout, production `/me`, auth navigation, and flashes.
 - User library features.

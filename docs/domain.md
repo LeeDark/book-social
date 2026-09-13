@@ -5,7 +5,7 @@ This document describes domain concepts. Database column details live in:
 - [Database v0.1](database_v0_1.md)
 - [Database v0.2](database_v0_2.md)
 
-## Current v0.2.5 Model
+## Current v0.2.6 Model
 
 Book Social currently models a small book catalog.
 
@@ -72,7 +72,7 @@ The normalized schema is described in [database_v0_2.md](database_v0_2.md).
 
 ### User and Authentication Foundation
 
-The current `users` module provides internal foundations only:
+The current `users` module provides:
 
 - registration input normalization and validation;
 - server-owned assignment of the ordinary `user` role;
@@ -95,8 +95,7 @@ page models.
 ### Library, Shelves, Tags
 
 The schema still contains legacy/demo `library`, `shelves`, and `tags` structures. They are not the
-user-facing personal-library model. The user-facing authentication workflow and final
-`library_items` model are deferred to v0.2.6 and v0.3 respectively.
+user-facing personal-library model. The final `library_items` model is deferred to v0.3.
 
 ## Current Design Rules
 
@@ -106,4 +105,4 @@ user-facing personal-library model. The user-facing authentication workflow and 
 - Keep handler, service, and repository responsibilities separate.
 - Keep password hashes and raw session tokens out of user/page models, errors, logs, and test
   diagnostics.
-- Keep user-facing auth and library behavior within their v0.2.6 and v0.3 roadmap scopes.
+- Keep private-library behavior within the v0.3 roadmap scope.

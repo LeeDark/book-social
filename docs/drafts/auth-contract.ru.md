@@ -3,9 +3,8 @@
 > **Статус: принятый versioned contract.**
 >
 > Foundation v0.2.5 закрыт на принятой implementation revision `41a8ddb`; user-facing workflow
-> v0.2.6 ещё не реализован. Текущее принятое поведение описывают `docs/routes.md`, `docs/domain.md`,
-> `docs/database.md` и `docs/development.md`. Пошаговые планы ведутся отдельно от этого
-> versioned contract.
+> v0.2.6 реализован и закрыт. Этот contract фиксирует принятое поведение; пошаговые планы ведутся
+> отдельно от него.
 
 ## 1. Цель, граница и существующая основа
 
@@ -27,7 +26,7 @@
 | v0.2.6 Registration/Login/Logout | Routes, handlers, forms/templates, application wiring, navigation/flashes и полный register/login/`/me`/logout flow.                                                         | Изменение session strategy, API auth, RBAC, account lifecycle или private-library ownership.       |
 
 MPA и `html/template` остаются основным UI, buffered renderer и layered boundaries сохраняются.
-v0.2.6 начинается только после закрытого v0.2.5 foundation; отсутствие v0.2.6 routes не блокирует
+v0.2.6 последовала за закрытым v0.2.5 foundation; отсутствие v0.2.6 routes не блокировало
 закрытие v0.2.5.
 
 v0.2.4 HTTP-основа уже закрыта. Существующие `/healthz`, `/static/*`, recovery, request ID, trusted
@@ -45,8 +44,8 @@ metrics или test fixtures.
 
 ## 2. Участники, identity и авторизация
 
-Матрица ниже задаёт наблюдаемое поведение будущих routes v0.2.6. В v0.2.5 эти actors нужны для
-проектирования identity/context/guard boundaries, но публичные auth routes ещё отсутствуют.
+Матрица ниже задаёт реализованное наблюдаемое поведение routes v0.2.6. В v0.2.5 эти actors были
+нужны для проектирования identity/context/guard boundaries до появления публичных auth routes.
 
 | Участник                            | Разрешено                                                                                                 | Запрещено / результат                                                                     |
 |-------------------------------------|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
@@ -58,7 +57,7 @@ metrics или test fixtures.
 проверяет право на private action в use case или другой явной server-side boundary. Navigation,
 hidden form fields и database role не являются security control.
 
-Единственная planned protected boundary v0.2.6 — `GET /me`: authenticated current user only.
+Единственная protected boundary v0.2.6 — `GET /me`: authenticated current user only.
 Missing, invalid или expired session означает anonymous state, redirect на `/login`, отсутствие
 `500` и отсутствие disclosure private resource. Handler получает только identity текущего
 пользователя; password/hash, session token, role internals и future-library data в page model не
@@ -69,11 +68,11 @@ Ownership library data намеренно отложен до v0.3. Для ка�
 обязателен contract: anonymous → refusal; owner → allowed operation; non-owner → refusal without
 disclosure. Admin case появляется только после отдельного product decision.
 
-## 3. Маршруты, формы и CSRF — target v0.2.6
+## 3. Маршруты, формы и CSRF v0.2.6
 
-Таблица ниже является route contract v0.2.6, а не описанием текущего v0.2.5 behavior. `next` в
-первом user-facing slice отсутствует: успешные registration и login перенаправляют на `/me`. Если
-return-to понадобится позднее, допустимы только validated local paths с fallback `/me`.
+Таблица ниже является реализованным route contract v0.2.6. `next` в первом user-facing slice
+отсутствует: успешные registration и login перенаправляют на `/me`. Если return-to понадобится
+позднее, допустимы только validated local paths с fallback `/me`.
 
 | Method/path      | Участник и защита от CSRF                                                                        | Успех                                                                        | Отказ / побочный эффект                                                                                                    |
 |------------------|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
@@ -85,8 +84,7 @@ return-to понадобится позднее, допустимы только
 | `GET /me`        | Authenticated current user only; no state change.                                                | `200`, minimal current-user identity.                                        | Missing/invalid/expired session → `303 /login`; no disclosure and no `500`.                                                |
 
 GET/HEAD не меняют state. v0.2.5 подключает единый `http.CrossOriginProtection` к application router
-и проверяет его на test-only handler; v0.2.6 обязана провести через него все реальные unsafe browser
-routes:
+и проверяет его на test-only handler; v0.2.6 проводит через него все реальные unsafe browser routes:
 middleware отклоняет cross-origin request по Fetch Metadata (`Sec-Fetch-Site`) либо `Origin` с safe
 `403`; forms не получают CSRF token. Запрос без обоих этих заголовков допускается как non-browser
 или unknown request, поэтому production использует HTTPS, а `SameSite=Lax` остаётся независимым
@@ -97,8 +95,8 @@ defense-in-depth барьером. Middleware включается для applic
 ## 4. Учётная запись, validation и domain errors
 
 Foundation v0.2.5 определяет registration input и service validation для `first_name`, `login`,
-`email`, `password` и confirmation; `second_name` и `sur_name` не входят ни в input, ни в будущую
-форму. Обычная роль `user` гарантируется migration/seed, назначается только server-side; отсутствие
+`email`, `password` и confirmation; `second_name` и `sur_name` не входят ни в input, ни в форму.
+Обычная роль `user` гарантируется migration/seed, назначается только server-side; отсутствие
 role в corrupted/manual DB — internal error. v0.2.6 отображает эти правила через form/handler, не
 создавая второй набор validation rules.
 
@@ -129,9 +127,9 @@ Session — DB-backed opaque session. Cookie содержит cryptographically 
 `Set-Cookie` отправляется только после successful authentication и успешной session persistence.
 
 Сессия имеет absolute lifetime 7 days без sliding renewal. v0.2.5 предоставляет create/load/delete,
-expiry semantics, token hashing, cookie manager и current-user context как foundation, но не обязана
-вызывать их из отсутствующих login/logout handlers. v0.2.6 после успешной registration/login создаёт
-или rotate новый identifier; request ищет hash, проверяет expiry и кладёт minimal identity в
+expiry semantics, token hashing, cookie manager и current-user context как foundation; v0.2.6
+использует их после успешной registration/login и создаёт или rotate новый identifier; request ищет
+hash, проверяет expiry и кладёт minimal identity в
 context. Missing/invalid/expired token — anonymous, не internal error; допустима lazy cleanup при
 load/delete, без worker. Logout v0.2.6 delete/invalidate сессию и clear `book_social_session`, даже
 если DB row уже отсутствует; операция idempotent и old-token reuse получает refusal.
@@ -152,10 +150,9 @@ private content запрещены.
 seed/reset/test bootstrap создают role `user` и проходят migration/seed smoke.
 
 Service/use case владеет transaction, когда меняется несколько таблиц. v0.2.5 создаёт foundation для
-server-owned default-role lookup и create user. Route contract v0.2.6 требует, чтобы successful
-registration atomically создавала user и session; если foundation не может обеспечить эту
-transaction boundary, v0.2.6 не начинается до исправления foundation или явного пересмотра success
-behavior в contract. Successful login создаёт новую session; одиночный delete/invalidate session
+server-owned default-role lookup и create user. Route contract v0.2.6 устанавливает, что successful
+registration atomically создаёт user и session. Successful login создаёт новую session; одиночный
+delete/invalidate session
 может быть repository call.
 
 Полный middleware order после wiring v0.2.6 сохраняет v0.2.4:
@@ -173,7 +170,7 @@ cookie/authorization headers, submitted credentials и private resource content.
 
 v0.2.5 отвечает за typed domain errors, redacted service/repository outcomes и отсутствие secrets в
 foundation responses/logs/test output. Полная client-status/event-class матрица применяется в
-v0.2.6, когда появляются handlers и реальные auth events.
+реализованных handlers и реальных auth events v0.2.6.
 
 | Событие                          | Клиент                                             | Журнал                                                     |
 |----------------------------------|----------------------------------------------------|------------------------------------------------------------|
@@ -199,9 +196,9 @@ v0.2.5 выполняется и закрывается отдельно:
    protected-route guard.
 5. Foundation verification, documentation и отдельный v0.2.5 release review.
 
-Только после этого v0.2.6 добавляет handlers, templates, navigation, flashes, production auth wiring
-и полный browser-style flow. У каждой версии собственный DoD и собственный closure; завершение
-пунктов v0.2.6 не используется как условие закрытия v0.2.5.
+После этого v0.2.6 добавила handlers, templates, navigation, flashes, production auth wiring и полный
+browser-style flow. У каждой версии собственный DoD и собственный closure; завершение пунктов v0.2.6
+не использовалось как условие закрытия v0.2.5.
 
 Для обеих версий narrow tests предшествуют `GOCACHE=/tmp/book-social-go-cache make test`,
 `GOCACHE=/tmp/book-social-go-cache go vet ./...`, `git diff --check` и
@@ -219,8 +216,8 @@ code:
   session/cookie lifecycle, CSRF, error/logging policy и verification; security-affecting `TBD` нет.
 - Продуктовая граница сохранена: private library ownership, roles/RBAC, API security и account
   recovery отложены до своих trigger.
-- v0.2.5 implementation прошёл отдельный финальный review на revision `41a8ddb`; UI/forms остаются
-  задачей v0.2.6 и не использовались для закрытия foundation.
+- v0.2.5 implementation прошёл отдельный финальный review на revision `41a8ddb`; UI/forms были
+  завершены в v0.2.6 и не использовались для закрытия foundation.
 
 ## Definition of Done v0.2.5
 
@@ -254,7 +251,7 @@ browser flow не является нарушением Definition of Done v0.2.
 
 ## Definition of Done v0.2.6
 
-v0.2.6 завершена только после закрытой v0.2.5 и когда одновременно выполнено всё ниже:
+v0.2.6 закрыта после v0.2.5; принятое реализованное поведение включает всё ниже:
 
 - `GET/POST /register`, `GET/POST /login`, `POST /logout` и protected `GET /me` реализуют route
   contract выше; state-changing `GET` route отсутствует.
@@ -275,13 +272,11 @@ v0.2.6 завершена только после закрытой v0.2.5 и к�
 - Handler/router/template tests покрывают forms, validation, conflicts, neutral login refusal,
   cookie attributes, current-user context, anonymous/authenticated `/me`, logout/reuse и каждый
   CrossOrigin success/refusal path; manual browser smoke проверяет accessibility и navigation.
-- `make test`, `go vet ./...`, lint и `git diff --check` проходят; PostgreSQL parity указана
-  отдельно, а routes/domain/database/testing/roadmap/task documentation описывает фактический v0.2.6
-  behavior.
+- Manual browser smoke и release closure завершены; документация описывает фактическое поведение
+  v0.2.6.
 
 ## Правило перехода между версиями
 
-v0.2.5 может быть закрыта без user-facing auth workflow, но прикладная реализация v0.2.6 не
-начинается на непринятом foundation. Applied Stage 7A evidence для полного MPA flow добавляется
-только после принятого v0.2.6 commit/tag; foundation evidence v0.2.5 обозначается отдельно и не
-выдаётся за готовый registration/login/logout path.
+v0.2.5 могла быть закрыта без user-facing auth workflow, но прикладная реализация v0.2.6 началась
+только на принятом foundation. Evidence полного MPA flow v0.2.6 обозначается отдельно от
+foundation evidence v0.2.5 и не смешивает их.

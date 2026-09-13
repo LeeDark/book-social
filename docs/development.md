@@ -50,9 +50,8 @@ SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> 
 accepts forwarded client-IP headers only from an immediate peer in those networks.
 
 `CrossOriginProtection` rejects unsafe cross-origin browser requests before route handlers and does
-not use insecure bypass patterns. The v0.2.5 route tree still contains no auth form handlers;
-current-user middleware and the route guard are foundations for v0.2.6 rather than global session
-work on static and health requests.
+not use insecure bypass patterns. Current-user middleware and the route guard support the completed
+v0.2.6 auth routes without adding session work to static and health requests.
 
 The 30-second application timeout is applied only to dynamic MPA pages. Health checks, static
 files, and the fallback 404 route do not use it. Static assets have a one-hour public cache on
@@ -132,14 +131,14 @@ Auth foundation configuration currently has one central non-environment setting:
 The cookie manager uses the same seven-day default when no explicit lifetime is supplied. Its
 policy defaults to `book_social_session`, `Path=/`, `HttpOnly`, and `SameSite=Lax`. `Secure` remains
 an explicit environment/wiring decision: it must be enabled for HTTPS stage/prod, while local HTTP
-development is the documented exception. Production cookie wiring begins with v0.2.6.
+development is the documented exception. The completed v0.2.6 auth flow uses this cookie policy.
 
 `APP_ENV=test` is not a supported runtime environment. Tests build their own configuration
 and temporary SQLite databases where needed.
 
-## Auth Foundation Lifecycle
+## Auth Lifecycle
 
-The v0.2.5 token and session sequence is deliberately split:
+The token and session sequence is deliberately split:
 
 ```text
 GenerateToken
@@ -151,8 +150,8 @@ GenerateToken
 If token generation or persistence fails, no cookie should be exposed. Current-user middleware
 hashes the cookie value before lookup and puts only minimal identity into typed request context.
 Invalid or expired sessions clear browser state and continue anonymously; unexpected store failures
-return a generic `500`. Logout/session invalidation and the real register/login handlers remain
-v0.2.6 work.
+return a generic `500`. Completed v0.2.6 registration and login handlers create sessions, and logout
+invalidates them.
 
 Set variables for one command:
 

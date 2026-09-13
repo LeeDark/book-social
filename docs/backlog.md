@@ -23,9 +23,9 @@ document. Do not use this file as an unbounded duplicate of the roadmap.
 
 ## Current planning boundary
 
-Active roadmap work is v0.2.6 Registration/Login/Logout. No backlog item is promoted by this
-document; defer unrelated API, rendering, and infrastructure ideas until the active release is
-closed or a concrete revisit condition is met.
+v0.2.6 Registration/Login/Logout is closed. The next planned scope is v0.3.0 Private Library
+Foundation, which is not active work. No backlog item is promoted by this document; defer unrelated
+API, rendering, and infrastructure ideas until a concrete revisit condition is met.
 
 ## Public catalog JSON API
 
