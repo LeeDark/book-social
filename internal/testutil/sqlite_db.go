@@ -33,6 +33,18 @@ func NewSQLiteCatalogV2TestDB(t *testing.T, ctx context.Context) *sql.DB {
 	return db
 }
 
+// NewSQLiteLibraryTestDB creates the v0.3 library schema with the normalized
+// catalog fixture. Callers create only the user data needed by each test.
+func NewSQLiteLibraryTestDB(t *testing.T, ctx context.Context) *sql.DB {
+	t.Helper()
+
+	db := NewSQLiteTestDB(t, ctx, filepath.Join(t.TempDir(), "book_social_library_test.db"))
+	ApplySQLiteLibraryTestSchema(t, ctx, db)
+	SeedSQLiteCatalogV2TestData(t, ctx, db)
+
+	return db
+}
+
 func NewSQLiteMemoryTestDB(t *testing.T, ctx context.Context) *sql.DB {
 	t.Helper()
 
@@ -68,6 +80,11 @@ func ApplySQLiteCatalogTestSchema(t *testing.T, ctx context.Context, db *sql.DB)
 }
 
 func ApplySQLiteCatalogV2TestSchema(t *testing.T, ctx context.Context, db *sql.DB) {
+	t.Helper()
+	applySQLiteCatalogTestMigrations(t, ctx, db, "000003")
+}
+
+func ApplySQLiteLibraryTestSchema(t *testing.T, ctx context.Context, db *sql.DB) {
 	t.Helper()
 	applySQLiteCatalogTestMigrations(t, ctx, db, "")
 }
