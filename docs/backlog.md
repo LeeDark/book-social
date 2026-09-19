@@ -23,9 +23,10 @@ document. Do not use this file as an unbounded duplicate of the roadmap.
 
 ## Current planning boundary
 
-v0.2.6 Registration/Login/Logout is closed. The next planned scope is v0.3.0 Private Library
-Foundation, which is not active work. No backlog item is promoted by this document; defer unrelated
-API, rendering, and infrastructure ideas until a concrete revisit condition is met.
+v0.2.6 Registration/Login/Logout is closed. v0.3.0 Private Library Foundation is the active scope;
+its contract is defined before schema and implementation work. No backlog item is promoted by this
+document; defer unrelated API, rendering, and infrastructure ideas until a concrete revisit
+condition is met.
 
 ## Public catalog JSON API
 

@@ -638,3 +638,21 @@ Decision:
 
 - Keep v0.3.0 Private Library Foundation as the next planned scope; do not treat it as active work
   until it receives a separate commitment.
+
+## 2026-09-19 — v0.3.0 private-library contract
+
+Result:
+
+- Activated v0.3.0 Private Library Foundation after its separate implementation commitment.
+- Defined the v0.3.0 add/list use cases, authenticated ownership boundary, deterministic listing,
+  application errors, HTTP mapping, repository ports, and transaction ownership.
+- Defined the future v0.3.1 status-transition and timestamp rules without implementing them.
+- Kept legacy library tables, schema migrations, handlers, templates, and lifecycle mutations out
+  of this contract step.
+
+Decision:
+
+- Use `POST /me/library` with a public book slug and server-owned current-user identity; successful
+  adds redirect to `GET /me/library`.
+- Keep v0.3.0 storage minimal and treat its entries as want-to-read until explicit status
+  persistence is added in v0.3.1.

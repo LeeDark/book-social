@@ -75,5 +75,7 @@ Current infrastructure caveat:
 - `APP_TRUSTED_PROXY_CIDRS` conditionally enables forwarded client-IP handling; it is disabled when
   unset.
 
-Next planned scope:
-- v0.3.0 Private Library Foundation. It is not active work.
+Current scope:
+- v0.3.0 Private Library Foundation is active. Its private-library use cases, ownership rules,
+  application errors, module boundaries, and future reading-state rules are defined in
+  `docs/library_v0_3.md`; schema and implementation remain pending.

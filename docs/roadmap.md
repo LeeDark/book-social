@@ -11,7 +11,8 @@ v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation th
 browser-facing flow: registration, login, idempotent logout, protected `/me`, auth navigation, and
 one-request success flashes. Its manual browser smoke and release closure are complete.
 
-Next planned scope: **v0.3.0 Private Library Foundation**. It is not active work.
+Active scope: **v0.3.0 Private Library Foundation**. Its private-library contract is defined before
+schema and implementation work begins.
 
 ## Planning Principles
 
@@ -263,9 +264,10 @@ acceptance criteria and relevant tests pass; unfinished work is not silently mov
 
 #### v0.3.0 — Private Library Foundation
 
-Status: next planned scope; not active.
+Status: active; the private-library contract is defined in
+[`library_v0_3.md`](library_v0_3.md) and implementation follows its dependency order.
 
-- [ ] Confirm the closed v0.2.6 auth baseline and write the library use cases, permission rules,
+- [x] Confirm the closed v0.2.6 auth baseline and write the library use cases, permission rules,
   status-transition rules, application errors, and transaction boundaries.
 - [ ] Add the `library` module and the minimal `library_items` migration, including unique
   `user_id + book_id`, ownership, and `added_at`.
