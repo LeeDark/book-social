@@ -5,7 +5,7 @@ This document describes domain concepts. Database column details live in:
 - [Database v0.1](database_v0_1.md)
 - [Database v0.2](database_v0_2.md)
 
-## Current v0.2.6 Model
+## Current v0.2.6 Model and v0.3 Foundation
 
 Book Social currently models a small book catalog.
 
@@ -95,12 +95,18 @@ page models.
 ### Library, Shelves, Tags
 
 The schema still contains legacy/demo `library`, `shelves`, and `tags` structures. They are not the
-user-facing personal-library model. The final `library_items` model is deferred to v0.3.
+user-facing personal-library model.
+
+Migration `000004` and the `library` module provide the private `library_items` persistence
+foundation: one owner, one catalog book, a uniqueness rule, and an `added_at` timestamp. Its service
+validates owner IDs and book slugs, translates catalog and storage errors to library application
+errors, and returns only catalog data plus item metadata. HTTP routes, forms, templates, and page
+models are not implemented by this foundation and remain deferred to later v0.3 issues.
 
 The accepted use cases, ownership rules, application errors, module boundaries, and future
 reading-state transitions are defined in the planned
-[Private Library v0.3 Contract](library_v0_3.md). They are not current behavior until their
-corresponding v0.3 issues are implemented.
+[Private Library v0.3 Contract](library_v0_3.md). Its HTTP and lifecycle sections are not current
+behavior until their corresponding v0.3 issues are implemented.
 
 ## Current Design Rules
 
