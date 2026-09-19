@@ -520,6 +520,7 @@ prepare task
   -> inspect relevant files
   -> plan the smallest safe change
   -> edit within scope
+  -> apply Go and SQL readability rules when code or migrations change
   -> run formatting/checks/tests
   -> review diff
   -> document behavior changes
@@ -542,6 +543,16 @@ If a check cannot be run, record:
 - why it failed;
 - whether the failure was environmental or code-related;
 - what should be run locally later.
+
+### Readability Review Pass
+
+Before commit, review the diff for human readability separately from domain correctness. Check
+logical grouping, whitespace between phases, naming, long expressions, visual density, helper
+boundaries, and comments. A readability-only pass must not alter behavior, APIs, state machines,
+validation, errors, migrations, or unresolved product decisions.
+
+Report readability findings separately from correctness findings. In the final summary, name the
+checks run and their results rather than pasting large command logs.
 
 ## Learning Loop
 
@@ -685,6 +696,22 @@ Rules:
 - avoid mixing unrelated changes;
 - do not commit generated artifacts accidentally;
 - slow down when a diff becomes too large to review confidently.
+
+### GitHub Issue And PR Markdown
+
+For multiline issue or pull-request descriptions, pass Markdown to GitHub CLI with `--body-file -`
+and literal newlines on stdin. Do not serialize Markdown as JSON and pass the escaped result to
+`--body`; GitHub will render literal `\\n` instead of headings, lists, and paragraphs.
+
+Before relying on a closing reference:
+
+1. Put `Closes #N` in its own final Markdown paragraph.
+2. Inspect the published text with `gh issue view` or `gh pr view --json body --jq .body`.
+3. Inspect the rendered GitHub page when the reference changes issue state or release tracking.
+
+Use [Go and SQL Readability](../code-readability.md) for mandatory readability rules and review
+questions. Apply it to new or materially changed code and migrations; do not expand a focused task
+into a bulk style cleanup.
 
 ## Prompt Templates
 
