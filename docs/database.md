@@ -15,8 +15,8 @@ Current state:
   can be applied with the `golang-migrate` CLI.
 - SQLite and PostgreSQL implement the normalized v0.2 catalog read-side.
 - SQLite and PostgreSQL implement equivalent user and opaque-session persistence contracts.
-- SQLite and PostgreSQL implement equivalent private-library persistence contracts; HTTP use cases
-  are introduced separately by later v0.3 issues.
+- SQLite and PostgreSQL implement equivalent private-library persistence contracts consumed by the
+  implemented v0.3.0 HTTP add/list flow.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
 ## Migration Layout
@@ -196,9 +196,9 @@ psql "$APP_DB_DSN" -f db/postgresql/seed.sql
 Tests do not use the local development database file.
 
 Current SQLite repository and HTTP integration tests create temporary or in-memory SQLite
-databases inside the test process and exercise the normalized catalog plus v0.2.5 auth persistence.
-The shared helper applies migrations through `000003`, creates a deterministic catalog fixture,
-and verifies the ordinary role and session constraints.
+databases inside the test process and exercise the normalized catalog, auth, and private-library
+persistence. The shared library helper applies migrations through `000004`, creates a deterministic
+catalog fixture, and verifies the ordinary role, session, and library constraints.
 
 This keeps tests fast and isolated without depending on the full development seed dataset.
 PostgreSQL repository tests are opt-in and exercise the same catalog and user/session repository

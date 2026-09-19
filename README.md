@@ -6,7 +6,7 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-v0.2.6 Registration/Login/Logout is complete on top of the v0.2.5 auth foundation:
+v0.3.0 Private Library Foundation is complete on top of the v0.2.6 auth flow:
 
 - Home and About pages.
 - Book catalog page.
@@ -42,11 +42,15 @@ v0.2.6 Registration/Login/Logout is complete on top of the v0.2.5 auth foundatio
   CSRF tokens to forms.
 - Registration, login, idempotent POST logout, protected `/me`, auth navigation, and one-request
   success flashes use the DB-backed opaque-session foundation.
+- Authenticated users can add a known catalog book from catalog and detail pages, then view only
+  their own deterministic private want-to-read list at `/me/library`.
+- SQLite and PostgreSQL migration `000004` provide owner-scoped `library_items` persistence with
+  duplicate prevention and deterministic list ordering.
 
 Not current production direction:
 - Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
-- The v0.3.0 private-library contract is active, but its schema and user-facing behavior are not
-  implemented yet. Search, pagination, and social features remain planned later.
+- Reading-state changes, removal, notes, ratings, search, pagination, and social features remain
+  planned later.
 
 ## Tech Stack
 
@@ -154,6 +158,7 @@ Useful routes:
 /books?genre=classic
 /books/{book-slug}
 /authors/{author-slug}
+/me/library
 ```
 
 ## Test
@@ -171,6 +176,7 @@ cmd/web/                 application entrypoint
 internal/app/            app wiring, routes, home handler
 internal/modules/books/  books/catalog module
 internal/modules/users/  auth/user/session service and repository contracts
+internal/modules/library/ private-library add/list service, handler, and repository contracts
 internal/storage/sqlite/ SQLite repository implementation
 internal/storage/postgresql/ PostgreSQL connection and repository implementation
 internal/http/auth/      session cookie, current-user context, and route-guard foundation
@@ -201,7 +207,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Implement the active v0.3.0 Private Library Foundation from its accepted contract.
+- Plan v0.3.1 Reading-State Lifecycle; it is not active yet.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:

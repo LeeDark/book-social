@@ -11,8 +11,8 @@ v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation th
 browser-facing flow: registration, login, idempotent logout, protected `/me`, auth navigation, and
 one-request success flashes. Its manual browser smoke and release closure are complete.
 
-Active scope: **v0.3.0 Private Library Foundation**. Its private-library contract is defined before
-schema and implementation work begins.
+v0.3.0 Private Library Foundation is closed. The next planned scope is **v0.3.1 Reading-State
+Lifecycle**; it is not active until separately committed.
 
 ## Planning Principles
 
@@ -264,15 +264,15 @@ acceptance criteria and relevant tests pass; unfinished work is not silently mov
 
 #### v0.3.0 — Private Library Foundation
 
-Status: active; the private-library contract is defined in
-[`library_v0_3.md`](library_v0_3.md) and implementation follows its dependency order.
+Status: closed. The implemented behavior and its remaining lifecycle boundary are recorded in
+[`library_v0_3.md`](library_v0_3.md).
 
 - [x] Confirm the closed v0.2.6 auth baseline and write the library use cases, permission rules,
   status-transition rules, application errors, and transaction boundaries.
-- [ ] Add the `library` module and the minimal `library_items` migration, including unique
+- [x] Add the `library` module and the minimal `library_items` migration, including unique
   `user_id + book_id`, ownership, and `added_at`.
-- [ ] Let an authenticated user add a known catalog book and view `/me/library`.
-- [ ] Cover migrations, repository behavior, anonymous access, duplicate addition, unknown books,
+- [x] Let an authenticated user add a known catalog book and view `/me/library`.
+- [x] Cover migrations, repository behavior, anonymous access, duplicate addition, unknown books,
   and user isolation on SQLite; retain an explicit opt-in PostgreSQL verification path.
 
 Outcome: a user can build a private want-to-read list from the existing catalog.

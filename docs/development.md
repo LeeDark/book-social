@@ -222,7 +222,7 @@ database is exactly `book_social_test` (and has the required `_test` suffix); it
 database without printing the DSN or credentials. Never point this variable at non-disposable data.
 When one test database is shared across packages, include `-p 1` in the test command.
 
-For the full isolated PostgreSQL migration and v0.2.6 auth integration check, run:
+For the full isolated PostgreSQL migration and auth/private-library integration check, run:
 
 ```bash
 make test/integration

@@ -21,6 +21,7 @@ Current modules:
 - app skeleton: config, logging, errors
 - users/auth foundation: password policy, registration/authentication services, DB sessions
 - HTTP auth foundation: cookie/token boundary, current-user context, and route guard
+- private library: owner-scoped add/list workflow and server-rendered library page
 
 Current focus:
 - minimal working features first
@@ -53,16 +54,16 @@ Current infrastructure caveat:
 - `APP_ENV=dev` uses SQLite and is the active local database path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
 - SQLite and PostgreSQL catalog repositories implement the same normalized v0.2 read contract.
-- SQLite and PostgreSQL v0.1 baseline, v0.2 normalization, and v0.2.5 auth migrations exist under
-  `db/*/migrations`.
+- SQLite and PostgreSQL v0.1 baseline, v0.2 normalization, v0.2.5 auth, and v0.3 private-library
+  migrations exist under `db/*/migrations`.
 - Migration commands use the installed `golang-migrate` CLI through `make db/migrate/up` and `make db/migrate/down`.
 - Reset and Docker/Compose bootstrap apply all migrations first and then seed SQL.
 - `make db/migrate/smoke` checks clean setup, seed counts, the v0.1 relationship migration, the
-  v0.2.5 user/session constraints, and rollback behavior.
+  v0.2.5 user/session constraints, v0.3 library constraints, and rollback behavior.
 - CI currently keeps migration smoke and a PostgreSQL service job local/manual; PostgreSQL tests
   use a disposable DSN and should run with `go test -p 1` when sharing one database.
-- Legacy `library`, `shelves`, and `tags` remain demo structures. The final `library_items` model is
-  deferred to v0.3.
+- Legacy `library`, `shelves`, and `tags` remain demo structures. `library_items` is the separate,
+  implemented private-library model.
 - Docker/Compose are supported as local environment workflows for SQLite dev and PostgreSQL stage/prod.
 - Docker/Compose are not production-ready infrastructure.
 - HTTP lifecycle uses signal-aware graceful shutdown with a five-second deadline.
@@ -76,6 +77,7 @@ Current infrastructure caveat:
   unset.
 
 Current scope:
-- v0.3.0 Private Library Foundation is active. Its private-library use cases, ownership rules,
-  application errors, module boundaries, and future reading-state rules are defined in
-  `docs/library_v0_3.md`; schema and implementation remain pending.
+- v0.3.0 Private Library Foundation is closed: authenticated users add known catalog books from
+  catalog/detail pages and list only their own want-to-read items at `/me/library`.
+- v0.3.1 Reading-State Lifecycle is next planned work. Persisted statuses, removal, notes, ratings,
+  and public libraries remain out of scope.
