@@ -71,6 +71,20 @@
     text-decoration: none;
 }
 
+.site-nav__items .site-nav__logout {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--pico-muted-color);
+    font-weight: 400;
+    text-decoration: none;
+}
+
+.site-nav__items .site-nav__logout:hover {
+    background: var(--surface-soft);
+    color: var(--pico-color);
+}
+
 @media (max-width: 760px) {
     .site-nav {
         align-items: flex-start;

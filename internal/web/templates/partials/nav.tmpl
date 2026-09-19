@@ -22,11 +22,11 @@
 
     <ul class="site-nav__items">
         {{if .CurrentUser}}
-            <li><a href="/me/library">My library</a></li>
-            <li><a href="/me">{{.CurrentUser.DisplayName}}</a></li>
+            <li><a href="/me/library"{{if eq .ActiveNav "library"}} aria-current="page"{{end}}>My library</a></li>
+            <li><a href="/me"{{if eq .ActiveNav "account"}} aria-current="page"{{end}}>{{.CurrentUser.DisplayName}}</a></li>
             <li>
                 <form method="post" action="/logout">
-                    <button type="submit" class="secondary">Logout</button>
+                    <button type="submit" class="site-nav__logout">Logout</button>
                 </form>
             </li>
         {{else}}
