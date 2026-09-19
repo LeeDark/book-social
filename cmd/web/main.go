@@ -17,6 +17,7 @@ import (
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/logging"
 	"github.com/LeeDark/book-social/internal/modules/books"
+	"github.com/LeeDark/book-social/internal/modules/library"
 	"github.com/LeeDark/book-social/internal/modules/users"
 	"github.com/LeeDark/book-social/internal/storage/postgresql"
 	"github.com/LeeDark/book-social/internal/storage/sqlite"
@@ -42,6 +43,7 @@ func main() {
 	var (
 		db          *sql.DB
 		bookRepo    books.BookRepository
+		libraryRepo library.Repository
 		userRepo    users.RegistrationRepository
 		sessionRepo users.SessionRepository
 	)
@@ -50,11 +52,13 @@ func main() {
 	case config.EnvDev:
 		db, err = sqlite.Open(ctx, cfg.DB.DSN)
 		bookRepo = sqlite.NewBookRepository(db)
+		libraryRepo = sqlite.NewLibraryRepository(db)
 		userRepo = sqlite.NewUserRepository(db)
 		sessionRepo = sqlite.NewSessionRepository(db)
 	case config.EnvStage, config.EnvProd:
 		db, err = postgresql.Open(ctx, cfg.DB.DSN)
 		bookRepo = postgresql.NewBookRepository(db)
+		libraryRepo = postgresql.NewLibraryRepository(db)
 		userRepo = postgresql.NewUserRepository(db)
 		sessionRepo = postgresql.NewSessionRepository(db)
 	default:
@@ -79,6 +83,8 @@ func main() {
 	userService := users.NewService(userRepo, users.NewPasswordPolicy())
 	sessionService := users.NewSessionService(userRepo, sessionRepo, cfg.Auth.SessionLifetime)
 	authHandler := app.NewAuthHandler(userService, sessionService, cookies, flashes, renderer, logger, cfg.Auth.SessionLifetime)
+	libraryService := library.NewService(libraryRepo, bookRepo)
+	libraryHandler := library.NewHandler(libraryService, flashes, renderer, logger)
 
 	deps := app.Deps{
 		Config:                cfg,
@@ -87,6 +93,7 @@ func main() {
 		CurrentUserMiddleware: httpauth.NewCurrentUserMiddleware(cookies, sessionService),
 		FlashManager:          flashes,
 		AuthHandler:           authHandler,
+		LibraryHandler:        libraryHandler,
 	}
 
 	catalogService := books.NewCatalogService(bookRepo)

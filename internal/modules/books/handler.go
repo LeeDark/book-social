@@ -38,6 +38,9 @@ func (h *CatalogHandler) Catalog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	view.ApplyRequestState(&data.Page, r)
+	for index := range data.Books {
+		data.Books[index].CanAddToLibrary = data.CurrentUser != nil
+	}
 
 	//h.logger.Debug("Catalog page", slog.Any("data", data))
 
@@ -68,6 +71,7 @@ func (h *CatalogHandler) BookDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	view.ApplyRequestState(&data.Page, r)
+	data.Book.CanAddToLibrary = data.CurrentUser != nil
 
 	//h.logger.Debug("Book Details page", slog.Any("data", data))
 

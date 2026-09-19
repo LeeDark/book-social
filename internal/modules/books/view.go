@@ -21,6 +21,7 @@ type BookCardView struct {
 	BookURL         string
 	CoverClass      string
 	ShowDetailsLink bool
+	CanAddToLibrary bool
 	UseHTMXFilters  bool
 }
 
@@ -48,10 +49,11 @@ type BookDetailsView struct {
 	Description string
 	CoverClass  string
 
-	Authors    []AuthorLinkView
-	Genres     []GenreLinkView
-	Covers     []CoverView
-	FrontCover *CoverView
+	Authors         []AuthorLinkView
+	Genres          []GenreLinkView
+	Covers          []CoverView
+	FrontCover      *CoverView
+	CanAddToLibrary bool
 }
 
 type AuthorLinkView struct {
