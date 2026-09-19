@@ -9,6 +9,7 @@ import (
 	httpauth "github.com/LeeDark/book-social/internal/http/auth"
 	"github.com/LeeDark/book-social/internal/http/flash"
 	appmiddleware "github.com/LeeDark/book-social/internal/http/middleware"
+	"github.com/LeeDark/book-social/internal/modules/library"
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 )
@@ -29,6 +30,7 @@ type App struct {
 	AuthHandler           *AuthHandler
 	CurrentUserMiddleware *httpauth.CurrentUserMiddleware
 	FlashManager          *flash.Manager
+	LibraryHandler        *library.Handler
 }
 
 const applicationTimeout = 30 * time.Second
@@ -47,6 +49,7 @@ func New(deps Deps,
 		AuthHandler:           deps.AuthHandler,
 		CurrentUserMiddleware: deps.CurrentUserMiddleware,
 		FlashManager:          deps.FlashManager,
+		LibraryHandler:        deps.LibraryHandler,
 	}
 
 	app.RegisterMiddleware(r, deps)

@@ -67,11 +67,18 @@ GET /login          login form; signed-in users redirect to /me
 POST /login         authenticate and create a new session; 303 /me or neutral 422 refusal
 POST /logout        invalidate the current session, clear cookies, and 303 /
 GET /me             protected minimal identity page; anonymous users receive 303 /login
+GET /me/library     protected owner-scoped library page; anonymous users receive 303 /login
+POST /me/library    protected add form with book_slug; 303 /me/library, 422/404/409 safe errors
 ```
 
 Unsafe browser POST requests remain protected by `http.CrossOriginProtection`. A cross-origin
 request receives `403` before mutation. Session and flash cookies are `HttpOnly`, `SameSite=Lax`,
 and use `Secure` outside development. Dynamic pages respond with `Cache-Control: no-store`.
+
+`POST /me/library` accepts only the form body's `book_slug`; the owner is always the typed
+current-user identity. A repeated item is `409`, an unknown book is `404`, and an empty slug is
+`422`. Successful additions set a one-request success flash. There is no route for another user's
+library.
 
 ## Catalog Filters
 

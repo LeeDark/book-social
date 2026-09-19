@@ -7,6 +7,7 @@ import (
 	"github.com/LeeDark/book-social/internal/http/auth"
 	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/render"
+	"github.com/LeeDark/book-social/internal/modules/library"
 )
 
 type Deps struct {
@@ -16,4 +17,5 @@ type Deps struct {
 	CurrentUserMiddleware *auth.CurrentUserMiddleware
 	FlashManager          *flash.Manager
 	AuthHandler           *AuthHandler
+	LibraryHandler        *library.Handler
 }

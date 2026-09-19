@@ -39,6 +39,10 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 			dynamic.Post("/logout", app.AuthHandler.Logout)
 			dynamic.With(httpauth.RequireAuthentication).Get("/me", app.AuthHandler.Me)
 		}
+		if app.LibraryHandler != nil {
+			dynamic.With(httpauth.RequireAuthentication).Get("/me/library", app.LibraryHandler.List)
+			dynamic.With(httpauth.RequireAuthentication).Post("/me/library", app.LibraryHandler.Add)
+		}
 	})
 
 	notFound := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

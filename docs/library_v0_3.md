@@ -1,8 +1,8 @@
 # Private Library v0.3 Contract
 
-This document defines the planned private-library behavior for v0.3. It is an implementation
-contract, not a description of currently available routes or schema. Current behavior remains
-documented in [domain.md](domain.md), [routes.md](routes.md), and [database.md](database.md).
+This document records the implemented v0.3.0 private-library behavior and the accepted v0.3.1
+lifecycle contract. Current routes, domain behavior, and schema are also summarized in
+[routes.md](routes.md), [domain.md](domain.md), and [database.md](database.md).
 
 ## Accepted Baseline
 
@@ -43,7 +43,7 @@ exposing the stored owner ID to templates.
 Items are ordered by `added_at DESC`, then library-item ID descending for deterministic ties. An
 empty library is a successful result, not a not-found error.
 
-## Planned Module Boundary
+## Module Boundary
 
 The `library` module owns its domain model, service, errors, and repository contract. It may depend
 on the existing `books` module as the upstream catalog boundary; the `books` module must not depend
@@ -104,7 +104,7 @@ Catalog `books.ErrBookNotFound` is translated to `library.ErrBookNotFound`. Data
 translated to `ErrItemAlreadyExists`. Unexpected details are wrapped for server logs but never sent
 to the client.
 
-## HTTP Contract for v0.3.0
+## Implemented HTTP Contract for v0.3.0
 
 ```text
 GET  /me/library   list the authenticated user's private library
@@ -116,7 +116,9 @@ POST /me/library   add the book identified by form field book_slug
 - Invalid input returns `422`; unknown books return `404`; duplicates return `409`.
 - Forms remain ordinary MPA forms. Existing cross-origin protection is retained without adding a
   separate CSRF-token mechanism.
-- Catalog and book-detail pages may render the same add form, but cannot select an owner.
+- Catalog and book-detail pages render the same add form only for authenticated users; neither can
+  select an owner. The library page presents every v0.3.0 item as `Want to read` and includes an
+  accessible empty state with a Browse catalog action.
 
 There is no route for another user's library. Future item mutation routes must include the current
 user ID in every repository lookup or mutation instead of loading an item globally and checking it

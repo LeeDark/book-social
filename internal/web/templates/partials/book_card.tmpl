@@ -48,6 +48,13 @@
                     <a href="{{.BookURL}}" aria-label="View details for {{.Title}}">View details</a>
                 </p>
             {{end}}
+
+            {{if .CanAddToLibrary}}
+                <form method="post" action="/me/library">
+                    <input type="hidden" name="book_slug" value="{{.Slug}}">
+                    <button type="submit">Add to my library</button>
+                </form>
+            {{end}}
         </div>
     </article>
 {{end}}

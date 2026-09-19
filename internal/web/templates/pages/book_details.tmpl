@@ -46,6 +46,13 @@
                         <p>{{.Book.Description}}</p>
                     </section>
                 {{end}}
+
+                {{if .Book.CanAddToLibrary}}
+                    <form method="post" action="/me/library">
+                        <input type="hidden" name="book_slug" value="{{.Book.Slug}}">
+                        <button type="submit">Add to my library</button>
+                    </form>
+                {{end}}
             </div>
         </div>
     </article>

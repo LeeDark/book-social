@@ -22,6 +22,7 @@
 
     <ul class="site-nav__items">
         {{if .CurrentUser}}
+            <li><a href="/me/library">My library</a></li>
             <li><a href="/me">{{.CurrentUser.DisplayName}}</a></li>
             <li>
                 <form method="post" action="/logout">

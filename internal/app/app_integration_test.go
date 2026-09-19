@@ -17,6 +17,7 @@ import (
 	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/modules/books"
+	"github.com/LeeDark/book-social/internal/modules/library"
 	"github.com/LeeDark/book-social/internal/modules/users"
 	"github.com/LeeDark/book-social/internal/storage/postgresql"
 	"github.com/LeeDark/book-social/internal/storage/sqlite"
@@ -188,6 +189,163 @@ func TestAuthRoutesWithPostgreSQL(t *testing.T) {
 	db := testutil.NewPostgresCatalogV2TestDB(t, ctx)
 	handler := newAuthIntegrationTestApp(t, postgresql.NewUserRepository(db), postgresql.NewSessionRepository(db), postgresql.NewBookRepository(db))
 	testAuthRoutes(t, handler)
+}
+
+func TestPrivateLibraryRoutesWithSQLite(t *testing.T) {
+	db := testutil.NewSQLiteLibraryTestDB(t, context.Background())
+	testPrivateLibraryRoutes(t, newLibraryIntegrationTestApp(t,
+		sqlite.NewUserRepository(db),
+		sqlite.NewSessionRepository(db),
+		sqlite.NewBookRepository(db),
+		sqlite.NewLibraryRepository(db),
+	))
+}
+
+func TestPrivateLibraryRoutesWithPostgreSQL(t *testing.T) {
+	db := testutil.NewPostgresLibraryTestDB(t, context.Background())
+	testPrivateLibraryRoutes(t, newLibraryIntegrationTestApp(t,
+		postgresql.NewUserRepository(db),
+		postgresql.NewSessionRepository(db),
+		postgresql.NewBookRepository(db),
+		postgresql.NewLibraryRepository(db),
+	))
+}
+
+func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
+	t.Helper()
+	password := "correct horse battery staple"
+	register := func(firstName, login string) *http.Cookie {
+		t.Helper()
+		values := url.Values{
+			"first_name":            {firstName},
+			"login":                 {login},
+			"email":                 {login + "@example.test"},
+			"password":              {password},
+			"password_confirmation": {password},
+		}
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, formRequest(http.MethodPost, "/register", values))
+		if recorder.Code != http.StatusSeeOther {
+			t.Fatalf("register %s = %d %q", login, recorder.Code, recorder.Body.String())
+		}
+		return cookieNamed(t, recorder.Result().Cookies(), "book_social_session")
+	}
+
+	t.Run("anonymous library routes redirect without mutation", func(t *testing.T) {
+		for _, request := range []*http.Request{
+			httptest.NewRequest(http.MethodGet, "/me/library", nil),
+			formRequest(http.MethodPost, "/me/library", url.Values{"book_slug": {"dracula"}}),
+		} {
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusSeeOther || recorder.Header().Get("Location") != "/login" {
+				t.Fatalf("anonymous response = %d %q", recorder.Code, recorder.Header().Get("Location"))
+			}
+		}
+	})
+
+	adaSession := register("Ada", "ada")
+
+	t.Run("authenticated catalog and details expose add control", func(t *testing.T) {
+		for _, path := range []string{"/books", "/books/dracula"} {
+			request := httptest.NewRequest(http.MethodGet, path, nil)
+			request.AddCookie(adaSession)
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), `action="/me/library"`) {
+				t.Fatalf("%s = %d %q", path, recorder.Code, recorder.Body.String())
+			}
+		}
+	})
+
+	addBook := func(session *http.Cookie, slug string) *httptest.ResponseRecorder {
+		t.Helper()
+		request := formRequest(http.MethodPost, "/me/library", url.Values{"book_slug": {slug}})
+		request.AddCookie(session)
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		return recorder
+	}
+
+	firstAdd := addBook(adaSession, "pride-and-prejudice")
+	if firstAdd.Code != http.StatusSeeOther || firstAdd.Header().Get("Location") != "/me/library" {
+		t.Fatalf("add = %d %q", firstAdd.Code, firstAdd.Header().Get("Location"))
+	}
+	flashCookie := cookieNamed(t, firstAdd.Result().Cookies(), "book_social_flash")
+
+	t.Run("library page shows one-request flash, owner-scoped items, navigation, and no-store", func(t *testing.T) {
+		request := httptest.NewRequest(http.MethodGet, "/me/library", nil)
+		request.AddCookie(adaSession)
+		request.AddCookie(flashCookie)
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		body := recorder.Body.String()
+		for _, fragment := range []string{"Pride and Prejudice", "Jane Austen", "Mary Shelley", "Want to read", "Book added to your library.", `href="/me/library"`} {
+			if !strings.Contains(body, fragment) {
+				t.Fatalf("library page missing %q: %q", fragment, body)
+			}
+		}
+		if recorder.Code != http.StatusOK || recorder.Header().Get("Cache-Control") != "no-store" {
+			t.Fatalf("library page = %d cache=%q", recorder.Code, recorder.Header().Get("Cache-Control"))
+		}
+
+		second := httptest.NewRecorder()
+		secondRequest := httptest.NewRequest(http.MethodGet, "/me/library", nil)
+		secondRequest.AddCookie(adaSession)
+		handler.ServeHTTP(second, secondRequest)
+		if strings.Contains(second.Body.String(), "Book added to your library.") {
+			t.Fatalf("flash persisted: %q", second.Body.String())
+		}
+	})
+
+	t.Run("duplicate, missing, malformed, and cross-origin additions are safe", func(t *testing.T) {
+		if recorder := addBook(adaSession, "pride-and-prejudice"); recorder.Code != http.StatusConflict || !strings.Contains(recorder.Body.String(), "already in your library") {
+			t.Fatalf("duplicate = %d %q", recorder.Code, recorder.Body.String())
+		}
+		if recorder := addBook(adaSession, "missing-book"); recorder.Code != http.StatusNotFound || !strings.Contains(recorder.Body.String(), "Book not found.") {
+			t.Fatalf("missing = %d %q", recorder.Code, recorder.Body.String())
+		}
+		request := formRequest(http.MethodPost, "/me/library?book_slug=dracula", url.Values{})
+		request.AddCookie(adaSession)
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		if recorder.Code != http.StatusUnprocessableEntity || !strings.Contains(recorder.Body.String(), "Book selection is required.") {
+			t.Fatalf("malformed = %d %q", recorder.Code, recorder.Body.String())
+		}
+		request = formRequest(http.MethodPost, "/me/library", url.Values{"book_slug": {"dracula"}})
+		request.Header.Set("Origin", "https://evil.example")
+		request.AddCookie(adaSession)
+		recorder = httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		if recorder.Code != http.StatusForbidden {
+			t.Fatalf("cross-origin = %d", recorder.Code)
+		}
+	})
+
+	secondAdd := addBook(adaSession, "dracula")
+	if secondAdd.Code != http.StatusSeeOther {
+		t.Fatalf("second add = %d %q", secondAdd.Code, secondAdd.Body.String())
+	}
+	t.Run("items have deterministic repository order and another user cannot see them", func(t *testing.T) {
+		request := httptest.NewRequest(http.MethodGet, "/me/library", nil)
+		request.AddCookie(adaSession)
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		body := recorder.Body.String()
+		if strings.Index(body, "Dracula") >= strings.Index(body, "Pride and Prejudice") {
+			t.Fatalf("library order is not newest first: %q", body)
+		}
+
+		bobSession := register("Bob", "bob")
+		request = httptest.NewRequest(http.MethodGet, "/me/library", nil)
+		request.AddCookie(bobSession)
+		recorder = httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		body = recorder.Body.String()
+		if recorder.Code != http.StatusOK || !strings.Contains(body, "Your library is empty") || strings.Contains(body, "Pride and Prejudice") {
+			t.Fatalf("other user library = %d %q", recorder.Code, body)
+		}
+	})
 }
 
 func testAuthRoutes(t *testing.T, handler http.Handler) {
@@ -446,6 +604,34 @@ func newAuthIntegrationTestApp(t *testing.T, userRepo users.RegistrationReposito
 	sessionService := users.NewSessionService(userRepo, sessionRepo, time.Hour)
 	deps := Deps{Config: config.Config{Env: config.EnvDev}, Logger: logger, Renderer: renderer, CurrentUserMiddleware: httpauth.NewCurrentUserMiddleware(cookies, sessionService), FlashManager: flashes, AuthHandler: NewAuthHandler(userService, sessionService, cookies, flashes, renderer, logger, time.Hour)}
 	catalogService := books.NewCatalogService(bookRepo)
+	return New(deps, NewHomeHandler(catalogService, renderer, logger), books.NewCatalogHandler(catalogService, renderer, logger)).Router
+}
+
+func newLibraryIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepository, sessionRepo users.SessionRepository, bookRepo books.BookRepository, libraryRepo library.Repository) http.Handler {
+	t.Helper()
+	testutil.ChdirProjectRoot(t)
+	renderer, err := render.NewRenderer()
+	if err != nil {
+		t.Fatalf("render.NewRenderer() error = %v", err)
+	}
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	cookies := httpauth.NewCookieManager(httpauth.CookieConfig{Lifetime: time.Hour})
+	flashes := flash.NewManager(false)
+	userService := users.NewService(userRepo, users.NewPasswordPolicy())
+	sessionService := users.NewSessionService(userRepo, sessionRepo, time.Hour)
+	catalogService := books.NewCatalogService(bookRepo)
+	libraryHandler := library.NewHandler(library.NewService(libraryRepo, bookRepo), flashes, renderer, logger)
+	deps := Deps{
+		Config:                config.Config{Env: config.EnvDev},
+		Logger:                logger,
+		Renderer:              renderer,
+		CurrentUserMiddleware: httpauth.NewCurrentUserMiddleware(cookies, sessionService),
+		FlashManager:          flashes,
+		AuthHandler:           NewAuthHandler(userService, sessionService, cookies, flashes, renderer, logger, time.Hour),
+		LibraryHandler:        libraryHandler,
+	}
+
 	return New(deps, NewHomeHandler(catalogService, renderer, logger), books.NewCatalogHandler(catalogService, renderer, logger)).Router
 }
 

@@ -657,6 +657,35 @@ Decision:
 - Keep v0.3.0 storage minimal and treat its entries as want-to-read until explicit status
   persistence is added in v0.3.1.
 
+## 2026-09-19 — v0.3.0 private-library MPA closure
+
+Result:
+
+- Added the protected `GET /me/library` and `POST /me/library` MPA workflow on the existing
+  owner-scoped library service and migration foundation.
+- Added authenticated catalog/detail add forms, a one-request success flash, authenticated
+  navigation, an accessible empty state, and fixed safe error outcomes for invalid, unknown, and
+  duplicate additions.
+- Added SQLite critical-flow coverage plus the opt-in PostgreSQL equivalent for owner isolation,
+  deterministic order, flash behavior, cross-origin refusal, and `no-store` responses.
+- Updated current documentation and closed v0.3.0; v0.3.1 lifecycle state remains planned.
+
+Validation:
+
+- `GOCACHE=/tmp/book-social-go-cache go test ./...` passed.
+- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...`, `make db/migrate/smoke`, and
+  `git diff --check` passed.
+- PostgreSQL HTTP parity is opt-in through `BOOK_SOCIAL_POSTGRES_TEST_DSN` and was skipped locally
+  because that variable was not set.
+- Local `make lint` could not run: installed `golangci-lint v2.12.2` panics because its build uses
+  Go 1.26 while the checked dependency requires Go 1.27. CI is the authoritative lint result.
+
+Decision:
+
+- Keep every v0.3.0 item presented as want-to-read without persisting a status. Status transitions,
+  removal, notes, ratings, pagination, and public libraries require a later committed scope.
+
 ## 2026-09-19 — Go, SQL, and GitHub Markdown readability rules
 
 Result:

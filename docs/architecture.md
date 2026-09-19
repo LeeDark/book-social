@@ -24,6 +24,8 @@ HTTP handler
 - `internal/modules/books`: catalog domain models, service, handler, views.
 - `internal/modules/users`: user/auth domain models, password policy, registration/authentication
   services, session service, and repository contracts. It has no HTTP imports.
+- `internal/modules/library`: private-library model, add/list service, handler, page views, and
+  repository contract; it may depend on the catalog boundary but not vice versa.
 - `internal/storage/sqlite`: SQLite implementation of repository interfaces.
 - `internal/storage/postgresql`: PostgreSQL connection and repository implementation.
 - `internal/http/auth`: cookie/token boundary, typed current-user request context, and testable
@@ -62,6 +64,8 @@ HTTP handler
   role user and first session atomically.
 - Keep generic 500 response bodies free of internal error details; log the detailed error on the
   server side. Buffer template output before committing its status.
+- Keep private-library ownership in typed current-user context and owner-scoped repository queries;
+  catalog and detail forms submit only a book slug.
 
 ## Package Boundaries
 
@@ -75,4 +79,4 @@ HTTP handler
 - Large frontend framework.
 - Full API/OpenAPI surface.
 - Production Docker/Kubernetes setup.
-- User library features.
+- Persisted reading-state changes, removal, notes, ratings, and public libraries.
