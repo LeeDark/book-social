@@ -45,7 +45,8 @@ v0.2.6 Registration/Login/Logout is complete on top of the v0.2.5 auth foundatio
 
 Not current production direction:
 - Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
-- Personal libraries, search, pagination, and social features are planned later.
+- The v0.3.0 private-library contract is active, but its schema and user-facing behavior are not
+  implemented yet. Search, pagination, and social features remain planned later.
 
 ## Tech Stack
 
@@ -187,6 +188,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Development](docs/development.md)
 - [Routes](docs/routes.md)
 - [Domain model](docs/domain.md)
+- [Private Library v0.3 contract](docs/library_v0_3.md)
 - [Database v0.1](docs/database_v0_1.md)
 - [Database v0.2](docs/database_v0_2.md)
 - [MPA auth contract](docs/drafts/auth-contract.ru.md)
@@ -198,7 +200,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Plan v0.3.0 Private Library Foundation; it is not active work yet.
+- Implement the active v0.3.0 Private Library Foundation from its accepted contract.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:

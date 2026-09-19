@@ -97,6 +97,11 @@ page models.
 The schema still contains legacy/demo `library`, `shelves`, and `tags` structures. They are not the
 user-facing personal-library model. The final `library_items` model is deferred to v0.3.
 
+The accepted use cases, ownership rules, application errors, module boundaries, and future
+reading-state transitions are defined in the planned
+[Private Library v0.3 Contract](library_v0_3.md). They are not current behavior until their
+corresponding v0.3 issues are implemented.
+
 ## Current Design Rules
 
 - Keep database details out of templates.
