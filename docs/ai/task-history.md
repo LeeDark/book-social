@@ -656,3 +656,20 @@ Decision:
   adds redirect to `GET /me/library`.
 - Keep v0.3.0 storage minimal and treat its entries as want-to-read until explicit status
   persistence is added in v0.3.1.
+
+## 2026-09-19 — Go, SQL, and GitHub Markdown readability rules
+
+Result:
+
+- Added one readable-default guide for Go code and SQLite/PostgreSQL SQL.
+- Added concise agent instructions and workflow review points rather than a bulk style rewrite.
+- Added visual grouping rules and a separate readability review pass that preserves behavior and
+  records ambiguity as a finding rather than resolving it during cleanup.
+- Recorded the safe GitHub CLI pattern for multiline Markdown: use `--body-file -` with literal
+  newlines and verify published bodies before relying on `Closes #N`.
+
+Decision:
+
+- Keep code readability rules separate from the changing model policy and from automated formatter
+  selection; the project continues to use its existing `gofmt`, vet, lint, migration, and test
+  checks.

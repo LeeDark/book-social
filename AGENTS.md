@@ -19,6 +19,7 @@ Useful project docs:
 - `docs/development.md`
 - `docs/routes.md`
 - `docs/domain.md`
+- `docs/code-readability.md`
 - `docs/database_v0_1.md`
 - `docs/roadmap.md`
 - `docs/ai/project-context.md`
@@ -127,6 +128,15 @@ The user's latest explicit instruction takes precedence over the defaults in thi
 - Separate pre-existing failures from failures caused by the current change.
 - If sandbox or environment restrictions prevent a check, explain the limitation and provide the
   exact local verification step.
+
+## Readability and GitHub Markdown
+
+- Follow `docs/code-readability.md` for new or materially changed Go and SQL; do not bulk-reformat
+  untouched code or historical migrations.
+- For multiline `gh issue` or `gh pr` bodies, use `--body-file -` with literal newlines on stdin,
+  never a JSON-escaped string passed to `--body`.
+- Put `Closes #N` on its own real Markdown paragraph and inspect the published body with
+  `gh ... --json body --jq .body` before relying on a closing reference.
 
 ## Completion contract
 

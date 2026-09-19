@@ -188,6 +188,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Development](docs/development.md)
 - [Routes](docs/routes.md)
 - [Domain model](docs/domain.md)
+- [Go and SQL readability](docs/code-readability.md)
 - [Private Library v0.3 contract](docs/library_v0_3.md)
 - [Database v0.1](docs/database_v0_1.md)
 - [Database v0.2](docs/database_v0_2.md)
