@@ -1,0 +1,37 @@
+{{define "title"}}{{.Title}}{{end}}
+
+{{define "main"}}
+    <section aria-labelledby="library-heading">
+        <header class="section-heading">
+            <h1 id="library-heading">Your library</h1>
+        </header>
+
+        {{if .Items}}
+            <ul>
+                {{range .Items}}
+                    <li>
+                        <article>
+                            <h2><a href="{{.BookURL}}">{{.Title}}</a></h2>
+                            {{if .Authors}}
+                                <p>
+                                    by
+                                    {{range $index, $author := .Authors}}
+                                        {{if $index}}, {{end}}
+                                        <a href="{{$author.URL}}">{{$author.Name}}</a>
+                                    {{end}}
+                                </p>
+                            {{end}}
+                            <p><strong>{{.StateLabel}}</strong></p>
+                        </article>
+                    </li>
+                {{end}}
+            </ul>
+        {{else}}
+            <section class="empty-state" aria-labelledby="library-empty-heading">
+                <h2 id="library-empty-heading">Your library is empty</h2>
+                <p>Browse the catalog to choose your next book.</p>
+                <p><a href="/books" role="button">Browse catalog</a></p>
+            </section>
+        {{end}}
+    </section>
+{{end}}
