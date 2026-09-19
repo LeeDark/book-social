@@ -138,9 +138,11 @@ db/migrate/smoke:
 		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$smoke_db" up; \
 		sqlite3 "$$smoke_db" < ./db/sqlite/seed.sql; \
 		counts="$$(sqlite3 -noheader -separator '|' "$$smoke_db" \
-			"SELECT (SELECT COUNT(*) FROM books) || '|' || (SELECT COUNT(*) FROM book_authors) || '|' || (SELECT COUNT(*) FROM book_genres);")"; \
-		test "$$counts" = "109|109|109"; \
+			"SELECT (SELECT COUNT(*) FROM books) || '|' || (SELECT COUNT(*) FROM book_authors) || '|' || (SELECT COUNT(*) FROM book_genres) || '|' || (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'library_items');")"; \
+		test "$$counts" = "109|109|109|1"; \
 		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$smoke_db" down 1; \
+		rolled_back_tables="$$(sqlite3 -noheader "$$smoke_db" "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'library_items';")"; \
+		test "$$rolled_back_tables" = "0"; \
 		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$legacy_db" up 1; \
 		sqlite3 "$$legacy_db" \
 			"INSERT INTO authors(id, first_name, sur_name, slug) VALUES (1, 'Jane', 'Austen', 'jane-austen'); \

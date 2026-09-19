@@ -50,6 +50,25 @@ func NewPostgresCatalogV2TestDB(t *testing.T, ctx context.Context) *sql.DB {
 	return db
 }
 
+// NewPostgresLibraryTestDB creates the v0.3 library schema with the normalized
+// catalog fixture. Callers create only the user data needed by each test.
+func NewPostgresLibraryTestDB(t *testing.T, ctx context.Context) *sql.DB {
+	t.Helper()
+
+	dsn := os.Getenv(PostgresTestDSNEnv)
+	if dsn == "" {
+		t.Skipf("set %s to run PostgreSQL tests", PostgresTestDSNEnv)
+	}
+
+	db := openPostgresTestDB(t, ctx, dsn)
+
+	ResetPostgresPublicSchema(t, ctx, db)
+	ApplyPostgresLibraryTestSchema(t, ctx, db)
+	SeedPostgresCatalogV2TestData(t, ctx, db)
+
+	return db
+}
+
 func ResetPostgresPublicSchema(t *testing.T, ctx context.Context, db *sql.DB) {
 	t.Helper()
 	assertSafePostgresTestDatabase(t, ctx, db)
@@ -66,6 +85,11 @@ func ApplyPostgresCatalogTestSchema(t *testing.T, ctx context.Context, db *sql.D
 }
 
 func ApplyPostgresCatalogV2TestSchema(t *testing.T, ctx context.Context, db *sql.DB) {
+	t.Helper()
+	applyPostgresCatalogTestMigrations(t, ctx, db, "000003")
+}
+
+func ApplyPostgresLibraryTestSchema(t *testing.T, ctx context.Context, db *sql.DB) {
 	t.Helper()
 	applyPostgresCatalogTestMigrations(t, ctx, db, "")
 }

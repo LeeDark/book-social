@@ -5,15 +5,18 @@ Database docs are split by project stage:
 - [Database v0.1](database_v0_1.md): baseline schema created by migration `000001`.
 - [Database v0.2](database_v0_2.md): normalized catalog schema created by migration `000002`.
 - Auth Foundation v0.2.5 is described below and created by migration `000003`.
+- Private Library Foundation v0.3.0 is described below and created by migration `000004`.
 
 Current state:
 
 - `APP_ENV=dev` uses SQLite and is the active local development path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
-- Baseline, catalog-normalization, and auth-foundation migration files exist and can be applied
-  with the `golang-migrate` CLI.
+- Baseline, catalog-normalization, auth-foundation, and private-library migration files exist and
+  can be applied with the `golang-migrate` CLI.
 - SQLite and PostgreSQL implement the normalized v0.2 catalog read-side.
 - SQLite and PostgreSQL implement equivalent user and opaque-session persistence contracts.
+- SQLite and PostgreSQL implement equivalent private-library persistence contracts; HTTP use cases
+  are introduced separately by later v0.3 issues.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
 ## Migration Layout
@@ -36,6 +39,8 @@ Migration files use matching sequence numbers where they represent the same doma
 The first migration pair is the v0.1 baseline schema. Migration `000002` normalizes catalog
 relationships and adds cover metadata without editing the baseline migration. Migration `000003`
 adds the ordinary `user` role and session storage for v0.2.5 without adding demo accounts.
+Migration `000004` adds the private `library_items` foundation without repurposing legacy demo
+library tables.
 
 Run pending SQLite migrations against the default local database:
 
@@ -101,15 +106,30 @@ session.
 In the v0.2.6 registration flow, user creation, ordinary-role lookup, and initial hashed-token
 session creation use one database transaction. A failed session write rolls back the user creation.
 
-CI runs Go tests, `go vet`, and lint. It does not run database migrations or Docker Compose
+## Private Library Foundation Schema
+
+Migration `000004_add_library_items` has matching SQLite and PostgreSQL variants. It creates
+`library_items` with `user_id`, `book_id`, and `added_at` plus a generated integer ID. It:
+
+- enforces one item per `user_id + book_id` with `uq_library_items_user_book`;
+- cascades item deletion when its owner or catalog book is deleted;
+- indexes `(user_id, added_at DESC, id DESC)` for the owner-scoped, deterministic list query;
+- stores UTC timestamps as RFC3339Nano text in SQLite and `TIMESTAMPTZ` in PostgreSQL.
+
+The down migration refuses to remove a non-empty `library_items` table. This protects private user
+data during rollback; an empty migration can be rolled back normally. The legacy `library`,
+`shelves`, and `tags` tables remain demo data and are unrelated to this model.
+
+CI runs Go tests, `go vet`, and lint. It does not run database migrations or Docker Compose.
 The local migration and seed smoke check is:
 
 ```bash
 make db/migrate/smoke
 ```
 
-It verifies a clean migration plus seed, migration of one v0.1 catalog row, and the documented
-down-migration path. CI does not run this target or Docker Compose workflows yet.
+It verifies a clean migration plus seed, creation and empty rollback of `library_items`, migration
+of one v0.1 catalog row, and the documented down-migration path. CI does not run this target or
+Docker Compose workflows yet.
 
 ## Reset And Seed
 

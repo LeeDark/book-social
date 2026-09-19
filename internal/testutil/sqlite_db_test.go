@@ -2,6 +2,9 @@ package testutil
 
 import (
 	"context"
+	"database/sql"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -83,12 +86,12 @@ func TestSQLiteCatalogV2TestDBUsesNormalizedRelationships(t *testing.T) {
 	}
 }
 
-func TestSQLiteAuthMigrationOnFreshDatabase(t *testing.T) {
+func TestSQLiteAuthAndLibraryMigrationOnFreshDatabase(t *testing.T) {
 	ctx := context.Background()
 	db := NewSQLiteMemoryTestDB(t, ctx)
 
-	if got := applySQLiteCatalogTestMigrations(t, ctx, db, ""); got != "000003" {
-		t.Fatalf("latest migration version = %q, want %q", got, "000003")
+	if got := applySQLiteCatalogTestMigrations(t, ctx, db, ""); got != "000004" {
+		t.Fatalf("latest migration version = %q, want %q", got, "000004")
 	}
 
 	checks := []struct {
@@ -114,6 +117,16 @@ func TestSQLiteAuthMigrationOnFreshDatabase(t *testing.T) {
 		{
 			name:  "user foreign key",
 			query: `SELECT COUNT(*) FROM pragma_foreign_key_list('sessions') WHERE "table" = 'users' AND on_delete = 'CASCADE'`,
+			want:  1,
+		},
+		{
+			name:  "library items table",
+			query: `SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'library_items'`,
+			want:  1,
+		},
+		{
+			name:  "library item list index",
+			query: `SELECT COUNT(*) FROM pragma_index_list('library_items') WHERE name = 'idx_library_items_user_added_at_id'`,
 			want:  1,
 		},
 	}
@@ -143,6 +156,18 @@ func TestSQLiteAuthMigrationOnFreshDatabase(t *testing.T) {
 		VALUES (1, zeroblob(32), '2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
 	`); err != nil {
 		t.Fatalf("insert valid session: %v", err)
+	}
+	if _, err := db.ExecContext(ctx, `
+		INSERT INTO books(id, title, slug)
+		VALUES (1, 'Migration Book', 'migration-book')
+	`); err != nil {
+		t.Fatalf("insert migration test book: %v", err)
+	}
+	if _, err := db.ExecContext(ctx, `
+		INSERT INTO library_items(user_id, book_id, added_at)
+		VALUES (1, 1, '2026-01-01T00:00:00Z')
+	`); err != nil {
+		t.Fatalf("insert valid library item: %v", err)
 	}
 
 	constraintChecks := []struct {
@@ -179,6 +204,20 @@ func TestSQLiteAuthMigrationOnFreshDatabase(t *testing.T) {
 					'2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z')
 			`,
 		},
+		{
+			name: "duplicate library item",
+			query: `
+				INSERT INTO library_items(user_id, book_id, added_at)
+				VALUES (1, 1, '2026-01-02T00:00:00Z')
+			`,
+		},
+		{
+			name: "unknown library book",
+			query: `
+				INSERT INTO library_items(user_id, book_id, added_at)
+				VALUES (1, 999, '2026-01-02T00:00:00Z')
+			`,
+		},
 	}
 
 	for _, check := range constraintChecks {
@@ -187,6 +226,71 @@ func TestSQLiteAuthMigrationOnFreshDatabase(t *testing.T) {
 				t.Fatal("invalid session insert succeeded")
 			}
 		})
+	}
+}
+
+func TestSQLiteLibraryMigrationRollbackAllowsEmptyLibrary(t *testing.T) {
+	ctx := context.Background()
+	db := NewSQLiteMemoryTestDB(t, ctx)
+	applySQLiteCatalogTestMigrations(t, ctx, db, "")
+
+	executeSQLiteMigration(t, ctx, db, "000004_add_library_items.down.sql")
+
+	var tables int
+	if err := db.QueryRowContext(ctx, `
+		SELECT COUNT(*)
+		FROM sqlite_master
+		WHERE type = 'table' AND name = 'library_items'
+	`).Scan(&tables); err != nil {
+		t.Fatalf("query library_items after rollback: %v", err)
+	}
+	if tables != 0 {
+		t.Fatalf("library_items tables after rollback = %d, want 0", tables)
+	}
+}
+
+func TestSQLiteLibraryMigrationRollbackRefusesToDeleteItems(t *testing.T) {
+	ctx := context.Background()
+	db := NewSQLiteMemoryTestDB(t, ctx)
+	applySQLiteCatalogTestMigrations(t, ctx, db, "")
+
+	statements := []string{
+		`INSERT INTO users(id, first_name, login, password_hash, email, user_role_id)
+			VALUES (1, 'Migration', 'migration-user', 'hash', 'migration@example.test',
+				(SELECT id FROM roles WHERE role_name = 'user'))`,
+		`INSERT INTO books(id, title, slug) VALUES (1, 'Migration Book', 'migration-book')`,
+		`INSERT INTO library_items(user_id, book_id, added_at) VALUES (1, 1, '2026-01-01T00:00:00Z')`,
+	}
+	execStatements(t, ctx, db, statements)
+
+	path := filepath.Join(projectRoot(t), "db", "sqlite", "migrations", "000004_add_library_items.down.sql")
+	migration, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read library down migration: %v", err)
+	}
+	if _, err := db.ExecContext(ctx, string(migration)); err == nil {
+		t.Fatal("rollback with library data succeeded")
+	}
+
+	var items int
+	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM library_items`).Scan(&items); err != nil {
+		t.Fatalf("query library items after rejected rollback: %v", err)
+	}
+	if items != 1 {
+		t.Fatalf("library items after rejected rollback = %d, want 1", items)
+	}
+}
+
+func executeSQLiteMigration(t *testing.T, ctx context.Context, db *sql.DB, filename string) {
+	t.Helper()
+
+	path := filepath.Join(projectRoot(t), "db", "sqlite", "migrations", filename)
+	migration, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read migration %s: %v", filename, err)
+	}
+	if _, err := db.ExecContext(ctx, string(migration)); err != nil {
+		t.Fatalf("apply migration %s: %v", filename, err)
 	}
 }
 
