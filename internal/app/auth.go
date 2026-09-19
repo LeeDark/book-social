@@ -164,7 +164,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	identity, _ := httpauth.CurrentUserFromRequest(r)
-	data := AuthPageData{Page: view.Page{Title: "Your account", Nav: view.MainNavigation()}, Form: AuthForm{}}
+	data := AuthPageData{Page: view.Page{Title: "Your account", ActiveNav: "account", Nav: view.MainNavigation()}, Form: AuthForm{}}
 	view.ApplyRequestState(&data.Page, r)
 	data.CurrentUser = &view.CurrentUser{ID: identity.ID, DisplayName: identity.FirstName}
 	if err := h.renderer.Render(w, http.StatusOK, "me.tmpl", data); err != nil {

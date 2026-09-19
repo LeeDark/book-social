@@ -280,10 +280,20 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, request)
 		body := recorder.Body.String()
-		for _, fragment := range []string{"Pride and Prejudice", "Jane Austen", "Mary Shelley", "Want to read", "Book added to your library.", `href="/me/library"`} {
+		for _, fragment := range []string{
+			"Pride and Prejudice",
+			"Jane Austen",
+			"Mary Shelley",
+			"Want to read",
+			"Book added to your library.",
+			`<a href="/me/library" aria-current="page">My library</a>`,
+		} {
 			if !strings.Contains(body, fragment) {
 				t.Fatalf("library page missing %q: %q", fragment, body)
 			}
+		}
+		if strings.Contains(body, `<a href="/me" aria-current="page">`) {
+			t.Fatalf("library page marks account as active: %q", body)
 		}
 		if recorder.Code != http.StatusOK || recorder.Header().Get("Cache-Control") != "no-store" {
 			t.Fatalf("library page = %d cache=%q", recorder.Code, recorder.Header().Get("Cache-Control"))
@@ -413,6 +423,12 @@ func testAuthRoutes(t *testing.T, handler http.Handler) {
 		body := rec.Body.String()
 		if rec.Code != http.StatusOK || !strings.Contains(body, "Signed in as Ada.") || !strings.Contains(body, `action="/logout"`) {
 			t.Fatalf("protected page = %d %q", rec.Code, rec.Body.String())
+		}
+		if !strings.Contains(body, `<a href="/me" aria-current="page">Ada</a>`) || strings.Contains(body, `<a href="/me/library" aria-current="page">`) {
+			t.Fatalf("account navigation active state = %q", body)
+		}
+		if !strings.Contains(body, `class="site-nav__logout"`) || strings.Contains(body, `class="secondary">Logout`) {
+			t.Fatalf("logout navigation style = %q", body)
 		}
 		for _, unwanted := range []string{`href="/login"`, `href="/register"`, password, session.Value, hex.EncodeToString(httpauth.HashToken(session.Value))} {
 			if strings.Contains(body, unwanted) {
