@@ -207,7 +207,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Plan v0.3.1 Reading-State Lifecycle; it is not active yet.
+- Begin v0.3.1 Reading-State Lifecycle with the bounded status-transition model and timestamp rules.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:

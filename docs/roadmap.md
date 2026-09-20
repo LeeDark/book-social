@@ -11,8 +11,9 @@ v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation th
 browser-facing flow: registration, login, idempotent logout, protected `/me`, auth navigation, and
 one-request success flashes. Its manual browser smoke and release closure are complete.
 
-v0.3.0 Private Library Foundation is closed. The next planned scope is **v0.3.1 Reading-State
-Lifecycle**; it is not active until separately committed.
+v0.3.0 Private Library Foundation is closed. Active scope: **v0.3.1 Reading-State Lifecycle**.
+Begin with the bounded status-transition model and its timestamp rules before opening user-facing
+lifecycle scope.
 
 ## Planning Principles
 
@@ -278,6 +279,9 @@ Status: closed. The implemented behavior and its remaining lifecycle boundary ar
 Outcome: a user can build a private want-to-read list from the existing catalog.
 
 #### v0.3.1 — Reading-State Lifecycle
+
+Status: active. The first bounded slice defines `want_to_read`, `reading`, and `read` transitions
+with documented `started_at` and `finished_at` rules.
 
 - [ ] Add `want_to_read`, `reading`, and `read` transitions, with documented `started_at` and
   `finished_at` rules.

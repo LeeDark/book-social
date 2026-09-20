@@ -686,6 +686,16 @@ Decision:
 - Keep every v0.3.0 item presented as want-to-read without persisting a status. Status transitions,
   removal, notes, ratings, pagination, and public libraries require a later committed scope.
 
+## 2026-09-20 — activate v0.3.1 reading-state lifecycle
+
+Decision:
+
+- Activate v0.3.1 Reading-State Lifecycle as the current planning scope after closing v0.3.0.
+- Start with a bounded domain slice for `want_to_read`, `reading`, and `read` transitions plus
+  `started_at` and `finished_at` timestamp rules.
+- Keep user-facing lifecycle mutations, removal, notes, ratings, and public libraries outside this
+  first slice until its contract and verification are complete.
+
 ## 2026-09-19 — Go, SQL, and GitHub Markdown readability rules
 
 Result:

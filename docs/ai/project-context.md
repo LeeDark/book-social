@@ -79,5 +79,6 @@ Current infrastructure caveat:
 Current scope:
 - v0.3.0 Private Library Foundation is closed: authenticated users add known catalog books from
   catalog/detail pages and list only their own want-to-read items at `/me/library`.
-- v0.3.1 Reading-State Lifecycle is next planned work. Persisted statuses, removal, notes, ratings,
-  and public libraries remain out of scope.
+- v0.3.1 Reading-State Lifecycle is active. Its first bounded slice defines persisted status
+  transitions and timestamp rules; removal, notes, ratings, and public libraries remain out of
+  scope.
