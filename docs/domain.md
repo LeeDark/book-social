@@ -101,11 +101,12 @@ Migration `000004` and the `library` module provide the private `library_items` 
 one catalog book, a uniqueness rule, and an `added_at` timestamp. Its service validates owner IDs and
 book slugs, translates catalog and storage errors to library application errors, and returns only
 catalog data plus item metadata. Authenticated users can add a catalog book and list only their own
-items at `/me/library`; items are presented as want-to-read until v0.3.1 persists lifecycle state.
+items at `/me/library`; items are currently presented as want-to-read.
 
-The accepted use cases, ownership rules, application errors, module boundaries, and future
-reading-state transitions are defined in the planned
-[Private Library v0.3 Contract](library_v0_3.md). Its v0.3.1 lifecycle section remains planned.
+The accepted v0.3.1 contract extends an item with `want_to_read`, `reading`, or `read`, nullable
+start/finish timestamps, and an optimistic-locking version. It defines owner-scoped status changes
+and explicit-confirmation removal, but these lifecycle operations remain planned until implemented.
+The detailed rules are in the [Private Library v0.3 Contract](library_v0_3.md).
 
 ## Current Design Rules
 
