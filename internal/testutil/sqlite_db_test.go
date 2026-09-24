@@ -90,8 +90,8 @@ func TestSQLiteAuthAndLibraryMigrationOnFreshDatabase(t *testing.T) {
 	ctx := context.Background()
 	db := NewSQLiteMemoryTestDB(t, ctx)
 
-	if got := applySQLiteCatalogTestMigrations(t, ctx, db, ""); got != "000004" {
-		t.Fatalf("latest migration version = %q, want %q", got, "000004")
+	if got := applySQLiteCatalogTestMigrations(t, ctx, db, ""); got != "000005" {
+		t.Fatalf("latest migration version = %q, want %q", got, "000005")
 	}
 
 	checks := []struct {
@@ -128,6 +128,11 @@ func TestSQLiteAuthAndLibraryMigrationOnFreshDatabase(t *testing.T) {
 			name:  "library item list index",
 			query: `SELECT COUNT(*) FROM pragma_index_list('library_items') WHERE name = 'idx_library_items_user_added_at_id'`,
 			want:  1,
+		},
+		{
+			name:  "library item lifecycle columns",
+			query: `SELECT COUNT(*) FROM pragma_table_info('library_items') WHERE name IN ('status', 'started_at', 'finished_at', 'version')`,
+			want:  4,
 		},
 	}
 
@@ -168,6 +173,20 @@ func TestSQLiteAuthAndLibraryMigrationOnFreshDatabase(t *testing.T) {
 		VALUES (1, 1, '2026-01-01T00:00:00Z')
 	`); err != nil {
 		t.Fatalf("insert valid library item: %v", err)
+	}
+
+	var status string
+	var version int
+	var startedAt, finishedAt sql.NullString
+	if err := db.QueryRowContext(ctx, `
+		SELECT status, started_at, finished_at, version
+		FROM library_items
+		WHERE user_id = 1 AND book_id = 1
+	`).Scan(&status, &startedAt, &finishedAt, &version); err != nil {
+		t.Fatalf("read lifecycle defaults: %v", err)
+	}
+	if status != "want_to_read" || startedAt.Valid || finishedAt.Valid || version != 1 {
+		t.Fatalf("lifecycle defaults = status %q start %v finish %v version %d", status, startedAt, finishedAt, version)
 	}
 
 	constraintChecks := []struct {
@@ -218,6 +237,20 @@ func TestSQLiteAuthAndLibraryMigrationOnFreshDatabase(t *testing.T) {
 				VALUES (1, 999, '2026-01-02T00:00:00Z')
 			`,
 		},
+		{
+			name: "invalid library status",
+			query: `
+				INSERT INTO library_items(user_id, book_id, status, added_at)
+				VALUES (1, 2, 'later', '2026-01-02T00:00:00Z')
+			`,
+		},
+		{
+			name: "non-positive library version",
+			query: `
+				INSERT INTO library_items(user_id, book_id, version, added_at)
+				VALUES (1, 2, 0, '2026-01-02T00:00:00Z')
+			`,
+		},
 	}
 
 	for _, check := range constraintChecks {
@@ -232,7 +265,7 @@ func TestSQLiteAuthAndLibraryMigrationOnFreshDatabase(t *testing.T) {
 func TestSQLiteLibraryMigrationRollbackAllowsEmptyLibrary(t *testing.T) {
 	ctx := context.Background()
 	db := NewSQLiteMemoryTestDB(t, ctx)
-	applySQLiteCatalogTestMigrations(t, ctx, db, "")
+	applySQLiteCatalogTestMigrations(t, ctx, db, "000004")
 
 	executeSQLiteMigration(t, ctx, db, "000004_add_library_items.down.sql")
 
@@ -252,7 +285,7 @@ func TestSQLiteLibraryMigrationRollbackAllowsEmptyLibrary(t *testing.T) {
 func TestSQLiteLibraryMigrationRollbackRefusesToDeleteItems(t *testing.T) {
 	ctx := context.Background()
 	db := NewSQLiteMemoryTestDB(t, ctx)
-	applySQLiteCatalogTestMigrations(t, ctx, db, "")
+	applySQLiteCatalogTestMigrations(t, ctx, db, "000004")
 
 	statements := []string{
 		`INSERT INTO users(id, first_name, login, password_hash, email, user_role_id)
@@ -278,6 +311,39 @@ func TestSQLiteLibraryMigrationRollbackRefusesToDeleteItems(t *testing.T) {
 	}
 	if items != 1 {
 		t.Fatalf("library items after rejected rollback = %d, want 1", items)
+	}
+}
+
+func TestSQLiteLibraryLifecycleRollbackProtectsLifecycleData(t *testing.T) {
+	ctx := context.Background()
+	db := NewSQLiteMemoryTestDB(t, ctx)
+	applySQLiteCatalogTestMigrations(t, ctx, db, "")
+
+	statements := []string{
+		`INSERT INTO users(id, first_name, login, password_hash, email, user_role_id)
+			VALUES (1, 'Migration', 'migration-user', 'hash', 'migration@example.test',
+				(SELECT id FROM roles WHERE role_name = 'user'))`,
+		`INSERT INTO books(id, title, slug) VALUES (1, 'Migration Book', 'migration-book')`,
+		`INSERT INTO library_items(user_id, book_id, status, added_at)
+			VALUES (1, 1, 'reading', '2026-01-01T00:00:00Z')`,
+	}
+	execStatements(t, ctx, db, statements)
+
+	path := filepath.Join(projectRoot(t), "db", "sqlite", "migrations", "000005_add_library_item_lifecycle.down.sql")
+	migration, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read lifecycle down migration: %v", err)
+	}
+	if _, err := db.ExecContext(ctx, string(migration)); err == nil {
+		t.Fatal("rollback with lifecycle data succeeded")
+	}
+
+	var status string
+	if err := db.QueryRowContext(ctx, `SELECT status FROM library_items WHERE id = 1`).Scan(&status); err != nil {
+		t.Fatalf("query library item after rejected rollback: %v", err)
+	}
+	if status != "reading" {
+		t.Fatalf("library item status after rejected rollback = %q, want reading", status)
 	}
 }
 
