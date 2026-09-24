@@ -107,15 +107,16 @@ func (r *LibraryRepository) GetByIDAndUserID(ctx context.Context, userID, itemID
 		return library.Item{}, library.ErrInternal
 	}
 
-	var parseErr error
-	item.StartedAt, parseErr = parseSQLiteNullableTime(startedAt)
-	if parseErr != nil {
+	parsedStartedAt, err := parseSQLiteNullableTime(startedAt)
+	if err != nil {
 		return library.Item{}, library.ErrInternal
 	}
-	item.FinishedAt, parseErr = parseSQLiteNullableTime(finishedAt)
-	if parseErr != nil {
+	parsedFinishedAt, err := parseSQLiteNullableTime(finishedAt)
+	if err != nil {
 		return library.Item{}, library.ErrInternal
 	}
+	item.StartedAt = nullableSQLiteTimePointer(parsedStartedAt)
+	item.FinishedAt = nullableSQLiteTimePointer(parsedFinishedAt)
 	return item, nil
 }
 
@@ -181,14 +182,16 @@ func scanLibraryItemRows(rows *sql.Rows) ([]library.Item, error) {
 			return nil, library.ErrInternal
 		}
 		item.AddedAt = parsedAddedAt
-		item.StartedAt, err = parseSQLiteNullableTime(startedAt)
+		parsedStartedAt, err := parseSQLiteNullableTime(startedAt)
 		if err != nil {
 			return nil, library.ErrInternal
 		}
-		item.FinishedAt, err = parseSQLiteNullableTime(finishedAt)
+		parsedFinishedAt, err := parseSQLiteNullableTime(finishedAt)
 		if err != nil {
 			return nil, library.ErrInternal
 		}
+		item.StartedAt = nullableSQLiteTimePointer(parsedStartedAt)
+		item.FinishedAt = nullableSQLiteTimePointer(parsedFinishedAt)
 		item.Book.Description = nullStringValue(description)
 		items = append(items, item)
 	}
@@ -205,15 +208,23 @@ func formatSQLiteNullableTime(value *time.Time) any {
 	return formatSQLiteTime(*value)
 }
 
-func parseSQLiteNullableTime(value sql.NullString) (*time.Time, error) {
+func parseSQLiteNullableTime(value sql.NullString) (sql.NullTime, error) {
 	if !value.Valid {
-		return nil, nil
+		return sql.NullTime{}, nil
 	}
 	parsed, err := parseSQLiteTime(value.String)
 	if err != nil {
-		return nil, err
+		return sql.NullTime{}, err
 	}
-	return &parsed, nil
+	return sql.NullTime{Time: parsed, Valid: true}, nil
+}
+
+func nullableSQLiteTimePointer(value sql.NullTime) *time.Time {
+	if !value.Valid {
+		return nil
+	}
+	parsed := value.Time.UTC()
+	return &parsed
 }
 
 func hasAffectedRow(result sql.Result) (bool, error) {
