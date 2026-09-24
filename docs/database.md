@@ -120,6 +120,19 @@ The down migration refuses to remove a non-empty `library_items` table. This pro
 data during rollback; an empty migration can be rolled back normally. The legacy `library`,
 `shelves`, and `tags` tables remain demo data and are unrelated to this model.
 
+## Planned Reading-State Lifecycle Schema
+
+The next paired SQLite/PostgreSQL migration for v0.3.1 will extend `library_items` with a constrained
+reading status, nullable `started_at` and `finished_at`, and a positive integer `version` for
+optimistic locking. Existing rows will become `want_to_read` with unset lifecycle timestamps and
+`version = 1`; new rows will use the same initial values. This is an accepted schema contract, not
+the current v0.3.0 database shape.
+
+Status changes and removal will include the owner ID and expected version in their write condition.
+An update increments the version only when it changes state; a repeat of the current state is a
+no-op. A stale update or removal is reported as a conflict rather than silently overwriting or
+deleting private data.
+
 CI runs Go tests, `go vet`, and lint. It does not run database migrations or Docker Compose.
 The local migration and seed smoke check is:
 

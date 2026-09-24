@@ -151,8 +151,41 @@ is an idempotent no-op. Timestamp invariants are:
 | `read`         | preserve an existing value, including `nil`                  | set to transition time |
 
 This permits marking a book as read when its start date is unknown. Moving from `read` back to
-`reading` preserves a known start and clears the finish. v0.3.1 will define the conflict-safe update
-mechanism, status forms, explicit-confirmation removal, and their HTTP routes before implementation.
+`reading` preserves a known start and clears the finish.
+
+### Planned Storage and Concurrency Contract
+
+The v0.3.1 migration will give every existing and new item a valid status, nullable lifecycle
+timestamps, and a positive integer `version`. Existing v0.3.0 rows are initialized as
+`want_to_read`, with both timestamps unset and `version = 1`. The database must constrain status to
+the three documented values and reject non-positive versions.
+
+Status changes use optimistic locking. A status form supplies the current item's `version`; a
+successful owner-scoped update requires that version, applies the transition, and increments it by
+one. A request using an old version is a conflict unless the item already has the requested status;
+that case is the documented successful no-op and does not change timestamps or version. This avoids
+silently overwriting a newer reading state without making timestamps a concurrency token.
+
+Removal also supplies the displayed `version`. It succeeds only for the owner and matching version;
+a stale confirmation is a conflict and never deletes a newer item state. Owner-scoped missing items
+remain `ErrItemNotFound`; the lifecycle implementation will add a distinct version-conflict error
+that handlers map to a safe `409 Conflict` response.
+
+### Planned HTTP Contract
+
+These v0.3.1 routes are accepted design requirements, not implemented v0.3.0 behavior:
+
+```text
+POST /me/library/{itemID}/status  change status; form fields: status, version
+GET  /me/library/{itemID}/remove  show the explicit removal confirmation
+POST /me/library/{itemID}/remove  confirm removal; form field: version
+```
+
+All lifecycle routes use the existing authentication guard and `no-store` policy. Successful POST
+requests use Post/Redirect/Get with `303 See Other` to `/me/library` and a one-request flash.
+Invalid item IDs, status values, or versions are `422`; owner-scoped missing items are `404`; stale
+state or removal forms are `409`. Cross-origin unsafe requests continue to be rejected before they
+reach a handler. A GET never mutates state, and removal is never triggered by a link or a GET.
 
 ## Deferred Work
 

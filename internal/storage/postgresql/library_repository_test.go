@@ -17,6 +17,8 @@ func TestLibraryRepositoryAddRejectsDuplicateItem(t *testing.T) {
 	params := library.AddItemParams{
 		UserID:  1,
 		BookID:  1,
+		Status:  library.ReadingStatusWantToRead,
+		Version: 1,
 		AddedAt: time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC),
 	}
 
@@ -35,9 +37,9 @@ func TestLibraryRepositoryListByUserIDIsPrivateAndDeterministic(t *testing.T) {
 	addedAt := time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC)
 
 	for _, params := range []library.AddItemParams{
-		{UserID: 1, BookID: 1, AddedAt: addedAt},
-		{UserID: 1, BookID: 2, AddedAt: addedAt},
-		{UserID: 2, BookID: 1, AddedAt: addedAt.Add(time.Hour)},
+		{UserID: 1, BookID: 1, Status: library.ReadingStatusWantToRead, Version: 1, AddedAt: addedAt},
+		{UserID: 1, BookID: 2, Status: library.ReadingStatusWantToRead, Version: 1, AddedAt: addedAt},
+		{UserID: 2, BookID: 1, Status: library.ReadingStatusWantToRead, Version: 1, AddedAt: addedAt.Add(time.Hour)},
 	} {
 		if err := repo.Add(ctx, params); err != nil {
 			t.Fatalf("Add(%+v) error = %v", params, err)
@@ -67,6 +69,71 @@ func TestLibraryRepositoryListByUserIDReturnsEmptySlice(t *testing.T) {
 	}
 	if len(items) != 0 {
 		t.Fatalf("items = %#v, want empty", items)
+	}
+}
+
+func TestLibraryRepositoryLifecycleMutationsAreOwnerScopedAndVersioned(t *testing.T) {
+	ctx := context.Background()
+	repo := NewLibraryRepository(newTestLibraryRepositoryDB(t, ctx))
+	addedAt := time.Date(2026, 9, 24, 9, 0, 0, 0, time.UTC)
+	if err := repo.Add(ctx, library.AddItemParams{
+		UserID:  1,
+		BookID:  1,
+		Status:  library.ReadingStatusWantToRead,
+		Version: 1,
+		AddedAt: addedAt,
+	}); err != nil {
+		t.Fatalf("Add() error = %v", err)
+	}
+
+	items, err := repo.ListByUserID(ctx, 1)
+	if err != nil || len(items) != 1 {
+		t.Fatalf("ListByUserID() = %#v, %v", items, err)
+	}
+	item := items[0]
+	if item.Status != library.ReadingStatusWantToRead || item.Version != 1 || item.StartedAt != nil || item.FinishedAt != nil {
+		t.Fatalf("initial lifecycle item = %+v", item)
+	}
+
+	startedAt := time.Date(2026, 9, 24, 10, 0, 0, 0, time.UTC)
+	updated, err := repo.UpdateStatus(ctx, library.UpdateStatusParams{
+		UserID:          1,
+		ItemID:          item.ID,
+		ExpectedVersion: 1,
+		Status:          library.ReadingStatusReading,
+		StartedAt:       &startedAt,
+	})
+	if err != nil || !updated {
+		t.Fatalf("UpdateStatus() = %t, %v", updated, err)
+	}
+	item, err = repo.GetByIDAndUserID(ctx, 1, item.ID)
+	if err != nil {
+		t.Fatalf("GetByIDAndUserID() error = %v", err)
+	}
+	if item.Status != library.ReadingStatusReading || item.Version != 2 || item.StartedAt == nil || !item.StartedAt.Equal(startedAt) || item.FinishedAt != nil {
+		t.Fatalf("updated lifecycle item = %+v", item)
+	}
+
+	updated, err = repo.UpdateStatus(ctx, library.UpdateStatusParams{
+		UserID:          1,
+		ItemID:          item.ID,
+		ExpectedVersion: 1,
+		Status:          library.ReadingStatusRead,
+	})
+	if err != nil || updated {
+		t.Fatalf("stale UpdateStatus() = %t, %v", updated, err)
+	}
+	if _, err := repo.GetByIDAndUserID(ctx, 2, item.ID); !errors.Is(err, library.ErrItemNotFound) {
+		t.Fatalf("other owner GetByIDAndUserID() error = %v, want ErrItemNotFound", err)
+	}
+
+	removed, err := repo.Remove(ctx, 2, item.ID, 2)
+	if err != nil || removed {
+		t.Fatalf("other owner Remove() = %t, %v", removed, err)
+	}
+	removed, err = repo.Remove(ctx, 1, item.ID, 2)
+	if err != nil || !removed {
+		t.Fatalf("Remove() = %t, %v", removed, err)
 	}
 }
 
