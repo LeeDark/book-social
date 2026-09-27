@@ -143,6 +143,17 @@ func TestLibraryRepositoryLifecycleDefaultsConstraintsAndOwnerScopedMutations(t 
 	if item.Status != library.ReadingStatusWantToRead || item.Version != 1 || item.StartedAt != nil || item.FinishedAt != nil {
 		t.Fatalf("default lifecycle item = %+v", item)
 	}
+	if item.Book.ID != 0 || item.Book.Title != "" || item.Book.Slug != "" || !item.AddedAt.IsZero() {
+		t.Fatalf("lifecycle item includes detail fields: %+v", item)
+	}
+
+	detailItem, err := repo.GetDetailByIDAndUserID(ctx, 1, item.ID)
+	if err != nil {
+		t.Fatalf("GetDetailByIDAndUserID() error = %v", err)
+	}
+	if detailItem.Book.ID != 1 || detailItem.Book.Title != "Pride and Prejudice" || detailItem.Book.Slug != "pride-and-prejudice" || !detailItem.AddedAt.IsZero() {
+		t.Fatalf("detail lifecycle item = %+v", detailItem)
+	}
 	for _, query := range []string{
 		`INSERT INTO library_items(user_id, book_id, status, added_at) VALUES (1, 2, 'unknown', '2026-09-24T09:00:00Z')`,
 		`INSERT INTO library_items(user_id, book_id, version, added_at) VALUES (2, 2, 0, '2026-09-24T09:00:00Z')`,

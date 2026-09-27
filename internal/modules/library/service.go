@@ -170,7 +170,7 @@ func (s *Service) Get(ctx context.Context, userID, itemID int) (Item, error) {
 	if userID <= 0 || itemID <= 0 {
 		return Item{}, ErrInvalidInput
 	}
-	item, err := s.repo.GetByIDAndUserID(ctx, userID, itemID)
+	item, err := s.repo.GetDetailByIDAndUserID(ctx, userID, itemID)
 	if err != nil {
 		return Item{}, mapRepositoryError(err)
 	}

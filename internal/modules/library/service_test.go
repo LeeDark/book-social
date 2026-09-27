@@ -24,6 +24,9 @@ type recordingRepository struct {
 	getErrors     []error
 	getErr        error
 	getCalls      int
+	detailItem    Item
+	detailErr     error
+	detailCalls   int
 	updated       bool
 	updateErr     error
 	updateParams  UpdateStatusParams
@@ -63,6 +66,11 @@ func (r *recordingRepository) GetByIDAndUserID(_ context.Context, _, _ int) (Ite
 		return item, err
 	}
 	return r.item, r.getErr
+}
+
+func (r *recordingRepository) GetDetailByIDAndUserID(_ context.Context, _, _ int) (Item, error) {
+	r.detailCalls++
+	return r.detailItem, r.detailErr
 }
 
 func (r *recordingRepository) UpdateStatus(_ context.Context, params UpdateStatusParams) (bool, error) {
@@ -196,6 +204,22 @@ func TestServiceListValidatesOwnerAndMapsRepositoryErrors(t *testing.T) {
 	_, err = service.List(context.Background(), 42)
 	if !errors.Is(err, ErrInternal) {
 		t.Fatalf("List() repository error = %v, want ErrInternal", err)
+	}
+}
+
+func TestServiceGetUsesDetailRepositoryLookup(t *testing.T) {
+	detailItem := Item{ID: 1, Book: books.Book{ID: 2, Title: "Dracula", Slug: "dracula"}}
+	repo := &recordingRepository{detailItem: detailItem}
+
+	item, err := NewService(repo, &recordingBookFinder{}).Get(context.Background(), 7, 1)
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+	if repo.detailCalls != 1 || repo.getCalls != 0 {
+		t.Fatalf("repository calls = detail %d, lifecycle %d", repo.detailCalls, repo.getCalls)
+	}
+	if item.Book.ID != detailItem.Book.ID || item.Book.Title != detailItem.Book.Title || item.Book.Slug != detailItem.Book.Slug {
+		t.Fatalf("Get() item = %#v, want %#v", item, detailItem)
 	}
 }
 

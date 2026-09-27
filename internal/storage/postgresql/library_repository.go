@@ -132,6 +132,39 @@ func (r *LibraryRepository) GetByIDAndUserID(ctx context.Context, userID, itemID
 	)
 	err := r.db.QueryRowContext(ctx, `
 		SELECT
+			id,
+			status,
+			started_at,
+			finished_at,
+			version
+		FROM library_items
+		WHERE id = $1 AND user_id = $2
+	`, itemID, userID).Scan(
+		&item.ID,
+		&item.Status,
+		&startedAt,
+		&finishedAt,
+		&item.Version,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return library.Item{}, library.ErrItemNotFound
+	}
+	if err != nil {
+		return library.Item{}, library.ErrInternal
+	}
+	item.StartedAt = postgresNullableTime(startedAt)
+	item.FinishedAt = postgresNullableTime(finishedAt)
+	return item, nil
+}
+
+func (r *LibraryRepository) GetDetailByIDAndUserID(ctx context.Context, userID, itemID int) (library.Item, error) {
+	var (
+		item       library.Item
+		startedAt  sql.NullTime
+		finishedAt sql.NullTime
+	)
+	err := r.db.QueryRowContext(ctx, `
+		SELECT
 			li.id,
 			li.status,
 			li.started_at,
