@@ -142,8 +142,16 @@ func TestLibraryRepositoryLifecycleMutationsAreOwnerScopedAndVersioned(t *testin
 	if item.Status != library.ReadingStatusWantToRead || item.Version != 1 || item.StartedAt != nil || item.FinishedAt != nil {
 		t.Fatalf("initial lifecycle item = %+v", item)
 	}
-	if item.Book.ID != 0 || item.Book.Title != "" || item.Book.Slug != "" || !item.AddedAt.IsZero() {
-		t.Fatalf("lifecycle item includes detail fields: %+v", item)
+	if item.Book.ID != 1 || item.Book.Title != "Pride and Prejudice" || item.Book.Slug != "pride-and-prejudice" || item.AddedAt.IsZero() {
+		t.Fatalf("library list item = %+v", item)
+	}
+
+	lifecycleItem, err := repo.GetByIDAndUserID(ctx, 1, item.ID)
+	if err != nil {
+		t.Fatalf("GetByIDAndUserID() error = %v", err)
+	}
+	if lifecycleItem.Book.ID != 0 || lifecycleItem.Book.Title != "" || lifecycleItem.Book.Slug != "" || !lifecycleItem.AddedAt.IsZero() {
+		t.Fatalf("lifecycle item includes detail fields: %+v", lifecycleItem)
 	}
 
 	detailItem, err := repo.GetDetailByIDAndUserID(ctx, 1, item.ID)
