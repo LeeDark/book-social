@@ -734,4 +734,38 @@ Validation:
   CI's pinned `golangci-lint v2.12.2` remains the authoritative lint check after push.
 - PostgreSQL tests were skipped locally because `BOOK_SOCIAL_POSTGRES_TEST_DSN` was not set.
 - External review, the documented opt-in PostgreSQL verification, migration smoke, and mandatory
-  browser smoke remain pending; v0.3.1 is not closed.
+  browser smoke remained pending at this checkpoint.
+
+## 2026-09-27 — v0.3.1 verification and release closure
+
+Result:
+
+- External review feedback was resolved, including MPA lifecycle-error pages, owner-scoped detail
+  lookup, consolidated status labels, documentation corrections, and focused coverage for privacy,
+  stale forms, malformed item IDs, anonymous routes, lifecycle error mapping, and concurrent
+  status updates.
+- Applied migration `5 add_library_item_lifecycle` to the local development SQLite database before
+  manual verification.
+- Completed the mandatory browser smoke: registration, add, lifecycle transitions, idempotent
+  repeat submission, catalog state display, stale-form conflict, explicit removal confirmation,
+  and Ada/Bob/anonymous privacy checks all passed.
+- Closed v0.3.1 after the automated, migration, and browser checks below passed.
+
+Validation:
+
+- `go test -v -race -count=1 ./...` passed without race reports. PostgreSQL tests were skipped
+  locally because `BOOK_SOCIAL_POSTGRES_TEST_DSN` was not set.
+- `go vet ./...` passed.
+- `make db/migrate/smoke` passed twice, exercising disposable SQLite migration, rollback, seed,
+  and legacy-data checks.
+- `make db/migrate/up` applied the lifecycle migration to the local development SQLite database.
+- Mandatory local browser smoke passed after the development database migration.
+
+Residual risks:
+
+- Catalog and detail pages return `500` if owner-scoped library-state lookup fails. This is an
+  intentional consistency choice: omitting state could offer Add for an already-added book and
+  lead to a confusing `409` on submission.
+- `ListBookStates` uses one SQL placeholder per displayed book. The current 109-book catalog is
+  well below SQLite and PostgreSQL parameter limits; add pagination or another batching strategy
+  before the catalog grows materially.
