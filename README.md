@@ -6,7 +6,8 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-v0.3.0 Private Library Foundation is complete on top of the v0.2.6 auth flow:
+v0.3.1 Reading-State Lifecycle is implemented on top of the v0.3.0 Private Library Foundation and
+is awaiting external review and the mandatory local browser smoke check:
 
 - Home and About pages.
 - Book catalog page.
@@ -43,14 +44,16 @@ v0.3.0 Private Library Foundation is complete on top of the v0.2.6 auth flow:
 - Registration, login, idempotent POST logout, protected `/me`, auth navigation, and one-request
   success flashes use the DB-backed opaque-session foundation.
 - Authenticated users can add a known catalog book from catalog and detail pages, then view only
-  their own deterministic private want-to-read list at `/me/library`.
+  their own deterministic private library at `/me/library`.
 - SQLite and PostgreSQL migration `000004` provide owner-scoped `library_items` persistence with
-  duplicate prevention and deterministic list ordering.
+  duplicate prevention and deterministic list ordering; migration `000005` adds lifecycle status,
+  nullable timestamps, and an optimistic-lock version.
+- Users can change an owned item's state between Want to read, Reading, and Read; stale mutations
+  are conflicts, repeating the current state is a no-op, and removal requires a confirmation page.
 
 Not current production direction:
 - Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
-- Reading-state changes, removal, notes, ratings, search, pagination, and social features remain
-  planned later.
+- Notes, ratings, search, pagination, and social features remain planned later.
 
 ## Tech Stack
 
@@ -176,7 +179,7 @@ cmd/web/                 application entrypoint
 internal/app/            app wiring, routes, home handler
 internal/modules/books/  books/catalog module
 internal/modules/users/  auth/user/session service and repository contracts
-internal/modules/library/ private-library add/list service, handler, and repository contracts
+internal/modules/library/ private-library lifecycle service, handler, and repository contracts
 internal/storage/sqlite/ SQLite repository implementation
 internal/storage/postgresql/ PostgreSQL connection and repository implementation
 internal/http/auth/      session cookie, current-user context, and route-guard foundation
@@ -207,7 +210,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Begin v0.3.1 Reading-State Lifecycle with the bounded status-transition model and timestamp rules.
+- Complete external review, PostgreSQL verification, and mandatory local smoke for v0.3.1.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:

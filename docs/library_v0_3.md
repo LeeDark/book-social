@@ -1,7 +1,7 @@
 # Private Library v0.3 Contract
 
-This document records the implemented v0.3.0 private-library behavior and the accepted v0.3.1
-lifecycle contract. Current routes, domain behavior, and schema are also summarized in
+This document records the implemented v0.3.0 private-library behavior and the implemented v0.3.1
+lifecycle rules. Current routes, domain behavior, and schema are also summarized in
 [routes.md](routes.md), [domain.md](domain.md), and [database.md](database.md).
 
 ## Accepted Baseline
@@ -74,7 +74,8 @@ type Item struct {
 }
 ```
 
-The service exposes add and list use cases. It owns input normalization, catalog-error translation,
+The v0.3.1 service exposes add, list, owner-scoped item lookup, status update, removal, and catalog
+state lookup use cases. It owns input normalization, catalog-error translation, timestamp rules,
 the operation clock, and orchestration. Repositories own SQL and database-error translation.
 Handlers own HTTP parsing, redirects, status codes, flash messages, and page/view models.
 
@@ -87,14 +88,15 @@ and receives a transaction-capable repository abstraction; handlers never manage
 
 The library module uses errors compatible with `errors.Is`:
 
-| Application outcome                   | Library error          | HTTP behavior                       |
-|---------------------------------------|------------------------|-------------------------------------|
-| Missing/invalid user ID or blank slug | `ErrInvalidInput`      | `422 Unprocessable Entity`          |
-| Catalog slug does not identify a book | `ErrBookNotFound`      | `404 Not Found`                     |
-| User already owns the book            | `ErrItemAlreadyExists` | `409 Conflict`                      |
-| Requested library item does not exist | `ErrItemNotFound`      | `404 Not Found`                     |
-| Authenticated user is not permitted   | `ErrForbidden`         | `403 Forbidden`                     |
-| Unexpected repository/catalog failure | `ErrInternal`          | generic `500 Internal Server Error` |
+| Application outcome                   | Library error            | HTTP behavior                       |
+|---------------------------------------|--------------------------|-------------------------------------|
+| Missing/invalid user ID or blank slug | `ErrInvalidInput`        | `422 Unprocessable Entity`          |
+| Catalog slug does not identify a book | `ErrBookNotFound`        | `404 Not Found`                     |
+| User already owns the book            | `ErrItemAlreadyExists`   | `409 Conflict`                      |
+| Requested library item does not exist | `ErrItemNotFound`        | `404 Not Found`                     |
+| Submitted lifecycle version is stale  | `ErrItemVersionConflict` | `409 Conflict`                      |
+| Authenticated user is not permitted   | `ErrForbidden`           | `403 Forbidden`                     |
+| Unexpected repository/catalog failure | `ErrInternal`            | generic `500 Internal Server Error` |
 
 Missing or invalid authentication remains `users.ErrUnauthenticated` at the existing HTTP auth
 boundary. Protected MPA routes redirect anonymous users to `/login` with `303 See Other`; the
@@ -137,9 +139,8 @@ afterward.
 
 ## Reading-State Rules for v0.3.1
 
-v0.3.0 has no status mutation. Its items are presented as want-to-read entries, and its minimal
-schema contains ownership, book identity, uniqueness, and `added_at`. v0.3.1 will persist the
-explicit statuses `want_to_read`, `reading`, and `read` and add `started_at` and `finished_at`.
+v0.3.1 persists the explicit statuses `want_to_read`, `reading`, and `read` plus nullable
+`started_at` and `finished_at` timestamps.
 
 All three status values may transition to either of the other values. Repeating the current status
 is an idempotent no-op. Timestamp invariants are:
@@ -153,10 +154,11 @@ is an idempotent no-op. Timestamp invariants are:
 This permits marking a book as read when its start date is unknown. Moving from `read` back to
 `reading` preserves a known start and clears the finish.
 
-### Planned Storage and Concurrency Contract
+### Storage and Concurrency Contract
 
-The v0.3.1 migration will give every existing and new item a valid status, nullable lifecycle
-timestamps, and a positive integer `version`. Existing v0.3.0 rows are initialized as
+Migration `000005_add_library_item_lifecycle` gives every existing and new item a valid status,
+nullable lifecycle timestamps, and a positive integer `version`. Existing v0.3.0 rows are initialized
+as
 `want_to_read`, with both timestamps unset and `version = 1`. The database must constrain status to
 the three documented values and reject non-positive versions.
 
@@ -168,12 +170,11 @@ silently overwriting a newer reading state without making timestamps a concurren
 
 Removal also supplies the displayed `version`. It succeeds only for the owner and matching version;
 a stale confirmation is a conflict and never deletes a newer item state. Owner-scoped missing items
-remain `ErrItemNotFound`; the lifecycle implementation will add a distinct version-conflict error
-that handlers map to a safe `409 Conflict` response.
+remain `ErrItemNotFound`; `ErrItemVersionConflict` maps to a safe `409 Conflict` response.
 
-### Planned HTTP Contract
+### HTTP Contract
 
-These v0.3.1 routes are accepted design requirements, not implemented v0.3.0 behavior:
+v0.3.1 provides these protected owner-scoped routes:
 
 ```text
 POST /me/library/{itemID}/status  change status; form fields: status, version
@@ -189,5 +190,5 @@ reach a handler. A GET never mutates state, and removal is never triggered by a 
 
 ## Deferred Work
 
-The following are not part of v0.3.0: persisted status changes, removal, ratings, notes, reading
-progress, custom shelves/tags, public libraries, external catalog import, and social features.
+Ratings, notes, reading progress, custom shelves/tags, public libraries, external catalog import,
+and social features are not part of v0.3.1.

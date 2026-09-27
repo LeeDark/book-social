@@ -21,7 +21,7 @@ Current modules:
 - app skeleton: config, logging, errors
 - users/auth foundation: password policy, registration/authentication services, DB sessions
 - HTTP auth foundation: cookie/token boundary, current-user context, and route guard
-- private library: owner-scoped add/list workflow and server-rendered library page
+- private library: owner-scoped add/list, lifecycle transitions, and confirmed removal workflow
 
 Current focus:
 - minimal working features first
@@ -54,8 +54,8 @@ Current infrastructure caveat:
 - `APP_ENV=dev` uses SQLite and is the active local database path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
 - SQLite and PostgreSQL catalog repositories implement the same normalized v0.2 read contract.
-- SQLite and PostgreSQL v0.1 baseline, v0.2 normalization, v0.2.5 auth, and v0.3 private-library
-  migrations exist under `db/*/migrations`.
+- SQLite and PostgreSQL v0.1 baseline, v0.2 normalization, v0.2.5 auth, v0.3 private-library, and
+  v0.3.1 lifecycle migrations exist under `db/*/migrations`.
 - Migration commands use the installed `golang-migrate` CLI through `make db/migrate/up` and `make db/migrate/down`.
 - Reset and Docker/Compose bootstrap apply all migrations first and then seed SQL.
 - `make db/migrate/smoke` checks clean setup, seed counts, the v0.1 relationship migration, the
@@ -78,7 +78,7 @@ Current infrastructure caveat:
 
 Current scope:
 - v0.3.0 Private Library Foundation is closed: authenticated users add known catalog books from
-  catalog/detail pages and list only their own want-to-read items at `/me/library`.
-- v0.3.1 Reading-State Lifecycle is active. Its first bounded slice defines persisted status
-  transitions and timestamp rules; removal, notes, ratings, and public libraries remain out of
-  scope.
+  catalog/detail pages and list only their own items at `/me/library`.
+- v0.3.1 Reading-State Lifecycle is implemented and awaiting review plus mandatory manual smoke:
+  owner-scoped status changes, timestamp rules, optimistic conflicts, catalog state display, and
+  explicit-confirmation removal are in scope. Notes, ratings, and public libraries remain deferred.

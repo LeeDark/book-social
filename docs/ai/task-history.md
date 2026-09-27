@@ -696,6 +696,28 @@ Decision:
 - Keep user-facing lifecycle mutations, removal, notes, ratings, and public libraries outside this
   first slice until its contract and verification are complete.
 
+## 2026-09-27 — v0.3.1 implementation and automated verification
+
+Result:
+
+- Implemented owner-scoped status changes, lifecycle timestamps, optimistic version conflicts,
+  catalog state display, and explicit-confirmation removal on SQLite and PostgreSQL.
+- Restored the reviewed SQLite nullable-timestamp parsing shape: parse text to `sql.NullTime`, then
+  convert a valid value to `*time.Time`; this avoids a `(nil, nil)` result flagged by `nilnil`.
+- Added HTTP coverage for malformed lifecycle forms, owner-scoped mutation refusal, and idempotent
+  repeat status submission.
+
+Validation:
+
+- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
+- Focused SQLite, library-service, and app tests passed.
+- Local `golangci-lint` could not run because the installed binary is built with Go 1.26 while the
+  project requires Go 1.27; CI remains the authoritative lint check after push.
+- PostgreSQL tests were skipped locally because `BOOK_SOCIAL_POSTGRES_TEST_DSN` was not set.
+- External review, the documented opt-in PostgreSQL verification, migration smoke, and mandatory
+  browser smoke remain pending; v0.3.1 is not closed.
+
 ## 2026-09-19 — Go, SQL, and GitHub Markdown readability rules
 
 Result:

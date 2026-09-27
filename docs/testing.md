@@ -49,6 +49,9 @@ Current tests cover:
 - unsafe cross-origin refusal and same-origin success through `http.CrossOriginProtection`
 - registration/login/logout handlers, safe `422` form outcomes, session cookies, and password
   non-repopulation in rendered forms
+- private-library lifecycle transitions, timestamp rules, optimistic-lock conflicts, idempotent
+  repeated status submissions, explicit removal confirmation, malformed lifecycle forms, and
+  owner-scoped refusal
 
 There are also small integration-style HTTP tests that use `httptest` and a temporary SQLite database.
 
@@ -63,7 +66,7 @@ Current repository and HTTP integration tests create disposable SQLite databases
 - tests insert minimal deterministic data needed by the behavior under test
 
 Shared helpers in `internal/testutil` build SQLite and PostgreSQL test schemas by applying the
-checked-in migrations through private-library migration `000004`, then seed a small deterministic
+checked-in migrations through reading-state lifecycle migration `000005`, then seed a small deterministic
 catalog fixture and ordinary user role. Tests can still keep scenario-specific fixture rows locally
 when they need more data than the default helper provides.
 
@@ -164,6 +167,17 @@ and email address for the test account if the database was not reset.
 
 Record the date, browser/version, commands used, and any failed step in the release evidence. Mark
 plan item 66 complete only after this smoke test passes in a real local browser.
+
+## Manual Browser Smoke: v0.3.1 Lifecycle
+
+Status: pending external review and corrections.
+
+After the v0.3.1 automated checks and review pass, use a reset local SQLite database and a real
+browser to verify `/books`, `/books/{valid-slug}`, and `/me/library`. Register two users and confirm
+that the owner can add a book, move it through Want to read → Reading → Read → Want to read, repeat
+a displayed state without changing it, and remove it only from the explicit confirmation page. The
+second user must neither see nor mutate the first user's item. Record the date, browser/version,
+commands, and result before closing the issue or milestone.
 
 ## Codex Sandbox Note
 
