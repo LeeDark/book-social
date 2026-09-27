@@ -17,7 +17,6 @@ type LibraryPageData struct {
 type ItemView struct {
 	ID            int
 	Version       int
-	Status        string
 	RemoveURL     string
 	Title         string
 	BookURL       string
@@ -47,12 +46,11 @@ func mapItemsToViews(items []Item) []ItemView {
 		views = append(views, ItemView{
 			ID:            item.ID,
 			Version:       item.Version,
-			Status:        string(item.Status),
 			RemoveURL:     fmt.Sprintf("/me/library/%d/remove", item.ID),
 			Title:         item.Book.Title,
 			BookURL:       fmt.Sprintf("/books/%s", item.Book.Slug),
 			Authors:       mapAuthorsToLinks(item.Book.Authors),
-			StateLabel:    readingStatusLabel(item.Status),
+			StateLabel:    item.Status.Label(),
 			StatusOptions: statusOptions(item.Status),
 		})
 	}
@@ -83,32 +81,14 @@ func authorName(author books.Author) string {
 	return strings.Join(parts, " ")
 }
 
-func readingStatusLabel(status ReadingStatus) string {
-	switch status {
-	case ReadingStatusReading:
-		return "Reading"
-	case ReadingStatusRead:
-		return "Read"
-	default:
-		return "Want to read"
-	}
-}
-
 func statusOptions(current ReadingStatus) []StatusOption {
-	values := []struct {
-		value ReadingStatus
-		label string
-	}{
-		{value: ReadingStatusWantToRead, label: "Want to read"},
-		{value: ReadingStatusReading, label: "Reading"},
-		{value: ReadingStatusRead, label: "Read"},
-	}
+	values := []ReadingStatus{ReadingStatusWantToRead, ReadingStatusReading, ReadingStatusRead}
 	options := make([]StatusOption, 0, len(values))
 	for _, value := range values {
 		options = append(options, StatusOption{
-			Value:    string(value.value),
-			Label:    value.label,
-			Selected: current == value.value,
+			Value:    string(value),
+			Label:    value.Label(),
+			Selected: current == value,
 		})
 	}
 	return options

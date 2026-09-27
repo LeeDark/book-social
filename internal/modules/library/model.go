@@ -14,6 +14,17 @@ const (
 	ReadingStatusRead       ReadingStatus = "read"
 )
 
+func (status ReadingStatus) Label() string {
+	switch status {
+	case ReadingStatusReading:
+		return "Reading"
+	case ReadingStatusRead:
+		return "Read"
+	default:
+		return "Want to read"
+	}
+}
+
 type Item struct {
 	ID         int
 	Book       books.Book
@@ -25,7 +36,6 @@ type Item struct {
 }
 
 type BookState struct {
-	ItemID int
 	Status ReadingStatus
 }
 

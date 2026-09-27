@@ -29,18 +29,7 @@ func (p *LibraryStateProvider) StatesForBooks(
 
 	labels := make(map[int]string, len(states))
 	for bookID, state := range states {
-		labels[bookID] = libraryStateLabel(state.Status)
+		labels[bookID] = state.Status.Label()
 	}
 	return labels, nil
-}
-
-func libraryStateLabel(status library.ReadingStatus) string {
-	switch status {
-	case library.ReadingStatusReading:
-		return "Reading"
-	case library.ReadingStatusRead:
-		return "Read"
-	default:
-		return "Want to read"
-	}
 }

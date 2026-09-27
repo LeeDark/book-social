@@ -393,7 +393,7 @@ func assertOptionalTimeEqual(t *testing.T, got, want *time.Time) {
 func TestServiceListBookStatesFiltersAndDeduplicatesBookIDs(t *testing.T) {
 	repo := &recordingRepository{
 		bookStates: map[int]BookState{
-			12: {ItemID: 8, Status: ReadingStatusReading},
+			12: {Status: ReadingStatusReading},
 		},
 	}
 
@@ -404,7 +404,7 @@ func TestServiceListBookStatesFiltersAndDeduplicatesBookIDs(t *testing.T) {
 	if repo.stateUserID != 42 || len(repo.stateBookIDs) != 1 || repo.stateBookIDs[0] != 12 {
 		t.Fatalf("repository request = user %d, books %v", repo.stateUserID, repo.stateBookIDs)
 	}
-	if states[12] != (BookState{ItemID: 8, Status: ReadingStatusReading}) {
+	if states[12] != (BookState{Status: ReadingStatusReading}) {
 		t.Fatalf("states = %#v", states)
 	}
 }

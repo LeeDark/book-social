@@ -49,7 +49,7 @@ The `library` module owns its domain model, service, errors, and repository cont
 on the existing `books` module as the upstream catalog boundary; the `books` module must not depend
 on `library`.
 
-The consuming service defines these minimum ports and values:
+The consuming service defines these current ports and values:
 
 ```go
 type BookFinder interface {
@@ -59,6 +59,25 @@ type BookFinder interface {
 type Repository interface {
 	Add(ctx context.Context, params AddItemParams) error
 	ListByUserID(ctx context.Context, userID int) ([]Item, error)
+	ListBookStates(ctx context.Context, userID int, bookIDs []int) (map[int]BookState, error)
+	GetByIDAndUserID(ctx context.Context, userID, itemID int) (Item, error)
+	GetDetailByIDAndUserID(ctx context.Context, userID, itemID int) (Item, error)
+	UpdateStatus(ctx context.Context, params UpdateStatusParams) (bool, error)
+	Remove(ctx context.Context, userID, itemID, expectedVersion int) (bool, error)
+}
+
+type Item struct {
+	ID         int
+	Book       books.Book
+	Status     ReadingStatus
+	StartedAt  *time.Time
+	FinishedAt *time.Time
+	Version    int
+	AddedAt    time.Time
+}
+
+type BookState struct {
+	Status ReadingStatus
 }
 
 type AddItemParams struct {
@@ -67,17 +86,23 @@ type AddItemParams struct {
 	AddedAt time.Time
 }
 
-type Item struct {
-	ID      int
-	Book    books.Book
-	AddedAt time.Time
+type UpdateStatusParams struct {
+	UserID          int
+	ItemID          int
+	ExpectedVersion int
+	Status          ReadingStatus
+	StartedAt       *time.Time
+	FinishedAt      *time.Time
 }
 ```
 
 The v0.3.1 service exposes add, list, owner-scoped item lookup, status update, removal, and catalog
-state lookup use cases. It owns input normalization, catalog-error translation, timestamp rules,
-the operation clock, and orchestration. Repositories own SQL and database-error translation.
-Handlers own HTTP parsing, redirects, status codes, flash messages, and page/view models.
+state lookup use cases. `GetByIDAndUserID` is the narrow lifecycle lookup used by status updates and
+conflict checks; `GetDetailByIDAndUserID` additionally loads a book ID, title, and slug for the
+removal confirmation page. The service owns input normalization, catalog-error translation,
+timestamp rules, the operation clock, and orchestration. Repositories own SQL and database-error
+translation. Handlers own HTTP parsing, redirects, status codes, flash messages, and page/view
+models.
 
 No service-level transaction is required in v0.3.0: add performs one authoritative insert after a
 catalog read, and list is read-only. Foreign keys handle a catalog row disappearing between lookup
@@ -157,10 +182,9 @@ This permits marking a book as read when its start date is unknown. Moving from 
 ### Storage and Concurrency Contract
 
 Migration `000005_add_library_item_lifecycle` gives every existing and new item a valid status,
-nullable lifecycle timestamps, and a positive integer `version`. Existing v0.3.0 rows are initialized
-as
-`want_to_read`, with both timestamps unset and `version = 1`. The database must constrain status to
-the three documented values and reject non-positive versions.
+nullable lifecycle timestamps, and a positive integer `version`. Existing v0.3.0 rows are
+initialized as `want_to_read`, with both timestamps unset and `version = 1`. The database must
+constrain status to the three documented values and reject non-positive versions.
 
 Status changes use optimistic locking. A status form supplies the current item's `version`; a
 successful owner-scoped update requires that version, applies the transition, and increments it by

@@ -90,19 +90,33 @@ func TestLibraryRepositoryListBookStatesIsOwnerScopedAndLimitedToRequestedBooks(
 	if len(states) != 1 {
 		t.Fatalf("len(states) = %d, want 1", len(states))
 	}
-	if state, exists := states[1]; !exists || state.Status != library.ReadingStatusWantToRead || state.ItemID <= 0 {
+	if state, exists := states[1]; !exists || state.Status != library.ReadingStatusWantToRead {
 		t.Fatalf("state for book 1 = %+v, exists = %t", state, exists)
 	}
 	if _, exists := states[2]; exists {
 		t.Fatalf("states includes unrequested book 2: %#v", states)
 	}
 
+	otherOwnerItems, err := repo.ListByUserID(ctx, 2)
+	if err != nil || len(otherOwnerItems) != 1 {
+		t.Fatalf("ListByUserID() for other owner = %#v, %v", otherOwnerItems, err)
+	}
+	updated, err := repo.UpdateStatus(ctx, library.UpdateStatusParams{
+		UserID:          2,
+		ItemID:          otherOwnerItems[0].ID,
+		ExpectedVersion: 1,
+		Status:          library.ReadingStatusRead,
+	})
+	if err != nil || !updated {
+		t.Fatalf("UpdateStatus() for other owner = %t, %v", updated, err)
+	}
+
 	otherOwnerStates, err := repo.ListBookStates(ctx, 2, []int{1})
 	if err != nil {
 		t.Fatalf("ListBookStates() for other owner error = %v", err)
 	}
-	if len(otherOwnerStates) != 1 || otherOwnerStates[1].ItemID == states[1].ItemID {
-		t.Fatalf("other owner states = %#v, want only the other owner's item", otherOwnerStates)
+	if len(otherOwnerStates) != 1 || otherOwnerStates[1].Status != library.ReadingStatusRead {
+		t.Fatalf("other owner states = %#v, want only the other owner's state", otherOwnerStates)
 	}
 }
 

@@ -96,7 +96,7 @@ func (r *LibraryRepository) ListBookStates(
 	}
 
 	query := `
-		SELECT book_id, id, status
+		SELECT book_id, status
 		FROM library_items
 		WHERE user_id = ?
 			AND book_id IN (` + queryPlaceholders(len(bookIDs)) + `);
@@ -112,7 +112,7 @@ func (r *LibraryRepository) ListBookStates(
 	for rows.Next() {
 		var bookID int
 		var state library.BookState
-		if err := rows.Scan(&bookID, &state.ItemID, &state.Status); err != nil {
+		if err := rows.Scan(&bookID, &state.Status); err != nil {
 			return nil, library.ErrInternal
 		}
 		states[bookID] = state

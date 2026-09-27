@@ -639,6 +639,23 @@ Decision:
 - Keep v0.3.0 Private Library Foundation as the next planned scope; do not treat it as active work
   until it receives a separate commitment.
 
+## 2026-09-19 — Go, SQL, and GitHub Markdown readability rules
+
+Result:
+
+- Added one readable-default guide for Go code and SQLite/PostgreSQL SQL.
+- Added concise agent instructions and workflow review points rather than a bulk style rewrite.
+- Added visual grouping rules and a separate readability review pass that preserves behavior and
+  records ambiguity as a finding rather than resolving it during cleanup.
+- Recorded the safe GitHub CLI pattern for multiline Markdown: use `--body-file -` with literal
+  newlines and verify published bodies before relying on `Closes #N`.
+
+Decision:
+
+- Keep code readability rules separate from the changing model policy and from automated formatter
+  selection; the project continues to use its existing `gofmt`, vet, lint, migration, and test
+  checks.
+
 ## 2026-09-19 — v0.3.0 private-library contract
 
 Result:
@@ -679,7 +696,7 @@ Validation:
 - PostgreSQL HTTP parity is opt-in through `BOOK_SOCIAL_POSTGRES_TEST_DSN` and was skipped locally
   because that variable was not set.
 - Local `make lint` could not run: installed `golangci-lint v2.12.2` panics because its build uses
-  Go 1.26 while the checked dependency requires Go 1.27. CI is the authoritative lint result.
+  Go 1.26 while a dependency being analyzed requires Go 1.27. CI is the authoritative lint result.
 
 Decision:
 
@@ -712,25 +729,9 @@ Validation:
 - `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
 - `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
 - Focused SQLite, library-service, and app tests passed.
-- Local `golangci-lint` could not run because the installed binary is built with Go 1.26 while the
-  project requires Go 1.27; CI remains the authoritative lint check after push.
+- Local `golangci-lint` could not run because the installed binary is built with Go 1.26 while a
+  dependency being analyzed requires Go 1.27. The project itself declares Go 1.26.4 in `go.mod`;
+  CI's pinned `golangci-lint v2.12.2` remains the authoritative lint check after push.
 - PostgreSQL tests were skipped locally because `BOOK_SOCIAL_POSTGRES_TEST_DSN` was not set.
 - External review, the documented opt-in PostgreSQL verification, migration smoke, and mandatory
   browser smoke remain pending; v0.3.1 is not closed.
-
-## 2026-09-19 — Go, SQL, and GitHub Markdown readability rules
-
-Result:
-
-- Added one readable-default guide for Go code and SQLite/PostgreSQL SQL.
-- Added concise agent instructions and workflow review points rather than a bulk style rewrite.
-- Added visual grouping rules and a separate readability review pass that preserves behavior and
-  records ambiguity as a finding rather than resolving it during cleanup.
-- Recorded the safe GitHub CLI pattern for multiline Markdown: use `--body-file -` with literal
-  newlines and verify published bodies before relying on `Closes #N`.
-
-Decision:
-
-- Keep code readability rules separate from the changing model policy and from automated formatter
-  selection; the project continues to use its existing `gofmt`, vet, lint, migration, and test
-  checks.
