@@ -159,14 +159,16 @@ func (r *LibraryRepository) GetByIDAndUserID(ctx context.Context, userID, itemID
 		return library.Item{}, library.ErrInternal
 	}
 
-	item.StartedAt, err = sqliteNullableTime(startedAt)
+	parsedStartedAt, err := parseSQLiteNullableTime(startedAt)
 	if err != nil {
 		return library.Item{}, library.ErrInternal
 	}
-	item.FinishedAt, err = sqliteNullableTime(finishedAt)
+	parsedFinishedAt, err := parseSQLiteNullableTime(finishedAt)
 	if err != nil {
 		return library.Item{}, library.ErrInternal
 	}
+	item.StartedAt = nullableSQLiteTimePointer(parsedStartedAt)
+	item.FinishedAt = nullableSQLiteTimePointer(parsedFinishedAt)
 	return item, nil
 }
 
@@ -232,14 +234,16 @@ func scanLibraryItemRows(rows *sql.Rows) ([]library.Item, error) {
 			return nil, library.ErrInternal
 		}
 		item.AddedAt = parsedAddedAt
-		item.StartedAt, err = sqliteNullableTime(startedAt)
+		parsedStartedAt, err := parseSQLiteNullableTime(startedAt)
 		if err != nil {
 			return nil, library.ErrInternal
 		}
-		item.FinishedAt, err = sqliteNullableTime(finishedAt)
+		parsedFinishedAt, err := parseSQLiteNullableTime(finishedAt)
 		if err != nil {
 			return nil, library.ErrInternal
 		}
+		item.StartedAt = nullableSQLiteTimePointer(parsedStartedAt)
+		item.FinishedAt = nullableSQLiteTimePointer(parsedFinishedAt)
 		item.Book.Description = nullStringValue(description)
 		items = append(items, item)
 	}
@@ -256,16 +260,23 @@ func formatSQLiteNullableTime(value *time.Time) any {
 	return formatSQLiteTime(*value)
 }
 
-func sqliteNullableTime(value sql.NullString) (*time.Time, error) {
+func parseSQLiteNullableTime(value sql.NullString) (sql.NullTime, error) {
 	if !value.Valid {
-		return nil, nil
+		return sql.NullTime{}, nil
 	}
 	parsed, err := parseSQLiteTime(value.String)
 	if err != nil {
-		return nil, err
+		return sql.NullTime{}, err
 	}
-	parsed = parsed.UTC()
-	return &parsed, nil
+	return sql.NullTime{Time: parsed.UTC(), Valid: true}, nil
+}
+
+func nullableSQLiteTimePointer(value sql.NullTime) *time.Time {
+	if !value.Valid {
+		return nil
+	}
+	parsed := value.Time.UTC()
+	return &parsed
 }
 
 func hasAffectedRow(result sql.Result) (bool, error) {

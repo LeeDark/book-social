@@ -197,6 +197,39 @@ func TestLibraryRepositoryLifecycleDefaultsConstraintsAndOwnerScopedMutations(t 
 	}
 }
 
+func TestParseSQLiteNullableTime(t *testing.T) {
+	parsedAt := time.Date(2026, 9, 24, 10, 0, 0, 0, time.FixedZone("UTC+2", 2*60*60))
+
+	tests := []struct {
+		name  string
+		value sql.NullString
+		want  sql.NullTime
+	}{
+		{
+			name:  "null value stays invalid without an error",
+			value: sql.NullString{},
+			want:  sql.NullTime{},
+		},
+		{
+			name:  "timestamp is parsed in UTC",
+			value: sql.NullString{String: formatSQLiteTime(parsedAt), Valid: true},
+			want:  sql.NullTime{Time: parsedAt.UTC(), Valid: true},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseSQLiteNullableTime(tt.value)
+			if err != nil {
+				t.Fatalf("parseSQLiteNullableTime() error = %v", err)
+			}
+			if got.Valid != tt.want.Valid || (got.Valid && !got.Time.Equal(tt.want.Time)) {
+				t.Fatalf("parseSQLiteNullableTime() = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}
+
 func newTestLibraryRepositoryDB(t *testing.T, ctx context.Context) *sql.DB {
 	t.Helper()
 

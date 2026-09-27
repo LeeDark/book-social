@@ -399,6 +399,58 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 			t.Fatalf("status form action is malformed: %q", formAction)
 		}
 
+		for _, tt := range []struct {
+			name   string
+			path   string
+			values url.Values
+		}{
+			{
+				name:   "status update without version",
+				path:   itemPath + "/status",
+				values: url.Values{"status": {"reading"}},
+			},
+			{
+				name:   "status update with unknown status",
+				path:   itemPath + "/status",
+				values: url.Values{"status": {"later"}, "version": {"1"}},
+			},
+			{
+				name:   "removal without version",
+				path:   itemPath + "/remove",
+				values: url.Values{},
+			},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				invalidRequest := formRequest(http.MethodPost, tt.path, tt.values)
+				invalidRequest.AddCookie(adaSession)
+				invalidResponse := httptest.NewRecorder()
+				handler.ServeHTTP(invalidResponse, invalidRequest)
+				if invalidResponse.Code != http.StatusUnprocessableEntity {
+					t.Fatalf("invalid form = %d, want %d", invalidResponse.Code, http.StatusUnprocessableEntity)
+				}
+			})
+		}
+
+		bobSession := register("Bob", "bob-lifecycle")
+		foreignStatus := formRequest(http.MethodPost, itemPath+"/status", url.Values{
+			"status":  {"reading"},
+			"version": {"1"},
+		})
+		foreignStatus.AddCookie(bobSession)
+		foreignStatusResponse := httptest.NewRecorder()
+		handler.ServeHTTP(foreignStatusResponse, foreignStatus)
+		if foreignStatusResponse.Code != http.StatusNotFound {
+			t.Fatalf("other user status update = %d, want %d", foreignStatusResponse.Code, http.StatusNotFound)
+		}
+
+		foreignRemoval := formRequest(http.MethodPost, itemPath+"/remove", url.Values{"version": {"1"}})
+		foreignRemoval.AddCookie(bobSession)
+		foreignRemovalResponse := httptest.NewRecorder()
+		handler.ServeHTTP(foreignRemovalResponse, foreignRemoval)
+		if foreignRemovalResponse.Code != http.StatusNotFound {
+			t.Fatalf("other user removal = %d, want %d", foreignRemovalResponse.Code, http.StatusNotFound)
+		}
+
 		statusRequest := formRequest(http.MethodPost, itemPath+"/status", url.Values{
 			"status":  {"reading"},
 			"version": {"1"},
@@ -408,6 +460,17 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 		handler.ServeHTTP(statusResponse, statusRequest)
 		if statusResponse.Code != http.StatusSeeOther || statusResponse.Header().Get("Location") != "/me/library" {
 			t.Fatalf("status update = %d %q", statusResponse.Code, statusResponse.Header().Get("Location"))
+		}
+
+		repeatStatusRequest := formRequest(http.MethodPost, itemPath+"/status", url.Values{
+			"status":  {"reading"},
+			"version": {"2"},
+		})
+		repeatStatusRequest.AddCookie(adaSession)
+		repeatStatusResponse := httptest.NewRecorder()
+		handler.ServeHTTP(repeatStatusResponse, repeatStatusRequest)
+		if repeatStatusResponse.Code != http.StatusSeeOther || repeatStatusResponse.Header().Get("Location") != "/me/library" {
+			t.Fatalf("repeat status update = %d %q", repeatStatusResponse.Code, repeatStatusResponse.Header().Get("Location"))
 		}
 
 		staleRemoval := formRequest(http.MethodPost, itemPath+"/remove", url.Values{"version": {"1"}})
