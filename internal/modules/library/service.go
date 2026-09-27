@@ -208,3 +208,40 @@ func mapRepositoryError(err error) error {
 		return ErrInternal
 	}
 }
+
+// ListBookStates returns owner-scoped states for the requested catalog books.
+func (s *Service) ListBookStates(
+	ctx context.Context,
+	userID int,
+	bookIDs []int,
+) (map[int]BookState, error) {
+	if s == nil || s.repo == nil {
+		return nil, ErrInternal
+	}
+	if userID <= 0 {
+		return nil, ErrInvalidInput
+	}
+
+	requestedBookIDs := make([]int, 0, len(bookIDs))
+	seenBookIDs := make(map[int]struct{}, len(bookIDs))
+	for _, bookID := range bookIDs {
+		if bookID <= 0 {
+			continue
+		}
+		if _, exists := seenBookIDs[bookID]; exists {
+			continue
+		}
+
+		seenBookIDs[bookID] = struct{}{}
+		requestedBookIDs = append(requestedBookIDs, bookID)
+	}
+	if len(requestedBookIDs) == 0 {
+		return map[int]BookState{}, nil
+	}
+
+	states, err := s.repo.ListBookStates(ctx, userID, requestedBookIDs)
+	if err != nil {
+		return nil, mapRepositoryError(err)
+	}
+	return states, nil
+}

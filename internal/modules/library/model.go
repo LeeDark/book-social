@@ -24,6 +24,11 @@ type Item struct {
 	AddedAt    time.Time
 }
 
+type BookState struct {
+	ItemID int
+	Status ReadingStatus
+}
+
 type AddItemParams struct {
 	UserID  int
 	BookID  int

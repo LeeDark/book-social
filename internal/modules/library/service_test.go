@@ -14,6 +14,10 @@ type recordingRepository struct {
 	addErr        error
 	items         []Item
 	listErr       error
+	bookStates    map[int]BookState
+	bookStateErr  error
+	stateUserID   int
+	stateBookIDs  []int
 	listedUser    int
 	item          Item
 	getItems      []Item
@@ -38,6 +42,12 @@ func (r *recordingRepository) Add(_ context.Context, params AddItemParams) error
 func (r *recordingRepository) ListByUserID(_ context.Context, userID int) ([]Item, error) {
 	r.listedUser = userID
 	return r.items, r.listErr
+}
+
+func (r *recordingRepository) ListBookStates(_ context.Context, userID int, bookIDs []int) (map[int]BookState, error) {
+	r.stateUserID = userID
+	r.stateBookIDs = append([]int(nil), bookIDs...)
+	return r.bookStates, r.bookStateErr
 }
 
 func (r *recordingRepository) GetByIDAndUserID(_ context.Context, _, _ int) (Item, error) {
@@ -353,5 +363,31 @@ func assertOptionalTimeEqual(t *testing.T, got, want *time.Time) {
 	}
 	if !got.Equal(*want) || got.Location() != time.UTC {
 		t.Fatalf("time = %s, want %s UTC", got, want)
+	}
+}
+
+func TestServiceListBookStatesFiltersAndDeduplicatesBookIDs(t *testing.T) {
+	repo := &recordingRepository{
+		bookStates: map[int]BookState{
+			12: {ItemID: 8, Status: ReadingStatusReading},
+		},
+	}
+
+	states, err := NewService(repo, nil).ListBookStates(context.Background(), 42, []int{12, 0, 12, -3})
+	if err != nil {
+		t.Fatalf("ListBookStates() error = %v", err)
+	}
+	if repo.stateUserID != 42 || len(repo.stateBookIDs) != 1 || repo.stateBookIDs[0] != 12 {
+		t.Fatalf("repository request = user %d, books %v", repo.stateUserID, repo.stateBookIDs)
+	}
+	if states[12] != (BookState{ItemID: 8, Status: ReadingStatusReading}) {
+		t.Fatalf("states = %#v", states)
+	}
+}
+
+func TestServiceListBookStatesRejectsInvalidUser(t *testing.T) {
+	_, err := NewService(&recordingRepository{}, nil).ListBookStates(context.Background(), 0, []int{1})
+	if !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("ListBookStates() error = %v, want ErrInvalidInput", err)
 	}
 }

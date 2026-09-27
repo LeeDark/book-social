@@ -59,6 +59,44 @@ func TestLibraryRepositoryListByUserIDIsPrivateAndDeterministic(t *testing.T) {
 	}
 }
 
+func TestLibraryRepositoryListBookStatesIsOwnerScopedAndLimitedToRequestedBooks(t *testing.T) {
+	ctx := context.Background()
+	repo := NewLibraryRepository(newTestLibraryRepositoryDB(t, ctx))
+	addedAt := time.Date(2026, 9, 27, 9, 0, 0, 0, time.UTC)
+
+	for _, params := range []library.AddItemParams{
+		{UserID: 1, BookID: 1, AddedAt: addedAt},
+		{UserID: 2, BookID: 1, AddedAt: addedAt},
+		{UserID: 1, BookID: 2, AddedAt: addedAt},
+	} {
+		if err := repo.Add(ctx, params); err != nil {
+			t.Fatalf("Add(%+v) error = %v", params, err)
+		}
+	}
+
+	states, err := repo.ListBookStates(ctx, 1, []int{1})
+	if err != nil {
+		t.Fatalf("ListBookStates() error = %v", err)
+	}
+	if len(states) != 1 {
+		t.Fatalf("len(states) = %d, want 1", len(states))
+	}
+	if state, exists := states[1]; !exists || state.Status != library.ReadingStatusWantToRead || state.ItemID <= 0 {
+		t.Fatalf("state for book 1 = %+v, exists = %t", state, exists)
+	}
+	if _, exists := states[2]; exists {
+		t.Fatalf("states includes unrequested book 2: %#v", states)
+	}
+
+	otherOwnerStates, err := repo.ListBookStates(ctx, 2, []int{1})
+	if err != nil {
+		t.Fatalf("ListBookStates() for other owner error = %v", err)
+	}
+	if len(otherOwnerStates) != 1 || otherOwnerStates[1].ItemID == states[1].ItemID {
+		t.Fatalf("other owner states = %#v, want only the other owner's item", otherOwnerStates)
+	}
+}
+
 func TestLibraryRepositoryListByUserIDReturnsEmptySlice(t *testing.T) {
 	items, err := NewLibraryRepository(newTestLibraryRepositoryDB(t, context.Background())).
 		ListByUserID(context.Background(), 1)

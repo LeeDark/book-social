@@ -79,6 +79,50 @@ func (r *LibraryRepository) ListByUserID(ctx context.Context, userID int) ([]lib
 	return items, nil
 }
 
+func (r *LibraryRepository) ListBookStates(
+	ctx context.Context,
+	userID int,
+	bookIDs []int,
+) (map[int]library.BookState, error) {
+	states := make(map[int]library.BookState, len(bookIDs))
+	if len(bookIDs) == 0 {
+		return states, nil
+	}
+
+	args := make([]any, 0, len(bookIDs)+1)
+	args = append(args, userID)
+	for _, bookID := range bookIDs {
+		args = append(args, bookID)
+	}
+
+	query := `
+		SELECT book_id, id, status
+		FROM library_items
+		WHERE user_id = ?
+			AND book_id IN (` + queryPlaceholders(len(bookIDs)) + `);
+	`
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, library.ErrInternal
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	for rows.Next() {
+		var bookID int
+		var state library.BookState
+		if err := rows.Scan(&bookID, &state.ItemID, &state.Status); err != nil {
+			return nil, library.ErrInternal
+		}
+		states[bookID] = state
+	}
+	if err := rows.Err(); err != nil {
+		return nil, library.ErrInternal
+	}
+	return states, nil
+}
+
 func (r *LibraryRepository) GetByIDAndUserID(ctx context.Context, userID, itemID int) (library.Item, error) {
 	var (
 		item       library.Item
