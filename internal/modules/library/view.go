@@ -10,14 +10,30 @@ import (
 
 type LibraryPageData struct {
 	view.Page
-	Items []ItemView
+	Items     []ItemView
+	FormError string
 }
 
 type ItemView struct {
-	Title      string
-	BookURL    string
-	Authors    []AuthorLinkView
-	StateLabel string
+	ID            int
+	Version       int
+	Status        string
+	RemoveURL     string
+	Title         string
+	BookURL       string
+	Authors       []AuthorLinkView
+	StateLabel    string
+	StatusOptions []StatusOption
+}
+
+type StatusOption struct {
+	Value, Label string
+	Selected     bool
+}
+
+type RemovalPageData struct {
+	view.Page
+	Item ItemView
 }
 
 type AuthorLinkView struct {
@@ -29,10 +45,15 @@ func mapItemsToViews(items []Item) []ItemView {
 	views := make([]ItemView, 0, len(items))
 	for _, item := range items {
 		views = append(views, ItemView{
-			Title:      item.Book.Title,
-			BookURL:    fmt.Sprintf("/books/%s", item.Book.Slug),
-			Authors:    mapAuthorsToLinks(item.Book.Authors),
-			StateLabel: "Want to read",
+			ID:            item.ID,
+			Version:       item.Version,
+			Status:        string(item.Status),
+			RemoveURL:     fmt.Sprintf("/me/library/%d/remove", item.ID),
+			Title:         item.Book.Title,
+			BookURL:       fmt.Sprintf("/books/%s", item.Book.Slug),
+			Authors:       mapAuthorsToLinks(item.Book.Authors),
+			StateLabel:    readingStatusLabel(item.Status),
+			StatusOptions: statusOptions(item.Status),
 		})
 	}
 
@@ -60,4 +81,35 @@ func authorName(author books.Author) string {
 	}
 
 	return strings.Join(parts, " ")
+}
+
+func readingStatusLabel(status ReadingStatus) string {
+	switch status {
+	case ReadingStatusReading:
+		return "Reading"
+	case ReadingStatusRead:
+		return "Read"
+	default:
+		return "Want to read"
+	}
+}
+
+func statusOptions(current ReadingStatus) []StatusOption {
+	values := []struct {
+		value ReadingStatus
+		label string
+	}{
+		{value: ReadingStatusWantToRead, label: "Want to read"},
+		{value: ReadingStatusReading, label: "Reading"},
+		{value: ReadingStatusRead, label: "Read"},
+	}
+	options := make([]StatusOption, 0, len(values))
+	for _, value := range values {
+		options = append(options, StatusOption{
+			Value:    string(value.value),
+			Label:    value.label,
+			Selected: current == value.value,
+		})
+	}
+	return options
 }

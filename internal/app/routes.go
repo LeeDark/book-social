@@ -42,6 +42,9 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 		if app.LibraryHandler != nil {
 			dynamic.With(httpauth.RequireAuthentication).Get("/me/library", app.LibraryHandler.List)
 			dynamic.With(httpauth.RequireAuthentication).Post("/me/library", app.LibraryHandler.Add)
+			dynamic.With(httpauth.RequireAuthentication).Post("/me/library/{itemID}/status", app.LibraryHandler.UpdateStatus)
+			dynamic.With(httpauth.RequireAuthentication).Get("/me/library/{itemID}/remove", app.LibraryHandler.RemoveConfirmation)
+			dynamic.With(httpauth.RequireAuthentication).Post("/me/library/{itemID}/remove", app.LibraryHandler.Remove)
 		}
 	})
 

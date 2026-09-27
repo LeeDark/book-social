@@ -80,10 +80,9 @@ current-user identity. A repeated item is `409`, an unknown book is `404`, and a
 `422`. Successful additions set a one-request success flash. There is no route for another user's
 library.
 
-### Planned v0.3.1 lifecycle routes
+### v0.3.1 lifecycle routes
 
-The following protected owner-scoped routes are an accepted v0.3.1 contract; they are not active
-until the lifecycle implementation is complete:
+The following protected owner-scoped routes implement the reading-state and removal flow:
 
 ```text
 POST /me/library/{itemID}/status  form fields: status, version

@@ -7,10 +7,12 @@ import (
 )
 
 const (
-	Registered       = "registered"
-	SignedIn         = "signed_in"
-	SignedOut        = "signed_out"
-	LibraryItemAdded = "library_item_added"
+	Registered           = "registered"
+	SignedIn             = "signed_in"
+	SignedOut            = "signed_out"
+	LibraryItemAdded     = "library_item_added"
+	LibraryStatusChanged = "library_status_changed"
+	LibraryItemRemoved   = "library_item_removed"
 )
 
 type contextKey struct{}
@@ -50,5 +52,10 @@ func FromRequest(r *http.Request) string {
 }
 
 func valid(code string) bool {
-	return code == Registered || code == SignedIn || code == SignedOut || code == LibraryItemAdded
+	switch code {
+	case Registered, SignedIn, SignedOut, LibraryItemAdded, LibraryStatusChanged, LibraryItemRemoved:
+		return true
+	default:
+		return false
+	}
 }

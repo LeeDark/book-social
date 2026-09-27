@@ -356,6 +356,67 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 			t.Fatalf("other user library = %d %q", recorder.Code, body)
 		}
 	})
+
+	t.Run("owner can change status and explicitly remove a library item", func(t *testing.T) {
+		request := httptest.NewRequest(http.MethodGet, "/me/library", nil)
+		request.AddCookie(adaSession)
+		page := httptest.NewRecorder()
+		handler.ServeHTTP(page, request)
+
+		bookIndex := strings.Index(page.Body.String(), "Pride and Prejudice")
+		if bookIndex < 0 {
+			t.Fatalf("library page does not contain target book: %q", page.Body.String())
+		}
+		formIndex := strings.Index(page.Body.String()[bookIndex:], `action="/me/library/`)
+		if formIndex < 0 {
+			t.Fatalf("library page does not contain a status form: %q", page.Body.String())
+		}
+		formAction := page.Body.String()[bookIndex+formIndex:]
+		formAction = formAction[len(`action="`):]
+		formActionEnd := strings.IndexByte(formAction, '"')
+		if formActionEnd < 0 {
+			t.Fatalf("status form action is malformed: %q", formAction)
+		}
+		itemPath := strings.TrimSuffix(formAction[:formActionEnd], "/status")
+		if itemPath == formAction[:formActionEnd] {
+			t.Fatalf("status form action is malformed: %q", formAction)
+		}
+
+		statusRequest := formRequest(http.MethodPost, itemPath+"/status", url.Values{
+			"status":  {"reading"},
+			"version": {"1"},
+		})
+		statusRequest.AddCookie(adaSession)
+		statusResponse := httptest.NewRecorder()
+		handler.ServeHTTP(statusResponse, statusRequest)
+		if statusResponse.Code != http.StatusSeeOther || statusResponse.Header().Get("Location") != "/me/library" {
+			t.Fatalf("status update = %d %q", statusResponse.Code, statusResponse.Header().Get("Location"))
+		}
+
+		staleRemoval := formRequest(http.MethodPost, itemPath+"/remove", url.Values{"version": {"1"}})
+		staleRemoval.AddCookie(adaSession)
+		staleResponse := httptest.NewRecorder()
+		handler.ServeHTTP(staleResponse, staleRemoval)
+		if staleResponse.Code != http.StatusConflict {
+			t.Fatalf("stale removal = %d, want %d", staleResponse.Code, http.StatusConflict)
+		}
+
+		confirmationRequest := httptest.NewRequest(http.MethodGet, itemPath+"/remove", nil)
+		confirmationRequest.AddCookie(adaSession)
+		confirmation := httptest.NewRecorder()
+		handler.ServeHTTP(confirmation, confirmationRequest)
+		if confirmation.Code != http.StatusOK || !strings.Contains(confirmation.Body.String(), "Pride and Prejudice") {
+			t.Fatalf("removal confirmation = %d %q", confirmation.Code, confirmation.Body.String())
+		}
+
+		removeRequest := formRequest(http.MethodPost, itemPath+"/remove", url.Values{"version": {"2"}})
+		removeRequest.AddCookie(adaSession)
+		removed := httptest.NewRecorder()
+		handler.ServeHTTP(removed, removeRequest)
+		if removed.Code != http.StatusSeeOther || removed.Header().Get("Location") != "/me/library" {
+			t.Fatalf("confirmed removal = %d %q", removed.Code, removed.Header().Get("Location"))
+		}
+	})
 }
 
 func testAuthRoutes(t *testing.T, handler http.Handler) {

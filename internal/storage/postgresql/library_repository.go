@@ -85,15 +85,27 @@ func (r *LibraryRepository) GetByIDAndUserID(ctx context.Context, userID, itemID
 		finishedAt sql.NullTime
 	)
 	err := r.db.QueryRowContext(ctx, `
-		SELECT id, status, started_at, finished_at, version
-		FROM library_items
-		WHERE id = $1 AND user_id = $2
+		SELECT
+			li.id,
+			li.status,
+			li.started_at,
+			li.finished_at,
+			li.version,
+			b.id,
+			b.title,
+			b.slug
+		FROM library_items li
+		JOIN books b ON b.id = li.book_id
+		WHERE li.id = $1 AND li.user_id = $2
 	`, itemID, userID).Scan(
 		&item.ID,
 		&item.Status,
 		&startedAt,
 		&finishedAt,
 		&item.Version,
+		&item.Book.ID,
+		&item.Book.Title,
+		&item.Book.Slug,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return library.Item{}, library.ErrItemNotFound

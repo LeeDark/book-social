@@ -163,6 +163,20 @@ func copyTime(value *time.Time) *time.Time {
 	return timePointer(*value)
 }
 
+func (s *Service) Get(ctx context.Context, userID, itemID int) (Item, error) {
+	if s == nil || s.repo == nil {
+		return Item{}, ErrInternal
+	}
+	if userID <= 0 || itemID <= 0 {
+		return Item{}, ErrInvalidInput
+	}
+	item, err := s.repo.GetByIDAndUserID(ctx, userID, itemID)
+	if err != nil {
+		return Item{}, mapRepositoryError(err)
+	}
+	return item, nil
+}
+
 func (s *Service) List(ctx context.Context, userID int) ([]Item, error) {
 	if s == nil || s.repo == nil {
 		return nil, ErrInternal

@@ -35,6 +35,18 @@ func (s *fakeLibraryService) List(_ context.Context, userID int) ([]Item, error)
 	return s.items, s.listErr
 }
 
+func (s *fakeLibraryService) Get(context.Context, int, int) (Item, error) {
+	return Item{}, ErrItemNotFound
+}
+
+func (s *fakeLibraryService) UpdateStatus(context.Context, int, int, ReadingStatus, int) error {
+	return nil
+}
+
+func (s *fakeLibraryService) Remove(context.Context, int, int, int) error {
+	return nil
+}
+
 func TestHandlerRejectsRequestsWithoutCurrentUser(t *testing.T) {
 	handler := newTestHandler(t, &fakeLibraryService{})
 

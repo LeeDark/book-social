@@ -1,0 +1,12 @@
+{{define "title"}}{{.Title}}{{end}}
+{{define "main"}}
+<section aria-labelledby="remove-heading">
+  <h1 id="remove-heading">Remove from your library</h1>
+  <p>Remove <strong>{{.Item.Title}}</strong> from your library? This cannot be undone.</p>
+  <form method="post" action="{{.Item.RemoveURL}}">
+    <input type="hidden" name="version" value="{{.Item.Version}}">
+    <button type="submit">Remove book</button>
+  </form>
+  <p><a href="/me/library">Cancel</a></p>
+</section>
+{{end}}
