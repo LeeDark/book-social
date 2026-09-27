@@ -273,6 +273,23 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 	}
 	flashCookie := cookieNamed(t, firstAdd.Result().Cookies(), "book_social_flash")
 
+	t.Run("catalog and book details show an existing library state", func(t *testing.T) {
+		for _, path := range []string{"/books", "/books/pride-and-prejudice"} {
+			request := httptest.NewRequest(http.MethodGet, path, nil)
+			request.AddCookie(adaSession)
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, request)
+
+			body := recorder.Body.String()
+			if recorder.Code != http.StatusOK || !strings.Contains(body, "Want to read") {
+				t.Fatalf("%s = %d %q", path, recorder.Code, body)
+			}
+			if strings.Contains(body, `name="book_slug" value="pride-and-prejudice"`) {
+				t.Fatalf("%s still offers the add form for an owned book: %q", path, body)
+			}
+		}
+	})
+
 	t.Run("library page shows one-request flash, owner-scoped items, navigation, and no-store", func(t *testing.T) {
 		request := httptest.NewRequest(http.MethodGet, "/me/library", nil)
 		request.AddCookie(adaSession)
@@ -681,7 +698,8 @@ func newAuthIntegrationTestApp(t *testing.T, userRepo users.RegistrationReposito
 	sessionService := users.NewSessionService(userRepo, sessionRepo, time.Hour)
 	deps := Deps{Config: config.Config{Env: config.EnvDev}, Logger: logger, Renderer: renderer, CurrentUserMiddleware: httpauth.NewCurrentUserMiddleware(cookies, sessionService), FlashManager: flashes, AuthHandler: NewAuthHandler(userService, sessionService, cookies, flashes, renderer, logger, time.Hour)}
 	catalogService := books.NewCatalogService(bookRepo)
-	return New(deps, NewHomeHandler(catalogService, renderer, logger), books.NewCatalogHandler(catalogService, renderer, logger)).Router
+	catalogHandler := books.NewCatalogHandler(catalogService, renderer, logger, nil)
+	return New(deps, NewHomeHandler(catalogService, renderer, logger), catalogHandler).Router
 }
 
 func newLibraryIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepository, sessionRepo users.SessionRepository, bookRepo books.BookRepository, libraryRepo library.Repository) http.Handler {
@@ -709,7 +727,11 @@ func newLibraryIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepos
 		LibraryHandler:        libraryHandler,
 	}
 
-	return New(deps, NewHomeHandler(catalogService, renderer, logger), books.NewCatalogHandler(catalogService, renderer, logger)).Router
+	libraryService := library.NewService(libraryRepo, bookRepo)
+	stateProvider := NewLibraryStateProvider(libraryService)
+	catalogHandler := books.NewCatalogHandler(catalogService, renderer, logger, stateProvider)
+
+	return New(deps, NewHomeHandler(catalogService, renderer, logger), catalogHandler).Router
 }
 
 func TestCatalogRouteReturnsPartialForHTMXRequest(t *testing.T) {
@@ -778,7 +800,7 @@ func newIntegrationTestApp(t *testing.T) http.Handler {
 	bookRepo := sqlite.NewBookRepository(db)
 	catalogService := books.NewCatalogService(bookRepo)
 	homeHandler := NewHomeHandler(catalogService, renderer, logger)
-	catalogHandler := books.NewCatalogHandler(catalogService, renderer, logger)
+	catalogHandler := books.NewCatalogHandler(catalogService, renderer, logger, nil)
 
 	return New(deps, homeHandler, catalogHandler).Router
 }

@@ -99,7 +99,12 @@ func main() {
 	catalogService := books.NewCatalogService(bookRepo)
 
 	homeHandler := app.NewHomeHandler(catalogService, deps.Renderer, deps.Logger)
-	catalogHandler := books.NewCatalogHandler(catalogService, deps.Renderer, deps.Logger)
+	catalogHandler := books.NewCatalogHandler(
+		catalogService,
+		deps.Renderer,
+		deps.Logger,
+		app.NewLibraryStateProvider(libraryService),
+	)
 
 	application := app.New(deps, homeHandler, catalogHandler)
 

@@ -13,6 +13,7 @@ type CatalogPageData struct {
 }
 
 type BookCardView struct {
+	ID              int
 	Title           string
 	Slug            string
 	Description     string
@@ -22,6 +23,7 @@ type BookCardView struct {
 	CoverClass      string
 	ShowDetailsLink bool
 	CanAddToLibrary bool
+	LibraryState    *LibraryStateView
 	UseHTMXFilters  bool
 }
 
@@ -54,6 +56,7 @@ type BookDetailsView struct {
 	Covers          []CoverView
 	FrontCover      *CoverView
 	CanAddToLibrary bool
+	LibraryState    *LibraryStateView
 }
 
 type AuthorLinkView struct {
@@ -65,6 +68,10 @@ type AuthorLinkView struct {
 type GenreLinkView struct {
 	Name string
 	URL  string
+}
+
+type LibraryStateView struct {
+	Label string
 }
 
 type CoverView struct {
@@ -85,6 +92,7 @@ func mapBooksToCards(books []Book) []BookCardView {
 	cards := make([]BookCardView, 0, len(books))
 	for _, book := range books {
 		card := BookCardView{
+			ID:              book.ID,
 			Title:           book.Title,
 			Slug:            book.Slug,
 			Description:     book.Description,
