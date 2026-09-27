@@ -49,19 +49,24 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, err := h.service.List(r.Context(), identity.ID)
+	h.renderLibrary(w, r, identity.ID, http.StatusOK, "")
+}
+
+func (h *Handler) renderLibrary(w http.ResponseWriter, r *http.Request, userID, status int, formError string) {
+	items, err := h.service.List(r.Context(), userID)
 	if err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("list private library: %w", err))
 		return
 	}
 
 	data := LibraryPageData{
-		Page:  view.Page{Title: "Your library", ActiveNav: "library", Nav: view.MainNavigation()},
-		Items: mapItemsToViews(items),
+		Page:      view.Page{Title: "Your library", ActiveNav: "library", Nav: view.MainNavigation()},
+		Items:     mapItemsToViews(items),
+		FormError: formError,
 	}
 	view.ApplyRequestState(&data.Page, r)
 
-	if err := h.renderer.Render(w, http.StatusOK, "library.tmpl", data); err != nil {
+	if err := h.renderer.Render(w, status, "library.tmpl", data); err != nil {
 		response.ServerError(w, r, h.logger, fmt.Errorf("render private library: %w", err))
 	}
 }
@@ -85,11 +90,11 @@ func (h *Handler) Add(w http.ResponseWriter, r *http.Request) {
 		h.flashes.Set(w, flash.LibraryItemAdded)
 		http.Redirect(w, r, "/me/library", http.StatusSeeOther)
 	case errors.Is(err, ErrInvalidInput):
-		http.Error(w, "Book selection is required.", http.StatusUnprocessableEntity)
+		h.renderLibrary(w, r, identity.ID, http.StatusUnprocessableEntity, "Book selection is required.")
 	case errors.Is(err, ErrBookNotFound):
-		http.Error(w, "Book not found.", http.StatusNotFound)
+		response.RenderNotFound(w, r, h.logger, h.renderer)
 	case errors.Is(err, ErrItemAlreadyExists):
-		http.Error(w, "This book is already in your library.", http.StatusConflict)
+		h.renderLibrary(w, r, identity.ID, http.StatusConflict, "This book is already in your library.")
 	default:
 		response.ServerError(w, r, h.logger, fmt.Errorf("add private library item: %w", err))
 	}
@@ -103,7 +108,7 @@ func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	itemID, version, err := lifecycleFormValues(w, r)
 	if err != nil {
-		http.Error(w, "A valid status and version are required.", http.StatusUnprocessableEntity)
+		h.renderLibrary(w, r, identity.ID, http.StatusUnprocessableEntity, "A valid status and version are required.")
 		return
 	}
 	status := ReadingStatus(r.PostForm.Get("status"))
@@ -113,7 +118,7 @@ func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/me/library", http.StatusSeeOther)
 		return
 	}
-	h.lifecycleError(w, r, err)
+	h.lifecycleError(w, r, identity.ID, err)
 }
 
 func (h *Handler) RemoveConfirmation(w http.ResponseWriter, r *http.Request) {
@@ -124,12 +129,12 @@ func (h *Handler) RemoveConfirmation(w http.ResponseWriter, r *http.Request) {
 	}
 	itemID, err := itemIDFromRequest(r)
 	if err != nil {
-		http.Error(w, "A valid library item is required.", http.StatusUnprocessableEntity)
+		h.renderLibrary(w, r, identity.ID, http.StatusUnprocessableEntity, "A valid library item is required.")
 		return
 	}
 	item, err := h.service.Get(r.Context(), identity.ID, itemID)
 	if err != nil {
-		h.lifecycleError(w, r, err)
+		h.lifecycleError(w, r, identity.ID, err)
 		return
 	}
 	data := RemovalPageData{
@@ -154,11 +159,11 @@ func (h *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 	}
 	itemID, version, err := lifecycleFormValues(w, r)
 	if err != nil {
-		http.Error(w, "A valid version is required.", http.StatusUnprocessableEntity)
+		h.renderLibrary(w, r, identity.ID, http.StatusUnprocessableEntity, "A valid version is required.")
 		return
 	}
 	if err := h.service.Remove(r.Context(), identity.ID, itemID, version); err != nil {
-		h.lifecycleError(w, r, err)
+		h.lifecycleError(w, r, identity.ID, err)
 		return
 	}
 	h.flashes.Set(w, flash.LibraryItemRemoved)
@@ -189,14 +194,14 @@ func itemIDFromRequest(r *http.Request) (int, error) {
 	return itemID, nil
 }
 
-func (h *Handler) lifecycleError(w http.ResponseWriter, r *http.Request, err error) {
+func (h *Handler) lifecycleError(w http.ResponseWriter, r *http.Request, userID int, err error) {
 	switch {
 	case errors.Is(err, ErrInvalidInput):
-		http.Error(w, "Invalid library request.", http.StatusUnprocessableEntity)
+		h.renderLibrary(w, r, userID, http.StatusUnprocessableEntity, "Invalid library request.")
 	case errors.Is(err, ErrItemNotFound):
-		http.Error(w, "Library item not found.", http.StatusNotFound)
+		response.RenderNotFound(w, r, h.logger, h.renderer)
 	case errors.Is(err, ErrItemVersionConflict):
-		http.Error(w, "This item changed. Reload your library and try again.", http.StatusConflict)
+		h.renderLibrary(w, r, userID, http.StatusConflict, "This item changed. Reload your library and try again.")
 	default:
 		response.ServerError(w, r, h.logger, fmt.Errorf("library lifecycle: %w", err))
 	}

@@ -326,19 +326,45 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 	})
 
 	t.Run("duplicate, missing, malformed, and cross-origin additions are safe", func(t *testing.T) {
-		if recorder := addBook(adaSession, "pride-and-prejudice"); recorder.Code != http.StatusConflict || !strings.Contains(recorder.Body.String(), "already in your library") {
+		recorder := addBook(adaSession, "pride-and-prejudice")
+		if recorder.Code != http.StatusConflict {
 			t.Fatalf("duplicate = %d %q", recorder.Code, recorder.Body.String())
 		}
-		if recorder := addBook(adaSession, "missing-book"); recorder.Code != http.StatusNotFound || !strings.Contains(recorder.Body.String(), "Book not found.") {
+		for _, fragment := range []string{
+			`role="alert">This book is already in your library.`,
+			`href="/me/library" aria-current="page"`,
+		} {
+			if !strings.Contains(recorder.Body.String(), fragment) {
+				t.Fatalf("duplicate page missing %q: %q", fragment, recorder.Body.String())
+			}
+		}
+
+		recorder = addBook(adaSession, "missing-book")
+		if recorder.Code != http.StatusNotFound {
 			t.Fatalf("missing = %d %q", recorder.Code, recorder.Body.String())
 		}
+		for _, fragment := range []string{"Page not found", `href="/books" role="button">Browse catalog`} {
+			if !strings.Contains(recorder.Body.String(), fragment) {
+				t.Fatalf("missing page missing %q: %q", fragment, recorder.Body.String())
+			}
+		}
+
 		request := formRequest(http.MethodPost, "/me/library?book_slug=dracula", url.Values{})
 		request.AddCookie(adaSession)
-		recorder := httptest.NewRecorder()
+		recorder = httptest.NewRecorder()
 		handler.ServeHTTP(recorder, request)
-		if recorder.Code != http.StatusUnprocessableEntity || !strings.Contains(recorder.Body.String(), "Book selection is required.") {
+		if recorder.Code != http.StatusUnprocessableEntity {
 			t.Fatalf("malformed = %d %q", recorder.Code, recorder.Body.String())
 		}
+		for _, fragment := range []string{
+			`role="alert">Book selection is required.`,
+			`href="/me/library" aria-current="page"`,
+		} {
+			if !strings.Contains(recorder.Body.String(), fragment) {
+				t.Fatalf("malformed page missing %q: %q", fragment, recorder.Body.String())
+			}
+		}
+
 		request = formRequest(http.MethodPost, "/me/library", url.Values{"book_slug": {"dracula"}})
 		request.Header.Set("Origin", "https://evil.example")
 		request.AddCookie(adaSession)
@@ -428,6 +454,11 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 				if invalidResponse.Code != http.StatusUnprocessableEntity {
 					t.Fatalf("invalid form = %d, want %d", invalidResponse.Code, http.StatusUnprocessableEntity)
 				}
+				for _, fragment := range []string{`role="alert"`, `href="/me/library" aria-current="page"`} {
+					if !strings.Contains(invalidResponse.Body.String(), fragment) {
+						t.Fatalf("invalid form page missing %q: %q", fragment, invalidResponse.Body.String())
+					}
+				}
 			})
 		}
 
@@ -479,6 +510,14 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 		handler.ServeHTTP(staleResponse, staleRemoval)
 		if staleResponse.Code != http.StatusConflict {
 			t.Fatalf("stale removal = %d, want %d", staleResponse.Code, http.StatusConflict)
+		}
+		for _, fragment := range []string{
+			`role="alert">This item changed. Reload your library and try again.`,
+			`href="/me/library" aria-current="page"`,
+		} {
+			if !strings.Contains(staleResponse.Body.String(), fragment) {
+				t.Fatalf("stale removal page missing %q: %q", fragment, staleResponse.Body.String())
+			}
 		}
 
 		confirmationRequest := httptest.NewRequest(http.MethodGet, itemPath+"/remove", nil)

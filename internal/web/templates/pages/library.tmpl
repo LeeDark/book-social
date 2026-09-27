@@ -6,6 +6,10 @@
             <h1 id="library-heading">Your library</h1>
         </header>
 
+        {{if .FormError}}
+            <p role="alert">{{.FormError}}</p>
+        {{end}}
+
         {{if .Items}}
             <ul>
                 {{range .Items}}
