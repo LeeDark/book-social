@@ -100,9 +100,6 @@ func TestServiceAddNormalizesSlugAndUsesUTCClock(t *testing.T) {
 	if !repo.added.AddedAt.Equal(wantAddedAt) || repo.added.AddedAt.Location() != time.UTC {
 		t.Fatalf("AddedAt = %s, want %s UTC", repo.added.AddedAt, wantAddedAt)
 	}
-	if repo.added.Status != ReadingStatusWantToRead || repo.added.Version != 1 || repo.added.StartedAt != nil || repo.added.FinishedAt != nil {
-		t.Fatalf("initial lifecycle params = %+v", repo.added)
-	}
 }
 
 func TestServiceAddRejectsInvalidInputBeforeCatalogLookup(t *testing.T) {
@@ -277,6 +274,20 @@ func TestServiceUpdateStatusHandlesNoOpAndConflict(t *testing.T) {
 			UpdateStatus(context.Background(), 1, 1, ReadingStatusRead, 2)
 		if !errors.Is(err, ErrItemVersionConflict) {
 			t.Fatalf("UpdateStatus() error = %v, want ErrItemVersionConflict", err)
+		}
+	})
+
+	t.Run("version newer than snapshot becomes a conflict without update", func(t *testing.T) {
+		repo := &recordingRepository{
+			item: Item{ID: 1, Status: ReadingStatusWantToRead, Version: 1},
+		}
+		err := NewService(repo, &recordingBookFinder{}).
+			UpdateStatus(context.Background(), 1, 1, ReadingStatusRead, 2)
+		if !errors.Is(err, ErrItemVersionConflict) {
+			t.Fatalf("UpdateStatus() error = %v, want ErrItemVersionConflict", err)
+		}
+		if repo.updateParams != (UpdateStatusParams{}) {
+			t.Fatalf("conflict called UpdateStatus(%+v)", repo.updateParams)
 		}
 	})
 }

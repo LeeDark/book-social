@@ -50,8 +50,6 @@ func (s *Service) Add(ctx context.Context, userID int, bookSlug string) error {
 	err = s.repo.Add(ctx, AddItemParams{
 		UserID:  userID,
 		BookID:  book.ID,
-		Status:  ReadingStatusWantToRead,
-		Version: 1,
 		AddedAt: s.now().UTC(),
 	})
 	return mapRepositoryError(err)
@@ -76,6 +74,9 @@ func (s *Service) UpdateStatus(
 	}
 	if item.Status == status {
 		return nil
+	}
+	if item.Version != expectedVersion {
+		return ErrItemVersionConflict
 	}
 
 	startedAt, finishedAt := transitionTimestamps(item, status, s.now().UTC())

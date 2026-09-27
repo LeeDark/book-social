@@ -25,13 +25,9 @@ type Item struct {
 }
 
 type AddItemParams struct {
-	UserID     int
-	BookID     int
-	Status     ReadingStatus
-	StartedAt  *time.Time
-	FinishedAt *time.Time
-	Version    int
-	AddedAt    time.Time
+	UserID  int
+	BookID  int
+	AddedAt time.Time
 }
 
 type UpdateStatusParams struct {

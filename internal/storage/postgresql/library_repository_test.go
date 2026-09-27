@@ -17,8 +17,6 @@ func TestLibraryRepositoryAddRejectsDuplicateItem(t *testing.T) {
 	params := library.AddItemParams{
 		UserID:  1,
 		BookID:  1,
-		Status:  library.ReadingStatusWantToRead,
-		Version: 1,
 		AddedAt: time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC),
 	}
 
@@ -37,9 +35,9 @@ func TestLibraryRepositoryListByUserIDIsPrivateAndDeterministic(t *testing.T) {
 	addedAt := time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC)
 
 	for _, params := range []library.AddItemParams{
-		{UserID: 1, BookID: 1, Status: library.ReadingStatusWantToRead, Version: 1, AddedAt: addedAt},
-		{UserID: 1, BookID: 2, Status: library.ReadingStatusWantToRead, Version: 1, AddedAt: addedAt},
-		{UserID: 2, BookID: 1, Status: library.ReadingStatusWantToRead, Version: 1, AddedAt: addedAt.Add(time.Hour)},
+		{UserID: 1, BookID: 1, AddedAt: addedAt},
+		{UserID: 1, BookID: 2, AddedAt: addedAt},
+		{UserID: 2, BookID: 1, AddedAt: addedAt.Add(time.Hour)},
 	} {
 		if err := repo.Add(ctx, params); err != nil {
 			t.Fatalf("Add(%+v) error = %v", params, err)
@@ -79,8 +77,6 @@ func TestLibraryRepositoryLifecycleMutationsAreOwnerScopedAndVersioned(t *testin
 	if err := repo.Add(ctx, library.AddItemParams{
 		UserID:  1,
 		BookID:  1,
-		Status:  library.ReadingStatusWantToRead,
-		Version: 1,
 		AddedAt: addedAt,
 	}); err != nil {
 		t.Fatalf("Add() error = %v", err)

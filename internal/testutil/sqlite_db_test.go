@@ -347,6 +347,48 @@ func TestSQLiteLibraryLifecycleRollbackProtectsLifecycleData(t *testing.T) {
 	}
 }
 
+func TestSQLiteLibraryLifecycleRollbackPreservesAutoincrementSequence(t *testing.T) {
+	ctx := context.Background()
+	db := NewSQLiteMemoryTestDB(t, ctx)
+	applySQLiteCatalogTestMigrations(t, ctx, db, "")
+
+	statements := []string{
+		`INSERT INTO users(id, first_name, login, password_hash, email, user_role_id)
+			VALUES (1, 'Migration', 'migration-user', 'hash', 'migration@example.test',
+				(SELECT id FROM roles WHERE role_name = 'user'))`,
+		`INSERT INTO books(id, title, slug) VALUES
+			(1, 'First Book', 'first-book'),
+			(2, 'Second Book', 'second-book'),
+			(3, 'Third Book', 'third-book'),
+			(4, 'Fourth Book', 'fourth-book')`,
+		`INSERT INTO library_items(user_id, book_id, added_at) VALUES
+			(1, 1, '2026-01-01T00:00:00Z'),
+			(1, 2, '2026-01-02T00:00:00Z'),
+			(1, 3, '2026-01-03T00:00:00Z')`,
+		`DELETE FROM library_items WHERE id = 3`,
+	}
+	execStatements(t, ctx, db, statements)
+
+	executeSQLiteMigration(t, ctx, db, "000005_add_library_item_lifecycle.down.sql")
+	executeSQLiteMigration(t, ctx, db, "000005_add_library_item_lifecycle.up.sql")
+
+	result, err := db.ExecContext(ctx, `
+		INSERT INTO library_items(user_id, book_id, added_at)
+		VALUES (1, 4, '2026-01-04T00:00:00Z')
+	`)
+	if err != nil {
+		t.Fatalf("insert library item after rollback and reapply: %v", err)
+	}
+
+	itemID, err := result.LastInsertId()
+	if err != nil {
+		t.Fatalf("get inserted library item ID: %v", err)
+	}
+	if itemID != 4 {
+		t.Fatalf("inserted library item ID = %d, want 4", itemID)
+	}
+}
+
 func executeSQLiteMigration(t *testing.T, ctx context.Context, db *sql.DB, filename string) {
 	t.Helper()
 

@@ -17,8 +17,6 @@ func TestLibraryRepositoryAddRejectsDuplicateItem(t *testing.T) {
 	params := library.AddItemParams{
 		UserID:  1,
 		BookID:  1,
-		Status:  library.ReadingStatusWantToRead,
-		Version: 1,
 		AddedAt: time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC),
 	}
 
@@ -37,9 +35,9 @@ func TestLibraryRepositoryListByUserIDIsPrivateAndDeterministic(t *testing.T) {
 	addedAt := time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC)
 
 	for _, params := range []library.AddItemParams{
-		{UserID: 1, BookID: 1, Status: library.ReadingStatusWantToRead, Version: 1, AddedAt: addedAt},
-		{UserID: 1, BookID: 2, Status: library.ReadingStatusWantToRead, Version: 1, AddedAt: addedAt},
-		{UserID: 2, BookID: 1, Status: library.ReadingStatusWantToRead, Version: 1, AddedAt: addedAt.Add(time.Hour)},
+		{UserID: 1, BookID: 1, AddedAt: addedAt},
+		{UserID: 1, BookID: 2, AddedAt: addedAt},
+		{UserID: 2, BookID: 1, AddedAt: addedAt.Add(time.Hour)},
 	} {
 		if err := repo.Add(ctx, params); err != nil {
 			t.Fatalf("Add(%+v) error = %v", params, err)
@@ -84,7 +82,7 @@ func TestLibraryRepositoryListByUserIDReturnsEmptySlice(t *testing.T) {
 func TestLibraryRepositoryMapsForeignKeyFailureToInternalError(t *testing.T) {
 	err := NewLibraryRepository(newTestLibraryRepositoryDB(t, context.Background())).Add(
 		context.Background(),
-		library.AddItemParams{UserID: 999, BookID: 1, Status: library.ReadingStatusWantToRead, Version: 1, AddedAt: time.Now()},
+		library.AddItemParams{UserID: 999, BookID: 1, AddedAt: time.Now()},
 	)
 	if !errors.Is(err, library.ErrInternal) {
 		t.Fatalf("Add() error = %v, want ErrInternal", err)
@@ -96,11 +94,8 @@ func TestLibraryRepositoryLifecycleDefaultsConstraintsAndOwnerScopedMutations(t 
 	repo := NewLibraryRepository(newTestLibraryRepositoryDB(t, ctx))
 	addedAt := time.Date(2026, 9, 24, 9, 0, 0, 0, time.UTC)
 
-	if _, err := repo.db.ExecContext(ctx, `
-		INSERT INTO library_items(user_id, book_id, added_at)
-		VALUES (1, 1, ?)
-	`, formatSQLiteTime(addedAt)); err != nil {
-		t.Fatalf("insert default lifecycle item: %v", err)
+	if err := repo.Add(ctx, library.AddItemParams{UserID: 1, BookID: 1, AddedAt: addedAt}); err != nil {
+		t.Fatalf("add default lifecycle item: %v", err)
 	}
 
 	item, err := repo.GetByIDAndUserID(ctx, 1, 1)

@@ -22,16 +22,12 @@ func NewLibraryRepository(db *sql.DB) *LibraryRepository {
 func (r *LibraryRepository) Add(ctx context.Context, params library.AddItemParams) error {
 	_, err := r.db.ExecContext(ctx, `
 		INSERT INTO library_items(
-			user_id, book_id, status, started_at, finished_at, version, added_at
+			user_id, book_id, added_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		VALUES ($1, $2, $3)
 	`,
 		params.UserID,
 		params.BookID,
-		string(params.Status),
-		params.StartedAt,
-		params.FinishedAt,
-		params.Version,
 		params.AddedAt.UTC(),
 	)
 	if err == nil {
