@@ -235,6 +235,12 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 		for _, request := range []*http.Request{
 			httptest.NewRequest(http.MethodGet, "/me/library", nil),
 			formRequest(http.MethodPost, "/me/library", url.Values{"book_slug": {"dracula"}}),
+			formRequest(http.MethodPost, "/me/library/1/status", url.Values{
+				"status":  {"reading"},
+				"version": {"1"},
+			}),
+			httptest.NewRequest(http.MethodGet, "/me/library/1/remove", nil),
+			formRequest(http.MethodPost, "/me/library/1/remove", url.Values{"version": {"1"}}),
 		} {
 			recorder := httptest.NewRecorder()
 			handler.ServeHTTP(recorder, request)
@@ -286,6 +292,38 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 			}
 			if strings.Contains(body, `name="book_slug" value="pride-and-prejudice"`) {
 				t.Fatalf("%s still offers the add form for an owned book: %q", path, body)
+			}
+		}
+	})
+
+	t.Run("catalog state is visible only to its owner", func(t *testing.T) {
+		bobSession := register("Bob", "bob-catalog")
+		visitors := []struct {
+			name    string
+			session *http.Cookie
+		}{
+			{name: "anonymous"},
+			{name: "other user", session: bobSession},
+		}
+
+		const privateState = `<strong>Want to read</strong> in <a href="/me/library">your library</a>.`
+		for _, visitor := range visitors {
+			for _, path := range []string{"/books", "/books/pride-and-prejudice"} {
+				t.Run(visitor.name+" "+path, func(t *testing.T) {
+					request := httptest.NewRequest(http.MethodGet, path, nil)
+					if visitor.session != nil {
+						request.AddCookie(visitor.session)
+					}
+
+					recorder := httptest.NewRecorder()
+					handler.ServeHTTP(recorder, request)
+					if recorder.Code != http.StatusOK {
+						t.Fatalf("%s = %d, want %d", path, recorder.Code, http.StatusOK)
+					}
+					if strings.Contains(recorder.Body.String(), privateState) {
+						t.Fatalf("%s exposes Ada's library state: %q", path, recorder.Body.String())
+					}
+				})
 			}
 		}
 	})
@@ -441,6 +479,11 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 				values: url.Values{"status": {"later"}, "version": {"1"}},
 			},
 			{
+				name:   "status update with invalid item ID",
+				path:   "/me/library/not-an-id/status",
+				values: url.Values{"status": {"reading"}, "version": {"1"}},
+			},
+			{
 				name:   "removal without version",
 				path:   itemPath + "/remove",
 				values: url.Values{},
@@ -482,6 +525,17 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 			t.Fatalf("other user removal = %d, want %d", foreignRemovalResponse.Code, http.StatusNotFound)
 		}
 
+		foreignConfirmationRequest := httptest.NewRequest(http.MethodGet, itemPath+"/remove", nil)
+		foreignConfirmationRequest.AddCookie(bobSession)
+		foreignConfirmationResponse := httptest.NewRecorder()
+		handler.ServeHTTP(foreignConfirmationResponse, foreignConfirmationRequest)
+		if foreignConfirmationResponse.Code != http.StatusNotFound {
+			t.Fatalf("other user removal confirmation = %d, want %d", foreignConfirmationResponse.Code, http.StatusNotFound)
+		}
+		if strings.Contains(foreignConfirmationResponse.Body.String(), "Pride and Prejudice") {
+			t.Fatalf("other user removal confirmation reveals private item: %q", foreignConfirmationResponse.Body.String())
+		}
+
 		statusRequest := formRequest(http.MethodPost, itemPath+"/status", url.Values{
 			"status":  {"reading"},
 			"version": {"1"},
@@ -491,6 +545,20 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 		handler.ServeHTTP(statusResponse, statusRequest)
 		if statusResponse.Code != http.StatusSeeOther || statusResponse.Header().Get("Location") != "/me/library" {
 			t.Fatalf("status update = %d %q", statusResponse.Code, statusResponse.Header().Get("Location"))
+		}
+
+		staleStatusRequest := formRequest(http.MethodPost, itemPath+"/status", url.Values{
+			"status":  {"read"},
+			"version": {"1"},
+		})
+		staleStatusRequest.AddCookie(adaSession)
+		staleStatusResponse := httptest.NewRecorder()
+		handler.ServeHTTP(staleStatusResponse, staleStatusRequest)
+		if staleStatusResponse.Code != http.StatusConflict {
+			t.Fatalf("stale status update = %d, want %d", staleStatusResponse.Code, http.StatusConflict)
+		}
+		if !strings.Contains(staleStatusResponse.Body.String(), `role="alert">This item changed. Reload your library and try again.`) {
+			t.Fatalf("stale status update does not render the conflict alert: %q", staleStatusResponse.Body.String())
 		}
 
 		repeatStatusRequest := formRequest(http.MethodPost, itemPath+"/status", url.Values{

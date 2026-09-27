@@ -297,6 +297,26 @@ func TestServiceUpdateStatusHandlesNoOpAndConflict(t *testing.T) {
 		}
 	})
 
+	t.Run("concurrent update already reached target status", func(t *testing.T) {
+		repo := &recordingRepository{
+			getItems: []Item{
+				{ID: 1, Status: ReadingStatusWantToRead, Version: 1},
+				{ID: 1, Status: ReadingStatusRead, Version: 2},
+			},
+		}
+		err := NewService(repo, &recordingBookFinder{}).
+			UpdateStatus(context.Background(), 1, 1, ReadingStatusRead, 1)
+		if err != nil {
+			t.Fatalf("UpdateStatus() error = %v", err)
+		}
+		if repo.getCalls != 2 {
+			t.Fatalf("GetByIDAndUserID calls = %d, want 2", repo.getCalls)
+		}
+		if repo.updateParams.Status != ReadingStatusRead || repo.updateParams.ExpectedVersion != 1 {
+			t.Fatalf("UpdateStatus() params = %+v", repo.updateParams)
+		}
+	})
+
 	t.Run("stale write becomes a conflict", func(t *testing.T) {
 		repo := &recordingRepository{
 			getItems: []Item{
