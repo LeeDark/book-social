@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/LeeDark/book-social/internal/modules/books"
 	"github.com/LeeDark/book-social/internal/modules/library"
@@ -20,9 +22,15 @@ func NewLibraryRepository(db *sql.DB) *LibraryRepository {
 
 func (r *LibraryRepository) Add(ctx context.Context, params library.AddItemParams) error {
 	_, err := r.db.ExecContext(ctx, `
-		INSERT INTO library_items(user_id, book_id, added_at)
+		INSERT INTO library_items(
+			user_id, book_id, added_at
+		)
 		VALUES ($1, $2, $3)
-	`, params.UserID, params.BookID, params.AddedAt.UTC())
+	`,
+		params.UserID,
+		params.BookID,
+		params.AddedAt.UTC(),
+	)
 	if err == nil {
 		return nil
 	}
@@ -38,6 +46,10 @@ func (r *LibraryRepository) ListByUserID(ctx context.Context, userID int) ([]lib
 	const query = `
 		SELECT
 			li.id,
+			li.status,
+			li.started_at,
+			li.finished_at,
+			li.version,
 			li.added_at,
 			b.id,
 			b.title,
@@ -67,13 +79,170 @@ func (r *LibraryRepository) ListByUserID(ctx context.Context, userID int) ([]lib
 	return items, nil
 }
 
+func (r *LibraryRepository) ListBookStates(
+	ctx context.Context,
+	userID int,
+	bookIDs []int,
+) (map[int]library.BookState, error) {
+	states := make(map[int]library.BookState, len(bookIDs))
+	if len(bookIDs) == 0 {
+		return states, nil
+	}
+
+	args := make([]any, 0, len(bookIDs)+1)
+	for _, bookID := range bookIDs {
+		args = append(args, bookID)
+	}
+	args = append(args, userID)
+
+	userIDPlaceholder := fmt.Sprintf("$%d", len(args))
+	query := `
+		SELECT book_id, status
+		FROM library_items
+		WHERE user_id = ` + userIDPlaceholder + `
+			AND book_id IN (` + queryPlaceholders(len(bookIDs)) + `);
+	`
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, library.ErrInternal
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	for rows.Next() {
+		var bookID int
+		var state library.BookState
+		if err := rows.Scan(&bookID, &state.Status); err != nil {
+			return nil, library.ErrInternal
+		}
+		states[bookID] = state
+	}
+	if err := rows.Err(); err != nil {
+		return nil, library.ErrInternal
+	}
+	return states, nil
+}
+
+func (r *LibraryRepository) GetByIDAndUserID(ctx context.Context, userID, itemID int) (library.Item, error) {
+	var (
+		item       library.Item
+		startedAt  sql.NullTime
+		finishedAt sql.NullTime
+	)
+	err := r.db.QueryRowContext(ctx, `
+		SELECT
+			id,
+			status,
+			started_at,
+			finished_at,
+			version
+		FROM library_items
+		WHERE id = $1 AND user_id = $2
+	`, itemID, userID).Scan(
+		&item.ID,
+		&item.Status,
+		&startedAt,
+		&finishedAt,
+		&item.Version,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return library.Item{}, library.ErrItemNotFound
+	}
+	if err != nil {
+		return library.Item{}, library.ErrInternal
+	}
+	item.StartedAt = postgresNullableTime(startedAt)
+	item.FinishedAt = postgresNullableTime(finishedAt)
+	return item, nil
+}
+
+func (r *LibraryRepository) GetDetailByIDAndUserID(ctx context.Context, userID, itemID int) (library.Item, error) {
+	var (
+		item       library.Item
+		startedAt  sql.NullTime
+		finishedAt sql.NullTime
+	)
+	err := r.db.QueryRowContext(ctx, `
+		SELECT
+			li.id,
+			li.status,
+			li.started_at,
+			li.finished_at,
+			li.version,
+			b.id,
+			b.title,
+			b.slug
+		FROM library_items li
+		JOIN books b ON b.id = li.book_id
+		WHERE li.id = $1 AND li.user_id = $2
+	`, itemID, userID).Scan(
+		&item.ID,
+		&item.Status,
+		&startedAt,
+		&finishedAt,
+		&item.Version,
+		&item.Book.ID,
+		&item.Book.Title,
+		&item.Book.Slug,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return library.Item{}, library.ErrItemNotFound
+	}
+	if err != nil {
+		return library.Item{}, library.ErrInternal
+	}
+	item.StartedAt = postgresNullableTime(startedAt)
+	item.FinishedAt = postgresNullableTime(finishedAt)
+	return item, nil
+}
+
+func (r *LibraryRepository) UpdateStatus(ctx context.Context, params library.UpdateStatusParams) (bool, error) {
+	result, err := r.db.ExecContext(ctx, `
+		UPDATE library_items
+		SET
+			status = $1,
+			started_at = $2,
+			finished_at = $3,
+			version = version + 1
+		WHERE id = $4 AND user_id = $5 AND version = $6
+	`,
+		string(params.Status),
+		params.StartedAt,
+		params.FinishedAt,
+		params.ItemID,
+		params.UserID,
+		params.ExpectedVersion,
+	)
+	if err != nil {
+		return false, library.ErrInternal
+	}
+	return hasAffectedRow(result)
+}
+
+func (r *LibraryRepository) Remove(ctx context.Context, userID, itemID, expectedVersion int) (bool, error) {
+	result, err := r.db.ExecContext(ctx, `
+		DELETE FROM library_items
+		WHERE id = $1 AND user_id = $2 AND version = $3
+	`, itemID, userID, expectedVersion)
+	if err != nil {
+		return false, library.ErrInternal
+	}
+	return hasAffectedRow(result)
+}
+
 func scanLibraryItemRows(rows *sql.Rows) ([]library.Item, error) {
 	items := make([]library.Item, 0)
 	for rows.Next() {
 		var item library.Item
+		var startedAt, finishedAt sql.NullTime
 		var description sql.NullString
 		if err := rows.Scan(
 			&item.ID,
+			&item.Status,
+			&startedAt,
+			&finishedAt,
+			&item.Version,
 			&item.AddedAt,
 			&item.Book.ID,
 			&item.Book.Title,
@@ -83,6 +252,8 @@ func scanLibraryItemRows(rows *sql.Rows) ([]library.Item, error) {
 			return nil, library.ErrInternal
 		}
 		item.AddedAt = item.AddedAt.UTC()
+		item.StartedAt = postgresNullableTime(startedAt)
+		item.FinishedAt = postgresNullableTime(finishedAt)
 		item.Book.Description = nullStringValue(description)
 		items = append(items, item)
 	}
@@ -90,6 +261,22 @@ func scanLibraryItemRows(rows *sql.Rows) ([]library.Item, error) {
 		return nil, library.ErrInternal
 	}
 	return items, nil
+}
+
+func postgresNullableTime(value sql.NullTime) *time.Time {
+	if !value.Valid {
+		return nil
+	}
+	parsed := value.Time.UTC()
+	return &parsed
+}
+
+func hasAffectedRow(result sql.Result) (bool, error) {
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return false, library.ErrInternal
+	}
+	return affected == 1, nil
 }
 
 func (r *LibraryRepository) hydrateBookRelationships(ctx context.Context, items []library.Item) error {

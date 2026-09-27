@@ -55,6 +55,128 @@ func (s *Service) Add(ctx context.Context, userID int, bookSlug string) error {
 	return mapRepositoryError(err)
 }
 
+func (s *Service) UpdateStatus(
+	ctx context.Context,
+	userID, itemID int,
+	status ReadingStatus,
+	expectedVersion int,
+) error {
+	if s == nil || s.repo == nil {
+		return ErrInternal
+	}
+	if userID <= 0 || itemID <= 0 || expectedVersion <= 0 || !isValidReadingStatus(status) {
+		return ErrInvalidInput
+	}
+
+	item, err := s.repo.GetByIDAndUserID(ctx, userID, itemID)
+	if err != nil {
+		return mapRepositoryError(err)
+	}
+	if item.Status == status {
+		return nil
+	}
+	if item.Version != expectedVersion {
+		return ErrItemVersionConflict
+	}
+
+	startedAt, finishedAt := transitionTimestamps(item, status, s.now().UTC())
+	updated, err := s.repo.UpdateStatus(ctx, UpdateStatusParams{
+		UserID:          userID,
+		ItemID:          itemID,
+		ExpectedVersion: expectedVersion,
+		Status:          status,
+		StartedAt:       startedAt,
+		FinishedAt:      finishedAt,
+	})
+	if err != nil {
+		return mapRepositoryError(err)
+	}
+	if updated {
+		return nil
+	}
+
+	item, err = s.repo.GetByIDAndUserID(ctx, userID, itemID)
+	if err != nil {
+		return mapRepositoryError(err)
+	}
+	if item.Status == status {
+		return nil
+	}
+	return ErrItemVersionConflict
+}
+
+func (s *Service) Remove(ctx context.Context, userID, itemID, expectedVersion int) error {
+	if s == nil || s.repo == nil {
+		return ErrInternal
+	}
+	if userID <= 0 || itemID <= 0 || expectedVersion <= 0 {
+		return ErrInvalidInput
+	}
+
+	removed, err := s.repo.Remove(ctx, userID, itemID, expectedVersion)
+	if err != nil {
+		return mapRepositoryError(err)
+	}
+	if removed {
+		return nil
+	}
+	if _, err := s.repo.GetByIDAndUserID(ctx, userID, itemID); err != nil {
+		return mapRepositoryError(err)
+	}
+	return ErrItemVersionConflict
+}
+
+func isValidReadingStatus(status ReadingStatus) bool {
+	switch status {
+	case ReadingStatusWantToRead, ReadingStatusReading, ReadingStatusRead:
+		return true
+	default:
+		return false
+	}
+}
+
+func transitionTimestamps(item Item, status ReadingStatus, now time.Time) (*time.Time, *time.Time) {
+	switch status {
+	case ReadingStatusWantToRead:
+		return nil, nil
+	case ReadingStatusReading:
+		if item.StartedAt != nil {
+			return copyTime(item.StartedAt), nil
+		}
+		return timePointer(now), nil
+	case ReadingStatusRead:
+		return copyTime(item.StartedAt), timePointer(now)
+	default:
+		return nil, nil
+	}
+}
+
+func timePointer(value time.Time) *time.Time {
+	value = value.UTC()
+	return &value
+}
+
+func copyTime(value *time.Time) *time.Time {
+	if value == nil {
+		return nil
+	}
+	return timePointer(*value)
+}
+
+func (s *Service) Get(ctx context.Context, userID, itemID int) (Item, error) {
+	if s == nil || s.repo == nil {
+		return Item{}, ErrInternal
+	}
+	if userID <= 0 || itemID <= 0 {
+		return Item{}, ErrInvalidInput
+	}
+	item, err := s.repo.GetDetailByIDAndUserID(ctx, userID, itemID)
+	if err != nil {
+		return Item{}, mapRepositoryError(err)
+	}
+	return item, nil
+}
+
 func (s *Service) List(ctx context.Context, userID int) ([]Item, error) {
 	if s == nil || s.repo == nil {
 		return nil, ErrInternal
@@ -78,9 +200,48 @@ func mapRepositoryError(err error) error {
 		return ErrItemAlreadyExists
 	case errors.Is(err, ErrItemNotFound):
 		return ErrItemNotFound
+	case errors.Is(err, ErrItemVersionConflict):
+		return ErrItemVersionConflict
 	case errors.Is(err, ErrForbidden):
 		return ErrForbidden
 	default:
 		return ErrInternal
 	}
+}
+
+// ListBookStates returns owner-scoped states for the requested catalog books.
+func (s *Service) ListBookStates(
+	ctx context.Context,
+	userID int,
+	bookIDs []int,
+) (map[int]BookState, error) {
+	if s == nil || s.repo == nil {
+		return nil, ErrInternal
+	}
+	if userID <= 0 {
+		return nil, ErrInvalidInput
+	}
+
+	requestedBookIDs := make([]int, 0, len(bookIDs))
+	seenBookIDs := make(map[int]struct{}, len(bookIDs))
+	for _, bookID := range bookIDs {
+		if bookID <= 0 {
+			continue
+		}
+		if _, exists := seenBookIDs[bookID]; exists {
+			continue
+		}
+
+		seenBookIDs[bookID] = struct{}{}
+		requestedBookIDs = append(requestedBookIDs, bookID)
+	}
+	if len(requestedBookIDs) == 0 {
+		return map[int]BookState{}, nil
+	}
+
+	states, err := s.repo.ListBookStates(ctx, userID, requestedBookIDs)
+	if err != nil {
+		return nil, mapRepositoryError(err)
+	}
+	return states, nil
 }

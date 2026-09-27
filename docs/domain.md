@@ -97,15 +97,14 @@ page models.
 The schema still contains legacy/demo `library`, `shelves`, and `tags` structures. They are not the
 user-facing personal-library model.
 
-Migration `000004` and the `library` module provide the private `library_items` behavior: one owner,
-one catalog book, a uniqueness rule, and an `added_at` timestamp. Its service validates owner IDs and
-book slugs, translates catalog and storage errors to library application errors, and returns only
-catalog data plus item metadata. Authenticated users can add a catalog book and list only their own
-items at `/me/library`; items are presented as want-to-read until v0.3.1 persists lifecycle state.
-
-The accepted use cases, ownership rules, application errors, module boundaries, and future
-reading-state transitions are defined in the planned
-[Private Library v0.3 Contract](library_v0_3.md). Its v0.3.1 lifecycle section remains planned.
+Migrations `000004` and `000005` plus the `library` module provide the private `library_items`
+behavior: one owner, one catalog book, a uniqueness rule, `added_at`, one of `want_to_read`,
+`reading`, or `read`, nullable start/finish timestamps, and an optimistic-locking version. Its
+service validates owner IDs and book slugs, translates catalog and storage errors to library
+application errors, and returns only catalog data plus item metadata. Authenticated users can add a
+catalog book, list only their own items at `/me/library`, change an owner-scoped status, and remove
+an item only after an explicit confirmation. The detailed rules are in the
+[Private Library v0.3 Contract](library_v0_3.md).
 
 ## Current Design Rules
 

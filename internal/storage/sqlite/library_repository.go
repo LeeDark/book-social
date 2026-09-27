@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/LeeDark/book-social/internal/modules/books"
 	"github.com/LeeDark/book-social/internal/modules/library"
@@ -21,9 +22,15 @@ func NewLibraryRepository(db *sql.DB) *LibraryRepository {
 
 func (r *LibraryRepository) Add(ctx context.Context, params library.AddItemParams) error {
 	_, err := r.db.ExecContext(ctx, `
-		INSERT INTO library_items(user_id, book_id, added_at)
+		INSERT INTO library_items(
+			user_id, book_id, added_at
+		)
 		VALUES (?, ?, ?)
-	`, params.UserID, params.BookID, formatSQLiteTime(params.AddedAt))
+	`,
+		params.UserID,
+		params.BookID,
+		formatSQLiteTime(params.AddedAt),
+	)
 	if err == nil {
 		return nil
 	}
@@ -39,6 +46,10 @@ func (r *LibraryRepository) ListByUserID(ctx context.Context, userID int) ([]lib
 	const query = `
 		SELECT
 			li.id,
+			li.status,
+			li.started_at,
+			li.finished_at,
+			li.version,
 			li.added_at,
 			b.id,
 			b.title,
@@ -68,15 +79,189 @@ func (r *LibraryRepository) ListByUserID(ctx context.Context, userID int) ([]lib
 	return items, nil
 }
 
+func (r *LibraryRepository) ListBookStates(
+	ctx context.Context,
+	userID int,
+	bookIDs []int,
+) (map[int]library.BookState, error) {
+	states := make(map[int]library.BookState, len(bookIDs))
+	if len(bookIDs) == 0 {
+		return states, nil
+	}
+
+	args := make([]any, 0, len(bookIDs)+1)
+	args = append(args, userID)
+	for _, bookID := range bookIDs {
+		args = append(args, bookID)
+	}
+
+	query := `
+		SELECT book_id, status
+		FROM library_items
+		WHERE user_id = ?
+			AND book_id IN (` + queryPlaceholders(len(bookIDs)) + `);
+	`
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, library.ErrInternal
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	for rows.Next() {
+		var bookID int
+		var state library.BookState
+		if err := rows.Scan(&bookID, &state.Status); err != nil {
+			return nil, library.ErrInternal
+		}
+		states[bookID] = state
+	}
+	if err := rows.Err(); err != nil {
+		return nil, library.ErrInternal
+	}
+	return states, nil
+}
+
+func (r *LibraryRepository) GetByIDAndUserID(ctx context.Context, userID, itemID int) (library.Item, error) {
+	var (
+		item       library.Item
+		startedAt  sql.NullString
+		finishedAt sql.NullString
+	)
+	err := r.db.QueryRowContext(ctx, `
+		SELECT
+			id,
+			status,
+			started_at,
+			finished_at,
+			version
+		FROM library_items
+		WHERE id = ? AND user_id = ?
+	`, itemID, userID).Scan(
+		&item.ID,
+		&item.Status,
+		&startedAt,
+		&finishedAt,
+		&item.Version,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return library.Item{}, library.ErrItemNotFound
+	}
+	if err != nil {
+		return library.Item{}, library.ErrInternal
+	}
+
+	parsedStartedAt, err := parseSQLiteNullableTime(startedAt)
+	if err != nil {
+		return library.Item{}, library.ErrInternal
+	}
+	parsedFinishedAt, err := parseSQLiteNullableTime(finishedAt)
+	if err != nil {
+		return library.Item{}, library.ErrInternal
+	}
+	item.StartedAt = nullableSQLiteTimePointer(parsedStartedAt)
+	item.FinishedAt = nullableSQLiteTimePointer(parsedFinishedAt)
+	return item, nil
+}
+
+func (r *LibraryRepository) GetDetailByIDAndUserID(ctx context.Context, userID, itemID int) (library.Item, error) {
+	var (
+		item       library.Item
+		startedAt  sql.NullString
+		finishedAt sql.NullString
+	)
+	err := r.db.QueryRowContext(ctx, `
+		SELECT
+			li.id,
+			li.status,
+			li.started_at,
+			li.finished_at,
+			li.version,
+			b.id,
+			b.title,
+			b.slug
+		FROM library_items li
+		JOIN books b ON b.id = li.book_id
+		WHERE li.id = ? AND li.user_id = ?
+	`, itemID, userID).Scan(
+		&item.ID,
+		&item.Status,
+		&startedAt,
+		&finishedAt,
+		&item.Version,
+		&item.Book.ID,
+		&item.Book.Title,
+		&item.Book.Slug,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return library.Item{}, library.ErrItemNotFound
+	}
+	if err != nil {
+		return library.Item{}, library.ErrInternal
+	}
+
+	parsedStartedAt, err := parseSQLiteNullableTime(startedAt)
+	if err != nil {
+		return library.Item{}, library.ErrInternal
+	}
+	parsedFinishedAt, err := parseSQLiteNullableTime(finishedAt)
+	if err != nil {
+		return library.Item{}, library.ErrInternal
+	}
+	item.StartedAt = nullableSQLiteTimePointer(parsedStartedAt)
+	item.FinishedAt = nullableSQLiteTimePointer(parsedFinishedAt)
+	return item, nil
+}
+
+func (r *LibraryRepository) UpdateStatus(ctx context.Context, params library.UpdateStatusParams) (bool, error) {
+	result, err := r.db.ExecContext(ctx, `
+		UPDATE library_items
+		SET
+			status = ?,
+			started_at = ?,
+			finished_at = ?,
+			version = version + 1
+		WHERE id = ? AND user_id = ? AND version = ?
+	`,
+		string(params.Status),
+		formatSQLiteNullableTime(params.StartedAt),
+		formatSQLiteNullableTime(params.FinishedAt),
+		params.ItemID,
+		params.UserID,
+		params.ExpectedVersion,
+	)
+	if err != nil {
+		return false, library.ErrInternal
+	}
+	return hasAffectedRow(result)
+}
+
+func (r *LibraryRepository) Remove(ctx context.Context, userID, itemID, expectedVersion int) (bool, error) {
+	result, err := r.db.ExecContext(ctx, `
+		DELETE FROM library_items
+		WHERE id = ? AND user_id = ? AND version = ?
+	`, itemID, userID, expectedVersion)
+	if err != nil {
+		return false, library.ErrInternal
+	}
+	return hasAffectedRow(result)
+}
+
 func scanLibraryItemRows(rows *sql.Rows) ([]library.Item, error) {
 	items := make([]library.Item, 0)
 	for rows.Next() {
 		var item library.Item
 		var addedAt string
+		var startedAt, finishedAt sql.NullString
 		var description sql.NullString
 
 		if err := rows.Scan(
 			&item.ID,
+			&item.Status,
+			&startedAt,
+			&finishedAt,
+			&item.Version,
 			&addedAt,
 			&item.Book.ID,
 			&item.Book.Title,
@@ -91,6 +276,16 @@ func scanLibraryItemRows(rows *sql.Rows) ([]library.Item, error) {
 			return nil, library.ErrInternal
 		}
 		item.AddedAt = parsedAddedAt
+		parsedStartedAt, err := parseSQLiteNullableTime(startedAt)
+		if err != nil {
+			return nil, library.ErrInternal
+		}
+		parsedFinishedAt, err := parseSQLiteNullableTime(finishedAt)
+		if err != nil {
+			return nil, library.ErrInternal
+		}
+		item.StartedAt = nullableSQLiteTimePointer(parsedStartedAt)
+		item.FinishedAt = nullableSQLiteTimePointer(parsedFinishedAt)
 		item.Book.Description = nullStringValue(description)
 		items = append(items, item)
 	}
@@ -98,6 +293,40 @@ func scanLibraryItemRows(rows *sql.Rows) ([]library.Item, error) {
 		return nil, library.ErrInternal
 	}
 	return items, nil
+}
+
+func formatSQLiteNullableTime(value *time.Time) any {
+	if value == nil {
+		return nil
+	}
+	return formatSQLiteTime(*value)
+}
+
+func parseSQLiteNullableTime(value sql.NullString) (sql.NullTime, error) {
+	if !value.Valid {
+		return sql.NullTime{}, nil
+	}
+	parsed, err := parseSQLiteTime(value.String)
+	if err != nil {
+		return sql.NullTime{}, err
+	}
+	return sql.NullTime{Time: parsed.UTC(), Valid: true}, nil
+}
+
+func nullableSQLiteTimePointer(value sql.NullTime) *time.Time {
+	if !value.Valid {
+		return nil
+	}
+	parsed := value.Time.UTC()
+	return &parsed
+}
+
+func hasAffectedRow(result sql.Result) (bool, error) {
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return false, library.ErrInternal
+	}
+	return affected == 1, nil
 }
 
 func (r *LibraryRepository) hydrateBookRelationships(ctx context.Context, items []library.Item) error {

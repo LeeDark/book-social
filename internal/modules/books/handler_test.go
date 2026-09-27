@@ -417,5 +417,5 @@ func newTestCatalogHandler(t *testing.T, service CatalogPageProvider) *CatalogHa
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	return NewCatalogHandler(service, renderer, logger)
+	return NewCatalogHandler(service, renderer, logger, nil)
 }

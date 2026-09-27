@@ -68,6 +68,58 @@ func TestLibraryRepositoryListByUserIDIsPrivateAndDeterministic(t *testing.T) {
 	}
 }
 
+func TestLibraryRepositoryListBookStatesIsOwnerScopedAndLimitedToRequestedBooks(t *testing.T) {
+	ctx := context.Background()
+	repo := NewLibraryRepository(newTestLibraryRepositoryDB(t, ctx))
+	addedAt := time.Date(2026, 9, 27, 9, 0, 0, 0, time.UTC)
+
+	for _, params := range []library.AddItemParams{
+		{UserID: 1, BookID: 1, AddedAt: addedAt},
+		{UserID: 2, BookID: 1, AddedAt: addedAt},
+		{UserID: 1, BookID: 2, AddedAt: addedAt},
+	} {
+		if err := repo.Add(ctx, params); err != nil {
+			t.Fatalf("Add(%+v) error = %v", params, err)
+		}
+	}
+
+	states, err := repo.ListBookStates(ctx, 1, []int{1})
+	if err != nil {
+		t.Fatalf("ListBookStates() error = %v", err)
+	}
+	if len(states) != 1 {
+		t.Fatalf("len(states) = %d, want 1", len(states))
+	}
+	if state, exists := states[1]; !exists || state.Status != library.ReadingStatusWantToRead {
+		t.Fatalf("state for book 1 = %+v, exists = %t", state, exists)
+	}
+	if _, exists := states[2]; exists {
+		t.Fatalf("states includes unrequested book 2: %#v", states)
+	}
+
+	otherOwnerItems, err := repo.ListByUserID(ctx, 2)
+	if err != nil || len(otherOwnerItems) != 1 {
+		t.Fatalf("ListByUserID() for other owner = %#v, %v", otherOwnerItems, err)
+	}
+	updated, err := repo.UpdateStatus(ctx, library.UpdateStatusParams{
+		UserID:          2,
+		ItemID:          otherOwnerItems[0].ID,
+		ExpectedVersion: 1,
+		Status:          library.ReadingStatusRead,
+	})
+	if err != nil || !updated {
+		t.Fatalf("UpdateStatus() for other owner = %t, %v", updated, err)
+	}
+
+	otherOwnerStates, err := repo.ListBookStates(ctx, 2, []int{1})
+	if err != nil {
+		t.Fatalf("ListBookStates() for other owner error = %v", err)
+	}
+	if len(otherOwnerStates) != 1 || otherOwnerStates[1].Status != library.ReadingStatusRead {
+		t.Fatalf("other owner states = %#v, want only the other owner's state", otherOwnerStates)
+	}
+}
+
 func TestLibraryRepositoryListByUserIDReturnsEmptySlice(t *testing.T) {
 	items, err := NewLibraryRepository(newTestLibraryRepositoryDB(t, context.Background())).
 		ListByUserID(context.Background(), 1)
@@ -86,6 +138,120 @@ func TestLibraryRepositoryMapsForeignKeyFailureToInternalError(t *testing.T) {
 	)
 	if !errors.Is(err, library.ErrInternal) {
 		t.Fatalf("Add() error = %v, want ErrInternal", err)
+	}
+}
+
+func TestLibraryRepositoryLifecycleDefaultsConstraintsAndOwnerScopedMutations(t *testing.T) {
+	ctx := context.Background()
+	repo := NewLibraryRepository(newTestLibraryRepositoryDB(t, ctx))
+	addedAt := time.Date(2026, 9, 24, 9, 0, 0, 0, time.UTC)
+
+	if err := repo.Add(ctx, library.AddItemParams{UserID: 1, BookID: 1, AddedAt: addedAt}); err != nil {
+		t.Fatalf("add default lifecycle item: %v", err)
+	}
+
+	item, err := repo.GetByIDAndUserID(ctx, 1, 1)
+	if err != nil {
+		t.Fatalf("GetByIDAndUserID() error = %v", err)
+	}
+	if item.Status != library.ReadingStatusWantToRead || item.Version != 1 || item.StartedAt != nil || item.FinishedAt != nil {
+		t.Fatalf("default lifecycle item = %+v", item)
+	}
+	if item.Book.ID != 0 || item.Book.Title != "" || item.Book.Slug != "" || !item.AddedAt.IsZero() {
+		t.Fatalf("lifecycle item includes detail fields: %+v", item)
+	}
+
+	detailItem, err := repo.GetDetailByIDAndUserID(ctx, 1, item.ID)
+	if err != nil {
+		t.Fatalf("GetDetailByIDAndUserID() error = %v", err)
+	}
+	if detailItem.Book.ID != 1 || detailItem.Book.Title != "Pride and Prejudice" || detailItem.Book.Slug != "pride-and-prejudice" || !detailItem.AddedAt.IsZero() {
+		t.Fatalf("detail lifecycle item = %+v", detailItem)
+	}
+	for _, query := range []string{
+		`INSERT INTO library_items(user_id, book_id, status, added_at) VALUES (1, 2, 'unknown', '2026-09-24T09:00:00Z')`,
+		`INSERT INTO library_items(user_id, book_id, version, added_at) VALUES (2, 2, 0, '2026-09-24T09:00:00Z')`,
+	} {
+		if _, err := repo.db.ExecContext(ctx, query); err == nil {
+			t.Fatalf("constraint query succeeded: %s", query)
+		}
+	}
+
+	startedAt := time.Date(2026, 9, 24, 10, 0, 0, 0, time.UTC)
+	updated, err := repo.UpdateStatus(ctx, library.UpdateStatusParams{
+		UserID:          1,
+		ItemID:          item.ID,
+		ExpectedVersion: 1,
+		Status:          library.ReadingStatusReading,
+		StartedAt:       &startedAt,
+	})
+	if err != nil || !updated {
+		t.Fatalf("UpdateStatus() = %t, %v", updated, err)
+	}
+	item, err = repo.GetByIDAndUserID(ctx, 1, item.ID)
+	if err != nil {
+		t.Fatalf("GetByIDAndUserID() after update error = %v", err)
+	}
+	if item.Status != library.ReadingStatusReading || item.Version != 2 || item.StartedAt == nil || !item.StartedAt.Equal(startedAt) || item.FinishedAt != nil {
+		t.Fatalf("updated lifecycle item = %+v", item)
+	}
+
+	updated, err = repo.UpdateStatus(ctx, library.UpdateStatusParams{
+		UserID:          1,
+		ItemID:          item.ID,
+		ExpectedVersion: 1,
+		Status:          library.ReadingStatusRead,
+	})
+	if err != nil || updated {
+		t.Fatalf("stale UpdateStatus() = %t, %v", updated, err)
+	}
+	if _, err := repo.GetByIDAndUserID(ctx, 2, item.ID); !errors.Is(err, library.ErrItemNotFound) {
+		t.Fatalf("other owner GetByIDAndUserID() error = %v, want ErrItemNotFound", err)
+	}
+
+	removed, err := repo.Remove(ctx, 2, item.ID, 2)
+	if err != nil || removed {
+		t.Fatalf("other owner Remove() = %t, %v", removed, err)
+	}
+	removed, err = repo.Remove(ctx, 1, item.ID, 2)
+	if err != nil || !removed {
+		t.Fatalf("Remove() = %t, %v", removed, err)
+	}
+	if _, err := repo.GetByIDAndUserID(ctx, 1, item.ID); !errors.Is(err, library.ErrItemNotFound) {
+		t.Fatalf("removed item lookup error = %v, want ErrItemNotFound", err)
+	}
+}
+
+func TestParseSQLiteNullableTime(t *testing.T) {
+	parsedAt := time.Date(2026, 9, 24, 10, 0, 0, 0, time.FixedZone("UTC+2", 2*60*60))
+
+	tests := []struct {
+		name  string
+		value sql.NullString
+		want  sql.NullTime
+	}{
+		{
+			name:  "null value stays invalid without an error",
+			value: sql.NullString{},
+			want:  sql.NullTime{},
+		},
+		{
+			name:  "timestamp is parsed in UTC",
+			value: sql.NullString{String: formatSQLiteTime(parsedAt), Valid: true},
+			want:  sql.NullTime{Time: parsedAt.UTC(), Valid: true},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseSQLiteNullableTime(tt.value)
+			if err != nil {
+				t.Fatalf("parseSQLiteNullableTime() error = %v", err)
+			}
+			if got.Valid != tt.want.Valid || (got.Valid && !got.Time.Equal(tt.want.Time)) {
+				t.Fatalf("parseSQLiteNullableTime() = %+v, want %+v", got, tt.want)
+			}
+		})
 	}
 }
 

@@ -6,6 +6,10 @@
             <h1 id="library-heading">Your library</h1>
         </header>
 
+        {{if .FormError}}
+            <p role="alert">{{.FormError}}</p>
+        {{end}}
+
         {{if .Items}}
             <ul>
                 {{range .Items}}
@@ -22,6 +26,15 @@
                                 </p>
                             {{end}}
                             <p><strong>{{.StateLabel}}</strong></p>
+                            <form method="post" action="/me/library/{{.ID}}/status">
+                                <label for="status-{{.ID}}">Reading status</label>
+                                <select id="status-{{.ID}}" name="status">
+                                    {{range .StatusOptions}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
+                                </select>
+                                <input type="hidden" name="version" value="{{.Version}}">
+                                <button type="submit">Update status</button>
+                            </form>
+                            <p><a href="{{.RemoveURL}}">Remove from library</a></p>
                         </article>
                     </li>
                 {{end}}

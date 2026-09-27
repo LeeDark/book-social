@@ -1,7 +1,7 @@
 # Private Library v0.3 Contract
 
-This document records the implemented v0.3.0 private-library behavior and the accepted v0.3.1
-lifecycle contract. Current routes, domain behavior, and schema are also summarized in
+This document records the implemented v0.3.0 private-library behavior and the implemented v0.3.1
+lifecycle rules. Current routes, domain behavior, and schema are also summarized in
 [routes.md](routes.md), [domain.md](domain.md), and [database.md](database.md).
 
 ## Accepted Baseline
@@ -49,7 +49,7 @@ The `library` module owns its domain model, service, errors, and repository cont
 on the existing `books` module as the upstream catalog boundary; the `books` module must not depend
 on `library`.
 
-The consuming service defines these minimum ports and values:
+The consuming service defines these current ports and values:
 
 ```go
 type BookFinder interface {
@@ -59,6 +59,25 @@ type BookFinder interface {
 type Repository interface {
 	Add(ctx context.Context, params AddItemParams) error
 	ListByUserID(ctx context.Context, userID int) ([]Item, error)
+	ListBookStates(ctx context.Context, userID int, bookIDs []int) (map[int]BookState, error)
+	GetByIDAndUserID(ctx context.Context, userID, itemID int) (Item, error)
+	GetDetailByIDAndUserID(ctx context.Context, userID, itemID int) (Item, error)
+	UpdateStatus(ctx context.Context, params UpdateStatusParams) (bool, error)
+	Remove(ctx context.Context, userID, itemID, expectedVersion int) (bool, error)
+}
+
+type Item struct {
+	ID         int
+	Book       books.Book
+	Status     ReadingStatus
+	StartedAt  *time.Time
+	FinishedAt *time.Time
+	Version    int
+	AddedAt    time.Time
+}
+
+type BookState struct {
+	Status ReadingStatus
 }
 
 type AddItemParams struct {
@@ -67,16 +86,23 @@ type AddItemParams struct {
 	AddedAt time.Time
 }
 
-type Item struct {
-	ID      int
-	Book    books.Book
-	AddedAt time.Time
+type UpdateStatusParams struct {
+	UserID          int
+	ItemID          int
+	ExpectedVersion int
+	Status          ReadingStatus
+	StartedAt       *time.Time
+	FinishedAt      *time.Time
 }
 ```
 
-The service exposes add and list use cases. It owns input normalization, catalog-error translation,
-the operation clock, and orchestration. Repositories own SQL and database-error translation.
-Handlers own HTTP parsing, redirects, status codes, flash messages, and page/view models.
+The v0.3.1 service exposes add, list, owner-scoped item lookup, status update, removal, and catalog
+state lookup use cases. `GetByIDAndUserID` is the narrow lifecycle lookup used by status updates and
+conflict checks; `GetDetailByIDAndUserID` additionally loads a book ID, title, and slug for the
+removal confirmation page. The service owns input normalization, catalog-error translation,
+timestamp rules, the operation clock, and orchestration. Repositories own SQL and database-error
+translation. Handlers own HTTP parsing, redirects, status codes, flash messages, and page/view
+models.
 
 No service-level transaction is required in v0.3.0: add performs one authoritative insert after a
 catalog read, and list is read-only. Foreign keys handle a catalog row disappearing between lookup
@@ -87,14 +113,15 @@ and receives a transaction-capable repository abstraction; handlers never manage
 
 The library module uses errors compatible with `errors.Is`:
 
-| Application outcome                   | Library error          | HTTP behavior                       |
-|---------------------------------------|------------------------|-------------------------------------|
-| Missing/invalid user ID or blank slug | `ErrInvalidInput`      | `422 Unprocessable Entity`          |
-| Catalog slug does not identify a book | `ErrBookNotFound`      | `404 Not Found`                     |
-| User already owns the book            | `ErrItemAlreadyExists` | `409 Conflict`                      |
-| Requested library item does not exist | `ErrItemNotFound`      | `404 Not Found`                     |
-| Authenticated user is not permitted   | `ErrForbidden`         | `403 Forbidden`                     |
-| Unexpected repository/catalog failure | `ErrInternal`          | generic `500 Internal Server Error` |
+| Application outcome                   | Library error            | HTTP behavior                       |
+|---------------------------------------|--------------------------|-------------------------------------|
+| Missing/invalid user ID or blank slug | `ErrInvalidInput`        | `422 Unprocessable Entity`          |
+| Catalog slug does not identify a book | `ErrBookNotFound`        | `404 Not Found`                     |
+| User already owns the book            | `ErrItemAlreadyExists`   | `409 Conflict`                      |
+| Requested library item does not exist | `ErrItemNotFound`        | `404 Not Found`                     |
+| Submitted lifecycle version is stale  | `ErrItemVersionConflict` | `409 Conflict`                      |
+| Authenticated user is not permitted   | `ErrForbidden`           | `403 Forbidden`                     |
+| Unexpected repository/catalog failure | `ErrInternal`            | generic `500 Internal Server Error` |
 
 Missing or invalid authentication remains `users.ErrUnauthenticated` at the existing HTTP auth
 boundary. Protected MPA routes redirect anonymous users to `/login` with `303 See Other`; the
@@ -137,9 +164,8 @@ afterward.
 
 ## Reading-State Rules for v0.3.1
 
-v0.3.0 has no status mutation. Its items are presented as want-to-read entries, and its minimal
-schema contains ownership, book identity, uniqueness, and `added_at`. v0.3.1 will persist the
-explicit statuses `want_to_read`, `reading`, and `read` and add `started_at` and `finished_at`.
+v0.3.1 persists the explicit statuses `want_to_read`, `reading`, and `read` plus nullable
+`started_at` and `finished_at` timestamps.
 
 All three status values may transition to either of the other values. Repeating the current status
 is an idempotent no-op. Timestamp invariants are:
@@ -151,10 +177,42 @@ is an idempotent no-op. Timestamp invariants are:
 | `read`         | preserve an existing value, including `nil`                  | set to transition time |
 
 This permits marking a book as read when its start date is unknown. Moving from `read` back to
-`reading` preserves a known start and clears the finish. v0.3.1 will define the conflict-safe update
-mechanism, status forms, explicit-confirmation removal, and their HTTP routes before implementation.
+`reading` preserves a known start and clears the finish.
+
+### Storage and Concurrency Contract
+
+Migration `000005_add_library_item_lifecycle` gives every existing and new item a valid status,
+nullable lifecycle timestamps, and a positive integer `version`. Existing v0.3.0 rows are
+initialized as `want_to_read`, with both timestamps unset and `version = 1`. The database must
+constrain status to the three documented values and reject non-positive versions.
+
+Status changes use optimistic locking. A status form supplies the current item's `version`; a
+successful owner-scoped update requires that version, applies the transition, and increments it by
+one. A request using an old version is a conflict unless the item already has the requested status;
+that case is the documented successful no-op and does not change timestamps or version. This avoids
+silently overwriting a newer reading state without making timestamps a concurrency token.
+
+Removal also supplies the displayed `version`. It succeeds only for the owner and matching version;
+a stale confirmation is a conflict and never deletes a newer item state. Owner-scoped missing items
+remain `ErrItemNotFound`; `ErrItemVersionConflict` maps to a safe `409 Conflict` response.
+
+### HTTP Contract
+
+v0.3.1 provides these protected owner-scoped routes:
+
+```text
+POST /me/library/{itemID}/status  change status; form fields: status, version
+GET  /me/library/{itemID}/remove  show the explicit removal confirmation
+POST /me/library/{itemID}/remove  confirm removal; form field: version
+```
+
+All lifecycle routes use the existing authentication guard and `no-store` policy. Successful POST
+requests use Post/Redirect/Get with `303 See Other` to `/me/library` and a one-request flash.
+Invalid item IDs, status values, or versions are `422`; owner-scoped missing items are `404`; stale
+state or removal forms are `409`. Cross-origin unsafe requests continue to be rejected before they
+reach a handler. A GET never mutates state, and removal is never triggered by a link or a GET.
 
 ## Deferred Work
 
-The following are not part of v0.3.0: persisted status changes, removal, ratings, notes, reading
-progress, custom shelves/tags, public libraries, external catalog import, and social features.
+Ratings, notes, reading progress, custom shelves/tags, public libraries, external catalog import,
+and social features are not part of v0.3.1.

@@ -6,17 +6,18 @@ Database docs are split by project stage:
 - [Database v0.2](database_v0_2.md): normalized catalog schema created by migration `000002`.
 - Auth Foundation v0.2.5 is described below and created by migration `000003`.
 - Private Library Foundation v0.3.0 is described below and created by migration `000004`.
+- Reading-State Lifecycle v0.3.1 is described below and created by migration `000005`.
 
 Current state:
 
 - `APP_ENV=dev` uses SQLite and is the active local development path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
-- Baseline, catalog-normalization, auth-foundation, and private-library migration files exist and
-  can be applied with the `golang-migrate` CLI.
+- Baseline, catalog-normalization, auth-foundation, private-library, and lifecycle migration files
+  exist and can be applied with the `golang-migrate` CLI.
 - SQLite and PostgreSQL implement the normalized v0.2 catalog read-side.
 - SQLite and PostgreSQL implement equivalent user and opaque-session persistence contracts.
 - SQLite and PostgreSQL implement equivalent private-library persistence contracts consumed by the
-  implemented v0.3.0 HTTP add/list flow.
+  implemented v0.3.1 lifecycle flow.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
 ## Migration Layout
@@ -41,6 +42,7 @@ relationships and adds cover metadata without editing the baseline migration. Mi
 adds the ordinary `user` role and session storage for v0.2.5 without adding demo accounts.
 Migration `000004` adds the private `library_items` foundation without repurposing legacy demo
 library tables.
+Migration `000005` adds the reading-state lifecycle without changing the historical foundation.
 
 Run pending SQLite migrations against the default local database:
 
@@ -120,6 +122,18 @@ The down migration refuses to remove a non-empty `library_items` table. This pro
 data during rollback; an empty migration can be rolled back normally. The legacy `library`,
 `shelves`, and `tags` tables remain demo data and are unrelated to this model.
 
+## Reading-State Lifecycle Schema
+
+Migration `000005_add_library_item_lifecycle` extends `library_items` with a constrained reading
+status, nullable `started_at` and `finished_at`, and a positive integer `version` for optimistic
+locking. Existing rows become `want_to_read` with unset lifecycle timestamps and `version = 1`; new
+rows use the same initial values.
+
+Status changes and removal include the owner ID and expected version in their write condition.
+An update increments the version only when it changes state; a repeat of the current state is a
+no-op. A stale update or removal is reported as a conflict rather than silently overwriting or
+deleting private data.
+
 CI runs Go tests, `go vet`, and lint. It does not run database migrations or Docker Compose.
 The local migration and seed smoke check is:
 
@@ -197,7 +211,7 @@ Tests do not use the local development database file.
 
 Current SQLite repository and HTTP integration tests create temporary or in-memory SQLite
 databases inside the test process and exercise the normalized catalog, auth, and private-library
-persistence. The shared library helper applies migrations through `000004`, creates a deterministic
+persistence. The shared library helper applies migrations through `000005`, creates a deterministic
 catalog fixture, and verifies the ordinary role, session, and library constraints.
 
 This keeps tests fast and isolated without depending on the full development seed dataset.

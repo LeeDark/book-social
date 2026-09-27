@@ -235,6 +235,12 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 		for _, request := range []*http.Request{
 			httptest.NewRequest(http.MethodGet, "/me/library", nil),
 			formRequest(http.MethodPost, "/me/library", url.Values{"book_slug": {"dracula"}}),
+			formRequest(http.MethodPost, "/me/library/1/status", url.Values{
+				"status":  {"reading"},
+				"version": {"1"},
+			}),
+			httptest.NewRequest(http.MethodGet, "/me/library/1/remove", nil),
+			formRequest(http.MethodPost, "/me/library/1/remove", url.Values{"version": {"1"}}),
 		} {
 			recorder := httptest.NewRecorder()
 			handler.ServeHTTP(recorder, request)
@@ -273,6 +279,55 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 	}
 	flashCookie := cookieNamed(t, firstAdd.Result().Cookies(), "book_social_flash")
 
+	t.Run("catalog and book details show an existing library state", func(t *testing.T) {
+		for _, path := range []string{"/books", "/books/pride-and-prejudice"} {
+			request := httptest.NewRequest(http.MethodGet, path, nil)
+			request.AddCookie(adaSession)
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, request)
+
+			body := recorder.Body.String()
+			if recorder.Code != http.StatusOK || !strings.Contains(body, "Want to read") {
+				t.Fatalf("%s = %d %q", path, recorder.Code, body)
+			}
+			if strings.Contains(body, `name="book_slug" value="pride-and-prejudice"`) {
+				t.Fatalf("%s still offers the add form for an owned book: %q", path, body)
+			}
+		}
+	})
+
+	t.Run("catalog state is visible only to its owner", func(t *testing.T) {
+		bobSession := register("Bob", "bob-catalog")
+		visitors := []struct {
+			name    string
+			session *http.Cookie
+		}{
+			{name: "anonymous"},
+			{name: "other user", session: bobSession},
+		}
+
+		const privateState = `<strong>Want to read</strong> in <a href="/me/library">your library</a>.`
+		for _, visitor := range visitors {
+			for _, path := range []string{"/books", "/books/pride-and-prejudice"} {
+				t.Run(visitor.name+" "+path, func(t *testing.T) {
+					request := httptest.NewRequest(http.MethodGet, path, nil)
+					if visitor.session != nil {
+						request.AddCookie(visitor.session)
+					}
+
+					recorder := httptest.NewRecorder()
+					handler.ServeHTTP(recorder, request)
+					if recorder.Code != http.StatusOK {
+						t.Fatalf("%s = %d, want %d", path, recorder.Code, http.StatusOK)
+					}
+					if strings.Contains(recorder.Body.String(), privateState) {
+						t.Fatalf("%s exposes Ada's library state: %q", path, recorder.Body.String())
+					}
+				})
+			}
+		}
+	})
+
 	t.Run("library page shows one-request flash, owner-scoped items, navigation, and no-store", func(t *testing.T) {
 		request := httptest.NewRequest(http.MethodGet, "/me/library", nil)
 		request.AddCookie(adaSession)
@@ -309,19 +364,45 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 	})
 
 	t.Run("duplicate, missing, malformed, and cross-origin additions are safe", func(t *testing.T) {
-		if recorder := addBook(adaSession, "pride-and-prejudice"); recorder.Code != http.StatusConflict || !strings.Contains(recorder.Body.String(), "already in your library") {
+		recorder := addBook(adaSession, "pride-and-prejudice")
+		if recorder.Code != http.StatusConflict {
 			t.Fatalf("duplicate = %d %q", recorder.Code, recorder.Body.String())
 		}
-		if recorder := addBook(adaSession, "missing-book"); recorder.Code != http.StatusNotFound || !strings.Contains(recorder.Body.String(), "Book not found.") {
+		for _, fragment := range []string{
+			`role="alert">This book is already in your library.`,
+			`href="/me/library" aria-current="page"`,
+		} {
+			if !strings.Contains(recorder.Body.String(), fragment) {
+				t.Fatalf("duplicate page missing %q: %q", fragment, recorder.Body.String())
+			}
+		}
+
+		recorder = addBook(adaSession, "missing-book")
+		if recorder.Code != http.StatusNotFound {
 			t.Fatalf("missing = %d %q", recorder.Code, recorder.Body.String())
 		}
+		for _, fragment := range []string{"Page not found", `href="/books" role="button">Browse catalog`} {
+			if !strings.Contains(recorder.Body.String(), fragment) {
+				t.Fatalf("missing page missing %q: %q", fragment, recorder.Body.String())
+			}
+		}
+
 		request := formRequest(http.MethodPost, "/me/library?book_slug=dracula", url.Values{})
 		request.AddCookie(adaSession)
-		recorder := httptest.NewRecorder()
+		recorder = httptest.NewRecorder()
 		handler.ServeHTTP(recorder, request)
-		if recorder.Code != http.StatusUnprocessableEntity || !strings.Contains(recorder.Body.String(), "Book selection is required.") {
+		if recorder.Code != http.StatusUnprocessableEntity {
 			t.Fatalf("malformed = %d %q", recorder.Code, recorder.Body.String())
 		}
+		for _, fragment := range []string{
+			`role="alert">Book selection is required.`,
+			`href="/me/library" aria-current="page"`,
+		} {
+			if !strings.Contains(recorder.Body.String(), fragment) {
+				t.Fatalf("malformed page missing %q: %q", fragment, recorder.Body.String())
+			}
+		}
+
 		request = formRequest(http.MethodPost, "/me/library", url.Values{"book_slug": {"dracula"}})
 		request.Header.Set("Origin", "https://evil.example")
 		request.AddCookie(adaSession)
@@ -354,6 +435,173 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 		body = recorder.Body.String()
 		if recorder.Code != http.StatusOK || !strings.Contains(body, "Your library is empty") || strings.Contains(body, "Pride and Prejudice") {
 			t.Fatalf("other user library = %d %q", recorder.Code, body)
+		}
+	})
+
+	t.Run("owner can change status and explicitly remove a library item", func(t *testing.T) {
+		request := httptest.NewRequest(http.MethodGet, "/me/library", nil)
+		request.AddCookie(adaSession)
+		page := httptest.NewRecorder()
+		handler.ServeHTTP(page, request)
+
+		bookIndex := strings.Index(page.Body.String(), "Pride and Prejudice")
+		if bookIndex < 0 {
+			t.Fatalf("library page does not contain target book: %q", page.Body.String())
+		}
+		formIndex := strings.Index(page.Body.String()[bookIndex:], `action="/me/library/`)
+		if formIndex < 0 {
+			t.Fatalf("library page does not contain a status form: %q", page.Body.String())
+		}
+		formAction := page.Body.String()[bookIndex+formIndex:]
+		formAction = formAction[len(`action="`):]
+		formActionEnd := strings.IndexByte(formAction, '"')
+		if formActionEnd < 0 {
+			t.Fatalf("status form action is malformed: %q", formAction)
+		}
+		itemPath := strings.TrimSuffix(formAction[:formActionEnd], "/status")
+		if itemPath == formAction[:formActionEnd] {
+			t.Fatalf("status form action is malformed: %q", formAction)
+		}
+
+		for _, tt := range []struct {
+			name   string
+			path   string
+			values url.Values
+		}{
+			{
+				name:   "status update without version",
+				path:   itemPath + "/status",
+				values: url.Values{"status": {"reading"}},
+			},
+			{
+				name:   "status update with unknown status",
+				path:   itemPath + "/status",
+				values: url.Values{"status": {"later"}, "version": {"1"}},
+			},
+			{
+				name:   "status update with invalid item ID",
+				path:   "/me/library/not-an-id/status",
+				values: url.Values{"status": {"reading"}, "version": {"1"}},
+			},
+			{
+				name:   "removal without version",
+				path:   itemPath + "/remove",
+				values: url.Values{},
+			},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				invalidRequest := formRequest(http.MethodPost, tt.path, tt.values)
+				invalidRequest.AddCookie(adaSession)
+				invalidResponse := httptest.NewRecorder()
+				handler.ServeHTTP(invalidResponse, invalidRequest)
+				if invalidResponse.Code != http.StatusUnprocessableEntity {
+					t.Fatalf("invalid form = %d, want %d", invalidResponse.Code, http.StatusUnprocessableEntity)
+				}
+				for _, fragment := range []string{`role="alert"`, `href="/me/library" aria-current="page"`} {
+					if !strings.Contains(invalidResponse.Body.String(), fragment) {
+						t.Fatalf("invalid form page missing %q: %q", fragment, invalidResponse.Body.String())
+					}
+				}
+			})
+		}
+
+		bobSession := register("Bob", "bob-lifecycle")
+		foreignStatus := formRequest(http.MethodPost, itemPath+"/status", url.Values{
+			"status":  {"reading"},
+			"version": {"1"},
+		})
+		foreignStatus.AddCookie(bobSession)
+		foreignStatusResponse := httptest.NewRecorder()
+		handler.ServeHTTP(foreignStatusResponse, foreignStatus)
+		if foreignStatusResponse.Code != http.StatusNotFound {
+			t.Fatalf("other user status update = %d, want %d", foreignStatusResponse.Code, http.StatusNotFound)
+		}
+
+		foreignRemoval := formRequest(http.MethodPost, itemPath+"/remove", url.Values{"version": {"1"}})
+		foreignRemoval.AddCookie(bobSession)
+		foreignRemovalResponse := httptest.NewRecorder()
+		handler.ServeHTTP(foreignRemovalResponse, foreignRemoval)
+		if foreignRemovalResponse.Code != http.StatusNotFound {
+			t.Fatalf("other user removal = %d, want %d", foreignRemovalResponse.Code, http.StatusNotFound)
+		}
+
+		foreignConfirmationRequest := httptest.NewRequest(http.MethodGet, itemPath+"/remove", nil)
+		foreignConfirmationRequest.AddCookie(bobSession)
+		foreignConfirmationResponse := httptest.NewRecorder()
+		handler.ServeHTTP(foreignConfirmationResponse, foreignConfirmationRequest)
+		if foreignConfirmationResponse.Code != http.StatusNotFound {
+			t.Fatalf("other user removal confirmation = %d, want %d", foreignConfirmationResponse.Code, http.StatusNotFound)
+		}
+		if strings.Contains(foreignConfirmationResponse.Body.String(), "Pride and Prejudice") {
+			t.Fatalf("other user removal confirmation reveals private item: %q", foreignConfirmationResponse.Body.String())
+		}
+
+		statusRequest := formRequest(http.MethodPost, itemPath+"/status", url.Values{
+			"status":  {"reading"},
+			"version": {"1"},
+		})
+		statusRequest.AddCookie(adaSession)
+		statusResponse := httptest.NewRecorder()
+		handler.ServeHTTP(statusResponse, statusRequest)
+		if statusResponse.Code != http.StatusSeeOther || statusResponse.Header().Get("Location") != "/me/library" {
+			t.Fatalf("status update = %d %q", statusResponse.Code, statusResponse.Header().Get("Location"))
+		}
+
+		staleStatusRequest := formRequest(http.MethodPost, itemPath+"/status", url.Values{
+			"status":  {"read"},
+			"version": {"1"},
+		})
+		staleStatusRequest.AddCookie(adaSession)
+		staleStatusResponse := httptest.NewRecorder()
+		handler.ServeHTTP(staleStatusResponse, staleStatusRequest)
+		if staleStatusResponse.Code != http.StatusConflict {
+			t.Fatalf("stale status update = %d, want %d", staleStatusResponse.Code, http.StatusConflict)
+		}
+		if !strings.Contains(staleStatusResponse.Body.String(), `role="alert">This item changed. Reload your library and try again.`) {
+			t.Fatalf("stale status update does not render the conflict alert: %q", staleStatusResponse.Body.String())
+		}
+
+		repeatStatusRequest := formRequest(http.MethodPost, itemPath+"/status", url.Values{
+			"status":  {"reading"},
+			"version": {"2"},
+		})
+		repeatStatusRequest.AddCookie(adaSession)
+		repeatStatusResponse := httptest.NewRecorder()
+		handler.ServeHTTP(repeatStatusResponse, repeatStatusRequest)
+		if repeatStatusResponse.Code != http.StatusSeeOther || repeatStatusResponse.Header().Get("Location") != "/me/library" {
+			t.Fatalf("repeat status update = %d %q", repeatStatusResponse.Code, repeatStatusResponse.Header().Get("Location"))
+		}
+
+		staleRemoval := formRequest(http.MethodPost, itemPath+"/remove", url.Values{"version": {"1"}})
+		staleRemoval.AddCookie(adaSession)
+		staleResponse := httptest.NewRecorder()
+		handler.ServeHTTP(staleResponse, staleRemoval)
+		if staleResponse.Code != http.StatusConflict {
+			t.Fatalf("stale removal = %d, want %d", staleResponse.Code, http.StatusConflict)
+		}
+		for _, fragment := range []string{
+			`role="alert">This item changed. Reload your library and try again.`,
+			`href="/me/library" aria-current="page"`,
+		} {
+			if !strings.Contains(staleResponse.Body.String(), fragment) {
+				t.Fatalf("stale removal page missing %q: %q", fragment, staleResponse.Body.String())
+			}
+		}
+
+		confirmationRequest := httptest.NewRequest(http.MethodGet, itemPath+"/remove", nil)
+		confirmationRequest.AddCookie(adaSession)
+		confirmation := httptest.NewRecorder()
+		handler.ServeHTTP(confirmation, confirmationRequest)
+		if confirmation.Code != http.StatusOK || !strings.Contains(confirmation.Body.String(), "Pride and Prejudice") {
+			t.Fatalf("removal confirmation = %d %q", confirmation.Code, confirmation.Body.String())
+		}
+
+		removeRequest := formRequest(http.MethodPost, itemPath+"/remove", url.Values{"version": {"2"}})
+		removeRequest.AddCookie(adaSession)
+		removed := httptest.NewRecorder()
+		handler.ServeHTTP(removed, removeRequest)
+		if removed.Code != http.StatusSeeOther || removed.Header().Get("Location") != "/me/library" {
+			t.Fatalf("confirmed removal = %d %q", removed.Code, removed.Header().Get("Location"))
 		}
 	})
 }
@@ -620,7 +868,8 @@ func newAuthIntegrationTestApp(t *testing.T, userRepo users.RegistrationReposito
 	sessionService := users.NewSessionService(userRepo, sessionRepo, time.Hour)
 	deps := Deps{Config: config.Config{Env: config.EnvDev}, Logger: logger, Renderer: renderer, CurrentUserMiddleware: httpauth.NewCurrentUserMiddleware(cookies, sessionService), FlashManager: flashes, AuthHandler: NewAuthHandler(userService, sessionService, cookies, flashes, renderer, logger, time.Hour)}
 	catalogService := books.NewCatalogService(bookRepo)
-	return New(deps, NewHomeHandler(catalogService, renderer, logger), books.NewCatalogHandler(catalogService, renderer, logger)).Router
+	catalogHandler := books.NewCatalogHandler(catalogService, renderer, logger, nil)
+	return New(deps, NewHomeHandler(catalogService, renderer, logger), catalogHandler).Router
 }
 
 func newLibraryIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepository, sessionRepo users.SessionRepository, bookRepo books.BookRepository, libraryRepo library.Repository) http.Handler {
@@ -648,7 +897,11 @@ func newLibraryIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepos
 		LibraryHandler:        libraryHandler,
 	}
 
-	return New(deps, NewHomeHandler(catalogService, renderer, logger), books.NewCatalogHandler(catalogService, renderer, logger)).Router
+	libraryService := library.NewService(libraryRepo, bookRepo)
+	stateProvider := NewLibraryStateProvider(libraryService)
+	catalogHandler := books.NewCatalogHandler(catalogService, renderer, logger, stateProvider)
+
+	return New(deps, NewHomeHandler(catalogService, renderer, logger), catalogHandler).Router
 }
 
 func TestCatalogRouteReturnsPartialForHTMXRequest(t *testing.T) {
@@ -717,7 +970,7 @@ func newIntegrationTestApp(t *testing.T) http.Handler {
 	bookRepo := sqlite.NewBookRepository(db)
 	catalogService := books.NewCatalogService(bookRepo)
 	homeHandler := NewHomeHandler(catalogService, renderer, logger)
-	catalogHandler := books.NewCatalogHandler(catalogService, renderer, logger)
+	catalogHandler := books.NewCatalogHandler(catalogService, renderer, logger, nil)
 
 	return New(deps, homeHandler, catalogHandler).Router
 }

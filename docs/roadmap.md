@@ -11,9 +11,9 @@ v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation th
 browser-facing flow: registration, login, idempotent logout, protected `/me`, auth navigation, and
 one-request success flashes. Its manual browser smoke and release closure are complete.
 
-v0.3.0 Private Library Foundation is closed. Active scope: **v0.3.1 Reading-State Lifecycle**.
-Begin with the bounded status-transition model and its timestamp rules before opening user-facing
-lifecycle scope.
+v0.3.0 Private Library Foundation and v0.3.1 Reading-State Lifecycle are closed. The v0.3.1
+release completed automated verification, SQLite migration smoke, and the mandatory manual browser
+smoke. No later release scope is active yet.
 
 ## Planning Principles
 
@@ -280,14 +280,14 @@ Outcome: a user can build a private want-to-read list from the existing catalog.
 
 #### v0.3.1 — Reading-State Lifecycle
 
-Status: active. The first bounded slice defines `want_to_read`, `reading`, and `read` transitions
-with documented `started_at` and `finished_at` rules.
+Status: closed. The bounded slice delivers `want_to_read`, `reading`, and `read` transitions with
+documented `started_at` and `finished_at` rules.
 
-- [ ] Add `want_to_read`, `reading`, and `read` transitions, with documented `started_at` and
+- [x] Add `want_to_read`, `reading`, and `read` transitions, with documented `started_at` and
   `finished_at` rules.
-- [ ] Show a current user's library state on book pages; support conflict-safe status changes and
+- [x] Show a current user's library state on book pages; support conflict-safe status changes and
   explicit-confirmation removal.
-- [ ] Complete MPA form validation, keyboard-accessible errors, empty states, and focused unit and
+- [x] Complete MPA form validation, keyboard-accessible errors, empty states, and focused unit and
   `httptest` coverage for lifecycle and permission refusals.
 
 Outcome: the private library supports the complete add → update → return → remove cycle.

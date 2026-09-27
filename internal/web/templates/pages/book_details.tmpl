@@ -47,7 +47,9 @@
                     </section>
                 {{end}}
 
-                {{if .Book.CanAddToLibrary}}
+                {{if .Book.LibraryState}}
+                    <p><strong>{{.Book.LibraryState.Label}}</strong> in <a href="/me/library">your library</a>.</p>
+                {{else if .Book.CanAddToLibrary}}
                     <form method="post" action="/me/library">
                         <input type="hidden" name="book_slug" value="{{.Book.Slug}}">
                         <button type="submit">Add to my library</button>
