@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
@@ -24,7 +25,6 @@ import (
 )
 
 func main() {
-	// wiring/bootstrap
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -40,7 +40,15 @@ func main() {
 		slog.String("build_date", buildinfo.BuildDate),
 	)
 
+	if err := run(ctx, cfg, logger); err != nil {
+		logger.Error("run app", slog.Any("error", err))
+		os.Exit(1)
+	}
+}
+
+func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	var (
+		err         error
 		db          *sql.DB
 		bookRepo    books.BookRepository
 		libraryRepo library.Repository
@@ -62,12 +70,10 @@ func main() {
 		userRepo = postgresql.NewUserRepository(db)
 		sessionRepo = postgresql.NewSessionRepository(db)
 	default:
-		logger.Error("unsupported app environment", slog.String("env", cfg.Env))
-		os.Exit(1)
+		return fmt.Errorf("unsupported app environment %q", cfg.Env)
 	}
 	if err != nil {
-		logger.Error("failed to open database", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to open database: %w", err)
 	}
 	defer func() {
 		_ = db.Close()
@@ -75,44 +81,56 @@ func main() {
 
 	renderer, err := render.NewRenderer()
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("create renderer: %w", err)
 	}
 
 	cookies := newSessionCookieManager(cfg)
 	flashes := flash.NewManager(cfg.Env != config.EnvDev)
+
 	userService := users.NewService(userRepo, users.NewPasswordPolicy())
 	sessionService := users.NewSessionService(userRepo, sessionRepo, cfg.Auth.SessionLifetime)
-	authHandler := app.NewAuthHandler(userService, sessionService, cookies, flashes, renderer, logger, cfg.Auth.SessionLifetime)
+	catalogService := books.NewCatalogService(bookRepo)
 	libraryService := library.NewService(libraryRepo, bookRepo)
+
+	currentUserMiddleware := httpauth.NewCurrentUserMiddleware(cookies, sessionService)
+	libraryStateProvider := app.NewLibraryStateProvider(libraryService)
+
+	homeHandler := app.NewHomeHandler(catalogService, renderer, logger)
+	authHandler := app.NewAuthHandler(
+		userService,
+		sessionService,
+		cookies,
+		flashes,
+		renderer,
+		logger,
+		cfg.Auth.SessionLifetime,
+	)
+	catalogHandler := books.NewCatalogHandler(
+		catalogService,
+		renderer,
+		logger,
+		libraryStateProvider,
+	)
 	libraryHandler := library.NewHandler(libraryService, flashes, renderer, logger)
 
 	deps := app.Deps{
 		Config:                cfg,
 		Logger:                logger,
 		Renderer:              renderer,
-		CurrentUserMiddleware: httpauth.NewCurrentUserMiddleware(cookies, sessionService),
+		CurrentUserMiddleware: currentUserMiddleware,
 		FlashManager:          flashes,
 		AuthHandler:           authHandler,
 		LibraryHandler:        libraryHandler,
 	}
 
-	catalogService := books.NewCatalogService(bookRepo)
-
-	homeHandler := app.NewHomeHandler(catalogService, deps.Renderer, deps.Logger)
-	catalogHandler := books.NewCatalogHandler(
-		catalogService,
-		deps.Renderer,
-		deps.Logger,
-		app.NewLibraryStateProvider(libraryService),
-	)
-
 	application := app.New(deps, homeHandler, catalogHandler)
 
 	err = app.Run(ctx, cfg, logger, application.Router)
 	if err != nil {
-		logger.Error("run app", slog.Any("error", err))
-		os.Exit(1)
+		return fmt.Errorf("run app: %w", err)
 	}
+
+	return nil
 }
 
 func newSessionCookieManager(cfg config.Config) *httpauth.CookieManager {
