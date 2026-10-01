@@ -22,13 +22,15 @@ Useful project docs:
 - `docs/code-readability.md`
 - `docs/database_v0_1.md`
 - `docs/roadmap.md`
+- `docs/private/roadmap.md` (full, local planning roadmap when available)
 - `docs/ai/project-context.md`
 - `docs/ai/task-history.md`
 - `docs/ai/ai-augmented-development-workflow.md`
 
-Use `docs/roadmap.md` as the source of truth for the current priority, active stage, and deferred
-work. Read it when the task depends on project sequencing, but do not load it for unrelated,
-well-scoped tasks.
+Use `docs/roadmap.md` for the current priority, active stage, and accepted public scope through
+v0.5. When available, use `docs/private/roadmap.md` for the full release sequence and deferred
+work; keep overlapping release scope synchronized. Read the relevant roadmap when the task depends
+on project sequencing, but do not load it for unrelated, well-scoped tasks.
 
 ## Stable technical direction
 

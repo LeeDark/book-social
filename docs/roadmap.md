@@ -1,6 +1,7 @@
 # Roadmap
 
 This roadmap is a working guide, not a release promise.
+This public version covers releases through v0.5.
 
 Unprioritized technical ideas and revisit conditions live in [backlog.md](backlog.md). The backlog
 does not change the active priority or release scope until an item is explicitly promoted here.
@@ -131,7 +132,7 @@ Schema:
 - [x] Preserve unused v0.1 `library`, `shelves`, and `tags` structures as explicit legacy/demo data.
 - [ ] Defer the final `library_items` schema to v0.3, where `user_id`, reading status, dates,
   uniqueness, and privacy rules are defined together.
-- [ ] Defer user shelves and `library_item_tags` to v0.6.
+- [ ] Defer user shelves and `library_item_tags` beyond the initial private-library scope.
 - [x] Update seed data for v0.2.
 - [x] Decide and document slug policy for books, authors, and genres.
 
@@ -342,8 +343,8 @@ public beta or a finished social service.
   rollback without automating production delivery.
 - [ ] Establish backups: server backups as a secondary layer, a daily PostgreSQL backup to storage
   separate from the VM, and a verified restore using disposable data.
-- [ ] Record actual cost, CPU/RAM/latency, and growth boundaries; do not add Prometheus, Grafana,
-  Loki, or OpenTelemetry before their v0.4 and v0.7 work.
+- [ ] Record actual cost, CPU/RAM/latency, and growth boundaries; defer Prometheus and Grafana to
+  v0.4, and add Loki or OpenTelemetry only when operational evidence justifies them.
 
 Outcome: a low-cost, reproducible PostgreSQL stage environment runs on Hetzner Cloud with verified
 deployment, migration, backup, and restore behavior; it can accommodate later observability
@@ -411,31 +412,48 @@ Not in v0.3: external catalog import, ratings, notes, reading progress, custom s
 features, a public beta, production SLOs, automated production deployment, a full monitoring stack,
 a frontend framework, message brokers, gRPC, or microservices.
 
-## v0.4 — Live Catalog and Search
+## v0.4 — Bilingual Public Alpha and Live Catalog
 
 Goal: let users find real books beyond the curated demo catalog and let an operator safely import
-one missing book from a controlled external source.
+one missing book from a controlled external source. Open registration on a separate public
+environment with complete English and Ukrainian support for the available user journey.
 
 ### Sub-releases
 
-#### v0.4.0 — Catalog Identity Contract
+#### v0.4.0 — Catalog and Locale Contracts
 
 - [ ] Decide work versus edition, identifiers, languages, provenance, duplicate/merge rules, and
   the migration path for existing catalog references.
 - [ ] Add the minimum schema, repository contracts, and operator error/review outcomes required by
   those decisions.
+- [ ] Fix the `en`/`uk` locale, fallback, public-URL, and existing-account migration contracts
+  before
+  changing routes or registration.
 
-Outcome: every future search or import operation has a stable catalog identity and correction model.
+Outcome: catalog identity and language behavior are stable before search, import, or localization.
 
-#### v0.4.1 — Search and Navigation
+#### v0.4.1 — Bilingual MPA Foundation
 
-- [ ] Search by title, author, and ISBN; add stable sorting, pagination, and retained useful filters.
-- [ ] Add canonical URLs, redirects, sitemap behavior, zero-result feedback, and conversion events.
+- [ ] Move user-facing messages out of templates into stable keys and English/Ukrainian catalogs;
+  translate the existing auth, catalog, library, error, and feedback flows.
+- [ ] Add explicit language selection, persisted preference, locale resolution and fallback, and
+  localized dates, numbers, and plurals; detect missing keys in tests.
+- [ ] Add language-specific public GET URLs, equivalent-page switching, canonical/hreflang, and
+  localized sitemap behavior; keep existing public GET URLs through redirects.
+
+Outcome: the existing user journey works end to end in either language before new public features.
+
+#### v0.4.2 — Search and Navigation
+
+- [ ] Search by title, author, and ISBN; add stable sorting, pagination, and retained useful
+  filters.
+- [ ] Add bilingual zero-result feedback and conversion events; preserve language and search state
+  across navigation and canonical redirects.
 - [ ] Measure indexed-query behavior before selecting PostgreSQL full-text search.
 
 Outcome: a user reliably finds an existing catalog record and can add it to their private library.
 
-#### v0.4.2 — First Controlled Import
+#### v0.4.3 — First Controlled Import
 
 - [ ] Implement one source-specific lookup/import by ISBN or external ID, started only by an
   authenticated operator.
@@ -446,15 +464,27 @@ Outcome: a user reliably finds an existing catalog record and can add it to thei
 Outcome: an operator can safely resolve one missing book without making an external API part of
 ordinary catalog reads.
 
-#### v0.4.3 — Import Operations Closure
+#### v0.4.4 — Public Account and Environment Readiness
+
+- [ ] Add verified-email activation, expiring single-use password recovery, and rate limits for
+  registration and login; translate their pages, errors, and transactional emails into `en`/`uk`.
+- [ ] Publish privacy/terms and a support contact in both languages; document manual user-data
+  export and deletion requests until self-service workflows are available.
+- [ ] Provision a persistent public PostgreSQL environment separate from the v0.3.5 stage, with
+  HTTPS, secrets, safe migrations, versioned deployment, and a documented rollback path.
+
+Outcome: open registration and persistent user data have a supportable public operating path.
+
+#### v0.4.5 — Import and Alpha Release Closure
 
 - [ ] Add focused migration, search, import, conflict, and failure tests; document source rules and
   manual correction paths.
 - [ ] Expose HTTP, PostgreSQL, search, import, retry, and failed-job metrics with focused Grafana
   dashboards; add tracing or centralized logs only when the stated conditions are met.
+- [ ] Verify bilingual critical flows, account security, backup/restore, rollback, and the public
+  browser path before opening registration.
 
-Outcome: the first import path is measurable, repeatable, and ready to become the foundation for
-v0.5 batch supply.
+Outcome: a bilingual public alpha is available, and its first import path is ready for v0.5 supply.
 
 ### Catalog Model
 
@@ -482,6 +512,20 @@ v0.5 batch supply.
 - [ ] Use a small PostgreSQL-backed job table only if the import flow needs retries or background
   processing.
 
+### Localization and Account Safety
+
+- [ ] Support `en` and `uk` across the complete available user journey, including forms, validation,
+  errors, support/legal text, and verification/recovery email; keep the operator UI single-language
+  until v0.5.
+- [ ] Keep edition/content language separate from UI locale; do not require every book to have
+  translated metadata or translate user content automatically.
+- [ ] Resolve explicit URL/selection before saved preference, anonymous cookie, browser hint, and
+  English fallback; do not overwrite an explicit choice with `Accept-Language`.
+- [ ] Use `/en/...` and `/uk/...` for indexable public pages; preserve existing private routes and
+  the public GET links through redirects.
+- [ ] Verify email before normal account use, provide secure recovery, limit auth abuse, and define
+  a support-owned manual export/deletion process for alpha users.
+
 ### Monitoring
 
 - [ ] Expose Prometheus-compatible RED metrics for critical HTTP paths.
@@ -492,6 +536,15 @@ v0.5 batch supply.
 - [ ] Add Loki only when a persistent staging environment or multiple processes make centralized
   log search useful.
 
+### Public Alpha Operations
+
+- [ ] Keep the v0.3.5 stage for testing and operate the public alpha in a separate persistent
+  PostgreSQL environment; do not use the local Compose `prod` workflow as deployment guidance.
+- [ ] Build and deploy a versioned artifact, run safe migrations, and document manual deployment,
+  rollback, support escalation, and incident response.
+- [ ] Store backups away from the public host and complete a restore rehearsal before launch; add
+  basic availability/error alerts without requiring the full monitoring stack.
+
 ### Definition of Done
 
 - [ ] A user can reliably find catalog records by title, author, or ISBN.
@@ -499,10 +552,16 @@ v0.5 batch supply.
 - [ ] Repeated import does not create logical duplicates.
 - [ ] Work/edition, language, provenance, canonical URL, and cover-source rules are documented.
 - [ ] Dashboards answer concrete availability, latency, search, and import questions.
+- [ ] Open registration and the available user journey work in `en` and `uk`, including account
+  verification/recovery, transactional email, errors, legal text, and support.
+- [ ] Public language URLs, redirects, `lang`, canonical/hreflang, and sitemap are checked.
+- [ ] The separate public environment has tested migration, rollback, backup/restore, and a manual
+  data-request process; the alpha is externally available.
 
 Not in v0.4: a universal importer framework, public bulk imports, an external search engine,
 runtime dependency on an external API for ordinary catalog requests, owned media storage, or
-catalog microservices.
+catalog microservices. Operator UI localization, self-service account deletion, social features,
+and broad acquisition remain later work.
 
 ## v0.5 — Catalog Supply and Media Foundation
 
@@ -542,6 +601,8 @@ Outcome: the team can prove a batch-import workflow without modifying the public
   catalog consistency.
 - [ ] Store and serve one class of explicitly permitted cover assets with recorded usage rights and
   attribution; reject invalid or unlicensed assets.
+- [ ] Localize the operator catalog/import/review UI, including the v0.4 single-book import and new
+  batch workflows, in English and Ukrainian.
 
 Outcome: a reviewed batch can safely enrich the public catalog and use rights-cleared covers.
 
@@ -551,6 +612,8 @@ Outcome: a reviewed batch can safely enrich the public catalog and use rights-cl
   result visibility; perform a security review for raw files and external fetches.
 - [ ] Document source terms, quality/license evidence, retention, operator procedures, and metrics
   for the accepted source.
+- [ ] Automate deployment to the separate stage environment and verify a versioned release there
+  before promoting it to the public alpha.
 
 Outcome: the first scalable catalog-supply and media path is operable without claiming a general
 purpose importer or media platform.
@@ -577,7 +640,8 @@ purpose importer or media platform.
   limitations for each accepted batch; retain raw-source references only as permitted.
 - [ ] Add resource limits, resumability, back-pressure, failure isolation, and idempotency so a
   repeated or interrupted batch does not corrupt the catalog.
-- [ ] Preserve the existing catalog during a failed import; promotion from staging data to the public
+- [ ] Preserve the existing catalog during a failed import; promotion from staging data to the
+  public
   catalog requires an explicit operator decision.
 
 ### Owned Media Foundation
@@ -591,250 +655,26 @@ purpose importer or media platform.
 - [ ] Introduce a small storage boundary with local development storage and an object-storage-ready
   production adapter; do not add full-text ebook storage, image editing, or a media CDN.
 
+### Operator UX and Delivery
+
+- [ ] Translate catalog correction, source admission, import review, and batch-result screens into
+  `en` and `uk`; preserve field-level language/source evidence in either operator locale.
+- [ ] Keep stage separate from the public environment and automate stage deployment of versioned
+  artifacts; retain an explicit review before public batch publication or application promotion.
+
 ### Definition of Done
 
 - [ ] One accepted source can be imported through the shared job model without duplicate logical
   catalog records and with per-field provenance.
-- [ ] A failed, resumed, or repeated batch preserves catalog consistency and has an auditable result.
+- [ ] A failed, resumed, or repeated batch preserves catalog consistency and has an auditable
+  result.
 - [ ] Users can inspect the source and limitations of published batch data.
-- [ ] The application stores and serves only cover assets with recorded usage rights and attribution.
+- [ ] The application stores and serves only cover assets with recorded usage rights and
+  attribution.
 - [ ] Source, import, and media risks are covered by focused tests, operator documentation, and
   metrics/logs appropriate to batch processing.
+- [ ] Operator import/review flows work in both languages, and the stage deployment is reproducible.
 
 Not in v0.5: scraping protected sites; treating a third-party API as the permanent catalog
 database; automatic unreviewed merge of all sources; anonymous arbitrary-URL imports; migration of
 user reviews/social data; full-text ebook hosting; or a general-purpose media platform.
-
-## v0.6 — Personal Reading System
-
-Goal: turn the private library into a useful system that gives readers a reason to return
-regularly even without a social graph.
-
-### Product Scope
-
-- [ ] Add private ratings and notes.
-- [ ] Track reading progress with explicit validation and date rules.
-- [ ] Support re-reads and reading history without destroying previous completion data.
-- [ ] Add user-owned shelves and tags.
-- [ ] Add library search, filters, sorting, and pagination.
-- [ ] Add useful empty, loading, validation, and conflict states.
-- [ ] Add a user-data export.
-- [ ] Expose the settled private-library export as a small authenticated, read-only JSON API slice
-  (`GET /api/v1/me/library/export`), with a versioned schema, `no-store` caching, contract tests,
-  and focused OpenAPI alignment; keep it same-origin and do not add CORS, bearer tokens, or rate
-  limiting without a concrete need.
-- [ ] Add one controlled personal-library import with preview, idempotency, and conflict reporting.
-- [ ] Enforce privacy in services and queries, not only in templates.
-
-### Account Lifecycle Preparation
-
-- [ ] Define the complete account-data inventory and the export contract for library, notes, ratings,
-  shelves, tags, reading history, and profile data.
-- [ ] Define deletion semantics and dependencies for the account, library data, private notes, and
-  future social data; implementation of public account deletion is reserved for v0.7.
-- [ ] Keep email activation, password recovery, and account deletion out of v0.6 unless a closed-user
-  cohort demonstrates a concrete need; record the deferred boundary for v0.7 public-beta readiness.
-
-### UX and Localization Foundation
-
-- [ ] Check the main library flows at mobile widths and with keyboard navigation.
-- [ ] Keep the catalog language separate from the UI locale.
-- [ ] Move UI messages to stable keys/catalogs outside templates.
-- [ ] Add locale resolution, explicit language selection, persisted preference, and fallback.
-- [ ] Localize dates, numbers, and plural forms.
-- [ ] Detect missing translation keys in development or tests.
-- [ ] Choose supported public locales later from the target audience; being i18n-ready does not
-  require pretending that every language is supported.
-
-### Analytics and Observability
-
-- [ ] Measure activation, meaningful weekly activity, W1/W4 retention, progress updates, and
-  completion.
-- [ ] Add business and retention views to Grafana.
-- [ ] Add centralized Loki logs when staging/background work creates a real diagnostic need.
-- [ ] Add OpenTelemetry SDK/Collector and critical traces only where correlation across HTTP and
-  jobs is useful.
-- [ ] Define telemetry retention, sensitive-data, and high-cardinality rules.
-
-### Frontend Decision
-
-- [ ] Keep the application MPA by default.
-- [ ] Optionally implement one bounded React island or sub-route for a clearly interactive workflow
-  such as import preview or statistics.
-- [ ] Evaluate the spike by user value, complexity, accessibility, testing, and operational cost;
-  do not treat it as a commitment to a full SPA rewrite.
-
-### Definition of Done
-
-- [ ] The library remains usable with tens or hundreds of items.
-- [ ] Status, progress, rating, notes, shelves/tags, dates, and re-reads have documented rules and
-  tests.
-- [ ] Export works; an enabled personal import is idempotent and reports conflicts.
-- [ ] Privacy is enforced server-side.
-- [ ] Critical queries are measured and indexed for realistic data.
-- [ ] Technical and product dashboards can evaluate reliability, activation, and retention.
-
-Not in v0.6: social feeds, public comments, a complete SPA migration, automatic machine translation
-of user content, or a requirement to run the whole monitoring stack in simple local development.
-
-## v0.7 — Social Core and Public Beta
-
-Goal: create a small safe social loop and prove that Book Social can be operated as a public
-service rather than only demonstrated locally.
-
-Core social flow:
-
-```text
-publish an explicitly public reading action
-  -> show it in a follower's chronological feed
-  -> receive a reaction or a visit to the book/profile
-  -> create another meaningful reading action
-```
-
-### Social Scope
-
-- [ ] Add public profiles with explicit visibility settings.
-- [ ] Add follow/unfollow and follower/following lists.
-- [ ] Publish only explicitly allowed reading activity types.
-- [ ] Add a chronological feed without a ranking algorithm.
-- [ ] Add one simple reaction: like.
-- [ ] Add minimal in-app notifications with mark-as-read and basic preferences.
-- [ ] Model a public review separately from a private note.
-- [ ] Decide during implementation whether one same-origin JSON enhancement for an idempotent social
-  action is justified by user interaction; retain MPA forms as the baseline and do not introduce an
-  API mutation merely to demonstrate technology.
-
-### Safety, Privacy, and Moderation
-
-- [ ] Add block and report before public access.
-- [ ] Add a small moderation queue and the ability to hide public reviews/activities.
-- [ ] Add rate limits for authentication and social mutations.
-- [ ] Publish community rules, privacy policy, terms, and a support contact.
-- [ ] Provide account/data export and deletion, or a documented manual beta process.
-- [ ] Add email verification and secure activation-token flow before public access.
-- [ ] Add password reset/account recovery with expiring, single-use tokens and safe failure messages.
-- [ ] Add self-service account deletion, or keep the documented manual beta process until it is
-  implemented; define its effect on a library, private notes, public activity, and social relations.
-- [ ] Re-verify the email address when it changes if email is used as a trusted account identifier.
-- [ ] Audit moderation actions.
-- [ ] Verify that private notes and activities never leak through profiles, feeds, events, logs, or
-  notifications.
-
-### Event-Driven Step
-
-- [ ] Introduce named and versioned domain/application events for existing actions.
-- [ ] Use synchronous in-process handlers when a shared transaction is appropriate.
-- [ ] Add a transactional outbox and worker only for real asynchronous feed, notification, or
-  search-update needs.
-- [ ] Design asynchronous consumers for at-least-once delivery and idempotency.
-- [ ] Keep an external broker out until independent consumers, backpressure, or separate scaling
-  provides a measured reason.
-
-### Public Operations
-
-- [ ] Run format, test, vet, lint, migration smoke, and artifact/container build in CI.
-- [ ] Produce a versioned artifact and automate at least the staging deployment.
-- [ ] Maintain a production-like PostgreSQL environment.
-- [ ] Add health/readiness checks and a safe migration step.
-- [ ] Document and test rollback, backup, and restore.
-- [ ] Keep secrets outside the repository.
-- [ ] Complete Prometheus/Grafana dashboards and alerts for critical HTTP and job paths.
-- [ ] Make staging/production logs searchable in Loki and correlate selected paths with
-  OpenTelemetry traces.
-- [ ] Document telemetry sampling, retention, cost, PII, and metric-cardinality rules.
-- [ ] Write a short operational runbook.
-
-### Localization Decision Gate
-
-- [ ] Confirm the target beta audience before promising supported languages.
-- [ ] If a two-language beta is justified, localize the complete critical journey rather than only
-  the landing page: auth, catalog/search, library, profile/feed, block/report, legal content,
-  notifications, errors, and support.
-- [ ] Add language-specific public URLs, canonical/hreflang behavior, and localized sitemap support
-  when public pages are available in multiple languages.
-
-### Definition of Done
-
-- [ ] A user controls visibility, follows another reader, sees a chronological feed, and leaves a
-  simple reaction.
-- [ ] Block, report, and minimal moderation work before public access.
-- [ ] Asynchronous side effects recover from failure without logical duplicates.
-- [ ] CI produces a versioned artifact and staging deployment is reproducible.
-- [ ] Rollback and backup/restore have been exercised at least once.
-- [ ] Dashboards and alerts show the health of critical public paths.
-- [ ] A limited beta is externally available or has exactly one documented external launch
-  blocker.
-
-Not in v0.7: comments, groups, and book clubs all at once; complex feed ranking; Kafka for
-demonstration; gRPC without a service boundary; a full SPA rewrite; or multi-region
-high-availability infrastructure.
-
-## v0.8 — Retention and Product Validation
-
-Status: direction marker. Refine this release after observing the v0.7 beta.
-
-Goal: determine whether readers return to Book Social without continuous manual reminders from the
-owner and identify the first repeatable growth loop.
-
-### Candidate Scope
-
-- [ ] Interview beta users and analyze activation and retention cohorts.
-- [ ] Improve onboarding and the first-book/first-status journey.
-- [ ] Improve missing-book feedback, catalog import, and personal import/export based on observed
-  friction.
-- [ ] Fix the most important causes of failed activation and churn.
-- [ ] Select and build exactly one evidence-backed retention bet:
-    - reading goals and statistics;
-    - buddy reads;
-    - one focused book-club workflow.
-- [ ] Test one referral/share loop without making social invitations a prerequisite for personal
-  value.
-- [ ] Test one low-risk book preview, public-domain reading, or affiliate outbound-link experiment
-  where rights and attribution are clear.
-- [ ] Improve the mobile MPA experience and evaluate small PWA capabilities if they support
-  retention.
-- [ ] Exercise incident, rollback, restore, moderation, privacy, and account-deletion procedures.
-- [ ] Revisit supported locales using retained-user and support/moderation data.
-- [ ] Decide whether the MPA, a hybrid frontend, or a bounded React application is justified by
-  actual interaction complexity.
-
-### Definition of Done
-
-- [ ] The release has one explicit retention hypothesis and success/failure criteria.
-- [ ] Activation and W1/W4 retention can be compared with the v0.7 baseline.
-- [ ] The chosen retention feature is evaluated with users rather than merely shipped.
-- [ ] The next product investment is selected from evidence, not from the size of the feature
-  backlog.
-- [ ] Operational procedures continue to work as the beta audience grows.
-
-Not committed in v0.8 by default: a full marketplace, a commercial ebook platform, author
-workspace, AI-assisted writing, a full SPA rewrite, an external broker, gRPC, microservices, or
-Kubernetes/Helm without an operational requirement.
-
-## Cross-Version Engineering Progression
-
-| Area          | v0.3                                     | v0.4                              | v0.5                                    | v0.6                                   | v0.7–v0.8                                         |
-|---------------|------------------------------------------|-----------------------------------|-----------------------------------------|----------------------------------------|---------------------------------------------------|
-| Product       | Minimal private library                  | Live catalog and search           | Catalog supply and media foundation     | Deep personal reading system           | Social beta, retention validation                 |
-| Data          | Library rules and demo data              | Work/edition, IDs, provenance     | Source registry, batches, asset rights  | Reading history, shelves/tags          | Social graph, events, moderation                  |
-| Observability | Logs, request ID, health, product events | Prometheus and Grafana            | Batch/media job evidence                | Loki/OTel when useful, retention views | Alerts, runbook, production policy                |
-| Delivery      | Release checklist and Hetzner hosted stage | Staging-friendly jobs/imports   | Resumable, reviewed batch publication   | Operational correlation                | Versioned deploy, rollback, restore               |
-| Frontend      | MPA                                      | MPA                               | MPA progress and batch-result pages     | Optional bounded React spike           | Evidence-based MPA/hybrid decision                |
-| Localization  | Avoid blockers                           | Language-aware catalog            | Preserve imported language/source data  | i18n-ready UI                          | Supported locales after market validation         |
-| Architecture  | Modular monolith                         | Modular monolith + jobs if needed | Import adapters and asset storage edge  | Internal events where useful           | Outbox/worker; external services only by evidence |
-
-## Explicitly Deferred Directions
-
-The following are valid future directions, not automatic next-release commitments:
-
-- reading challenges, streaks, recommendations, buddy reads, and book clubs;
-- additional import/export formats;
-- advanced media processing beyond the v0.5 asset-storage foundation;
-- a dedicated search engine;
-- public-domain or licensed reading;
-- affiliate offers, reader premium, and other monetization experiments;
-- author tools and AI-assisted writing as a separate product track;
-- an external message broker;
-- gRPC after a real service boundary exists;
-- service extraction after measured scaling, ownership, reliability, or deployment needs;
-- Kubernetes, Helm, or a specific cloud platform when the deployment model requires them.

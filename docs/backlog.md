@@ -3,11 +3,12 @@
 This document collects technical ideas, experiments, cleanup opportunities, and possible future
 tasks that are not committed release work.
 
-`docs/roadmap.md` remains the source of truth for the current priority, release sequence, and
-accepted scope. An item in this backlog is not a promise and should not interrupt the active
-roadmap stage. Review backlog items when planning a release, after learning from an experiment, or
-when their revisit conditions become true. Promote an item to the roadmap only with a concrete
-user or operator outcome, scope, verification plan, and definition of done.
+`docs/roadmap.md` remains the source of truth for the current priority and accepted public scope
+through v0.5. The full release sequence lives in `docs/private/roadmap.md` when available. An item
+in this backlog is not a promise and should not interrupt the active roadmap stage. Review backlog
+items when planning a release, after learning from an experiment, or when their revisit conditions
+become true. Promote an item to the relevant roadmap only with a concrete user or operator outcome,
+scope, verification plan, and definition of done.
 
 ## Candidate format
 
@@ -23,8 +24,8 @@ document. Do not use this file as an unbounded duplicate of the roadmap.
 
 ## Current planning boundary
 
-v0.2.6 Registration/Login/Logout is closed. v0.3.0 Private Library Foundation is the active scope;
-its contract is defined before schema and implementation work. No backlog item is promoted by this
+v0.2.6 Registration/Login/Logout, v0.3.0 Private Library Foundation, and v0.3.1 Reading-State
+Lifecycle are closed. No later release scope is active yet. No backlog item is promoted by this
 document; defer unrelated API, rendering, and infrastructure ideas until a concrete revisit
 condition is met.
 

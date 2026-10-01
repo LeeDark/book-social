@@ -203,7 +203,8 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Database v0.2](docs/database_v0_2.md)
 - [MPA auth contract](docs/drafts/auth-contract.ru.md)
 - [Testing](docs/testing.md)
-- [Roadmap](docs/roadmap.md)
+- [Roadmap (English)](docs/roadmap.md)
+- [Дорожня карта (українською)](docs/roadmap.uk.md)
 - [Technical backlog](docs/backlog.md)
 - [AI project context](docs/ai/project-context.md)
 
