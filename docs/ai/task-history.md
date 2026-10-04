@@ -769,3 +769,15 @@ Residual risks:
 - `ListBookStates` uses one SQL placeholder per displayed book. The current 109-book catalog is
   well below SQLite and PostgreSQL parameter limits; add pagination or another batching strategy
   before the catalog grows materially.
+
+## 2026-10-04 — activate v0.3.2 curated catalog operations
+
+Decision:
+
+- Activate v0.3.2 Curated Catalog Operations after closing v0.3.1.
+- Define the operator, seed/provenance, audit, and missing-book contracts before migrations or MPA
+  implementation begin.
+- Keep the scope bounded to deterministic demo data, one appointed administrator role, book
+  create/correct operations using existing authors and genres, and non-persistent feedback.
+- Defer external import, persistent requests, catalog deletion, author/genre administration,
+  role-management UI, slug history, media handling, and general search.

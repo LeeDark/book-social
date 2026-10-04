@@ -44,6 +44,18 @@ Migration `000004` adds the private `library_items` foundation without repurposi
 library tables.
 Migration `000005` adds the reading-state lifecycle without changing the historical foundation.
 
+## Planned Curated Catalog Operations Schema
+
+The paired v0.3.2 SQLite/PostgreSQL migration will add the `admin` role and an append-only
+`catalog_audit_log` table. Each audit row will record an actor user, book entity, `create` or
+`correct` action, controlled server-generated summary, and UTC occurrence time. Book creation or
+correction and its audit row will share one transaction.
+
+The migration will not add a seeded administrator account, a missing-book request table, external
+catalog data, cover files, slug history, or catalog deletion behavior. Test fixtures, deterministic
+development seed data, and the curated demo catalog have separate responsibilities; the accepted
+planned contract is in [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
+
 Run pending SQLite migrations against the default local database:
 
 ```bash

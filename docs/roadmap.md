@@ -14,7 +14,8 @@ one-request success flashes. Its manual browser smoke and release closure are co
 
 v0.3.0 Private Library Foundation and v0.3.1 Reading-State Lifecycle are closed. The v0.3.1
 release completed automated verification, SQLite migration smoke, and the mandatory manual browser
-smoke. No later release scope is active yet.
+smoke. Active scope: **v0.3.2 Curated Catalog Operations**. Its operator, seed/provenance, and
+missing-book contracts are defined before implementation begins.
 
 ## Planning Principles
 
@@ -294,6 +295,9 @@ documented `started_at` and `finished_at` rules.
 Outcome: the private library supports the complete add → update → return → remove cycle.
 
 #### v0.3.2 — Curated Catalog Operations
+
+Status: active. The accepted planned contract is in
+[`catalog_operations_v0_3_2.md`](catalog_operations_v0_3_2.md).
 
 - [ ] Separate test fixtures, deterministic development seed data, and the curated demo catalog;
   document demo metadata provenance and permitted cover use.

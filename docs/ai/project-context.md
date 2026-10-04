@@ -79,6 +79,8 @@ Current infrastructure caveat:
 Current scope:
 - v0.3.0 Private Library Foundation is closed: authenticated users add known catalog books from
   catalog/detail pages and list only their own items at `/me/library`.
-- v0.3.1 Reading-State Lifecycle is implemented and awaiting review plus mandatory manual smoke:
-  owner-scoped status changes, timestamp rules, optimistic conflicts, catalog state display, and
-  explicit-confirmation removal are in scope. Notes, ratings, and public libraries remain deferred.
+- v0.3.1 Reading-State Lifecycle is closed: owner-scoped status changes, timestamp rules,
+  optimistic conflicts, catalog state display, and explicit-confirmation removal are implemented.
+- v0.3.2 Curated Catalog Operations is active planning work. Its contract defines deterministic
+  demo data, provenance, a minimal administrator boundary, audited book corrections, and
+  non-persistent missing-book feedback; none of those operations is implemented yet.

@@ -6,8 +6,9 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-v0.3.1 Reading-State Lifecycle is implemented on top of the v0.3.0 Private Library Foundation and
-is awaiting external review and the mandatory local browser smoke check:
+v0.3.1 Reading-State Lifecycle is closed on top of the v0.3.0 Private Library Foundation. v0.3.2
+Curated Catalog Operations is active planning work; it does not yet add administrator routes or
+catalog mutation:
 
 - Home and About pages.
 - Book catalog page.
@@ -199,6 +200,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Domain model](docs/domain.md)
 - [Go and SQL readability](docs/code-readability.md)
 - [Private Library v0.3 contract](docs/library_v0_3.md)
+- [Curated Catalog Operations v0.3.2 contract](docs/catalog_operations_v0_3_2.md)
 - [Database v0.1](docs/database_v0_1.md)
 - [Database v0.2](docs/database_v0_2.md)
 - [MPA auth contract](docs/drafts/auth-contract.ru.md)
@@ -211,7 +213,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Complete external review, PostgreSQL verification, and mandatory local smoke for v0.3.1.
+- Define and implement the bounded v0.3.2 curated-catalog operations workflow.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:

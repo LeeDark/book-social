@@ -70,6 +70,18 @@ a CSS placeholder. Uploading, proxying, or storing cover files is not part of th
 
 The normalized schema is described in [database_v0_2.md](database_v0_2.md).
 
+### Planned Curated Catalog Operations
+
+v0.3.2 will let a deliberately appointed administrator find, create, and correct demo books while
+preserving stable public book slugs. Operators will select existing authors and genres, may set or
+clear one front-cover URL, and produce an immutable audit record for each successful create or
+correction. The internal authorization capability does not enter page models or templates.
+
+Missing-book feedback will be an authenticated, non-persistent request that emits one safe
+structured event. Catalog deletion, author/genre administration, external import, and cover asset
+handling remain deferred. The planned rules are in
+[Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
+
 ### User and Authentication Foundation
 
 The current `users` module provides:

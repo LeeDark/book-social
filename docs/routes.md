@@ -95,6 +95,27 @@ Malformed item IDs, status values, and versions return `422`; owner-scoped missi
 `404`; stale forms return `409` without overwriting a newer state or deleting the item. The existing
 authentication, cross-origin, and `no-store` policies apply unchanged.
 
+### Planned v0.3.2 catalog-operation routes
+
+The following routes are accepted design requirements for v0.3.2; they are not implemented yet.
+
+```text
+GET  /admin/catalog                    optional query field: q
+GET  /admin/catalog/books/new          creation form
+POST /admin/catalog/books/new          book form
+GET  /admin/catalog/books/{id}/edit    correction form
+POST /admin/catalog/books/{id}/edit    book form
+GET  /books/request                    missing-book form
+POST /books/request                    title, author
+```
+
+Admin routes redirect anonymous users to `/login`, return `403` for ordinary authenticated users,
+and retain existing `no-store` and cross-origin policies. Book forms use Post/Redirect/Get; malformed
+input is `422`, unknown book IDs are `404`, and duplicate create slugs are `409`. The missing-book
+form is authenticated, validates its fields with `422`, then redirects to `/books` with a flash; it
+does not persist a request or call an external service. Details are in
+[Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
+
 ## Catalog Filters
 
 `GET /books` supports:
