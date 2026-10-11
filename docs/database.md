@@ -57,8 +57,10 @@ The down migration refuses rollback if audit rows exist or any user has the `adm
 It never silently deletes audit history or revokes an appointed administrator. Empty rollback
 removes the table and the unassigned role while retaining ordinary users and catalog data.
 
-The application append-only repository, server-generated summaries, UTC write boundary, transactional
-catalog changes, and HTTP administrator guard are still planned. The schema alone does not prevent
+The application append-only repository, server-generated summaries, UTC write boundary, and
+transactional catalog changes are still planned. The HTTP administrator guard is implemented and
+uses the current database role; operator handlers are not yet wired into the runtime.
+The schema alone does not prevent
 a database owner from updating or deleting audit rows through direct SQL.
 The full contract is in [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
 
@@ -95,7 +97,8 @@ Commit with `COMMIT;` only when the result is the intended account with role `ad
 `is_admin`; otherwise run `ROLLBACK;`. Do not execute an unscoped update or change `user.is_admin`.
 This is a deliberate account appointment, not a seed operation or a role-management UI.
 Ordinary registration remains bound to `user`, and no administrator account is seeded.
-At the schema-only checkpoint this assignment does not yet enable operator HTTP routes.
+At the authorization checkpoint this assignment does not yet enable operator HTTP routes: runtime
+operator handlers are still pending. The guard observes a role change on the next session request.
 
 Run pending SQLite migrations against the default local database:
 

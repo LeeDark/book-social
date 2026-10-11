@@ -31,6 +31,16 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 		dynamic.Get("/books", app.CatalogHandler.Catalog)
 		dynamic.Get("/books/{slug}", app.CatalogHandler.BookDetails)
 		dynamic.Get("/authors/{slug}", app.CatalogHandler.Author)
+		if app.AdminCatalogHandler != nil {
+			dynamic.Route("/admin/catalog", func(admin chi.Router) {
+				admin.Use(httpauth.RequireAdministrator)
+				admin.Get("/", app.AdminCatalogHandler.Find)
+				admin.Get("/books/new", app.AdminCatalogHandler.NewBook)
+				admin.Post("/books/new", app.AdminCatalogHandler.NewBook)
+				admin.Get("/books/{id}/edit", app.AdminCatalogHandler.EditBook)
+				admin.Post("/books/{id}/edit", app.AdminCatalogHandler.EditBook)
+			})
+		}
 		if app.AuthHandler != nil {
 			dynamic.Get("/register", app.AuthHandler.Register)
 			dynamic.Post("/register", app.AuthHandler.Register)

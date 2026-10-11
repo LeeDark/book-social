@@ -18,4 +18,5 @@ type Deps struct {
 	FlashManager          *flash.Manager
 	AuthHandler           *AuthHandler
 	LibraryHandler        *library.Handler
+	AdminCatalogHandler   AdminCatalogHandler
 }

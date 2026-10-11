@@ -97,7 +97,15 @@ authentication, cross-origin, and `no-store` policies apply unchanged.
 
 ### Planned v0.3.2 catalog-operation routes
 
-The following routes are accepted design requirements for v0.3.2; they are not implemented yet.
+The following routes are accepted design requirements for v0.3.2; their forms and workflows are
+still pending.
+
+At the #24 step-2 checkpoint, the admin route registration and `RequireAdministrator` guard are
+implemented behind an injected operator handler. Tests supply that handler to verify all five
+routes. The runtime does not yet provide an operator handler, so these pages are not available.
+The guard reads the current role through session loading on every request; promotion and demotion
+take effect on the next request without signing in again. Page models and request logs do not
+receive the internal `IsAdmin` capability. Operator-service authorization remains a step-3 task.
 
 ```text
 GET  /admin/catalog                    optional query field: q

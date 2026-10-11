@@ -124,11 +124,12 @@ func (r *UserRepository) FindCredentials(ctx context.Context, identifier string)
 func (r *UserRepository) FindByID(ctx context.Context, id int) (users.User, error) {
 	var user users.User
 	if err := r.db.QueryRowContext(ctx, `
-		SELECT id, first_name, login, email, user_role_id
-		FROM users
-		WHERE id = $1
+		SELECT u.id, u.first_name, u.login, u.email, u.user_role_id, r.is_admin
+		FROM users u
+		JOIN roles r ON r.id = u.user_role_id
+		WHERE u.id = $1
 		LIMIT 1
-	`, id).Scan(&user.ID, &user.FirstName, &user.Login, &user.Email, &user.RoleID); err != nil {
+	`, id).Scan(&user.ID, &user.FirstName, &user.Login, &user.Email, &user.RoleID, &user.IsAdmin); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return users.User{}, users.ErrUserNotFound
 		}

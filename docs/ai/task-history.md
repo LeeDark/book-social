@@ -853,3 +853,36 @@ Limitations:
 - Audit append-only behavior and safe summary/UTC generation will be enforced at the application
   write boundary in the remaining steps. Direct SQL by a database owner can still modify audit rows.
 - No migration was applied to the user's development database and no account was promoted.
+
+## 2026-10-11 — v0.3.2 administrator authorization (#24, step 2)
+
+Result:
+
+- Added internal `IsAdmin` to the application user and HTTP identity. Both repositories load
+  `roles.is_admin` in `FindByID`, so session requests observe current role assignments.
+- Added `RequireAdministrator` with anonymous `303 /login`, ordinary-user `403`, administrator
+  pass-through, and `no-store` responses.
+- Registered all five operator routes behind an injected `AdminCatalogHandler`, inside the
+  existing current-user/flash/cross-origin middleware chain. Runtime operator handlers remain
+  pending; tests inject a recording handler instead of implementing catalog operations.
+- Added SQLite/PostgreSQL acceptance for ordinary registration, same-session promotion/demotion,
+  all route access outcomes, cross-origin POST refusal, and render/log privacy.
+- Kept page models and templates unchanged. Documented the implemented authorization checkpoint
+  separately from pending operator services, forms, and runtime wiring.
+
+Validation:
+
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/http/auth ./internal/app -run 'Administrator|CurrentUser' -v`
+  passed; opt-in PostgreSQL acceptance skipped without a DSN in that command.
+- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
+- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed, including PostgreSQL
+  administrator authorization and the existing migration/repository/HTTP checks. The sandbox
+  download restriction required an approved retry. Disposable Compose resources were removed.
+- `git diff --check` passed.
+
+Review boundary:
+
+- Stopped after step 2. Service-side actor authorization and transactional mutation checks belong
+  to step 3; operator forms and runtime handler wiring belong to step 4.
+- No user development database changes, account appointments, staging, or commits were performed.

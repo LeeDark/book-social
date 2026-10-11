@@ -20,6 +20,12 @@ type CatalogHandler interface {
 	Author(w http.ResponseWriter, r *http.Request)
 }
 
+type AdminCatalogHandler interface {
+	Find(w http.ResponseWriter, r *http.Request)
+	NewBook(w http.ResponseWriter, r *http.Request)
+	EditBook(w http.ResponseWriter, r *http.Request)
+}
+
 type App struct {
 	Config config.Config
 	Logger *slog.Logger
@@ -27,6 +33,7 @@ type App struct {
 
 	HomeHandler           *HomeHandler
 	CatalogHandler        CatalogHandler
+	AdminCatalogHandler   AdminCatalogHandler
 	AuthHandler           *AuthHandler
 	CurrentUserMiddleware *httpauth.CurrentUserMiddleware
 	FlashManager          *flash.Manager
@@ -46,6 +53,7 @@ func New(deps Deps,
 		Router:                r,
 		HomeHandler:           homeHandler,
 		CatalogHandler:        catalogHandler,
+		AdminCatalogHandler:   deps.AdminCatalogHandler,
 		AuthHandler:           deps.AuthHandler,
 		CurrentUserMiddleware: deps.CurrentUserMiddleware,
 		FlashManager:          deps.FlashManager,

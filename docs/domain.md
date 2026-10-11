@@ -92,7 +92,8 @@ The current `users` module provides:
 - credential verification with one neutral invalid-credentials outcome;
 - a dummy bcrypt verification path for an unknown account;
 - DB-backed opaque-session creation, lookup, expiry, and invalidation;
-- minimal current-user identity without password hash or role internals.
+- current-user identity without password hash, with an internal `IsAdmin` capability loaded from
+  the current database role on each authenticated request.
 
 Sessions have a seven-day absolute lifetime without sliding renewal. The raw high-entropy token is
 browser-facing; persistence receives only its 32-byte SHA-256 hash. Missing, invalid, or expired
