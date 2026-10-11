@@ -166,6 +166,12 @@ used for local development or disposable test data.
 seed SQL is development data, not production data. It is expected to run after a fresh schema
 or reset; it is not treated as a repeatable data migration.
 
+The seed's catalog provenance, its separation from test fixtures, and the cover-metadata record
+are documented in [Curated Demo Catalog Provenance](demo_catalog_provenance.md).
+The dataset contains 109 books, 24 authors, 23 genres, and no covers. Fresh bootstrap assigns book
+IDs in slug order in both dialects. This does not renumber existing databases: the seed is only for
+fresh disposable databases. Stable public identifiers remain the book slugs.
+
 Reset scripts destroy only disposable local database state, run all migrations up, and then apply
 the matching seed SQL.
 

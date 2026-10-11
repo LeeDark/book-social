@@ -102,6 +102,33 @@ database. Docker Compose is its only external prerequisite.
 Do not use the full development seed dataset in ordinary unit or handler tests. Use full seed data
 only for an explicit seed smoke test or database setup check.
 
+### Development Seed Acceptance (#23)
+
+Dedicated development-seed tests apply the checked-in migrations and full seed to disposable
+databases. Ordinary fixture helpers remain independent. SQLite tests compare two fresh catalogs,
+including IDs, descriptions, relationships, and cover metadata, and check every book against the
+provenance inventory. HTTP acceptance covers catalog reads, filters, book/author pages, cover
+placeholder fallback, and authenticated addition of a seeded book to the private library.
+
+Run the focused SQLite checks:
+
+```bash
+GOCACHE=/tmp/book-social-go-cache go test -v ./internal/testutil ./internal/app -run SQLiteDevelopmentSeed
+make db/migrate/smoke
+```
+
+The opt-in PostgreSQL checks compare the full catalog with SQLite, verify identity sequences after
+seed, and run the same HTTP acceptance. Use only the disposable `book_social_test` database; its
+`public` schema is reset. Run packages sequentially:
+
+```bash
+BOOK_SOCIAL_POSTGRES_TEST_DSN='postgres://book_social:book_social@localhost:5432/book_social_test?sslmode=disable' \
+  GOCACHE=/tmp/book-social-go-cache go test -p 1 -v -count=1 ./internal/testutil ./internal/app -run PostgresDevelopmentSeed
+```
+
+`make test/integration` includes these tests and provisions its own isolated PostgreSQL database.
+The dataset and source limitations are in [Demo Catalog Provenance](demo_catalog_provenance.md).
+
 ## Testing Guidance
 
 - Prefer table-driven tests.

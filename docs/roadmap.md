@@ -299,7 +299,7 @@ Outcome: the private library supports the complete add → update → return →
 Status: active. The accepted planned contract is in
 [`catalog_operations_v0_3_2.md`](catalog_operations_v0_3_2.md).
 
-- [ ] Separate test fixtures, deterministic development seed data, and the curated demo catalog;
+- [x] Separate test fixtures, deterministic development seed data, and the curated demo catalog;
   document demo metadata provenance and permitted cover use.
 - [ ] Add a clear missing-book state and simple feedback path without an external import.
 - [ ] Add only the administrator role, protected routes, catalog find/create/correct operations,

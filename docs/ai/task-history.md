@@ -781,3 +781,42 @@ Decision:
   create/correct operations using existing authors and genres, and non-persistent feedback.
 - Defer external import, persistent requests, catalog deletion, author/genre administration,
   role-management UI, slug history, media handling, and general search.
+
+## 2026-10-11 — v0.3.2 development seed and provenance (#23)
+
+Result:
+
+- Kept ordinary minimal test fixtures independent from the full development seed; introduced
+  explicitly named seed acceptance helpers for disposable SQLite and guarded PostgreSQL databases.
+- Made fresh book IDs deterministic in both SQL dialects by inserting books in slug order.
+  Existing databases are not changed; seed is not a repeatable migration.
+- Documented all 109 demo book slugs, repository lineage, unknown external metadata provenance,
+  edition/attribution limitations, absent covers, and the permitted-use record required before
+  adding any future cover URL. No description authorship or reuse rights are inferred from Git.
+- Added two-bootstrap SQLite comparison, complete cross-dialect catalog comparison, provenance
+  inventory and relationship checks, PostgreSQL sequence checks, and HTTP seed acceptance for
+  catalog/filter/detail/author reads and authenticated private-library addition.
+- Marked the seed/provenance roadmap item complete after verification; administrator operations,
+  missing-book feedback, and milestone release closure remain pending.
+
+Validation:
+
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil ./internal/app ./internal/storage/sqlite -run 'DevelopmentSeed|BookRepository|LibraryRepository' -v` passed.
+- `make db/migrate/smoke` passed against disposable SQLite databases.
+- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
+- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed, including PostgreSQL seed parity,
+  sequences, repository tests, and HTTP acceptance; its disposable Compose resources were removed.
+  The first sandbox attempt could not download the pinned migrate tool; the approved retry passed.
+- After strengthening generated-ID ordering and cover-placeholder assertions,
+  `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil ./internal/app -run SQLiteDevelopmentSeed -v`
+  and `GOCACHE=/tmp/book-social-go-cache make test/integration` passed again.
+- `git diff --check` passed.
+
+Residual limitations:
+
+- Legacy descriptions, author biographies, and genre summaries have no confirmed original external
+  source or reuse basis. The provenance inventory records this explicitly; source verification or
+  reviewed replacement text remains necessary before broader reuse.
+- Fresh bootstrap changes numeric book IDs compared with the former insertion order. Slugs and
+  catalog metadata remain unchanged, and no existing development database was reset.
