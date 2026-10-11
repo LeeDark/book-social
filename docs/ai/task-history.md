@@ -886,3 +886,60 @@ Review boundary:
 - Stopped after step 2. Service-side actor authorization and transactional mutation checks belong
   to step 3; operator forms and runtime handler wiring belong to step 4.
 - No user development database changes, account appointments, staging, or commits were performed.
+
+## 2026-10-11 — v0.3.2 catalog operator service (#24, step 3)
+
+Result:
+
+- Added a focused operator service and consuming repository/transaction contracts in `books`.
+  Read use cases check the actor's database capability; write use cases recheck it inside the
+  service-owned transaction before validation or mutations.
+- Added equivalent SQLite/PostgreSQL find, book-ID lookup, existing-author/genre options, creation,
+  correction, relationship replacement, front-cover update/clear, and append-only audit APIs.
+  Correction input has no slug field and the SQL never updates the slug.
+- Implemented title/slug/HTTPS validation, normalized ID sets, existing-selection checks, and
+  duplicate-slug conflict mapping. Invalid UTF-8 and NUL text are rejected consistently across
+  dialects instead of becoming PostgreSQL storage failures.
+- Used Go lowercase substring matching for bounded operator search, preserving literal SQL wildcard
+  characters and identical Unicode semantics. Blank service search does not list the catalog.
+- Generated UTC audit records with controlled sorted group summaries, including one empty-summary
+  record for successful no-op corrections. Cover URL changes clear stale technical metadata while
+  preserving other variants and metadata for unchanged URLs.
+- Added fake-based service checks and shared real-database acceptance, including rollback of all
+  book/link/cover changes when the final audit write fails.
+- Advanced PostgreSQL fixture sequences after explicit IDs. The first parity run exposed this
+  fixture limitation; the second exposed an incorrect constraint name in new slug-conflict mapping.
+  Both were corrected before the passing parity run.
+- Updated checkpoint documentation and synchronized the completed #23 checkbox in the Ukrainian
+  roadmap. #24 remains incomplete and runtime handler wiring is still pending.
+
+Validation:
+
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/storage/sqlite ./internal/storage/postgresql`
+  passed (PostgreSQL tests opt-in).
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/testutil -run 'Operator|SuggestSlug' -v`
+  passed for unit/SQLite tests, then the focused check passed again after additional refusal cases.
+- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed, including after the final code correction.
+- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed after the corrections, including
+  PostgreSQL operator acceptance with race checks. Disposable Compose resources were removed.
+- `git diff --check` passed.
+- Local `golangci-lint` did not complete: the installed v2.12.2 binary is built with Go 1.26.4,
+  while the active Go 1.27.1 standard library contains syntax its type checker cannot parse.
+  Retrying with a writable temporary lint cache eliminated cache errors but retained the toolchain
+  incompatibility. No lint-driven source changes were made.
+
+Readability follow-up:
+
+- Re-read `AGENTS.md` and `docs/code-readability.md`; separated service phases, expanded dense
+  literals/calls and SQL clauses, and clarified test fixtures without changing behavior or APIs.
+- Ran `gofmt` on the six touched Go files. The focused operator/slug check and
+  `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/testutil ./internal/storage/sqlite ./internal/storage/postgresql -count=1`
+  passed; PostgreSQL database tests skipped without the opt-in DSN.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` and `git diff --check` passed.
+  PostgreSQL integration and lint were not rerun for this readability-only follow-up.
+
+Review boundary:
+
+- Stopped after step 3. Forms, handlers, flashes, and runtime dependency wiring remain step 4.
+- No user database mutations, staging, or commits were performed.

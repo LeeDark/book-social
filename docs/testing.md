@@ -131,6 +131,19 @@ The dataset and source limitations are in [Demo Catalog Provenance](demo_catalog
 
 ## Testing Guidance
 
+Operator service tests cover normalization, permission refusal, immutable slugs, controlled UTC
+audit metadata, no-op corrections, and transaction failures. Shared SQLite/PostgreSQL operator
+acceptance exercises literal Unicode search, existing-author/genre selection, public read
+compatibility, cover variant preservation, and rollback of book/link/cover changes on audit failure.
+PostgreSQL fixture identity sequences are advanced after explicit IDs, allowing generated-ID
+operator writes. These tests are included in `make test/integration`.
+
+Focused checks:
+
+```bash
+GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/testutil -run 'Operator|SuggestSlug'
+```
+
 - Prefer table-driven tests.
 - Use `httptest` for HTTP handlers.
 - Use fake repositories/services for unit tests.

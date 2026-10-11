@@ -105,7 +105,9 @@ implemented behind an injected operator handler. Tests supply that handler to ve
 routes. The runtime does not yet provide an operator handler, so these pages are not available.
 The guard reads the current role through session loading on every request; promotion and demotion
 take effect on the next request without signing in again. Page models and request logs do not
-receive the internal `IsAdmin` capability. Operator-service authorization remains a step-3 task.
+receive the internal `IsAdmin` capability. At the step-3 checkpoint, operator services also check the
+actor's database capability, inside the transaction for catalog writes. Their validation, search,
+and transactional audit behavior are implemented, but runtime forms and handler wiring remain pending.
 
 ```text
 GET  /admin/catalog                    optional query field: q
