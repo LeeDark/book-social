@@ -66,7 +66,7 @@ Current repository and HTTP integration tests create disposable SQLite databases
 - tests insert minimal deterministic data needed by the behavior under test
 
 Shared helpers in `internal/testutil` build SQLite and PostgreSQL test schemas by applying the
-checked-in migrations through reading-state lifecycle migration `000005`, then seed a small deterministic
+checked-in migrations through catalog-operations migration `000006`, then seed a small deterministic
 catalog fixture and ordinary user role. Tests can still keep scenario-specific fixture rows locally
 when they need more data than the default helper provides.
 

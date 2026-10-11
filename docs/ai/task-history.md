@@ -820,3 +820,36 @@ Residual limitations:
   reviewed replacement text remains necessary before broader reuse.
 - Fresh bootstrap changes numeric book IDs compared with the former insertion order. Slugs and
   catalog metadata remain unchanged, and no existing development database was reset.
+
+## 2026-10-11 — v0.3.2 administrator schema (#24, step 1)
+
+Result:
+
+- Added paired migration `000006_add_catalog_operations`: the unassigned `admin` reference role
+  and catalog audit storage with book/action checks and restrictive actor/book foreign keys.
+- Down migration refuses rollback with existing audit rows or an assigned administrator, preserving
+  history and appointments. Empty rollback retains ordinary users and catalog records.
+- Documented deliberate appointment of an existing account by exact user ID and distinguished
+  the implemented schema from pending authorization, operator services, and append-only writes.
+- Updated SQLite's latest-version assertion and smoke rollback depth for the new migration.
+- Stopped at the step-1 review boundary. Administrator guards, operator repositories/services,
+  templates, and final issue verification are not implemented; #24 remains incomplete.
+
+Validation:
+
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil -run CatalogOperationsMigration -v`
+  passed for SQLite; PostgreSQL subtests skipped without a DSN.
+- `make db/migrate/smoke` passed against disposable SQLite databases.
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil ./internal/storage/sqlite ./internal/app`
+  passed.
+- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed with PostgreSQL migration,
+  constraint, rollback, repository, and HTTP checks. Its disposable Compose resources were removed.
+  The sandbox download restriction required an approved retry; the first PostgreSQL CLI run exposed
+  a semicolon in a migration comment, which was corrected before the successful run.
+- `git diff --check` passed.
+
+Limitations:
+
+- Audit append-only behavior and safe summary/UTC generation will be enforced at the application
+  write boundary in the remaining steps. Direct SQL by a database owner can still modify audit rows.
+- No migration was applied to the user's development database and no account was promoted.

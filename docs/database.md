@@ -43,18 +43,59 @@ adds the ordinary `user` role and session storage for v0.2.5 without adding demo
 Migration `000004` adds the private `library_items` foundation without repurposing legacy demo
 library tables.
 Migration `000005` adds the reading-state lifecycle without changing the historical foundation.
+Migration `000006` adds the administrator reference role and catalog audit storage.
 
-## Planned Curated Catalog Operations Schema
+## Curated Catalog Operations Schema
 
-The paired v0.3.2 SQLite/PostgreSQL migration will add the `admin` role and an append-only
-`catalog_audit_log` table. Each audit row will record an actor user, book entity, `create` or
-`correct` action, controlled server-generated summary, and UTC occurrence time. Book creation or
-correction and its audit row will share one transaction.
+Migration `000006_add_catalog_operations` adds `admin` with `is_admin` enabled and
+`catalog_audit_log`: `id`, `actor_user_id`, `entity_type`, `entity_id`, `action`, `summary`,
+and `occurred_at`. The schema accepts only the `book` entity type and `create`/`correct` actions.
+Actor and book foreign keys use `RESTRICT` for deletion and ID updates to retain audit references.
+SQLite stores UTC time as RFC3339Nano text; PostgreSQL uses `TIMESTAMPTZ`.
 
-The migration will not add a seeded administrator account, a missing-book request table, external
-catalog data, cover files, slug history, or catalog deletion behavior. Test fixtures, deterministic
-development seed data, and the curated demo catalog have separate responsibilities; the accepted
-planned contract is in [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
+The down migration refuses rollback if audit rows exist or any user has the `admin` role.
+It never silently deletes audit history or revokes an appointed administrator. Empty rollback
+removes the table and the unassigned role while retaining ordinary users and catalog data.
+
+The application append-only repository, server-generated summaries, UTC write boundary, transactional
+catalog changes, and HTTP administrator guard are still planned. The schema alone does not prevent
+a database owner from updating or deleting audit rows through direct SQL.
+The full contract is in [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
+
+### Appoint the First Administrator
+
+Apply migration `000006`, then register the intended account normally. The environment owner uses
+the database console to identify that account by its exact login:
+
+```sql
+SELECT u.id, u.login, r.role_name
+FROM users u
+JOIN roles r ON r.id = u.user_role_id
+WHERE u.login = 'chosen-login';
+```
+
+Verify the returned account and replace `123` below with its positive user ID. Both supported
+dialects accept this operation:
+
+```sql
+BEGIN;
+
+UPDATE users
+SET user_role_id = (SELECT id FROM roles WHERE role_name = 'admin')
+WHERE id = 123
+    AND user_role_id = (SELECT id FROM roles WHERE role_name = 'user');
+
+SELECT u.id, u.login, r.role_name, r.is_admin
+FROM users u
+JOIN roles r ON r.id = u.user_role_id
+WHERE u.id = 123;
+```
+
+Commit with `COMMIT;` only when the result is the intended account with role `admin` and enabled
+`is_admin`; otherwise run `ROLLBACK;`. Do not execute an unscoped update or change `user.is_admin`.
+This is a deliberate account appointment, not a seed operation or a role-management UI.
+Ordinary registration remains bound to `user`, and no administrator account is seeded.
+At the schema-only checkpoint this assignment does not yet enable operator HTTP routes.
 
 Run pending SQLite migrations against the default local database:
 
