@@ -1,7 +1,9 @@
 # Curated Catalog Operations v0.3.2 Contract
 
-This document defines the planned v0.3.2 operator workflow. It is a design contract for issues
-#23–#25, not a description of current application behavior.
+This document defines the accepted v0.3.2 contract for issues #23–#25. Demo data/provenance (#23)
+and the operator workflow (#24) are implemented; automated operator HTTP acceptance passes on
+SQLite and PostgreSQL, with manual browser review pending. Missing-book feedback (#25) remains
+planned and is not available in the runtime.
 
 ## Purpose and Boundaries
 
@@ -27,14 +29,14 @@ cache, upload, or store cover files.
 ## Administrator Authorization
 
 The existing `roles.is_admin` capability is used by one new `admin` role. The paired v0.3.2
-migration will add that role; ordinary registration continues to assign only `user`.
+migration `000006` adds that role; ordinary registration continues to assign only `user`.
 
 The environment owner appoints the first administrator through one documented, deliberate database
 operation. There is no role-management page, self-service promotion, or seeded administrator
 account.
 
-Current-user loading will expose an internal `IsAdmin` capability to the authorization guard. It is
-not copied to page models, templates, forms, flashes, logs, or public responses. The planned guard
+Current-user loading exposes an internal `IsAdmin` capability to the authorization guard. It is
+not copied to page models, templates, forms, flashes, logs, or public responses. The guard
 has these outcomes:
 
 | Requester                   | Admin route outcome         |
@@ -45,7 +47,7 @@ has these outcomes:
 
 The existing `no-store` policy and `http.CrossOriginProtection` apply unchanged.
 
-## Planned Operator Routes
+## Operator Routes
 
 ```text
 GET  /admin/catalog                    optional query field: q
@@ -92,8 +94,9 @@ replacement, its front-cover change, and its audit entry use one service-owned t
 
 ## Audit Contract
 
-The planned `catalog_audit_log` table contains an immutable record for every successful book
-creation or correction:
+The `catalog_audit_log` table records every successful book creation or correction. The application
+boundary exposes only append operations; it has no audit-update/delete API. A database owner can
+still mutate rows through direct SQL, so this is not a database-level tamper-proof log:
 
 ```text
 id, actor_user_id, entity_type, entity_id, action, summary, occurred_at
@@ -103,8 +106,10 @@ id, actor_user_id, entity_type, entity_id, action, summary, occurred_at
 server-generated: `created` for a creation, or a stable sorted list of changed groups from `title`,
 `description`, `authors`, `genres`, and `front_cover`. It does not contain submitted values, a full
 before/after snapshot, credentials, session data, or arbitrary form text.
+A successful no-op correction also appends exactly one record, with an empty summary. Audit writes
+commit in the same transaction as catalog changes; an audit failure rolls all catalog writes back.
 
-## Missing-Book Feedback
+## Planned Missing-Book Feedback (#25)
 
 ```text
 GET  /books/request

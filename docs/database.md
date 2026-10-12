@@ -101,8 +101,9 @@ Commit with `COMMIT;` only when the result is the intended account with role `ad
 `is_admin`; otherwise run `ROLLBACK;`. Do not execute an unscoped update or change `user.is_admin`.
 This is a deliberate account appointment, not a seed operation or a role-management UI.
 Ordinary registration remains bound to `user`, and no administrator account is seeded.
-At the authorization checkpoint this assignment does not yet enable operator HTTP routes: runtime
-operator handlers are still pending. The guard observes a role change on the next session request.
+This assignment enables the runtime operator routes at `/admin/catalog`. The guard observes a role
+change on the next session request without requiring the user to sign in again. Operator services
+also recheck the current capability, inside the transaction for writes.
 
 Run pending SQLite migrations against the default local database:
 

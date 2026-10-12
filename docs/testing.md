@@ -52,6 +52,8 @@ Current tests cover:
 - private-library lifecycle transitions, timestamp rules, optimistic-lock conflicts, idempotent
   repeated status submissions, explicit removal confirmation, malformed lifecycle forms, and
   owner-scoped refusal
+- administrator-only catalog forms, literal search, immutable slugs, safe audit records, and
+  atomic book/link/cover/audit changes, including real SQLite/PostgreSQL HTTP acceptance
 
 There are also small integration-style HTTP tests that use `httptest` and a temporary SQLite database.
 
@@ -160,8 +162,21 @@ using [the documented procedure](database.md#appoint-the-first-administrator), a
 Check title-to-slug suggestions and manual overrides, keyboard navigation/error links, retained
 values after a duplicate slug or invalid HTTPS URL, success messages after saving, and the same
 public `/books/{slug}` URL after correction. With JavaScript disabled, supply a slug manually.
-Unknown IDs should show `404`; malformed IDs should show `422`. The final #24 acceptance and
-backend/browser review remain step 5.
+Unknown IDs should show `404`; malformed IDs should show `422`. The detailed checklist below
+records the remaining manual #24 browser review; it is not covered by the DOM double.
+
+DB-backed operator HTTP acceptance exercises real sessions, guard, router, templates, services,
+repositories and migrations for both backends. It verifies create/correct/no-op audit counts and
+UTC timestamps, normalization, conflict/validation refusals with unchanged data, the permanent
+public URL, one-request flashes, safe logs, and rollback after the final audit write fails.
+
+```bash
+GOCACHE=/tmp/book-social-go-cache go test ./internal/app -run CatalogOperatorHTTPAcceptance -count=1
+GOCACHE=/tmp/book-social-go-cache make test/integration
+```
+
+The first command runs SQLite and skips PostgreSQL without the opt-in DSN; the second provisions
+the isolated PostgreSQL test database and runs the parity suite sequentially with the race detector.
 
 - Prefer table-driven tests.
 - Use `httptest` for HTTP handlers.
@@ -176,6 +191,37 @@ backend/browser review remain step 5.
 - Verify panic responses do not expose panic values and that access logs record status 500.
 - Do not format credentials, password hashes, raw session tokens, token hashes, or issued cookie
   values into test failure messages.
+
+## Manual Browser Smoke: v0.3.2 Operator (#24)
+
+Status: pending user review. Automated SQLite/PostgreSQL acceptance is complete, but does not prove
+visual layout, browser event behavior, or keyboard accessibility. This does not close all of v0.3.2:
+missing-book feedback (#25) remains planned.
+
+Run the app locally outside the Codex sandbox with migrations through `000006`. Use an ordinary
+registered test account and deliberately appoint it through the procedure in `docs/database.md`.
+Use a disposable database for this smoke; writes and audit history are intentionally persistent.
+Do not run reset or appoint a production account just to complete a test.
+
+- [ ] Anonymous access to `/admin/catalog` redirects to `/login`; an ordinary signed-in account
+  receives `403`. After appointment, the same session can open the operator pages.
+- [ ] `/admin/catalog` initially shows only the find form. Search a known title/slug and an absent
+  title; check edit/public links and actionable empty-state text.
+- [ ] `/admin/catalog/books/new` proposes an ASCII slug while typing a title. Manually edit the
+  slug and confirm later title edits do not overwrite it. Try a Unicode-only title and enter a
+  valid slug yourself. With JavaScript disabled, manually supplied slugs still work.
+- [ ] Submit an invalid HTTPS URL, then a duplicate slug; check `422`/`409`, retained text and
+  selections, linked error messages, labels, and keyboard-only navigation.
+- [ ] Create a unique book with selected existing authors/genres and an optional permitted cover
+  URL. Check `303` to `/admin/catalog/books/{new-id}/edit`, one success message, then reload to
+  confirm the message disappears. The public `/books/{new-slug}` page opens.
+- [ ] Correct title/description/selections and clear the front cover; verify the same public URL
+  shows the changes. The edit form has no mutable slug input. Save again without changes and
+  confirm a single success message still appears.
+- [ ] `/admin/catalog/books/not-an-id/edit` returns `422`; a positive ID absent from the test
+  database returns `404`. Demoting the test account to `user` makes the next request return `403`.
+
+Record the backend/environment and review result before marking the operator roadmap item done.
 
 ## Manual Browser Smoke: v0.2.6 Auth Flow
 

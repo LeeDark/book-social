@@ -993,3 +993,52 @@ Review boundary:
   `/admin/catalog/books/{valid-id}/edit`, `/admin/catalog/books/unknown/edit`, and `/books/{slug}`.
   Run locally outside the sandbox with an explicitly appointed test administrator.
 - No user development database mutations or administrator appointments were performed.
+
+## 2026-10-12 — v0.3.2 operator acceptance (#24, step 5)
+
+Result:
+
+- Read the current GitHub #24 acceptance criteria, repository instructions, readability guide,
+  operator contract, and the relevant roadmap/checkpoint documentation.
+- Added a shared DB-backed HTTP acceptance scenario for SQLite and opt-in PostgreSQL using the
+  real session loader, guard, router, templates, services, repositories and migrated fixtures.
+  It verifies normalized creation, correction through the permanent public URL, exactly one safe
+  UTC audit row per successful create/correct/no-op, retained validation/conflict errors,
+  one-request flashes, no-store/cross-origin and anonymous/ordinary-user refusals, and safe logs.
+- Injected audit failures only in disposable fixture databases and verified that HTTP `500`
+  responses leave no partial book/link/cover correction or newly created book.
+- Updated README, AI context, contract, database/routes/testing docs, and synchronized the
+  English/Ukrainian and local private roadmap status. Operator implementation and automated
+  verification are complete; manual browser review/user acceptance remain explicitly pending.
+  Missing-book feedback (#25) and all-of-v0.3.2 closure remain out of scope.
+- Added a detailed manual browser checklist without claiming it was run. No production Go or SQL
+  behavior was changed in this step.
+
+Validation:
+
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/app -run CatalogOperatorHTTPAcceptance -count=1 -v`
+  passed for SQLite and skipped PostgreSQL without a DSN. The focused check passed again after
+  the final HTTP rollback cases were added.
+- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector, including the final
+  acceptance test. The default opt-in PostgreSQL skips are covered by the separate integration run.
+- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed, including the final PostgreSQL
+  HTTP acceptance and rollback cases. Migration `000006` up/down/up and sequential race checks
+  passed; only the target's disposable Compose container/network were removed afterward.
+- `make db/migrate/smoke` passed for SQLite migration, seed and legacy-data checks.
+- `node internal/web/tests/catalog-operator.test.cjs` passed all four suggestion tests.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed. An intermediate incomplete test-helper
+  rename was caught by vet, corrected, and followed by passing final unit/integration/vet checks.
+- `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache ./bin/golangci-lint run ./... --config=./.golangci.yml`
+  passed with `0 issues`. The initial sandbox toolchain download failed on the read-only cache;
+  an approved download of the version already declared in `go.mod` resolved the previous lint
+  incompatibility without changing project dependencies or the installed lint version.
+- `gofmt` applied to the new Go test; `gofmt -l` and `git diff --check` passed.
+
+Review boundary:
+
+- Automated step 5 is complete. Browser layout, JavaScript events and keyboard behavior still
+  require local user review using the pending checklist in `docs/testing.md`.
+- The operator roadmap checkbox remains unchecked until that review and acceptance. GitHub #24
+  remains open; no GitHub edits, staging or commits were performed.
+- No app listener/browser was started in the sandbox, no user development database was mutated,
+  and no administrator account was appointed outside disposable tests.

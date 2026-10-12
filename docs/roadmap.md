@@ -14,8 +14,9 @@ one-request success flashes. Its manual browser smoke and release closure are co
 
 v0.3.0 Private Library Foundation and v0.3.1 Reading-State Lifecycle are closed. The v0.3.1
 release completed automated verification, SQLite migration smoke, and the mandatory manual browser
-smoke. Active scope: **v0.3.2 Curated Catalog Operations**. Its operator, seed/provenance, and
-missing-book contracts are defined before implementation begins.
+smoke. Active scope: **v0.3.2 Curated Catalog Operations**. Demo data/provenance (#23) and the
+operator workflow (#24) are implemented, with SQLite/PostgreSQL automated acceptance passing.
+Operator browser review remains pending; missing-book feedback (#25) is still planned.
 
 ## Planning Principles
 
@@ -296,7 +297,7 @@ Outcome: the private library supports the complete add → update → return →
 
 #### v0.3.2 — Curated Catalog Operations
 
-Status: active. The accepted planned contract is in
+Status: active. The accepted contract is in
 [`catalog_operations_v0_3_2.md`](catalog_operations_v0_3_2.md).
 
 - [x] Separate test fixtures, deterministic development seed data, and the curated demo catalog;
@@ -304,6 +305,9 @@ Status: active. The accepted planned contract is in
 - [ ] Add a clear missing-book state and simple feedback path without an external import.
 - [ ] Add only the administrator role, protected routes, catalog find/create/correct operations,
   and critical-change audit records needed to maintain the demo catalog.
+
+#24 implementation and automated verification are complete. The operator item remains unchecked
+until manual browser review and user acceptance; #25 feedback is still pending.
 
 Outcome: a small closed cohort can use reproducible catalog data that an operator can correct
 without direct SQL.
