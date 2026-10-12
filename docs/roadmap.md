@@ -16,7 +16,8 @@ v0.3.0 Private Library Foundation and v0.3.1 Reading-State Lifecycle are closed.
 release completed automated verification, SQLite migration smoke, and the mandatory manual browser
 smoke. Active scope: **v0.3.2 Curated Catalog Operations**. Demo data/provenance (#23) and the
 operator workflow (#24) are implemented, with SQLite/PostgreSQL automated acceptance passing.
-Operator browser review remains pending; missing-book feedback (#25) is still planned.
+The user confirmed successful operator browser review on 2026-10-12; #24 is accepted.
+Missing-book feedback (#25) is still planned.
 
 ## Planning Principles
 
@@ -303,11 +304,11 @@ Status: active. The accepted contract is in
 - [x] Separate test fixtures, deterministic development seed data, and the curated demo catalog;
   document demo metadata provenance and permitted cover use.
 - [ ] Add a clear missing-book state and simple feedback path without an external import.
-- [ ] Add only the administrator role, protected routes, catalog find/create/correct operations,
+- [x] Add only the administrator role, protected routes, catalog find/create/correct operations,
   and critical-change audit records needed to maintain the demo catalog.
 
-#24 implementation and automated verification are complete. The operator item remains unchecked
-until manual browser review and user acceptance; #25 feedback is still pending.
+#24 implementation, automated verification, and user-confirmed browser review are complete.
+The operator workflow is accepted; #25 feedback is still pending.
 
 Outcome: a small closed cohort can use reproducible catalog data that an operator can correct
 without direct SQL.
@@ -379,9 +380,9 @@ components without changing the application architecture.
 - [ ] Prepare a reproducible demo catalog suitable for product demonstrations and a small closed
   user cohort.
 - [ ] Document data provenance and permitted cover usage for demo records.
-- [ ] Protect minimal admin routes with an administrator role.
-- [ ] Allow an operator to find, create, and correct the metadata needed by the demo catalog.
-- [ ] Record critical administrative changes with actor, entity, action, and time.
+- [x] Protect minimal admin routes with an administrator role.
+- [x] Allow an operator to find, create, and correct the metadata needed by the demo catalog.
+- [x] Record critical administrative changes with actor, entity, action, and time.
 
 ### Engineering Scope
 

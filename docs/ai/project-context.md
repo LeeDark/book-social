@@ -84,5 +84,6 @@ Current scope:
   optimistic conflicts, catalog state display, and explicit-confirmation removal are implemented.
 - v0.3.2 Curated Catalog Operations is active. Deterministic development/demo data and provenance
   (#23), the administrator boundary, catalog MPA forms, immutable slugs, and transactional audit
-  (#24) are implemented. Automated HTTP acceptance passes on SQLite and PostgreSQL; manual
-  operator browser review remains pending. Non-persistent missing-book feedback (#25) is planned.
+  (#24) are implemented and accepted. Automated HTTP acceptance passes on SQLite and PostgreSQL;
+  the user confirmed successful operator browser review on 2026-10-12. Non-persistent missing-book
+  feedback (#25) is planned.

@@ -9,8 +9,8 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 v0.3.1 Reading-State Lifecycle is closed on top of the v0.3.0 Private Library Foundation. v0.3.2
 Curated Catalog Operations is active: deterministic demo data/provenance and administrator-only
 catalog find/create/correct pages with transactional audit are implemented. Operator HTTP acceptance
-passes on SQLite and PostgreSQL; manual browser review is pending. Missing-book feedback (#25)
-remains planned:
+passes on SQLite and PostgreSQL; the user confirmed successful manual browser review.
+Missing-book feedback (#25) remains planned:
 
 - Home and About pages.
 - Book catalog page.
@@ -215,7 +215,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Complete operator browser review and the bounded v0.3.2 missing-book feedback workflow.
+- Implement the bounded v0.3.2 missing-book feedback workflow (#25).
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:

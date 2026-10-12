@@ -98,8 +98,8 @@ authentication, cross-origin, and `no-store` policies apply unchanged.
 ### v0.3.2 catalog-operation routes
 
 All five administrator routes are wired into the runtime with server-rendered search, creation,
-and correction pages. DB-backed HTTP acceptance verifies both database backends; manual browser
-review remains pending.
+and correction pages. DB-backed HTTP acceptance verifies both database backends; the user confirmed
+successful local browser review on 2026-10-12.
 The guard reads the current role through session loading on every request; promotion and demotion
 take effect on the next request without signing in again. Page models and request logs do not
 receive the internal `IsAdmin` capability. Operator services also check the actor's database

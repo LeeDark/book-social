@@ -163,7 +163,7 @@ Check title-to-slug suggestions and manual overrides, keyboard navigation/error 
 values after a duplicate slug or invalid HTTPS URL, success messages after saving, and the same
 public `/books/{slug}` URL after correction. With JavaScript disabled, supply a slug manually.
 Unknown IDs should show `404`; malformed IDs should show `422`. The detailed checklist below
-records the remaining manual #24 browser review; it is not covered by the DOM double.
+records the completed user-confirmed manual #24 browser review; it is not covered by the DOM double.
 
 DB-backed operator HTTP acceptance exercises real sessions, guard, router, templates, services,
 repositories and migrations for both backends. It verifies create/correct/no-op audit counts and
@@ -194,34 +194,36 @@ the isolated PostgreSQL test database and runs the parity suite sequentially wit
 
 ## Manual Browser Smoke: v0.3.2 Operator (#24)
 
-Status: pending user review. Automated SQLite/PostgreSQL acceptance is complete, but does not prove
-visual layout, browser event behavior, or keyboard accessibility. This does not close all of v0.3.2:
-missing-book feedback (#25) remains planned.
+Status: complete. On 2026-10-12 the user confirmed that the local browser review passed and accepted
+#24 after clarifying malformed-ID `422` behavior and optional author/genre selections. This is
+user-reported manual evidence, not a browser run by Codex; browser version and backend were not
+separately recorded. Automated HTTP acceptance independently passes on SQLite and PostgreSQL.
+Missing-book feedback (#25) remains planned, so this does not close all of v0.3.2.
 
 Run the app locally outside the Codex sandbox with migrations through `000006`. Use an ordinary
 registered test account and deliberately appoint it through the procedure in `docs/database.md`.
 Use a disposable database for this smoke; writes and audit history are intentionally persistent.
 Do not run reset or appoint a production account just to complete a test.
 
-- [ ] Anonymous access to `/admin/catalog` redirects to `/login`; an ordinary signed-in account
+- [x] Anonymous access to `/admin/catalog` redirects to `/login`; an ordinary signed-in account
   receives `403`. After appointment, the same session can open the operator pages.
-- [ ] `/admin/catalog` initially shows only the find form. Search a known title/slug and an absent
+- [x] `/admin/catalog` initially shows only the find form. Search a known title/slug and an absent
   title; check edit/public links and actionable empty-state text.
-- [ ] `/admin/catalog/books/new` proposes an ASCII slug while typing a title. Manually edit the
+- [x] `/admin/catalog/books/new` proposes an ASCII slug while typing a title. Manually edit the
   slug and confirm later title edits do not overwrite it. Try a Unicode-only title and enter a
   valid slug yourself. With JavaScript disabled, manually supplied slugs still work.
-- [ ] Submit an invalid HTTPS URL, then a duplicate slug; check `422`/`409`, retained text and
+- [x] Submit an invalid HTTPS URL, then a duplicate slug; check `422`/`409`, retained text and
   selections, linked error messages, labels, and keyboard-only navigation.
-- [ ] Create a unique book with selected existing authors/genres and an optional permitted cover
+- [x] Create a unique book with selected existing authors/genres and an optional permitted cover
   URL. Check `303` to `/admin/catalog/books/{new-id}/edit`, one success message, then reload to
   confirm the message disappears. The public `/books/{new-slug}` page opens.
-- [ ] Correct title/description/selections and clear the front cover; verify the same public URL
+- [x] Correct title/description/selections and clear the front cover; verify the same public URL
   shows the changes. The edit form has no mutable slug input. Save again without changes and
   confirm a single success message still appears.
-- [ ] `/admin/catalog/books/not-an-id/edit` returns `422`; a positive ID absent from the test
+- [x] `/admin/catalog/books/not-an-id/edit` returns `422`; a positive ID absent from the test
   database returns `404`. Demoting the test account to `user` makes the next request return `403`.
 
-Record the backend/environment and review result before marking the operator roadmap item done.
+The operator roadmap item is marked complete following the user's review and acceptance.
 
 ## Manual Browser Smoke: v0.2.6 Auth Flow
 

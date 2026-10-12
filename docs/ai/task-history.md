@@ -1042,3 +1042,26 @@ Review boundary:
   remains open; no GitHub edits, staging or commits were performed.
 - No app listener/browser was started in the sandbox, no user development database was mutated,
   and no administrator account was appointed outside disposable tests.
+
+## 2026-10-12 — v0.3.2 operator browser review accepted (#24)
+
+Result:
+
+- The user confirmed successful local browser review and accepted #24 after clarifying that a
+  malformed route ID returns `422` and that author/genre selections may be empty by contract.
+  This is user-reported manual evidence; the browser version and backend were not separately
+  recorded. Automated HTTP acceptance already passed independently on SQLite and PostgreSQL.
+- Marked the operator release item and its authorization/mutation/audit scope checkboxes complete
+  in the English, Ukrainian and local private roadmaps. Marked the seven manual smoke checklist
+  items complete and updated README, project context, operator contract and route documentation.
+  Earlier checkpoint history was preserved rather than rewritten as if it had always been complete.
+- Marked all five acceptance criteria complete in GitHub #24 and inspected the published body.
+  The issue remains OPEN; this marks acceptance without closing the issue or claiming v0.3.2
+  release closure. Missing-book feedback (#25) remains planned.
+
+Validation and boundary:
+
+- `git diff --check` passed; only documentation changed. Runtime tests were not rerun because
+  implementation, templates, migrations and dependencies were unchanged.
+- GitHub body/state were read back after the edit; the initial sandbox network failure required
+  an approved retry. No GitHub comment, issue closure, staging or commit was performed.

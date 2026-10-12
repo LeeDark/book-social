@@ -2,8 +2,8 @@
 
 This document defines the accepted v0.3.2 contract for issues #23–#25. Demo data/provenance (#23)
 and the operator workflow (#24) are implemented; automated operator HTTP acceptance passes on
-SQLite and PostgreSQL, with manual browser review pending. Missing-book feedback (#25) remains
-planned and is not available in the runtime.
+SQLite and PostgreSQL, and the user confirmed successful manual browser review. Missing-book
+feedback (#25) remains planned and is not available in the runtime.
 
 ## Purpose and Boundaries
 
