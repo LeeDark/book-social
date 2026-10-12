@@ -63,9 +63,9 @@ timestamps. A correction input has no slug field. Relationship replacement, fron
 and the audit entry commit together or roll back together. A successful correction with no changed
 groups records an empty summary; otherwise the summary is a sorted comma-separated group list.
 Changing a front-cover URL clears its old technical metadata; unchanged URLs retain it, and
-other cover variants are preserved. Operator handlers are not yet wired into the runtime.
-The schema alone does not prevent
-a database owner from updating or deleting audit rows through direct SQL.
+other cover variants are preserved. The runtime now exposes the guarded operator search and book
+forms through these services for both backends. The schema alone does not prevent a database owner
+from updating or deleting audit rows through direct SQL.
 The full contract is in [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
 
 ### Appoint the First Administrator

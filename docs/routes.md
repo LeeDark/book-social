@@ -95,19 +95,14 @@ Malformed item IDs, status values, and versions return `422`; owner-scoped missi
 `404`; stale forms return `409` without overwriting a newer state or deleting the item. The existing
 authentication, cross-origin, and `no-store` policies apply unchanged.
 
-### Planned v0.3.2 catalog-operation routes
+### v0.3.2 catalog-operation routes
 
-The following routes are accepted design requirements for v0.3.2; their forms and workflows are
-still pending.
-
-At the #24 step-2 checkpoint, the admin route registration and `RequireAdministrator` guard are
-implemented behind an injected operator handler. Tests supply that handler to verify all five
-routes. The runtime does not yet provide an operator handler, so these pages are not available.
+At the #24 step-4 checkpoint, all five administrator routes are wired into the runtime with
+server-rendered search, creation, and correction pages for both database backends.
 The guard reads the current role through session loading on every request; promotion and demotion
 take effect on the next request without signing in again. Page models and request logs do not
-receive the internal `IsAdmin` capability. At the step-3 checkpoint, operator services also check the
-actor's database capability, inside the transaction for catalog writes. Their validation, search,
-and transactional audit behavior are implemented, but runtime forms and handler wiring remain pending.
+receive the internal `IsAdmin` capability. Operator services also check the actor's database
+capability, inside the transaction for catalog writes.
 
 ```text
 GET  /admin/catalog                    optional query field: q
@@ -115,15 +110,28 @@ GET  /admin/catalog/books/new          creation form
 POST /admin/catalog/books/new          book form
 GET  /admin/catalog/books/{id}/edit    correction form
 POST /admin/catalog/books/{id}/edit    book form
-GET  /books/request                    missing-book form
-POST /books/request                    title, author
 ```
 
 Admin routes redirect anonymous users to `/login`, return `403` for ordinary authenticated users,
 and retain existing `no-store` and cross-origin policies. Book forms use Post/Redirect/Get; malformed
-input is `422`, unknown book IDs are `404`, and duplicate create slugs are `409`. The missing-book
-form is authenticated, validates its fields with `422`, then redirects to `/books` with a flash; it
-does not persist a request or call an external service. Details are in
+input is `422`, unknown book IDs are `404`, and duplicate create slugs are `409`. Successful writes
+redirect to the book's edit page with a fixed one-request flash. Blank search does not list the
+catalog. Validation/conflict pages retain submitted text and existing-author/genre selections,
+with linked field errors. URL-encoded POST bodies are limited to 128 KiB; malformed/oversized forms,
+duplicate scalar fields, and malformed selected IDs return `422` without reaching a catalog write.
+Only POST-body fields are accepted; correction ignores any submitted slug, actor, or audit fields.
+The creation form proposes an ASCII slug through optional JavaScript until the operator edits it.
+Without JavaScript, the operator enters a slug manually; server validation is always required.
+
+The missing-book feedback routes remain planned for #25, not available in the runtime:
+
+```text
+GET  /books/request                    missing-book form
+POST /books/request                    title, author
+```
+
+The planned form is authenticated, validates its fields with `422`, then redirects to `/books` with
+a flash; it does not persist a request or call an external service. Details are in
 [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
 
 ## Catalog Filters

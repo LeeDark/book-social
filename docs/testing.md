@@ -144,6 +144,25 @@ Focused checks:
 GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/testutil -run 'Operator|SuggestSlug'
 ```
 
+Operator HTTP tests use a fake service and the real router/templates to cover form GETs, retained
+POST values, `422`/`409`/`404`/`403`/`500` outcomes, immutable correction slugs, fixed one-request
+flashes, anonymous/ordinary-user refusal, and cross-origin POST protection. JavaScript suggestion
+tests use Node's built-in test/assert modules with a small DOM double, not a browser or dependency.
+
+```bash
+GOCACHE=/tmp/book-social-go-cache go test ./internal/app -run OperatorHTTP -count=1
+node internal/web/tests/catalog-operator.test.cjs
+```
+
+For manual review, run the application outside the Codex sandbox, appoint a test administrator
+using [the documented procedure](database.md#appoint-the-first-administrator), and open
+`/admin/catalog`, `/admin/catalog/books/new`, and `/admin/catalog/books/{valid-id}/edit`.
+Check title-to-slug suggestions and manual overrides, keyboard navigation/error links, retained
+values after a duplicate slug or invalid HTTPS URL, success messages after saving, and the same
+public `/books/{slug}` URL after correction. With JavaScript disabled, supply a slug manually.
+Unknown IDs should show `404`; malformed IDs should show `422`. The final #24 acceptance and
+backend/browser review remain step 5.
+
 - Prefer table-driven tests.
 - Use `httptest` for HTTP handlers.
 - Use fake repositories/services for unit tests.

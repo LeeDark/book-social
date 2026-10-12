@@ -48,24 +48,27 @@ func main() {
 
 func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	var (
-		err         error
-		db          *sql.DB
-		bookRepo    books.BookRepository
-		libraryRepo library.Repository
-		userRepo    users.RegistrationRepository
-		sessionRepo users.SessionRepository
+		err          error
+		db           *sql.DB
+		bookRepo     books.BookRepository
+		operatorRepo books.OperatorRepository
+		libraryRepo  library.Repository
+		userRepo     users.RegistrationRepository
+		sessionRepo  users.SessionRepository
 	)
 
 	switch cfg.Env {
 	case config.EnvDev:
 		db, err = sqlite.Open(ctx, cfg.DB.DSN)
 		bookRepo = sqlite.NewBookRepository(db)
+		operatorRepo = sqlite.NewCatalogOperatorRepository(db)
 		libraryRepo = sqlite.NewLibraryRepository(db)
 		userRepo = sqlite.NewUserRepository(db)
 		sessionRepo = sqlite.NewSessionRepository(db)
 	case config.EnvStage, config.EnvProd:
 		db, err = postgresql.Open(ctx, cfg.DB.DSN)
 		bookRepo = postgresql.NewBookRepository(db)
+		operatorRepo = postgresql.NewCatalogOperatorRepository(db)
 		libraryRepo = postgresql.NewLibraryRepository(db)
 		userRepo = postgresql.NewUserRepository(db)
 		sessionRepo = postgresql.NewSessionRepository(db)
@@ -90,6 +93,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	userService := users.NewService(userRepo, users.NewPasswordPolicy())
 	sessionService := users.NewSessionService(userRepo, sessionRepo, cfg.Auth.SessionLifetime)
 	catalogService := books.NewCatalogService(bookRepo)
+	operatorService := books.NewOperatorService(operatorRepo)
 	libraryService := library.NewService(libraryRepo, bookRepo)
 
 	currentUserMiddleware := httpauth.NewCurrentUserMiddleware(cookies, sessionService)
@@ -112,6 +116,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		libraryStateProvider,
 	)
 	libraryHandler := library.NewHandler(libraryService, flashes, renderer, logger)
+	operatorHandler := books.NewOperatorHandler(operatorService, flashes, renderer, logger)
 
 	deps := app.Deps{
 		Config:                cfg,
@@ -121,6 +126,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		FlashManager:          flashes,
 		AuthHandler:           authHandler,
 		LibraryHandler:        libraryHandler,
+		AdminCatalogHandler:   operatorHandler,
 	}
 
 	application := app.New(deps, homeHandler, catalogHandler)

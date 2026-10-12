@@ -54,5 +54,9 @@ func ApplyRequestState(page *Page, r *http.Request) {
 		page.Flash = []FlashMessage{{Type: "success", Text: "Reading status updated."}}
 	case flash.LibraryItemRemoved:
 		page.Flash = []FlashMessage{{Type: "success", Text: "Book removed from your library."}}
+	case flash.CatalogBookCreated:
+		page.Flash = []FlashMessage{{Type: "success", Text: "Book created."}}
+	case flash.CatalogBookCorrected:
+		page.Flash = []FlashMessage{{Type: "success", Text: "Book corrections saved."}}
 	}
 }

@@ -943,3 +943,53 @@ Review boundary:
 
 - Stopped after step 3. Forms, handlers, flashes, and runtime dependency wiring remain step 4.
 - No user database mutations, staging, or commits were performed.
+
+## 2026-10-11 — v0.3.2 catalog operator MPA (#24, step 4)
+
+Result:
+
+- Added consuming HTTP service contracts, operator handlers and render-safe page/form models.
+  Wired the operator service/repository/handler in `cmd/web` for SQLite and PostgreSQL, using
+  the existing administrator guard, current-user loading, no-store and cross-origin protection.
+- Added search and shared creation/correction templates with labels, linked error summaries,
+  field errors, retained submitted values and existing-author/genre checkbox selections.
+  Correction displays the permanent slug without a mutable input. Cover URLs remain metadata;
+  the form neither uploads nor fetches images.
+- Kept status mapping in handlers: invalid IDs/forms/selections `422`, unknown books `404`,
+  duplicate creation slugs `409`, forbidden actors `403`, unexpected errors `500`.
+  Success uses `303` to the edit page and fixed one-request create/correct flashes.
+- Bounded URL-encoded POST bodies to 128 KiB, rejected duplicate scalar fields and malformed
+  selected IDs before writes, and used only POST-body metadata. Actor IDs come from request
+  identity; correction slug and audit metadata are never accepted from submitted fields.
+- Added optional creation-only ASCII slug suggestions that stop after manual edits and preserve
+  resubmitted slugs. Without JavaScript the operator supplies a slug; server validation remains
+  mandatory. No frontend framework or package dependency was added.
+- Added fake-service `httptest` checks through the real router/templates and Node built-in tests
+  with a DOM double. Updated database/routes/testing docs to describe the runtime checkpoint and
+  keep missing-book feedback (#25) explicitly planned.
+
+Validation:
+
+- Applied `gofmt` to changed Go files; `git diff --check` passed.
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/http/view ./internal/http/flash ./cmd/web`
+  passed (flash has no standalone test files; its new codes are exercised through HTTP tests).
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/app -run OperatorHTTP -count=1`
+  passed, including after the final refusal/escaping/empty-selection cases.
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/app ./internal/modules/books ./internal/http/view ./cmd/web -count=1`
+  and the same command with `-race` passed.
+- `node internal/web/tests/catalog-operator.test.cjs` passed all four tests; the `node --test`
+  and TAP-reporter invocations also exited successfully.
+- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector; opt-in PostgreSQL
+  database tests skipped without a DSN. No new database integration tests were added in this step.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
+- PostgreSQL integration and lint were not rerun; the preceding step records the installed lint
+  binary/toolchain incompatibility. No web server or browser was started in the sandbox.
+
+Review boundary:
+
+- Stopped after step 4, without staging or committing. Final #24 acceptance, backend and browser
+  smoke checks, and completion documentation remain step 5; the roadmap item remains unchecked.
+- Manual routes: `/admin/catalog`, `/admin/catalog/books/new`,
+  `/admin/catalog/books/{valid-id}/edit`, `/admin/catalog/books/unknown/edit`, and `/books/{slug}`.
+  Run locally outside the sandbox with an explicitly appointed test administrator.
+- No user development database mutations or administrator appointments were performed.
