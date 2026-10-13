@@ -67,33 +67,47 @@ func TestMissingBookServiceRequest(t *testing.T) {
 }
 
 func TestMissingBookServiceLogsOnlySafeMetadata(t *testing.T) {
-	var logs bytes.Buffer
-	service := NewMissingBookService(slog.New(slog.NewJSONHandler(&logs, nil)))
-	input := MissingBookRequest{Title: "  private-title\ncredential-secret  ", Author: " private-author "}
-	if err := service.Request(context.Background(), 7, "request-25", input); err != nil {
-		t.Fatalf("Request() error = %v", err)
+	tests := []struct {
+		name         string
+		input        MissingBookRequest
+		titleLength  int
+		authorLength int
+	}{
+		{name: "submitted secrets are excluded", input: MissingBookRequest{Title: "  private-title\ncredential-secret  ", Author: " private-author "}, titleLength: 31, authorLength: 14},
+		{name: "Unicode lengths after trimming", input: MissingBookRequest{Title: "  Книга  ", Author: " Автор "}, titleLength: 5, authorLength: 5},
+		{name: "omitted author", input: MissingBookRequest{Title: "Book"}, titleLength: 4},
+		{name: "whitespace author is absent", input: MissingBookRequest{Title: "Book", Author: " \t\n "}, titleLength: 4},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var logs bytes.Buffer
+			service := NewMissingBookService(slog.New(slog.NewJSONHandler(&logs, nil)))
+			if err := service.Request(context.Background(), 7, "request-25", tt.input); err != nil {
+				t.Fatalf("Request() error = %v", err)
+			}
 
-	var event map[string]any
-	if err := json.Unmarshal(logs.Bytes(), &event); err != nil {
-		t.Fatalf("decode event: %v", err)
-	}
-	want := map[string]any{
-		"level": "INFO", "msg": "catalog_missing_book_requested",
-		"request_id": "request-25", "actor_id": float64(7),
-		"title_length": float64(31), "author_length": float64(14), "has_author": true,
-	}
-	if len(event) != len(want)+1 || event["time"] == nil {
-		t.Fatalf("unexpected event fields: %v", event)
-	}
-	for key, value := range want {
-		if event[key] != value {
-			t.Errorf("event[%s] = %v, want %v", key, event[key], value)
-		}
-	}
-	for _, secret := range []string{"private-title", "credential-secret", "private-author"} {
-		if strings.Contains(logs.String(), secret) {
-			t.Errorf("log contains submitted text %q", secret)
-		}
+			var event map[string]any
+			if err := json.Unmarshal(logs.Bytes(), &event); err != nil {
+				t.Fatalf("decode event: %v", err)
+			}
+			want := map[string]any{
+				"level": "INFO", "msg": "catalog_missing_book_requested",
+				"request_id": "request-25", "actor_id": float64(7),
+				"title_length": float64(tt.titleLength), "author_length": float64(tt.authorLength), "has_author": tt.authorLength > 0,
+			}
+			if len(event) != len(want)+1 || event["time"] == nil {
+				t.Fatalf("unexpected event fields: %v", event)
+			}
+			for key, value := range want {
+				if event[key] != value {
+					t.Errorf("event[%s] = %v, want %v", key, event[key], value)
+				}
+			}
+			for _, secret := range []string{"private-title", "credential-secret", "private-author"} {
+				if strings.Contains(logs.String(), secret) {
+					t.Errorf("log contains submitted text %q", secret)
+				}
+			}
+		})
 	}
 }
