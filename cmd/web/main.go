@@ -94,6 +94,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	sessionService := users.NewSessionService(userRepo, sessionRepo, cfg.Auth.SessionLifetime)
 	catalogService := books.NewCatalogService(bookRepo)
 	operatorService := books.NewOperatorService(operatorRepo)
+	missingBookService := books.NewMissingBookService(logger)
 	libraryService := library.NewService(libraryRepo, bookRepo)
 
 	currentUserMiddleware := httpauth.NewCurrentUserMiddleware(cookies, sessionService)
@@ -117,6 +118,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	)
 	libraryHandler := library.NewHandler(libraryService, flashes, renderer, logger)
 	operatorHandler := books.NewOperatorHandler(operatorService, flashes, renderer, logger)
+	missingBookHandler := books.NewMissingBookHandler(missingBookService, renderer, logger)
 
 	deps := app.Deps{
 		Config:                cfg,
@@ -127,6 +129,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		AuthHandler:           authHandler,
 		LibraryHandler:        libraryHandler,
 		AdminCatalogHandler:   operatorHandler,
+		MissingBookHandler:    missingBookHandler,
 	}
 
 	application := app.New(deps, homeHandler, catalogHandler)
