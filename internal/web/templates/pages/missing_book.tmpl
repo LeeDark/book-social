@@ -1,0 +1,35 @@
+{{define "title"}}{{.Title}}{{end}}
+
+{{define "main"}}
+    <section aria-labelledby="missing-book-heading">
+        <h1 id="missing-book-heading">Request a missing book</h1>
+        <p>Tell us which book you could not find in the catalog. A request does not guarantee that the book will be added.</p>
+        <p>Enter only the book title and author. Please do not include contact details or other personal information.</p>
+        <p><a href="/books">Back to catalog</a></p>
+
+        {{if .Form.Errors}}
+            <div role="alert" aria-labelledby="missing-book-errors-heading">
+                <h2 id="missing-book-errors-heading">Please check the form</h2>
+                <ul>
+                    {{range $field, $message := .Form.Errors}}
+                        <li>{{if eq $field "form"}}{{$message}}{{else}}<a href="#{{$field}}">{{$message}}</a>{{end}}</li>
+                    {{end}}
+                </ul>
+            </div>
+        {{end}}
+
+        <form method="post" action="/books/request" novalidate>
+            <label for="title">Book title</label>
+            <input id="title" name="title" value="{{.Form.Title}}" required aria-describedby="title-help{{if index .Form.Errors "title"}} title-error{{end}}"{{if index .Form.Errors "title"}} aria-invalid="true"{{end}}>
+            <small id="title-help">Required, up to 255 characters.</small>
+            {{with index .Form.Errors "title"}}<small id="title-error">{{.}}</small>{{end}}
+
+            <label for="author">Author (optional)</label>
+            <input id="author" name="author" value="{{.Form.Author}}" aria-describedby="author-help{{if index .Form.Errors "author"}} author-error{{end}}"{{if index .Form.Errors "author"}} aria-invalid="true"{{end}}>
+            <small id="author-help">Up to 255 characters. Leave empty if you do not know the author.</small>
+            {{with index .Form.Errors "author"}}<small id="author-error">{{.}}</small>{{end}}
+
+            <button type="submit">Send request</button>
+        </form>
+    </section>
+{{end}}

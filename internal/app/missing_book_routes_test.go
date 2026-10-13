@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/modules/books"
 	"github.com/LeeDark/book-social/internal/modules/users"
+	"github.com/LeeDark/book-social/internal/testutil"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -22,16 +24,14 @@ func (missingBookRouteUserLoader) LoadCurrentUser(context.Context, []byte, time.
 	return users.User{ID: 7, FirstName: "Reader"}, nil
 }
 
-// The actual form template belongs to the next implementation step. This
-// renderer lets route tests exercise the real handler and service independently.
 type missingBookRouteRenderer struct {
-	calls int
+	renderer *render.Renderer
+	calls    int
 }
 
-func (f *missingBookRouteRenderer) Render(w http.ResponseWriter, status int, _ string, _ any) error {
+func (f *missingBookRouteRenderer) Render(w http.ResponseWriter, status int, page string, data any) error {
 	f.calls++
-	w.WriteHeader(status)
-	return nil
+	return f.renderer.Render(w, status, page, data)
 }
 
 func TestMissingBookRoutes(t *testing.T) {
@@ -48,12 +48,19 @@ func TestMissingBookRoutes(t *testing.T) {
 		wantEvent   bool
 		wantRender  bool
 		wantDetails bool
+		fragments   []string
 	}{
-		{name: "authenticated GET uses request handler", method: http.MethodGet, path: "/books/request", status: http.StatusOK, wantRender: true},
+		{name: "authenticated GET uses request handler", method: http.MethodGet, path: "/books/request", status: http.StatusOK, wantRender: true,
+			fragments: []string{`method="post" action="/books/request"`, `for="title"`, `for="author"`, "Send request"}},
 		{name: "authenticated POST emits event", method: http.MethodPost, path: "/books/request", body: "title=Book", fetchSite: "same-origin", status: http.StatusSeeOther, location: "/books", wantEvent: true},
 		{name: "anonymous GET redirects to login", method: http.MethodGet, path: "/books/request", anonymous: true, status: http.StatusSeeOther, location: "/login"},
 		{name: "anonymous POST redirects without event", method: http.MethodPost, path: "/books/request", body: "title=Book", anonymous: true, status: http.StatusSeeOther, location: "/login"},
-		{name: "invalid POST renders validation error", method: http.MethodPost, path: "/books/request", status: http.StatusUnprocessableEntity, wantRender: true},
+		{name: "invalid POST renders validation error", method: http.MethodPost, path: "/books/request", status: http.StatusUnprocessableEntity, wantRender: true,
+			fragments: []string{`role="alert"`, `href="#title"`, `aria-describedby="title-help title-error"`, `aria-invalid="true"`, `id="title-error"`}},
+		{name: "invalid author retains and escapes values", method: http.MethodPost, path: "/books/request", body: "title=%3Cscript%3E&author=" + strings.Repeat("a", 256), status: http.StatusUnprocessableEntity, wantRender: true,
+			fragments: []string{`value="&lt;script&gt;"`, `value="` + strings.Repeat("a", 256) + `"`, `href="#author"`, `aria-describedby="author-help author-error"`, `id="author-error"`}},
+		{name: "malformed POST renders form error", method: http.MethodPost, path: "/books/request", body: "title=%zz", status: http.StatusUnprocessableEntity, wantRender: true,
+			fragments: []string{`role="alert"`, "Enter a valid request with a title and optional author."}},
 		{name: "cross-site POST rejected before handler", method: http.MethodPost, path: "/books/request", body: "title=Book", fetchSite: "cross-site", status: http.StatusForbidden},
 		{name: "foreign origin POST rejected before handler", method: http.MethodPost, path: "/books/request", body: "title=Book", origin: "https://attacker.example", status: http.StatusForbidden},
 		{name: "anonymous cross-site POST rejected", method: http.MethodPost, path: "/books/request", body: "title=Book", anonymous: true, fetchSite: "cross-site", status: http.StatusForbidden},
@@ -62,9 +69,14 @@ func TestMissingBookRoutes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testutil.ChdirProjectRoot(t)
+			realRenderer, err := render.NewRenderer()
+			if err != nil {
+				t.Fatalf("create renderer: %v", err)
+			}
 			var logs bytes.Buffer
 			logger := slog.New(slog.NewJSONHandler(&logs, nil))
-			renderer := &missingBookRouteRenderer{}
+			renderer := &missingBookRouteRenderer{renderer: realRenderer}
 			cookies := auth.NewCookieManager(auth.CookieConfig{})
 			deps := Deps{
 				Logger:                logger,
@@ -91,6 +103,11 @@ func TestMissingBookRoutes(t *testing.T) {
 			}
 			if rec.Header().Get("Cache-Control") != "no-store" {
 				t.Fatalf("Cache-Control = %q, want no-store", rec.Header().Get("Cache-Control"))
+			}
+			for _, fragment := range tt.fragments {
+				if !strings.Contains(rec.Body.String(), fragment) {
+					t.Errorf("response lacks %q", fragment)
+				}
 			}
 			wantEvents := 0
 			if tt.wantEvent {

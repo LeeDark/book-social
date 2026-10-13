@@ -86,7 +86,7 @@ func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), "Signal in the Stacks") {
 		t.Fatalf("body does not contain rendered book title: %q", rec.Body.String())
 	}
-	for _, fragment := range []string{`src="/static/js/vendor/htmx.min.js"`, `hx-get="/books?author=jon-a-vale"`, `hx-get="/books?genre=mystery"`} {
+	for _, fragment := range []string{`href="/books/request"`, `src="/static/js/vendor/htmx.min.js"`, `hx-get="/books?author=jon-a-vale"`, `hx-get="/books?genre=mystery"`} {
 		if !strings.Contains(rec.Body.String(), fragment) {
 			t.Fatalf("body does not contain %q: %q", fragment, rec.Body.String())
 		}
@@ -158,20 +158,25 @@ func TestCatalogHandlerCatalogRendersEmptyState(t *testing.T) {
 		},
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/books", nil)
-	rec := httptest.NewRecorder()
+	for _, mode := range []string{"full page", "HTMX partial"} {
+		t.Run(mode, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/books", nil)
+			if mode == "HTMX partial" {
+				req.Header.Set("HX-Request", "true")
+			}
+			rec := httptest.NewRecorder()
+			handler.Catalog(rec, req)
 
-	handler.Catalog(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
-	}
-
-	body := rec.Body.String()
-	for _, fragment := range []string{"No books found", "View catalog", "Go home"} {
-		if !strings.Contains(body, fragment) {
-			t.Fatalf("body does not contain %q: %q", fragment, body)
-		}
+			if rec.Code != http.StatusOK {
+				t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+			}
+			body := rec.Body.String()
+			for _, fragment := range []string{"No books found", "View catalog", "Go home", `href="/books/request"`} {
+				if !strings.Contains(body, fragment) {
+					t.Fatalf("body does not contain %q: %q", fragment, body)
+				}
+			}
+		})
 	}
 }
 
