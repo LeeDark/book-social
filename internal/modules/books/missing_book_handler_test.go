@@ -12,7 +12,13 @@ import (
 	"time"
 
 	"github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/flash"
+	appmiddleware "github.com/LeeDark/book-social/internal/http/middleware"
+	"github.com/LeeDark/book-social/internal/http/render"
+	"github.com/LeeDark/book-social/internal/http/view"
 	"github.com/LeeDark/book-social/internal/modules/users"
+	"github.com/LeeDark/book-social/internal/testutil"
+	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 )
 
@@ -20,6 +26,80 @@ type fakeMissingBookRenderer struct {
 	page string
 	data MissingBookPageData
 	err  error
+}
+
+func TestMissingBookConfirmationAppearsOnceAfterRedirect(t *testing.T) {
+	testutil.ChdirProjectRoot(t)
+	renderer, err := render.NewRenderer()
+	if err != nil {
+		t.Fatalf("create renderer: %v", err)
+	}
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&logs, nil))
+	flashes := flash.NewManager(false)
+	cookies := auth.NewCookieManager(auth.CookieConfig{})
+	handler := NewMissingBookHandler(NewMissingBookService(logger), flashes, renderer, logger)
+	catalog := NewCatalogHandler(fakeCatalogPageProvider{
+		catalogData: CatalogPageData{Page: view.Page{Title: "Books"}},
+	}, renderer, logger, nil)
+	router := chi.NewRouter()
+	router.Use(appmiddleware.NoStore)
+	router.Use(auth.NewCurrentUserMiddleware(cookies, missingBookUserLoader{}).Handler)
+	router.Use(flashes.Handler)
+	router.With(auth.RequireAuthentication).Post("/books/request", handler.Request)
+	router.Get("/books", catalog.Catalog)
+
+	post := httptest.NewRequest(http.MethodPost, "/books/request", strings.NewReader("title=PrivateBook&author=PrivateAuthor"))
+	post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	session := &http.Cookie{Name: "book_social_session", Value: "session-secret"}
+	post.AddCookie(session)
+	submitted := httptest.NewRecorder()
+	router.ServeHTTP(submitted, post)
+	if submitted.Code != http.StatusSeeOther || submitted.Header().Get("Location") != "/books" {
+		t.Fatalf("submission = %d, location = %q", submitted.Code, submitted.Header().Get("Location"))
+	}
+	var confirmation *http.Cookie
+	for _, cookie := range submitted.Result().Cookies() {
+		if cookie.Name == "book_social_flash" {
+			confirmation = cookie
+		}
+	}
+	if confirmation == nil || confirmation.Value != flash.MissingBookRequested || !confirmation.HttpOnly || confirmation.SameSite != http.SameSiteLaxMode {
+		t.Fatalf("unexpected confirmation cookie: %+v", confirmation)
+	}
+
+	get := httptest.NewRequest(http.MethodGet, "/books", nil)
+	get.AddCookie(session)
+	get.AddCookie(confirmation)
+	redirected := httptest.NewRecorder()
+	router.ServeHTTP(redirected, get)
+	message := "Your missing-book request has been received. This does not guarantee that the book will be added."
+	if redirected.Code != http.StatusOK || redirected.Header().Get("Cache-Control") != "no-store" || !strings.Contains(redirected.Body.String(), message) || !strings.Contains(redirected.Body.String(), `role="status"`) {
+		t.Fatalf("confirmation page = %d %q", redirected.Code, redirected.Body.String())
+	}
+	if strings.Contains(redirected.Body.String(), "PrivateBook") || strings.Contains(redirected.Body.String(), "PrivateAuthor") {
+		t.Fatal("confirmation exposes submitted text")
+	}
+	cleared := false
+	for _, cookie := range redirected.Result().Cookies() {
+		if cookie.Name == "book_social_flash" && cookie.MaxAge < 0 {
+			cleared = true
+		}
+	}
+	if !cleared {
+		t.Fatal("confirmation cookie was not cleared")
+	}
+
+	refresh := httptest.NewRequest(http.MethodGet, "/books", nil)
+	refresh.AddCookie(session)
+	next := httptest.NewRecorder()
+	router.ServeHTTP(next, refresh)
+	if next.Code != http.StatusOK || strings.Contains(next.Body.String(), message) {
+		t.Fatalf("confirmation persisted: %d %q", next.Code, next.Body.String())
+	}
+	if strings.Count(logs.String(), `"msg":"catalog_missing_book_requested"`) != 1 {
+		t.Fatal("following the redirect or refreshing emitted another event")
+	}
 }
 
 func (f *fakeMissingBookRenderer) Render(w http.ResponseWriter, status int, page string, data any) error {
@@ -69,7 +149,7 @@ func TestMissingBookHandlerRequest(t *testing.T) {
 			var logs bytes.Buffer
 			logger := slog.New(slog.NewJSONHandler(&logs, nil))
 			renderer := &fakeMissingBookRenderer{err: tt.renderErr}
-			handler := NewMissingBookHandler(NewMissingBookService(logger), renderer, logger)
+			handler := NewMissingBookHandler(NewMissingBookService(logger), flash.NewManager(false), renderer, logger)
 			cookies := auth.NewCookieManager(auth.CookieConfig{})
 			currentUser := auth.NewCurrentUserMiddleware(cookies, missingBookUserLoader{})
 			stack := chimiddleware.RequestID(currentUser.Handler(http.HandlerFunc(handler.Request)))
@@ -95,6 +175,19 @@ func TestMissingBookHandlerRequest(t *testing.T) {
 			}
 			if events != wantEvents || strings.Contains(logs.String(), "session-secret") {
 				t.Fatalf("unexpected event count or session-token leak: %s", &logs)
+			}
+			wantFlashes := 0
+			if tt.wantEvent {
+				wantFlashes = 1
+			}
+			flashes := 0
+			for _, cookie := range rec.Result().Cookies() {
+				if cookie.Name == "book_social_flash" && cookie.Value == flash.MissingBookRequested {
+					flashes++
+				}
+			}
+			if flashes != wantFlashes {
+				t.Fatalf("confirmation cookies = %d, want %d", flashes, wantFlashes)
 			}
 			if tt.field != "" && renderer.data.Form.Errors[tt.field] == "" {
 				t.Fatalf("missing error for %s: %+v", tt.field, renderer.data.Form)

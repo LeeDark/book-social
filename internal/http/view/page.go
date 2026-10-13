@@ -58,5 +58,7 @@ func ApplyRequestState(page *Page, r *http.Request) {
 		page.Flash = []FlashMessage{{Type: "success", Text: "Book created."}}
 	case flash.CatalogBookCorrected:
 		page.Flash = []FlashMessage{{Type: "success", Text: "Book corrections saved."}}
+	case flash.MissingBookRequested:
+		page.Flash = []FlashMessage{{Type: "success", Text: "Your missing-book request has been received. This does not guarantee that the book will be added."}}
 	}
 }

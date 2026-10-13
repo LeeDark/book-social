@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/modules/books"
 	"github.com/LeeDark/book-social/internal/modules/users"
@@ -78,10 +79,12 @@ func TestMissingBookRoutes(t *testing.T) {
 			logger := slog.New(slog.NewJSONHandler(&logs, nil))
 			renderer := &missingBookRouteRenderer{renderer: realRenderer}
 			cookies := auth.NewCookieManager(auth.CookieConfig{})
+			flashes := flash.NewManager(false)
 			deps := Deps{
 				Logger:                logger,
 				CurrentUserMiddleware: auth.NewCurrentUserMiddleware(cookies, missingBookRouteUserLoader{}),
-				MissingBookHandler:    books.NewMissingBookHandler(books.NewMissingBookService(logger), renderer, logger),
+				FlashManager:          flashes,
+				MissingBookHandler:    books.NewMissingBookHandler(books.NewMissingBookService(logger), flashes, renderer, logger),
 			}
 			var detailsSlug string
 			catalog := fakeCatalogHandler{observeContext: func(ctx context.Context) {
@@ -115,6 +118,15 @@ func TestMissingBookRoutes(t *testing.T) {
 			}
 			if got := strings.Count(logs.String(), `"msg":"catalog_missing_book_requested"`); got != wantEvents {
 				t.Fatalf("events = %d, want %d: %s", got, wantEvents, &logs)
+			}
+			confirmationCookies := 0
+			for _, cookie := range rec.Result().Cookies() {
+				if cookie.Name == "book_social_flash" && cookie.Value == flash.MissingBookRequested {
+					confirmationCookies++
+				}
+			}
+			if confirmationCookies != wantEvents {
+				t.Fatalf("confirmation cookies = %d, want %d", confirmationCookies, wantEvents)
 			}
 			wantRenders := 0
 			if tt.wantRender {

@@ -118,7 +118,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	)
 	libraryHandler := library.NewHandler(libraryService, flashes, renderer, logger)
 	operatorHandler := books.NewOperatorHandler(operatorService, flashes, renderer, logger)
-	missingBookHandler := books.NewMissingBookHandler(missingBookService, renderer, logger)
+	missingBookHandler := books.NewMissingBookHandler(missingBookService, flashes, renderer, logger)
 
 	deps := app.Deps{
 		Config:                cfg,

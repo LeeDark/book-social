@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/response"
 	"github.com/LeeDark/book-social/internal/http/view"
 	"github.com/LeeDark/book-social/internal/modules/users"
@@ -26,12 +27,13 @@ type missingBookRenderer interface {
 
 type MissingBookHandler struct {
 	service  missingBookRequester
+	flashes  *flash.Manager
 	renderer missingBookRenderer
 	logger   *slog.Logger
 }
 
-func NewMissingBookHandler(service missingBookRequester, renderer missingBookRenderer, logger *slog.Logger) *MissingBookHandler {
-	return &MissingBookHandler{service: service, renderer: renderer, logger: logger}
+func NewMissingBookHandler(service missingBookRequester, flashes *flash.Manager, renderer missingBookRenderer, logger *slog.Logger) *MissingBookHandler {
+	return &MissingBookHandler{service: service, flashes: flashes, renderer: renderer, logger: logger}
 }
 
 func (h *MissingBookHandler) Request(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +80,7 @@ func (h *MissingBookHandler) Request(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.flashes.Set(w, flash.MissingBookRequested)
 	http.Redirect(w, r, "/books", http.StatusSeeOther)
 }
 

@@ -15,6 +15,7 @@ const (
 	LibraryItemRemoved   = "library_item_removed"
 	CatalogBookCreated   = "catalog_book_created"
 	CatalogBookCorrected = "catalog_book_corrected"
+	MissingBookRequested = "missing_book_requested"
 )
 
 type contextKey struct{}
@@ -57,7 +58,7 @@ func valid(code string) bool {
 	switch code {
 	case Registered, SignedIn, SignedOut,
 		LibraryItemAdded, LibraryStatusChanged, LibraryItemRemoved,
-		CatalogBookCreated, CatalogBookCorrected:
+		CatalogBookCreated, CatalogBookCorrected, MissingBookRequested:
 		return true
 	default:
 		return false
