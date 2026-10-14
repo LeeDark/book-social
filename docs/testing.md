@@ -198,7 +198,8 @@ Status: complete. On 2026-10-12 the user confirmed that the local browser review
 #24 after clarifying malformed-ID `422` behavior and optional author/genre selections. This is
 user-reported manual evidence, not a browser run by Codex; browser version and backend were not
 separately recorded. Automated HTTP acceptance independently passes on SQLite and PostgreSQL.
-Missing-book feedback (#25) remains planned, so this does not close all of v0.3.2.
+Missing-book feedback (#25) is implemented with automated checks, but its manual review and
+acceptance remain pending, so this does not close all of v0.3.2.
 
 Run the app locally outside the Codex sandbox with migrations through `000006`. Use an ordinary
 registered test account and deliberately appoint it through the procedure in `docs/database.md`.
@@ -285,6 +286,36 @@ that the owner can add a book, move it through Want to read → Reading → Read
 a displayed state without changing it, and remove it only from the explicit confirmation page. The
 second user must neither see nor mutate the first user's item. Record the date, browser/version,
 commands, and result before closing the issue or milestone.
+
+## Manual Browser Smoke: v0.3.2 Missing-Book Feedback (#25)
+
+Status: pending. Automated service and HTTP checks pass; no browser run is claimed.
+
+Run the app locally outside the Codex sandbox with `make run` and an already migrated development
+database. Use an ordinary registered account; administrator privileges are unnecessary. Record
+the date, browser/version, database backend, and result before accepting #25.
+
+- [ ] While anonymous, open `/books` and follow "Request a missing book". Expect `/login`;
+  direct access to `/books/request` must also redirect to login.
+- [ ] Sign in and follow the link from `/books`. Verify the form has a required title, optional
+  author, a submit button and a back-to-catalog link. Use `Tab` and `Shift+Tab` to reach controls
+  with visible focus, then submit using the keyboard.
+- [ ] Submit a blank or whitespace-only title. Expect `422`, an error summary linked to the title,
+  an inline error associated with the input, and retained author text. Repeat with a field longer
+  than 255 characters; correct the field and resubmit. No confirmation should appear on rejection.
+- [ ] Submit a valid title, first without an author and then with one. Expect `303 /books` and the
+  confirmation that does not promise the book will be added. Reload `/books`: the flash is gone.
+- [ ] Check the catalog's empty state using `/books?author=missing-book-smoke-no-match`. The request
+  link must remain available; also follow an author/genre filter that has no matching books to
+  check the HTMX partial when such a combination exists in the local catalog.
+- [ ] Inspect response headers for the form, validation response, redirect and catalog:
+  `Cache-Control: no-store` must be present. Check one structured event per successful submission;
+  fields are `request_id`, `actor_id`, `title_length`, `author_length`, `has_author`, with no submitted
+  title/author or session-token values. Do not copy credentials or cookie values into reports.
+
+Cross-origin refusal, expired-session behavior, malformed/oversized bodies, Unicode boundaries,
+HTML escaping and exclusion of private request data are covered by `httptest`. The flow adds no
+request table or database write and calls no external catalog service.
 
 ## Codex Sandbox Note
 

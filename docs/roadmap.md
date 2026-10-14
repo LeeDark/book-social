@@ -17,7 +17,8 @@ release completed automated verification, SQLite migration smoke, and the mandat
 smoke. Active scope: **v0.3.2 Curated Catalog Operations**. Demo data/provenance (#23) and the
 operator workflow (#24) are implemented, with SQLite/PostgreSQL automated acceptance passing.
 The user confirmed successful operator browser review on 2026-10-12; #24 is accepted.
-Missing-book feedback (#25) is still planned.
+Missing-book feedback (#25) is implemented with automated verification; manual browser review and
+acceptance remain pending. v0.3.2 remains active.
 
 ## Planning Principles
 
@@ -308,7 +309,8 @@ Status: active. The accepted contract is in
   and critical-change audit records needed to maintain the demo catalog.
 
 #24 implementation, automated verification, and user-confirmed browser review are complete.
-The operator workflow is accepted; #25 feedback is still pending.
+The operator workflow is accepted. #25 feedback is implemented and automated checks pass; manual
+browser review and acceptance remain pending, so its release checkbox stays open.
 
 Outcome: a small closed cohort can use reproducible catalog data that an operator can correct
 without direct SQL.

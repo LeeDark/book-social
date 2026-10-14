@@ -23,6 +23,7 @@ The application timeout is added only to dynamic MPA page routes:
 
 ```text
 GET /, /about, /books, /books/{slug}, /authors/{slug} -> Timeout(30s)
+GET/POST /books/request -> Timeout(30s)
 ```
 
 `/healthz`, `/static/*`, and the fallback 404 handler do not use the application timeout. The 404
@@ -124,15 +125,20 @@ Only POST-body fields are accepted; correction ignores any submitted slug, actor
 The creation form proposes an ASCII slug through optional JavaScript until the operator edits it.
 Without JavaScript, the operator enters a slug manually; server validation is always required.
 
-The missing-book feedback routes remain planned for #25, not available in the runtime:
+The missing-book feedback routes for #25 are wired into the runtime:
 
 ```text
 GET  /books/request                    missing-book form
 POST /books/request                    title, author
 ```
 
-The planned form is authenticated, validates its fields with `422`, then redirects to `/books` with
-a flash; it does not persist a request or call an external service. Details are in
+The form uses `RequireAuthentication`; anonymous or expired sessions receive `303 /login`.
+Only body fields `title` and `author` are used. Invalid fields, malformed encoding, and bodies over
+64 KiB return accessible `422` form errors. Successful submission emits one metadata-only event
+and redirects with `303 /books` and a one-request confirmation flash. Unsafe cross-origin POST
+requests receive `403` before event creation; `no-store` applies to these routes.
+The literal `/books/request` route takes precedence over `/books/{slug}`. The flow does not persist
+a request or call an external service. Manual browser review is pending. Details are in
 [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
 
 ## Catalog Filters

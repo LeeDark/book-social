@@ -86,4 +86,6 @@ Current scope:
   (#23), the administrator boundary, catalog MPA forms, immutable slugs, and transactional audit
   (#24) are implemented and accepted. Automated HTTP acceptance passes on SQLite and PostgreSQL;
   the user confirmed successful operator browser review on 2026-10-12. Non-persistent missing-book
-  feedback (#25) is planned.
+  feedback (#25) is implemented at `GET/POST /books/request`, with bounded field validation,
+  metadata-only logging and a one-request flash. Automated checks pass; manual browser review and
+  acceptance remain pending, and v0.3.2 remains active.

@@ -3,7 +3,8 @@
 This document defines the accepted v0.3.2 contract for issues #23–#25. Demo data/provenance (#23)
 and the operator workflow (#24) are implemented; automated operator HTTP acceptance passes on
 SQLite and PostgreSQL, and the user confirmed successful manual browser review. Missing-book
-feedback (#25) remains planned and is not available in the runtime.
+feedback (#25) is implemented with automated service and HTTP coverage; its manual browser review
+and acceptance remain pending.
 
 ## Purpose and Boundaries
 
@@ -109,23 +110,37 @@ before/after snapshot, credentials, session data, or arbitrary form text.
 A successful no-op correction also appends exactly one record, with an empty summary. Audit writes
 commit in the same transaction as catalog changes; an audit failure rolls all catalog writes back.
 
-## Planned Missing-Book Feedback (#25)
+## Missing-Book Feedback (#25)
 
 ```text
 GET  /books/request
 POST /books/request    title, author
 ```
 
-The form is available only to an authenticated user and is linked from the public catalog. `title`
-is trimmed, required, and limited to 255 characters; `author` is optional and limited to 255
-characters. No comments, contact details, or other free-form fields are accepted. Invalid input is
-rendered as an accessible `422` form error. Anonymous users receive `303 /login`.
+The form is available only to an authenticated user and is linked from the public catalog and its
+empty state, including HTMX partial responses. Both fields are trimmed: `title` is required and
+limited to 255 Unicode code points; `author` is optional with the same limit. Invalid UTF-8 and NUL
+are rejected. Only `title` and `author` from the form body are used; query parameters and additional
+submitted fields are ignored. The form offers no comments or contact fields.
 
-A valid request emits one structured `catalog_missing_book_requested` event with request ID, actor
-ID, normalized bounded title, and optional normalized bounded author. Structured logging prevents
-log-format injection; credentials, session tokens, and unrelated request data are never logged.
+Invalid input, malformed form encoding, or a body exceeding 64 KiB returns an accessible `422`
+form error. Field errors preserve and HTML-escape submitted values, link the error summary to the
+affected input, and use `aria-invalid` and `aria-describedby`. Anonymous or expired sessions receive
+`303 /login`. The existing `no-store` policy and cross-origin protection apply; unsafe cross-origin
+POST requests receive `403` before event creation.
+
+A valid request emits one structured `catalog_missing_book_requested` event with `request_id`,
+`actor_id`, `title_length`, `author_length`, and `has_author`. Lengths count Unicode code points after
+trimming; a blank author has length zero and `has_author=false`. The actor comes from current-user
+identity, not submitted fields. Submitted title/author text, credentials, session tokens, and
+unrelated request data are excluded. This metadata-only event replaces the earlier plan to log
+bounded title/author text and follows #25's restriction on arbitrary free-text logging.
 The POST performs no database write, external lookup, import, email, queue, or administrator inbox
-operation. It redirects with `303` to `/books` and a one-request confirmation flash.
+operation. The log records the fact of submission, not enough data to identify and fulfil the
+requested book. It redirects with `303` to `/books` and a fixed one-request confirmation flash that
+does not promise catalog addition. Following the redirect or refreshing creates no further event.
+
+Manual review remains pending; see the [missing-book browser checklist](testing.md#manual-browser-smoke-v032-missing-book-feedback-25).
 
 ## Deferred Work
 

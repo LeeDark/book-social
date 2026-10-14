@@ -1065,3 +1065,40 @@ Validation and boundary:
   implementation, templates, migrations and dependencies were unchanged.
 - GitHub body/state were read back after the edit; the initial sandbox network failure required
   an approved retry. No GitHub comment, issue closure, staging or commit was performed.
+
+## 2026-10-14 — Missing-book feedback implemented and documented (#25)
+
+Result:
+
+- Implemented the six-step missing-book plan through service, handler, runtime wiring, accessible
+  MPA form, catalog/empty-state links, one-request confirmation, tests and completion documentation.
+  Authenticated `GET/POST /books/request` uses the existing guard, cross-origin protection and
+  `no-store` policy. Valid submission redirects with `303 /books`; invalid input returns `422`.
+- Title is required; author is optional. Both are trimmed and limited to 255 Unicode code points.
+  Invalid UTF-8, NUL, malformed encoding and bodies over 64 KiB are rejected. Field errors retain
+  escaped values and are associated with their inputs.
+- The event `catalog_missing_book_requested` contains only request/actor IDs, normalized field
+  lengths and author presence. Submitted text and unrelated request data are excluded, replacing
+  the earlier contract proposal to log bounded book text. This records a submission but cannot
+  identify the requested book for fulfilment. No request persistence or external lookup was added.
+- Updated README, routes, the catalog contract, project context and English/Ukrainian/local private
+  roadmaps. Added a pending manual browser checklist to `docs/testing.md`; existing history remains
+  intact. The local private roadmap remains ignored by Git.
+
+Validation:
+
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/app ./internal/http/flash ./internal/http/view -count=1`
+  passed; the flash package has no standalone tests, and the HTTP tests exercise its behavior.
+- `GOCACHE=/tmp/book-social-go-cache make test` passed with `-race -count=1`. Opt-in PostgreSQL tests
+  skipped because `BOOK_SOCIAL_POSTGRES_TEST_DSN` was not configured; this run does not claim
+  PostgreSQL integration verification.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed. `gofmt -l` found no formatting differences
+  in the Go files changed for #25, and `git diff --check` passed.
+
+Review boundary:
+
+- Automated implementation and documentation are complete. Browser layout, visible keyboard focus
+  and manual acceptance still require local user review. The #25 release checkbox stays open and
+  v0.3.2 remains active; no GitHub issue edits or closure were performed.
+- This final step changed only documentation. No web server was started in the sandbox, no
+  development database was modified, and no staging or commit was performed for step 6.
