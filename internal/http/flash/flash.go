@@ -13,6 +13,9 @@ const (
 	LibraryItemAdded     = "library_item_added"
 	LibraryStatusChanged = "library_status_changed"
 	LibraryItemRemoved   = "library_item_removed"
+	CatalogBookCreated   = "catalog_book_created"
+	CatalogBookCorrected = "catalog_book_corrected"
+	MissingBookRequested = "missing_book_requested"
 )
 
 type contextKey struct{}
@@ -53,7 +56,9 @@ func FromRequest(r *http.Request) string {
 
 func valid(code string) bool {
 	switch code {
-	case Registered, SignedIn, SignedOut, LibraryItemAdded, LibraryStatusChanged, LibraryItemRemoved:
+	case Registered, SignedIn, SignedOut,
+		LibraryItemAdded, LibraryStatusChanged, LibraryItemRemoved,
+		CatalogBookCreated, CatalogBookCorrected, MissingBookRequested:
 		return true
 	default:
 		return false

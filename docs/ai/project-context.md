@@ -22,6 +22,7 @@ Current modules:
 - users/auth foundation: password policy, registration/authentication services, DB sessions
 - HTTP auth foundation: cookie/token boundary, current-user context, and route guard
 - private library: owner-scoped add/list, lifecycle transitions, and confirmed removal workflow
+- catalog maintenance: administrator-only find/create/correct MPA pages and transactional audit
 
 Current focus:
 - minimal working features first
@@ -54,8 +55,8 @@ Current infrastructure caveat:
 - `APP_ENV=dev` uses SQLite and is the active local database path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
 - SQLite and PostgreSQL catalog repositories implement the same normalized v0.2 read contract.
-- SQLite and PostgreSQL v0.1 baseline, v0.2 normalization, v0.2.5 auth, v0.3 private-library, and
-  v0.3.1 lifecycle migrations exist under `db/*/migrations`.
+- SQLite and PostgreSQL v0.1 baseline, v0.2 normalization, v0.2.5 auth, v0.3 private-library,
+  v0.3.1 lifecycle, and v0.3.2 administrator/audit migrations exist under `db/*/migrations`.
 - Migration commands use the installed `golang-migrate` CLI through `make db/migrate/up` and `make db/migrate/down`.
 - Reset and Docker/Compose bootstrap apply all migrations first and then seed SQL.
 - `make db/migrate/smoke` checks clean setup, seed counts, the v0.1 relationship migration, the
@@ -79,6 +80,14 @@ Current infrastructure caveat:
 Current scope:
 - v0.3.0 Private Library Foundation is closed: authenticated users add known catalog books from
   catalog/detail pages and list only their own items at `/me/library`.
-- v0.3.1 Reading-State Lifecycle is implemented and awaiting review plus mandatory manual smoke:
-  owner-scoped status changes, timestamp rules, optimistic conflicts, catalog state display, and
-  explicit-confirmation removal are in scope. Notes, ratings, and public libraries remain deferred.
+- v0.3.1 Reading-State Lifecycle is closed: owner-scoped status changes, timestamp rules,
+  optimistic conflicts, catalog state display, and explicit-confirmation removal are implemented.
+- v0.3.2 Curated Catalog Operations is active. Deterministic development/demo data and provenance
+  (#23), the administrator boundary, catalog MPA forms, immutable slugs, and transactional audit
+  (#24) are implemented and accepted. Automated HTTP acceptance passes on SQLite and PostgreSQL;
+  the user confirmed successful operator browser review on 2026-10-12. Non-persistent missing-book
+  feedback (#25) is implemented at `GET/POST /books/request`, with bounded field validation,
+  metadata-only logging and a one-request flash. Automated checks pass; the user confirmed
+  successful manual browser review and accepted #25 on 2026-10-15. The subsequent agreed v0.3.2
+  follow-up will persist title, optional author and submitting user; it is not implemented yet.
+  Operator listing and processed/rejected decisions are planned for v0.4.3. v0.3.2 remains active.

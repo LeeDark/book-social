@@ -51,7 +51,7 @@ func TestCurrentUserMiddlewareAddsMinimalIdentityForValidSession(t *testing.T) {
 	if err := cookies.Set(seedResponse, rawToken); err != nil {
 		t.Fatalf("Set() error = %v", err)
 	}
-	wantUser := users.User{ID: 7, FirstName: "Ada", Login: "ada", Email: "ada@example.test", RoleID: 99}
+	wantUser := users.User{ID: 7, FirstName: "Ada", Login: "ada", Email: "ada@example.test", RoleID: 99, IsAdmin: true}
 	wantHash := HashToken(rawToken)
 	fixedNow := time.Date(2026, 8, 19, 12, 0, 0, 0, time.UTC)
 	loader := currentUserLoaderFunc(func(_ context.Context, gotHash []byte, gotNow time.Time) (users.User, error) {
@@ -74,8 +74,8 @@ func TestCurrentUserMiddlewareAddsMinimalIdentityForValidSession(t *testing.T) {
 		if !ok {
 			t.Fatal("valid session has no current-user identity")
 		}
-		if identity != (Identity{ID: 7, FirstName: "Ada", Login: "ada", Email: "ada@example.test"}) {
-			t.Fatalf("identity = %+v, want minimal identity without role internals", identity)
+		if identity != (Identity{ID: 7, FirstName: "Ada", Login: "ada", Email: "ada@example.test", IsAdmin: true}) {
+			t.Fatal("identity did not preserve the internal administrator capability")
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})).ServeHTTP(recorder, req)

@@ -43,6 +43,67 @@ adds the ordinary `user` role and session storage for v0.2.5 without adding demo
 Migration `000004` adds the private `library_items` foundation without repurposing legacy demo
 library tables.
 Migration `000005` adds the reading-state lifecycle without changing the historical foundation.
+Migration `000006` adds the administrator reference role and catalog audit storage.
+
+## Curated Catalog Operations Schema
+
+Migration `000006_add_catalog_operations` adds `admin` with `is_admin` enabled and
+`catalog_audit_log`: `id`, `actor_user_id`, `entity_type`, `entity_id`, `action`, `summary`,
+and `occurred_at`. The schema accepts only the `book` entity type and `create`/`correct` actions.
+Actor and book foreign keys use `RESTRICT` for deletion and ID updates to retain audit references.
+SQLite stores UTC time as RFC3339Nano text; PostgreSQL uses `TIMESTAMPTZ`.
+
+The down migration refuses rollback if audit rows exist or any user has the `admin` role.
+It never silently deletes audit history or revokes an appointed administrator. Empty rollback
+removes the table and the unassigned role while retaining ordinary users and catalog data.
+
+The operator service and both repositories now support administrator-only find/create/correct,
+service-owned transactions, append-only audit writes, server-generated summaries, and UTC audit
+timestamps. A correction input has no slug field. Relationship replacement, front-cover changes,
+and the audit entry commit together or roll back together. A successful correction with no changed
+groups records an empty summary; otherwise the summary is a sorted comma-separated group list.
+Changing a front-cover URL clears its old technical metadata; unchanged URLs retain it, and
+other cover variants are preserved. The runtime now exposes the guarded operator search and book
+forms through these services for both backends. The schema alone does not prevent a database owner
+from updating or deleting audit rows through direct SQL.
+The full contract is in [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
+
+### Appoint the First Administrator
+
+Apply migration `000006`, then register the intended account normally. The environment owner uses
+the database console to identify that account by its exact login:
+
+```sql
+SELECT u.id, u.login, r.role_name
+FROM users u
+JOIN roles r ON r.id = u.user_role_id
+WHERE u.login = 'chosen-login';
+```
+
+Verify the returned account and replace `123` below with its positive user ID. Both supported
+dialects accept this operation:
+
+```sql
+BEGIN;
+
+UPDATE users
+SET user_role_id = (SELECT id FROM roles WHERE role_name = 'admin')
+WHERE id = 123
+    AND user_role_id = (SELECT id FROM roles WHERE role_name = 'user');
+
+SELECT u.id, u.login, r.role_name, r.is_admin
+FROM users u
+JOIN roles r ON r.id = u.user_role_id
+WHERE u.id = 123;
+```
+
+Commit with `COMMIT;` only when the result is the intended account with role `admin` and enabled
+`is_admin`; otherwise run `ROLLBACK;`. Do not execute an unscoped update or change `user.is_admin`.
+This is a deliberate account appointment, not a seed operation or a role-management UI.
+Ordinary registration remains bound to `user`, and no administrator account is seeded.
+This assignment enables the runtime operator routes at `/admin/catalog`. The guard observes a role
+change on the next session request without requiring the user to sign in again. Operator services
+also recheck the current capability, inside the transaction for writes.
 
 Run pending SQLite migrations against the default local database:
 
@@ -153,6 +214,12 @@ used for local development or disposable test data.
 `seed` means loading deterministic sample/reference data after the schema exists. The current
 seed SQL is development data, not production data. It is expected to run after a fresh schema
 or reset; it is not treated as a repeatable data migration.
+
+The seed's catalog provenance, its separation from test fixtures, and the cover-metadata record
+are documented in [Curated Demo Catalog Provenance](demo_catalog_provenance.md).
+The dataset contains 109 books, 24 authors, 23 genres, and no covers. Fresh bootstrap assigns book
+IDs in slug order in both dialects. This does not renumber existing databases: the seed is only for
+fresh disposable databases. Stable public identifiers remain the book slugs.
 
 Reset scripts destroy only disposable local database state, run all migrations up, and then apply
 the matching seed SQL.

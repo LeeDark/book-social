@@ -6,8 +6,15 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-v0.3.1 Reading-State Lifecycle is implemented on top of the v0.3.0 Private Library Foundation and
-is awaiting external review and the mandatory local browser smoke check:
+v0.3.1 Reading-State Lifecycle is closed on top of the v0.3.0 Private Library Foundation. v0.3.2
+Curated Catalog Operations is active: deterministic demo data/provenance and administrator-only
+catalog find/create/correct pages with transactional audit are implemented. Operator HTTP acceptance
+passes on SQLite and PostgreSQL; the user confirmed successful manual browser review.
+Authenticated missing-book feedback (#25) is implemented with a server-rendered form, safe
+metadata-only event and one-request confirmation. Automated checks pass; the user confirmed
+successful manual browser review and accepted #25 on 2026-10-15.
+The agreed v0.3.2 follow-up will persist title, optional author and submitting user; it is not yet
+implemented. Operator listing and processed/rejected decisions are planned for v0.4.3.
 
 - Home and About pages.
 - Book catalog page.
@@ -199,6 +206,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Domain model](docs/domain.md)
 - [Go and SQL readability](docs/code-readability.md)
 - [Private Library v0.3 contract](docs/library_v0_3.md)
+- [Curated Catalog Operations v0.3.2 contract](docs/catalog_operations_v0_3_2.md)
 - [Database v0.1](docs/database_v0_1.md)
 - [Database v0.2](docs/database_v0_2.md)
 - [MPA auth contract](docs/drafts/auth-contract.ru.md)
@@ -211,7 +219,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Complete external review, PostgreSQL verification, and mandatory local smoke for v0.3.1.
+- Persist missing-book requests in v0.3.2, then complete verification and release closure.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:
