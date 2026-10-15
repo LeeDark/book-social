@@ -87,5 +87,7 @@ Current scope:
   (#24) are implemented and accepted. Automated HTTP acceptance passes on SQLite and PostgreSQL;
   the user confirmed successful operator browser review on 2026-10-12. Non-persistent missing-book
   feedback (#25) is implemented at `GET/POST /books/request`, with bounded field validation,
-  metadata-only logging and a one-request flash. Automated checks pass; manual browser review and
-  acceptance remain pending, and v0.3.2 remains active.
+  metadata-only logging and a one-request flash. Automated checks pass; the user confirmed
+  successful manual browser review and accepted #25 on 2026-10-15. The subsequent agreed v0.3.2
+  follow-up will persist title, optional author and submitting user; it is not implemented yet.
+  Operator listing and processed/rejected decisions are planned for v0.4.3. v0.3.2 remains active.

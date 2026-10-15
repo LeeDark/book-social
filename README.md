@@ -11,8 +11,10 @@ Curated Catalog Operations is active: deterministic demo data/provenance and adm
 catalog find/create/correct pages with transactional audit are implemented. Operator HTTP acceptance
 passes on SQLite and PostgreSQL; the user confirmed successful manual browser review.
 Authenticated missing-book feedback (#25) is implemented with a server-rendered form, safe
-metadata-only event and one-request confirmation. Automated checks pass; manual browser review
-and acceptance remain pending.
+metadata-only event and one-request confirmation. Automated checks pass; the user confirmed
+successful manual browser review and accepted #25 on 2026-10-15.
+The agreed v0.3.2 follow-up will persist title, optional author and submitting user; it is not yet
+implemented. Operator listing and processed/rejected decisions are planned for v0.4.3.
 
 - Home and About pages.
 - Book catalog page.
@@ -217,7 +219,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Complete manual browser review and acceptance of the v0.3.2 missing-book feedback workflow (#25).
+- Persist missing-book requests in v0.3.2, then complete verification and release closure.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:

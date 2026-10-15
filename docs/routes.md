@@ -138,7 +138,8 @@ Only body fields `title` and `author` are used. Invalid fields, malformed encodi
 and redirects with `303 /books` and a one-request confirmation flash. Unsafe cross-origin POST
 requests receive `403` before event creation; `no-store` applies to these routes.
 The literal `/books/request` route takes precedence over `/books/{slug}`. The flow does not persist
-a request or call an external service. Manual browser review is pending. Details are in
+a request or call an external service. The user confirmed successful manual browser review and
+accepted #25 on 2026-10-15. Details are in
 [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
 
 ## Catalog Filters

@@ -1102,3 +1102,37 @@ Review boundary:
   v0.3.2 remains active; no GitHub issue edits or closure were performed.
 - This final step changed only documentation. No web server was started in the sandbox, no
   development database was modified, and no staging or commit was performed for step 6.
+
+## 2026-10-15 — Missing-book browser review accepted (#25)
+
+Result:
+
+- After receiving the detailed browser verification steps, the user confirmed that everything
+  passed and accepted #25. This is user-reported manual evidence; browser version, backend and
+  exact launch command were not separately reported. No new PostgreSQL integration evidence is
+  inferred from this confirmation.
+- Marked the six missing-book browser checklist items complete and the missing-book release item
+  accepted in the English, Ukrainian and local private roadmaps. Synchronized README, project
+  context, routes and the catalog contract. Earlier pending checkpoints remain as history.
+- All three v0.3.2 scope items are accepted. v0.3.2 remains active pending release closure.
+
+Validation and boundary:
+
+- `git diff --check` passed. Only documentation changed; runtime tests were not rerun because
+  implementation, templates, migrations and dependencies were unchanged.
+- No browser/server was started by Codex. No GitHub issue edit or closure, staging or commit was
+  performed. The local private roadmap remains ignored by Git.
+
+## 2026-10-15 — Missing-book persistence and operator workflow scheduled
+
+- After discussing the limitations of metadata-only events, the user agreed to split the remaining
+  workflow: persist title, optional author and submitting user in v0.3.2; show an operator the saved
+  requests and support processed/rejected decisions in v0.4.3.
+- Added an unchecked v0.3.2 persistence follow-up and v0.4.3 operator scope to the English, Ukrainian
+  and local private roadmaps. Updated the contract, README, project context and pending verification
+  checklist. The original non-persistent #25 browser acceptance remains historical evidence.
+- Persistence is planned, not implemented. It will collect new submissions; earlier metadata-only
+  events cannot recover book text. v0.3.2 remains active until the new scope is implemented and
+  verified. Success will require saving first; text remains excluded from logs.
+- Only documentation changed. `git diff --check` passed; runtime tests were not rerun. No GitHub
+  changes, staging or commit were performed.

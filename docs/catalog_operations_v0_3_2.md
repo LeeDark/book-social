@@ -3,8 +3,8 @@
 This document defines the accepted v0.3.2 contract for issues #23–#25. Demo data/provenance (#23)
 and the operator workflow (#24) are implemented; automated operator HTTP acceptance passes on
 SQLite and PostgreSQL, and the user confirmed successful manual browser review. Missing-book
-feedback (#25) is implemented with automated service and HTTP coverage; its manual browser review
-and acceptance remain pending.
+feedback (#25) is implemented with automated service and HTTP coverage; the user confirmed
+successful manual browser review and accepted it on 2026-10-15.
 
 ## Purpose and Boundaries
 
@@ -140,11 +140,30 @@ operation. The log records the fact of submission, not enough data to identify a
 requested book. It redirects with `303` to `/books` and a fixed one-request confirmation flash that
 does not promise catalog addition. Following the redirect or refreshing creates no further event.
 
-Manual review remains pending; see the [missing-book browser checklist](testing.md#manual-browser-smoke-v032-missing-book-feedback-25).
+Manual review was confirmed successful by the user on 2026-10-15; see the
+[completed missing-book browser checklist](testing.md#manual-browser-smoke-v032-missing-book-feedback-25).
+
+## Planned Missing-Book Persistence Follow-Up (v0.3.2)
+
+After accepting the non-persistent #25 flow, the user expanded v0.3.2 on 2026-10-15:
+
+- Save the normalized title, optional author and authenticated submitting user's ID as application
+  data in the database. User identity must come from the session, not submitted form fields.
+- Keep the existing form and validation. Set the success flash and redirect only after a successful
+  save; a failed save must not produce a success confirmation or successful-submission event.
+- Keep title/author values out of logs; saving bounded application data is separate from logging.
+- Apply paired SQLite/PostgreSQL migrations and verify repository persistence, HTTP outcomes and
+  failure behavior. This work remains planned, not implemented or covered by the accepted smoke.
+
+The existing metadata-only events cannot reconstruct earlier submissions. Persistence will collect
+new requests after implementation. An operator list and the ability to mark requests processed or
+rejected are explicitly planned for v0.4.3, alongside controlled import. v0.3.2 does not add that
+operator workflow or notifications.
 
 ## Deferred Work
 
-v0.3.2 does not include external imports or APIs, public submissions, persistent requests, catalog
-deletion, author/genre administration, role-management UI, slug redirects, Unicode slugs or
+v0.3.2 does not include external imports or APIs, public anonymous submissions, an operator request
+inbox or request processing, catalog deletion, author/genre administration, role-management UI,
+slug redirects, Unicode slugs or
 transliteration, cover uploads/proxying, source adapters, audit browsing, pagination, full-text
 search, or concurrent editor conflict handling.

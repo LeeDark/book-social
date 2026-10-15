@@ -17,8 +17,10 @@ release completed automated verification, SQLite migration smoke, and the mandat
 smoke. Active scope: **v0.3.2 Curated Catalog Operations**. Demo data/provenance (#23) and the
 operator workflow (#24) are implemented, with SQLite/PostgreSQL automated acceptance passing.
 The user confirmed successful operator browser review on 2026-10-12; #24 is accepted.
-Missing-book feedback (#25) is implemented with automated verification; manual browser review and
-acceptance remain pending. v0.3.2 remains active.
+Missing-book feedback (#25) is implemented with automated verification; the user confirmed successful
+manual browser review on 2026-10-15 and accepted #25's non-persistent flow. The agreed v0.3.2
+follow-up is to persist the requested title, optional author and submitting user. Operator listing
+and processed/rejected decisions are planned for v0.4.3. Persistence is not implemented yet.
 
 ## Planning Principles
 
@@ -304,13 +306,18 @@ Status: active. The accepted contract is in
 
 - [x] Separate test fixtures, deterministic development seed data, and the curated demo catalog;
   document demo metadata provenance and permitted cover use.
-- [ ] Add a clear missing-book state and simple feedback path without an external import.
+- [x] Add a clear missing-book state and simple feedback path without an external import.
+- [ ] Persist the validated missing-book title, optional author and authenticated submitting user;
+  confirm success only after saving. Keep submitted text out of logs. Operator listing and request
+  processing are deferred to v0.4.3.
 - [x] Add only the administrator role, protected routes, catalog find/create/correct operations,
   and critical-change audit records needed to maintain the demo catalog.
 
 #24 implementation, automated verification, and user-confirmed browser review are complete.
-The operator workflow is accepted. #25 feedback is implemented and automated checks pass; manual
-browser review and acceptance remain pending, so its release checkbox stays open.
+The operator workflow is accepted. #25 feedback implementation and automated verification are
+complete; the user confirmed successful manual browser review and accepted it on 2026-10-15.
+The original three scope items are accepted. The subsequently agreed persistence follow-up remains
+open; v0.3.2 is not complete until that work and its verification are accepted.
 
 Outcome: a small closed cohort can use reproducible catalog data that an operator can correct
 without direct SQL.
@@ -466,6 +473,8 @@ Outcome: a user reliably finds an existing catalog record and can add it to thei
 
 #### v0.4.3 — First Controlled Import
 
+- [ ] Show an authorized operator the missing-book requests saved since v0.3.2, including title,
+  optional author and submitting user; allow marking a request processed or rejected.
 - [ ] Implement one source-specific lookup/import by ISBN or external ID, started only by an
   authenticated operator.
 - [ ] Add source provenance, rate/timeout controls, idempotency, conflict review, and explicit
