@@ -770,446 +770,78 @@ Residual risks:
   well below SQLite and PostgreSQL parameter limits; add pagination or another batching strategy
   before the catalog grows materially.
 
-## 2026-10-04 — activate v0.3.2 curated catalog operations
-
-Decision:
-
-- Activate v0.3.2 Curated Catalog Operations after closing v0.3.1.
-- Define the operator, seed/provenance, audit, and missing-book contracts before migrations or MPA
-  implementation begin.
-- Keep the scope bounded to deterministic demo data, one appointed administrator role, book
-  create/correct operations using existing authors and genres, and non-persistent feedback.
-- Defer external import, persistent requests, catalog deletion, author/genre administration,
-  role-management UI, slug history, media handling, and general search.
-
-## 2026-10-11 — v0.3.2 development seed and provenance (#23)
-
-Result:
-
-- Kept ordinary minimal test fixtures independent from the full development seed; introduced
-  explicitly named seed acceptance helpers for disposable SQLite and guarded PostgreSQL databases.
-- Made fresh book IDs deterministic in both SQL dialects by inserting books in slug order.
-  Existing databases are not changed; seed is not a repeatable migration.
-- Documented all 109 demo book slugs, repository lineage, unknown external metadata provenance,
-  edition/attribution limitations, absent covers, and the permitted-use record required before
-  adding any future cover URL. No description authorship or reuse rights are inferred from Git.
-- Added two-bootstrap SQLite comparison, complete cross-dialect catalog comparison, provenance
-  inventory and relationship checks, PostgreSQL sequence checks, and HTTP seed acceptance for
-  catalog/filter/detail/author reads and authenticated private-library addition.
-- Marked the seed/provenance roadmap item complete after verification; administrator operations,
-  missing-book feedback, and milestone release closure remain pending.
-
-Validation:
-
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil ./internal/app ./internal/storage/sqlite -run 'DevelopmentSeed|BookRepository|LibraryRepository' -v` passed.
-- `make db/migrate/smoke` passed against disposable SQLite databases.
-- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
-- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
-- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed, including PostgreSQL seed parity,
-  sequences, repository tests, and HTTP acceptance; its disposable Compose resources were removed.
-  The first sandbox attempt could not download the pinned migrate tool; the approved retry passed.
-- After strengthening generated-ID ordering and cover-placeholder assertions,
-  `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil ./internal/app -run SQLiteDevelopmentSeed -v`
-  and `GOCACHE=/tmp/book-social-go-cache make test/integration` passed again.
-- `git diff --check` passed.
-
-Residual limitations:
-
-- Legacy descriptions, author biographies, and genre summaries have no confirmed original external
-  source or reuse basis. The provenance inventory records this explicitly; source verification or
-  reviewed replacement text remains necessary before broader reuse.
-- Fresh bootstrap changes numeric book IDs compared with the former insertion order. Slugs and
-  catalog metadata remain unchanged, and no existing development database was reset.
-
-## 2026-10-11 — v0.3.2 administrator schema (#24, step 1)
-
-Result:
-
-- Added paired migration `000006_add_catalog_operations`: the unassigned `admin` reference role
-  and catalog audit storage with book/action checks and restrictive actor/book foreign keys.
-- Down migration refuses rollback with existing audit rows or an assigned administrator, preserving
-  history and appointments. Empty rollback retains ordinary users and catalog records.
-- Documented deliberate appointment of an existing account by exact user ID and distinguished
-  the implemented schema from pending authorization, operator services, and append-only writes.
-- Updated SQLite's latest-version assertion and smoke rollback depth for the new migration.
-- Stopped at the step-1 review boundary. Administrator guards, operator repositories/services,
-  templates, and final issue verification are not implemented; #24 remains incomplete.
-
-Validation:
-
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil -run CatalogOperationsMigration -v`
-  passed for SQLite; PostgreSQL subtests skipped without a DSN.
-- `make db/migrate/smoke` passed against disposable SQLite databases.
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil ./internal/storage/sqlite ./internal/app`
-  passed.
-- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed with PostgreSQL migration,
-  constraint, rollback, repository, and HTTP checks. Its disposable Compose resources were removed.
-  The sandbox download restriction required an approved retry; the first PostgreSQL CLI run exposed
-  a semicolon in a migration comment, which was corrected before the successful run.
-- `git diff --check` passed.
-
-Limitations:
-
-- Audit append-only behavior and safe summary/UTC generation will be enforced at the application
-  write boundary in the remaining steps. Direct SQL by a database owner can still modify audit rows.
-- No migration was applied to the user's development database and no account was promoted.
-
-## 2026-10-11 — v0.3.2 administrator authorization (#24, step 2)
-
-Result:
-
-- Added internal `IsAdmin` to the application user and HTTP identity. Both repositories load
-  `roles.is_admin` in `FindByID`, so session requests observe current role assignments.
-- Added `RequireAdministrator` with anonymous `303 /login`, ordinary-user `403`, administrator
-  pass-through, and `no-store` responses.
-- Registered all five operator routes behind an injected `AdminCatalogHandler`, inside the
-  existing current-user/flash/cross-origin middleware chain. Runtime operator handlers remain
-  pending; tests inject a recording handler instead of implementing catalog operations.
-- Added SQLite/PostgreSQL acceptance for ordinary registration, same-session promotion/demotion,
-  all route access outcomes, cross-origin POST refusal, and render/log privacy.
-- Kept page models and templates unchanged. Documented the implemented authorization checkpoint
-  separately from pending operator services, forms, and runtime wiring.
-
-Validation:
-
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/http/auth ./internal/app -run 'Administrator|CurrentUser' -v`
-  passed; opt-in PostgreSQL acceptance skipped without a DSN in that command.
-- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
-- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
-- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed, including PostgreSQL
-  administrator authorization and the existing migration/repository/HTTP checks. The sandbox
-  download restriction required an approved retry. Disposable Compose resources were removed.
-- `git diff --check` passed.
-
-Review boundary:
-
-- Stopped after step 2. Service-side actor authorization and transactional mutation checks belong
-  to step 3; operator forms and runtime handler wiring belong to step 4.
-- No user development database changes, account appointments, staging, or commits were performed.
-
-## 2026-10-11 — v0.3.2 catalog operator service (#24, step 3)
-
-Result:
-
-- Added a focused operator service and consuming repository/transaction contracts in `books`.
-  Read use cases check the actor's database capability; write use cases recheck it inside the
-  service-owned transaction before validation or mutations.
-- Added equivalent SQLite/PostgreSQL find, book-ID lookup, existing-author/genre options, creation,
-  correction, relationship replacement, front-cover update/clear, and append-only audit APIs.
-  Correction input has no slug field and the SQL never updates the slug.
-- Implemented title/slug/HTTPS validation, normalized ID sets, existing-selection checks, and
-  duplicate-slug conflict mapping. Invalid UTF-8 and NUL text are rejected consistently across
-  dialects instead of becoming PostgreSQL storage failures.
-- Used Go lowercase substring matching for bounded operator search, preserving literal SQL wildcard
-  characters and identical Unicode semantics. Blank service search does not list the catalog.
-- Generated UTC audit records with controlled sorted group summaries, including one empty-summary
-  record for successful no-op corrections. Cover URL changes clear stale technical metadata while
-  preserving other variants and metadata for unchanged URLs.
-- Added fake-based service checks and shared real-database acceptance, including rollback of all
-  book/link/cover changes when the final audit write fails.
-- Advanced PostgreSQL fixture sequences after explicit IDs. The first parity run exposed this
-  fixture limitation; the second exposed an incorrect constraint name in new slug-conflict mapping.
-  Both were corrected before the passing parity run.
-- Updated checkpoint documentation and synchronized the completed #23 checkbox in the Ukrainian
-  roadmap. #24 remains incomplete and runtime handler wiring is still pending.
-
-Validation:
-
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/storage/sqlite ./internal/storage/postgresql`
-  passed (PostgreSQL tests opt-in).
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/testutil -run 'Operator|SuggestSlug' -v`
-  passed for unit/SQLite tests, then the focused check passed again after additional refusal cases.
-- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
-- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed, including after the final code correction.
-- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed after the corrections, including
-  PostgreSQL operator acceptance with race checks. Disposable Compose resources were removed.
-- `git diff --check` passed.
-- Local `golangci-lint` did not complete: the installed v2.12.2 binary is built with Go 1.26.4,
-  while the active Go 1.27.1 standard library contains syntax its type checker cannot parse.
-  Retrying with a writable temporary lint cache eliminated cache errors but retained the toolchain
-  incompatibility. No lint-driven source changes were made.
-
-Readability follow-up:
-
-- Re-read `AGENTS.md` and `docs/code-readability.md`; separated service phases, expanded dense
-  literals/calls and SQL clauses, and clarified test fixtures without changing behavior or APIs.
-- Ran `gofmt` on the six touched Go files. The focused operator/slug check and
-  `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/testutil ./internal/storage/sqlite ./internal/storage/postgresql -count=1`
-  passed; PostgreSQL database tests skipped without the opt-in DSN.
-- `GOCACHE=/tmp/book-social-go-cache go vet ./...` and `git diff --check` passed.
-  PostgreSQL integration and lint were not rerun for this readability-only follow-up.
-
-Review boundary:
-
-- Stopped after step 3. Forms, handlers, flashes, and runtime dependency wiring remain step 4.
-- No user database mutations, staging, or commits were performed.
-
-## 2026-10-11 — v0.3.2 catalog operator MPA (#24, step 4)
-
-Result:
-
-- Added consuming HTTP service contracts, operator handlers and render-safe page/form models.
-  Wired the operator service/repository/handler in `cmd/web` for SQLite and PostgreSQL, using
-  the existing administrator guard, current-user loading, no-store and cross-origin protection.
-- Added search and shared creation/correction templates with labels, linked error summaries,
-  field errors, retained submitted values and existing-author/genre checkbox selections.
-  Correction displays the permanent slug without a mutable input. Cover URLs remain metadata;
-  the form neither uploads nor fetches images.
-- Kept status mapping in handlers: invalid IDs/forms/selections `422`, unknown books `404`,
-  duplicate creation slugs `409`, forbidden actors `403`, unexpected errors `500`.
-  Success uses `303` to the edit page and fixed one-request create/correct flashes.
-- Bounded URL-encoded POST bodies to 128 KiB, rejected duplicate scalar fields and malformed
-  selected IDs before writes, and used only POST-body metadata. Actor IDs come from request
-  identity; correction slug and audit metadata are never accepted from submitted fields.
-- Added optional creation-only ASCII slug suggestions that stop after manual edits and preserve
-  resubmitted slugs. Without JavaScript the operator supplies a slug; server validation remains
-  mandatory. No frontend framework or package dependency was added.
-- Added fake-service `httptest` checks through the real router/templates and Node built-in tests
-  with a DOM double. Updated database/routes/testing docs to describe the runtime checkpoint and
-  keep missing-book feedback (#25) explicitly planned.
-
-Validation:
-
-- Applied `gofmt` to changed Go files; `git diff --check` passed.
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/http/view ./internal/http/flash ./cmd/web`
-  passed (flash has no standalone test files; its new codes are exercised through HTTP tests).
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/app -run OperatorHTTP -count=1`
-  passed, including after the final refusal/escaping/empty-selection cases.
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/app ./internal/modules/books ./internal/http/view ./cmd/web -count=1`
-  and the same command with `-race` passed.
-- `node internal/web/tests/catalog-operator.test.cjs` passed all four tests; the `node --test`
-  and TAP-reporter invocations also exited successfully.
-- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector; opt-in PostgreSQL
-  database tests skipped without a DSN. No new database integration tests were added in this step.
-- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed.
-- PostgreSQL integration and lint were not rerun; the preceding step records the installed lint
-  binary/toolchain incompatibility. No web server or browser was started in the sandbox.
-
-Review boundary:
-
-- Stopped after step 4, without staging or committing. Final #24 acceptance, backend and browser
-  smoke checks, and completion documentation remain step 5; the roadmap item remains unchecked.
-- Manual routes: `/admin/catalog`, `/admin/catalog/books/new`,
-  `/admin/catalog/books/{valid-id}/edit`, `/admin/catalog/books/unknown/edit`, and `/books/{slug}`.
-  Run locally outside the sandbox with an explicitly appointed test administrator.
-- No user development database mutations or administrator appointments were performed.
-
-## 2026-10-12 — v0.3.2 operator acceptance (#24, step 5)
-
-Result:
-
-- Read the current GitHub #24 acceptance criteria, repository instructions, readability guide,
-  operator contract, and the relevant roadmap/checkpoint documentation.
-- Added a shared DB-backed HTTP acceptance scenario for SQLite and opt-in PostgreSQL using the
-  real session loader, guard, router, templates, services, repositories and migrated fixtures.
-  It verifies normalized creation, correction through the permanent public URL, exactly one safe
-  UTC audit row per successful create/correct/no-op, retained validation/conflict errors,
-  one-request flashes, no-store/cross-origin and anonymous/ordinary-user refusals, and safe logs.
-- Injected audit failures only in disposable fixture databases and verified that HTTP `500`
-  responses leave no partial book/link/cover correction or newly created book.
-- Updated README, AI context, contract, database/routes/testing docs, and synchronized the
-  English/Ukrainian and local private roadmap status. Operator implementation and automated
-  verification are complete; manual browser review/user acceptance remain explicitly pending.
-  Missing-book feedback (#25) and all-of-v0.3.2 closure remain out of scope.
-- Added a detailed manual browser checklist without claiming it was run. No production Go or SQL
-  behavior was changed in this step.
-
-Validation:
-
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/app -run CatalogOperatorHTTPAcceptance -count=1 -v`
-  passed for SQLite and skipped PostgreSQL without a DSN. The focused check passed again after
-  the final HTTP rollback cases were added.
-- `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector, including the final
-  acceptance test. The default opt-in PostgreSQL skips are covered by the separate integration run.
-- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed, including the final PostgreSQL
-  HTTP acceptance and rollback cases. Migration `000006` up/down/up and sequential race checks
-  passed; only the target's disposable Compose container/network were removed afterward.
-- `make db/migrate/smoke` passed for SQLite migration, seed and legacy-data checks.
-- `node internal/web/tests/catalog-operator.test.cjs` passed all four suggestion tests.
-- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed. An intermediate incomplete test-helper
-  rename was caught by vet, corrected, and followed by passing final unit/integration/vet checks.
-- `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache ./bin/golangci-lint run ./... --config=./.golangci.yml`
-  passed with `0 issues`. The initial sandbox toolchain download failed on the read-only cache;
-  an approved download of the version already declared in `go.mod` resolved the previous lint
-  incompatibility without changing project dependencies or the installed lint version.
-- `gofmt` applied to the new Go test; `gofmt -l` and `git diff --check` passed.
-
-Review boundary:
-
-- Automated step 5 is complete. Browser layout, JavaScript events and keyboard behavior still
-  require local user review using the pending checklist in `docs/testing.md`.
-- The operator roadmap checkbox remains unchecked until that review and acceptance. GitHub #24
-  remains open; no GitHub edits, staging or commits were performed.
-- No app listener/browser was started in the sandbox, no user development database was mutated,
-  and no administrator account was appointed outside disposable tests.
-
-## 2026-10-12 — v0.3.2 operator browser review accepted (#24)
-
-Result:
-
-- The user confirmed successful local browser review and accepted #24 after clarifying that a
-  malformed route ID returns `422` and that author/genre selections may be empty by contract.
-  This is user-reported manual evidence; the browser version and backend were not separately
-  recorded. Automated HTTP acceptance already passed independently on SQLite and PostgreSQL.
-- Marked the operator release item and its authorization/mutation/audit scope checkboxes complete
-  in the English, Ukrainian and local private roadmaps. Marked the seven manual smoke checklist
-  items complete and updated README, project context, operator contract and route documentation.
-  Earlier checkpoint history was preserved rather than rewritten as if it had always been complete.
-- Marked all five acceptance criteria complete in GitHub #24 and inspected the published body.
-  The issue remains OPEN; this marks acceptance without closing the issue or claiming v0.3.2
-  release closure. Missing-book feedback (#25) remains planned.
-
-Validation and boundary:
-
-- `git diff --check` passed; only documentation changed. Runtime tests were not rerun because
-  implementation, templates, migrations and dependencies were unchanged.
-- GitHub body/state were read back after the edit; the initial sandbox network failure required
-  an approved retry. No GitHub comment, issue closure, staging or commit was performed.
-
-## 2026-10-14 — Missing-book feedback implemented and documented (#25)
-
-Result:
-
-- Implemented the six-step missing-book plan through service, handler, runtime wiring, accessible
-  MPA form, catalog/empty-state links, one-request confirmation, tests and completion documentation.
-  Authenticated `GET/POST /books/request` uses the existing guard, cross-origin protection and
-  `no-store` policy. Valid submission redirects with `303 /books`; invalid input returns `422`.
-- Title is required; author is optional. Both are trimmed and limited to 255 Unicode code points.
-  Invalid UTF-8, NUL, malformed encoding and bodies over 64 KiB are rejected. Field errors retain
-  escaped values and are associated with their inputs.
-- The event `catalog_missing_book_requested` contains only request/actor IDs, normalized field
-  lengths and author presence. Submitted text and unrelated request data are excluded, replacing
-  the earlier contract proposal to log bounded book text. This records a submission but cannot
-  identify the requested book for fulfilment. No request persistence or external lookup was added.
-- Updated README, routes, the catalog contract, project context and English/Ukrainian/local private
-  roadmaps. Added a pending manual browser checklist to `docs/testing.md`; existing history remains
-  intact. The local private roadmap remains ignored by Git.
-
-Validation:
-
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/app ./internal/http/flash ./internal/http/view -count=1`
-  passed; the flash package has no standalone tests, and the HTTP tests exercise its behavior.
-- `GOCACHE=/tmp/book-social-go-cache make test` passed with `-race -count=1`. Opt-in PostgreSQL tests
-  skipped because `BOOK_SOCIAL_POSTGRES_TEST_DSN` was not configured; this run does not claim
-  PostgreSQL integration verification.
-- `GOCACHE=/tmp/book-social-go-cache go vet ./...` passed. `gofmt -l` found no formatting differences
-  in the Go files changed for #25, and `git diff --check` passed.
-
-Review boundary:
-
-- Automated implementation and documentation are complete. Browser layout, visible keyboard focus
-  and manual acceptance still require local user review. The #25 release checkbox stays open and
-  v0.3.2 remains active; no GitHub issue edits or closure were performed.
-- This final step changed only documentation. No web server was started in the sandbox, no
-  development database was modified, and no staging or commit was performed for step 6.
-
-## 2026-10-15 — Missing-book browser review accepted (#25)
-
-Result:
-
-- After receiving the detailed browser verification steps, the user confirmed that everything
-  passed and accepted #25. This is user-reported manual evidence; browser version, backend and
-  exact launch command were not separately reported. No new PostgreSQL integration evidence is
-  inferred from this confirmation.
-- Marked the six missing-book browser checklist items complete and the missing-book release item
-  accepted in the English, Ukrainian and local private roadmaps. Synchronized README, project
-  context, routes and the catalog contract. Earlier pending checkpoints remain as history.
-- All three v0.3.2 scope items are accepted. v0.3.2 remains active pending release closure.
-
-Validation and boundary:
-
-- `git diff --check` passed. Only documentation changed; runtime tests were not rerun because
-  implementation, templates, migrations and dependencies were unchanged.
-- No browser/server was started by Codex. No GitHub issue edit or closure, staging or commit was
-  performed. The local private roadmap remains ignored by Git.
-
-## 2026-10-15 — Missing-book persistence and operator workflow scheduled
-
-- After discussing the limitations of metadata-only events, the user agreed to split the remaining
-  workflow: persist title, optional author and submitting user in v0.3.2; show an operator the saved
-  requests and support processed/rejected decisions in v0.4.3.
-- Added an unchecked v0.3.2 persistence follow-up and v0.4.3 operator scope to the English, Ukrainian
-  and local private roadmaps. Updated the contract, README, project context and pending verification
-  checklist. The original non-persistent #25 browser acceptance remains historical evidence.
-- Persistence is planned, not implemented. It will collect new submissions; earlier metadata-only
-  events cannot recover book text. v0.3.2 remains active until the new scope is implemented and
-  verified. Success will require saving first; text remains excluded from logs.
-- Only documentation changed. `git diff --check` passed; runtime tests were not rerun. No GitHub
-  changes, staging or commit were performed.
-
-## 2026-10-23 — Missing-book persistence step 1: stored model defined (#25)
-
-- Defined `missing_book_requests` with database-generated ID, session-owned user ID, normalized
-  title, optional author represented as non-null empty text, and application-assigned UTC creation
-  time. SQLite will use RFC3339Nano text; PostgreSQL will use `TIMESTAMPTZ`.
-- Fixed the planned user reference policy as `ON DELETE CASCADE` / `ON UPDATE RESTRICT`; requests
-  are removed with their account. Existing audit restrictions and account-deletion functionality
-  are outside this change. No account details are copied into a request.
-- Repeated submissions remain separate rows. No required catalog references, deduplication,
-  processing status, operator listing or processing API is introduced. v0.4.3 will add processing
-  fields; retained requests will initially be unprocessed.
-- Updated the catalog contract, domain description and database documentation. Existing runtime
-  remains non-persistent; migrations and repositories belong to subsequent plan steps.
-- `git diff --check` passed. No runtime tests were needed for this documentation-only step.
-  No GitHub edits, staging or commit were performed.
-
-## 2026-10-23 — Missing-book persistence step 2: paired migrations (#25)
-
-- Added paired `000007_add_missing_book_requests` up/down migrations. The table stores request ID,
-  submitting user, title, non-null optional author and creation time. Named text-length checks,
-  required fields and `ON DELETE CASCADE` / `ON UPDATE RESTRICT` match the defined model. SQLite
-  explicitly rejects NUL text, matching PostgreSQL's built-in restriction.
-- Rollback refuses a non-empty request table. PostgreSQL locks the table before checking emptiness
-  to prevent concurrent writes being silently dropped. Empty rollback/reapply preserves the
-  preceding user, catalog, role and audit schema/data.
-- Added shared SQLite/PostgreSQL migration tests covering Unicode boundaries, empty author,
-  repeated requests, required fields, foreign keys, user deletion/ID changes, and guarded rollback.
-  Updated the latest SQLite version assertion and smoke rollback depth from three to four steps
-  so it still exercises removal of the library foundation.
-- Updated database, contract and testing documentation. Repositories and service wiring remain
-  pending; the runtime form still does not save requests. Historical migrations were not changed.
-
-Validation:
-
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil -run 'MissingBookRequestsMigration|TestSQLiteAuthAndLibraryMigrationOnFreshDatabase' -count=1 -v`
-  passed on SQLite; PostgreSQL cases skipped without a DSN in this initial check.
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil ./internal/storage/sqlite ./internal/app -count=1`
-  passed.
-- `make db/migrate/smoke` passed on disposable SQLite databases, including `000007` and legacy-data
-  upgrade. `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
-- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed with actual PostgreSQL migration
-  up/down/up and shared constraints/rollback tests. The first sandbox attempt could not download
-  the pinned migrate tool; an approved retry installed it and completed the isolated integration
-  target. Its disposable Compose container/network were removed afterward.
-- `GOCACHE=/tmp/book-social-go-cache go vet ./internal/testutil`, formatting and `git diff --check`
-  passed. No user development database was migrated, no web server was started, and no GitHub edits,
-  staging or commit were performed.
-
-## 2026-10-23 — Missing-book persistence step 3: SQLite/PostgreSQL repositories (#25)
-
-- Added the small `books.MissingBookRepository.Create` contract and
-  `CreateMissingBookRequestParams` for service-validated title/author, submitting user and creation
-  time. Both storage packages expose concrete constructors and execute one parameterized insert.
-  SQLite uses UTC RFC3339Nano text; PostgreSQL receives the supplied time converted to UTC.
-- Unexpected database failures return only `ErrMissingBookInternal`, without wrapped driver
-  diagnostics that could contain submitted text. Canceled/expired contexts retain their standard
-  errors. Repositories do not normalize fields, assign identity/time, log or emit events.
-- Added shared disposable-database tests for exact stored fields, empty author, Unicode limits,
-  SQL punctuation, UTC conversion, repeated submissions, safe constraint/connection errors and
-  canceled/deadline contexts. Updated the contract, database docs and repository checklist.
-- Service/runtime wiring remains step 4; the current HTTP flow still does not save requests.
-
-Validation:
-
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil -run 'Test(SQLite|Postgres)MissingBookRepository' -count=1 -v`
-  passed on SQLite; PostgreSQL cases skipped without a DSN in this initial check.
-- `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/storage/sqlite ./internal/storage/postgresql ./internal/testutil -count=1`
-  passed, with the default opt-in PostgreSQL skips.
-- `GOCACHE=/tmp/book-social-go-cache go vet ./internal/modules/books ./internal/storage/sqlite ./internal/storage/postgresql ./internal/testutil`
-  passed. Formatting checks and `git diff --check` passed.
-- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed with actual PostgreSQL repository
-  tests and the race detector, plus migration up/down/up and existing HTTP acceptance checks. The
-  first sandbox attempt could not access the pinned migrate tool's module proxy; an approved retry
-  completed the target. Its disposable Compose container/network were removed afterward.
-- No development database was changed or web server started. No GitHub edits, staging or commit
-  were performed.
+## 2026-10-04 — v0.3.2 scope agreed
+
+- Activated curated catalog operations: deterministic demo data/provenance, administrator
+  create/correct operations with audit, and authenticated missing-book feedback.
+- External import, catalog deletion, author/genre administration and media storage were deferred.
+  Feedback was initially non-persistent; its scope was expanded on 2026-10-15.
+
+## 2026-10-11 — Development seed and provenance (#23)
+
+- Separated minimal test fixtures from the deterministic 109-book SQLite/PostgreSQL development
+  seed. Fresh IDs follow slug order; existing databases are unaffected.
+- Recorded metadata lineage, unknown source/reuse rights and cover limitations. Unverified covers
+  remain absent; broader reuse still requires source verification or reviewed replacement text.
+- Added seed parity, generated-ID/sequence, provenance and HTTP acceptance checks.
+- Passed: `make test` (race), `make test/integration` (PostgreSQL), `make db/migrate/smoke`,
+  `go vet ./...` and `git diff --check`. #23 accepted.
+
+## 2026-10-11–12 — Administrator catalog workflow (#24)
+
+- Added paired migration `000006`: unassigned administrator role and audit storage. Rollback
+  refuses existing audit data or an appointed administrator.
+- Added current-role authorization and five guarded MPA routes for find/create/correct. Anonymous
+  users receive `303 /login`; ordinary users receive `403`. Promotion/demotion affects the next
+  request; administrator capability stays out of page models.
+- Implemented accessible retained form errors, immutable correction slugs, optional ASCII slug
+  suggestions, existing-author/genre selections, HTTPS cover metadata and one-request flashes.
+  Unknown IDs return `404`, malformed input `422`, duplicate slugs `409`.
+- Book/link/cover changes and one UTC audit entry commit together, including no-op corrections.
+  Audit summaries contain only changed field groups; direct SQL by the owner is not prevented.
+- SQLite/PostgreSQL HTTP acceptance verifies authorization, public URLs, safe logs and rollback
+  after audit failure. Optional author/genre selections remain valid.
+- Passed: `make test` (race), `make test/integration`, `make db/migrate/smoke`,
+  `go vet ./...`, `node internal/web/tests/catalog-operator.test.cjs` (four tests),
+  formatting and `git diff --check`. Lint passed with Go 1.26.4 after resolving the active
+  Go 1.27.1/toolchain incompatibility.
+- User confirmed browser review and accepted #24 on 2026-10-12. Browser version/backend were not
+  reported. Acceptance was recorded in the docs, roadmaps and GitHub criteria without closing
+  the issue or declaring the release complete.
+
+## 2026-10-14–15 — Missing-book form, acceptance and scope expansion (#25)
+
+- Added authenticated `GET/POST /books/request`, catalog/empty-state links, required title,
+  optional author, accessible `422` errors and `303 /books` with one-request confirmation.
+  Fields are trimmed and limited to 255 Unicode code points; invalid UTF-8, NUL and
+  malformed/oversized bodies are rejected. Existing auth, cross-origin and no-store policies apply.
+- The original flow logs only request/actor IDs, field lengths and author presence. It stores no
+  book text, so earlier events cannot identify or recover the requested books.
+- Service/HTTP tests cover validation, escaping, anonymous/expired sessions, cross-origin refusal,
+  private-data exclusion and flash lifetime. `make test` (race), `go vet ./...`, formatting
+  and `git diff --check` passed; PostgreSQL tests skipped without a DSN.
+- User confirmed browser review and accepted the original flow on 2026-10-15; browser version,
+  backend and launch command were not reported.
+- Subsequently agreed: save title, optional author and submitting user in v0.3.2; add operator
+  listing and processed/rejected decisions in v0.4.3. Updated contracts, roadmaps and verification
+  plans. v0.3.2 remains active until the expanded scope is implemented and verified.
+
+## 2026-10-23 — Missing-book persistence foundation (#25, steps 1–3)
+
+- Defined `missing_book_requests`: generated ID, session-owned user ID, normalized title,
+  optional author as empty text, and application-assigned UTC creation time. No account snapshots,
+  catalog references, deduplication or processing status; repeated submissions are separate rows.
+- Added paired migration `000007` with required fields, Unicode length checks and
+  `ON DELETE CASCADE` / `ON UPDATE RESTRICT`. Non-empty rollback is refused; PostgreSQL locks
+  the table before checking emptiness. Updated migration-version and SQLite smoke rollback checks.
+- Added `MissingBookRepository.Create` and SQLite/PostgreSQL implementations using one
+  parameterized insert. Time uses UTC RFC3339Nano text in SQLite and `TIMESTAMPTZ` in PostgreSQL.
+  Unexpected failures return a safe sentinel without driver details; context errors are preserved.
+- Shared disposable-database tests cover stored fields, optional author, Unicode, repeated
+  submissions, constraints, cascade, rollback, UTC conversion and safe errors.
+- Passed: focused migration/repository tests, affected-package tests, `make test` (step 2),
+  `make test/integration` (steps 2–3, including real PostgreSQL and race checks),
+  `make db/migrate/smoke` (step 2), relevant `go vet`, formatting and `git diff --check`.
+  Development databases were not changed.
+- Current boundary: schema and repositories are ready; service/runtime wiring remains step 4.
+  The running form still does not save requests. Operator processing remains v0.4.3.
