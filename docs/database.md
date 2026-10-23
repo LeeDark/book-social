@@ -20,6 +20,22 @@ Current state:
   implemented v0.3.1 lifecycle flow.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
+## Planned Missing-Book Request Storage
+
+The v0.3.2 persistence follow-up has a defined model for a new `missing_book_requests` table:
+`id`, `user_id`, `title`, `author`, `created_at`. It is not present in the current schema and no
+migration or repository is implemented by the model-definition step.
+
+The user reference will be required, with `ON DELETE CASCADE` and `ON UPDATE RESTRICT`. Title is
+required normalized text of 1–255 Unicode code points. Author is non-null optional text of 0–255
+code points, represented as `''` when absent. Creation time is application-assigned UTC, stored as
+RFC3339Nano text in SQLite and `TIMESTAMPTZ` in PostgreSQL. Repeated submissions are separate rows;
+there is no title/author/user uniqueness constraint or processing status in v0.3.2.
+
+The full ownership, normalization and later processing boundary is defined in the
+[stored-request contract](catalog_operations_v0_3_2.md#stored-request-model-defined-persistence-not-implemented).
+Paired migrations, constraints and repository verification are subsequent implementation steps.
+
 ## Migration Layout
 
 SQLite and PostgreSQL migrations live in separate folders because the project keeps

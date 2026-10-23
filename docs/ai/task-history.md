@@ -1136,3 +1136,19 @@ Validation and boundary:
   verified. Success will require saving first; text remains excluded from logs.
 - Only documentation changed. `git diff --check` passed; runtime tests were not rerun. No GitHub
   changes, staging or commit were performed.
+
+## 2026-10-23 — Missing-book persistence step 1: stored model defined (#25)
+
+- Defined `missing_book_requests` with database-generated ID, session-owned user ID, normalized
+  title, optional author represented as non-null empty text, and application-assigned UTC creation
+  time. SQLite will use RFC3339Nano text; PostgreSQL will use `TIMESTAMPTZ`.
+- Fixed the planned user reference policy as `ON DELETE CASCADE` / `ON UPDATE RESTRICT`; requests
+  are removed with their account. Existing audit restrictions and account-deletion functionality
+  are outside this change. No account details are copied into a request.
+- Repeated submissions remain separate rows. No required catalog references, deduplication,
+  processing status, operator listing or processing API is introduced. v0.4.3 will add processing
+  fields; retained requests will initially be unprocessed.
+- Updated the catalog contract, domain description and database documentation. Existing runtime
+  remains non-persistent; migrations and repositories belong to subsequent plan steps.
+- `git diff --check` passed. No runtime tests were needed for this documentation-only step.
+  No GitHub edits, staging or commit were performed.

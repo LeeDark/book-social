@@ -155,6 +155,42 @@ After accepting the non-persistent #25 flow, the user expanded v0.3.2 on 2026-10
 - Apply paired SQLite/PostgreSQL migrations and verify repository persistence, HTTP outcomes and
   failure behavior. This work remains planned, not implemented or covered by the accepted smoke.
 
+### Stored Request Model (Defined; Persistence Not Implemented)
+
+The persistence model was defined on 2026-10-23 for implementation in the following steps. The
+planned table is `missing_book_requests`; no such table or persistence behavior is added by this
+model-definition step.
+
+| Field | Meaning and ownership | Stored value |
+|-------|-----------------------|--------------|
+| `id` | Database-generated request identity | Positive integer primary key |
+| `user_id` | Submitting account, taken from authenticated session identity | Required foreign key to `users.id` |
+| `title` | Reader's requested book title, normalized by the service | Required text, 1–255 Unicode code points after trimming |
+| `author` | Reader's optional author text, normalized by the service | Non-null text, 0–255 Unicode code points; absent or whitespace-only input becomes `""` |
+| `created_at` | Submission time assigned by the application | Required UTC timestamp; RFC3339Nano text in SQLite and `TIMESTAMPTZ` in PostgreSQL |
+
+Both text fields use the existing trimming and validation rules: invalid UTF-8 and NUL are rejected.
+Author text is not an `authors` reference, and a request has no required `books` reference: the
+requested book or author may be absent from the catalog. Names, emails and other account details
+are not copied into the request. The existing `MissingBookRequest` Go type is form/use-case input
+with title and author only; server-owned identity, request ID and creation time are not form fields.
+
+The submitting-user foreign key will use `ON DELETE CASCADE` and `ON UPDATE RESTRICT`. Deleting an
+account deletes its requests rather than retaining orphaned rows or copied personal identifiers.
+This rule applies only to missing-book requests; it does not change existing audit restrictions or
+introduce account-deletion functionality.
+
+Each successful submission creates a separate row. There is no uniqueness rule on title, author or
+user, no deduplication and no retry/idempotency guarantee. Refreshing the redirected catalog page is
+a GET and creates no request. `id` distinguishes repeated submissions; `created_at` records when
+each was made.
+
+v0.3.2 stores submitted requests without a status, decision reason, processing timestamp, reviewer
+or resolved-book link. All requests still present when the v0.4.3 processing workflow is introduced
+will be initial unprocessed requests; that release will add the required processing model through
+a later migration. This step does not add operator queries, indexes for an undecided listing
+contract, notification delivery, or a background job model.
+
 The existing metadata-only events cannot reconstruct earlier submissions. Persistence will collect
 new requests after implementation. An operator list and the ability to mark requests processed or
 rejected are explicitly planned for v0.4.3, alongside controlled import. v0.3.2 does not add that
