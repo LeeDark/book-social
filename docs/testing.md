@@ -68,7 +68,7 @@ Current repository and HTTP integration tests create disposable SQLite databases
 - tests insert minimal deterministic data needed by the behavior under test
 
 Shared helpers in `internal/testutil` build SQLite and PostgreSQL test schemas by applying the
-checked-in migrations through catalog-operations migration `000006`, then seed a small deterministic
+checked-in migrations through missing-book request migration `000007`, then seed a small deterministic
 catalog fixture and ordinary user role. Tests can still keep scenario-specific fixture rows locally
 when they need more data than the default helper provides.
 
@@ -318,13 +318,16 @@ the date, browser/version, database backend, and result when rerunning this chec
 
 Cross-origin refusal, expired-session behavior, malformed/oversized bodies, Unicode boundaries,
 HTML escaping and exclusion of private request data are covered by `httptest`. The flow adds no
-request table or database write and calls no external catalog service.
+request database write and calls no external catalog service. Migration `000007` now creates the
+request table, but repository/service wiring is not implemented yet.
 
 ### Planned Persistence Follow-Up Checks
 
 The accepted checklist above covers the original non-persistent #25 flow. The user subsequently
-agreed to save title, optional author and submitting user in v0.3.2; implementation and these checks
-remain pending. Operator listing and processed/rejected decisions belong to v0.4.3.
+agreed to save title, optional author and submitting user in v0.3.2. Migration `000007` is implemented
+with shared SQLite/PostgreSQL checks for text limits, required fields, user references, cascade and
+guarded rollback. Repository persistence, service wiring and the checklist below remain pending.
+Operator listing and processed/rejected decisions belong to v0.4.3.
 
 - [ ] Verify paired SQLite/PostgreSQL migrations and repository round trips for title, optional
   author and submitting user, using disposable databases.

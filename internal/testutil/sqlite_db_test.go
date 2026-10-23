@@ -90,8 +90,8 @@ func TestSQLiteAuthAndLibraryMigrationOnFreshDatabase(t *testing.T) {
 	ctx := context.Background()
 	db := NewSQLiteMemoryTestDB(t, ctx)
 
-	if got := applySQLiteCatalogTestMigrations(t, ctx, db, ""); got != "000006" {
-		t.Fatalf("latest migration version = %q, want %q", got, "000006")
+	if got := applySQLiteCatalogTestMigrations(t, ctx, db, ""); got != "000007" {
+		t.Fatalf("latest migration version = %q, want %q", got, "000007")
 	}
 
 	checks := []struct {

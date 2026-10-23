@@ -20,21 +20,30 @@ Current state:
   implemented v0.3.1 lifecycle flow.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
-## Planned Missing-Book Request Storage
+## Missing-Book Request Schema (Persistence Wiring Pending)
 
-The v0.3.2 persistence follow-up has a defined model for a new `missing_book_requests` table:
-`id`, `user_id`, `title`, `author`, `created_at`. It is not present in the current schema and no
-migration or repository is implemented by the model-definition step.
+Paired migration `000007_add_missing_book_requests` creates `missing_book_requests` with
+`id`, `user_id`, `title`, `author`, `created_at`. Repositories and service wiring remain pending;
+the current HTTP flow still emits metadata-only events without saving requests.
 
-The user reference will be required, with `ON DELETE CASCADE` and `ON UPDATE RESTRICT`. Title is
+The user reference is required, with `ON DELETE CASCADE` and `ON UPDATE RESTRICT`. Title is
 required normalized text of 1–255 Unicode code points. Author is non-null optional text of 0–255
 code points, represented as `''` when absent. Creation time is application-assigned UTC, stored as
 RFC3339Nano text in SQLite and `TIMESTAMPTZ` in PostgreSQL. Repeated submissions are separate rows;
 there is no title/author/user uniqueness constraint or processing status in v0.3.2.
 
+All fields are non-null; absent author text must be explicitly stored as `''`. Named length checks
+apply to both dialects. SQLite also explicitly rejects NUL in title/author, matching PostgreSQL's
+text behavior. UTF-8 validation, trimming and assignment of UTC creation time remain application
+responsibilities. The migration does not create a default timestamp or seed requests.
+
+The down migration refuses rollback while requests exist. PostgreSQL takes an exclusive table lock
+before checking emptiness; SQLite migrations run transactionally through the CLI. An empty table
+can be rolled back and recreated without changing users, catalog data or audit records.
+
 The full ownership, normalization and later processing boundary is defined in the
 [stored-request contract](catalog_operations_v0_3_2.md#stored-request-model-defined-persistence-not-implemented).
-Paired migrations, constraints and repository verification are subsequent implementation steps.
+Repository persistence and HTTP verification are subsequent implementation steps.
 
 ## Migration Layout
 
@@ -60,6 +69,7 @@ Migration `000004` adds the private `library_items` foundation without repurposi
 library tables.
 Migration `000005` adds the reading-state lifecycle without changing the historical foundation.
 Migration `000006` adds the administrator reference role and catalog audit storage.
+Migration `000007` adds missing-book request storage; it does not yet connect the form to the database.
 
 ## Curated Catalog Operations Schema
 

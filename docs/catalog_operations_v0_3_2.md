@@ -152,14 +152,15 @@ After accepting the non-persistent #25 flow, the user expanded v0.3.2 on 2026-10
 - Keep the existing form and validation. Set the success flash and redirect only after a successful
   save; a failed save must not produce a success confirmation or successful-submission event.
 - Keep title/author values out of logs; saving bounded application data is separate from logging.
-- Apply paired SQLite/PostgreSQL migrations and verify repository persistence, HTTP outcomes and
-  failure behavior. This work remains planned, not implemented or covered by the accepted smoke.
+- Paired SQLite/PostgreSQL migration `000007` now creates the request table with constraints and
+  guarded rollback. Repository persistence, HTTP outcomes and save-failure behavior remain pending
+  and are not covered by the earlier accepted browser smoke.
 
 ### Stored Request Model (Defined; Persistence Not Implemented)
 
-The persistence model was defined on 2026-10-23 for implementation in the following steps. The
-planned table is `missing_book_requests`; no such table or persistence behavior is added by this
-model-definition step.
+The persistence model was defined on 2026-10-23. Paired migration `000007` now creates
+`missing_book_requests`; runtime persistence remains pending. The model-definition step added no
+runtime behavior, and the migration step does not change the service or HTTP flow.
 
 | Field | Meaning and ownership | Stored value |
 |-------|-----------------------|--------------|
@@ -175,7 +176,7 @@ requested book or author may be absent from the catalog. Names, emails and other
 are not copied into the request. The existing `MissingBookRequest` Go type is form/use-case input
 with title and author only; server-owned identity, request ID and creation time are not form fields.
 
-The submitting-user foreign key will use `ON DELETE CASCADE` and `ON UPDATE RESTRICT`. Deleting an
+The submitting-user foreign key uses `ON DELETE CASCADE` and `ON UPDATE RESTRICT`. Deleting an
 account deletes its requests rather than retaining orphaned rows or copied personal identifiers.
 This rule applies only to missing-book requests; it does not change existing audit restrictions or
 introduce account-deletion functionality.

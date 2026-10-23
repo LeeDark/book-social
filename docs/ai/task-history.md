@@ -1152,3 +1152,35 @@ Validation and boundary:
   remains non-persistent; migrations and repositories belong to subsequent plan steps.
 - `git diff --check` passed. No runtime tests were needed for this documentation-only step.
   No GitHub edits, staging or commit were performed.
+
+## 2026-10-23 — Missing-book persistence step 2: paired migrations (#25)
+
+- Added paired `000007_add_missing_book_requests` up/down migrations. The table stores request ID,
+  submitting user, title, non-null optional author and creation time. Named text-length checks,
+  required fields and `ON DELETE CASCADE` / `ON UPDATE RESTRICT` match the defined model. SQLite
+  explicitly rejects NUL text, matching PostgreSQL's built-in restriction.
+- Rollback refuses a non-empty request table. PostgreSQL locks the table before checking emptiness
+  to prevent concurrent writes being silently dropped. Empty rollback/reapply preserves the
+  preceding user, catalog, role and audit schema/data.
+- Added shared SQLite/PostgreSQL migration tests covering Unicode boundaries, empty author,
+  repeated requests, required fields, foreign keys, user deletion/ID changes, and guarded rollback.
+  Updated the latest SQLite version assertion and smoke rollback depth from three to four steps
+  so it still exercises removal of the library foundation.
+- Updated database, contract and testing documentation. Repositories and service wiring remain
+  pending; the runtime form still does not save requests. Historical migrations were not changed.
+
+Validation:
+
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil -run 'MissingBookRequestsMigration|TestSQLiteAuthAndLibraryMigrationOnFreshDatabase' -count=1 -v`
+  passed on SQLite; PostgreSQL cases skipped without a DSN in this initial check.
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil ./internal/storage/sqlite ./internal/app -count=1`
+  passed.
+- `make db/migrate/smoke` passed on disposable SQLite databases, including `000007` and legacy-data
+  upgrade. `GOCACHE=/tmp/book-social-go-cache make test` passed with the race detector.
+- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed with actual PostgreSQL migration
+  up/down/up and shared constraints/rollback tests. The first sandbox attempt could not download
+  the pinned migrate tool; an approved retry installed it and completed the isolated integration
+  target. Its disposable Compose container/network were removed afterward.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./internal/testutil`, formatting and `git diff --check`
+  passed. No user development database was migrated, no web server was started, and no GitHub edits,
+  staging or commit were performed.
