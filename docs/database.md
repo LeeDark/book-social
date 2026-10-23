@@ -23,8 +23,9 @@ Current state:
 ## Missing-Book Request Schema (Persistence Wiring Pending)
 
 Paired migration `000007_add_missing_book_requests` creates `missing_book_requests` with
-`id`, `user_id`, `title`, `author`, `created_at`. Repositories and service wiring remain pending;
-the current HTTP flow still emits metadata-only events without saving requests.
+`id`, `user_id`, `title`, `author`, `created_at`. Both storage packages now implement the
+`books.MissingBookRepository.Create` contract with one parameterized insert. Service wiring remains
+pending; the current HTTP flow still emits metadata-only events without saving requests.
 
 The user reference is required, with `ON DELETE CASCADE` and `ON UPDATE RESTRICT`. Title is
 required normalized text of 1–255 Unicode code points. Author is non-null optional text of 0–255
@@ -43,7 +44,12 @@ can be rolled back and recreated without changing users, catalog data or audit r
 
 The full ownership, normalization and later processing boundary is defined in the
 [stored-request contract](catalog_operations_v0_3_2.md#stored-request-model-defined-persistence-not-implemented).
-Repository persistence and HTTP verification are subsequent implementation steps.
+Repository writes preserve supplied title/author text, store the supplied user ID and convert the
+supplied creation time to UTC. Validation, normalization, session identity and time assignment belong
+to the service. Unexpected database failures return only `books.ErrMissingBookInternal`, with no
+wrapped driver error or submitted text; finished contexts retain cancellation/deadline errors.
+Repositories do not log, emit events or provide operator listing/processing methods. Service wiring
+and HTTP verification are subsequent implementation steps.
 
 ## Migration Layout
 

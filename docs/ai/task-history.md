@@ -1184,3 +1184,32 @@ Validation:
 - `GOCACHE=/tmp/book-social-go-cache go vet ./internal/testutil`, formatting and `git diff --check`
   passed. No user development database was migrated, no web server was started, and no GitHub edits,
   staging or commit were performed.
+
+## 2026-10-23 — Missing-book persistence step 3: SQLite/PostgreSQL repositories (#25)
+
+- Added the small `books.MissingBookRepository.Create` contract and
+  `CreateMissingBookRequestParams` for service-validated title/author, submitting user and creation
+  time. Both storage packages expose concrete constructors and execute one parameterized insert.
+  SQLite uses UTC RFC3339Nano text; PostgreSQL receives the supplied time converted to UTC.
+- Unexpected database failures return only `ErrMissingBookInternal`, without wrapped driver
+  diagnostics that could contain submitted text. Canceled/expired contexts retain their standard
+  errors. Repositories do not normalize fields, assign identity/time, log or emit events.
+- Added shared disposable-database tests for exact stored fields, empty author, Unicode limits,
+  SQL punctuation, UTC conversion, repeated submissions, safe constraint/connection errors and
+  canceled/deadline contexts. Updated the contract, database docs and repository checklist.
+- Service/runtime wiring remains step 4; the current HTTP flow still does not save requests.
+
+Validation:
+
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/testutil -run 'Test(SQLite|Postgres)MissingBookRepository' -count=1 -v`
+  passed on SQLite; PostgreSQL cases skipped without a DSN in this initial check.
+- `GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/storage/sqlite ./internal/storage/postgresql ./internal/testutil -count=1`
+  passed, with the default opt-in PostgreSQL skips.
+- `GOCACHE=/tmp/book-social-go-cache go vet ./internal/modules/books ./internal/storage/sqlite ./internal/storage/postgresql ./internal/testutil`
+  passed. Formatting checks and `git diff --check` passed.
+- `GOCACHE=/tmp/book-social-go-cache make test/integration` passed with actual PostgreSQL repository
+  tests and the race detector, plus migration up/down/up and existing HTTP acceptance checks. The
+  first sandbox attempt could not access the pinned migrate tool's module proxy; an approved retry
+  completed the target. Its disposable Compose container/network were removed afterward.
+- No development database was changed or web server started. No GitHub edits, staging or commit
+  were performed.

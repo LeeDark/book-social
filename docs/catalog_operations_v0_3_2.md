@@ -153,14 +153,16 @@ After accepting the non-persistent #25 flow, the user expanded v0.3.2 on 2026-10
   save; a failed save must not produce a success confirmation or successful-submission event.
 - Keep title/author values out of logs; saving bounded application data is separate from logging.
 - Paired SQLite/PostgreSQL migration `000007` now creates the request table with constraints and
-  guarded rollback. Repository persistence, HTTP outcomes and save-failure behavior remain pending
+  guarded rollback. Both storage packages now implement one-insert request creation through
+  `MissingBookRepository`. Service wiring, HTTP outcomes and save-failure behavior remain pending
   and are not covered by the earlier accepted browser smoke.
 
 ### Stored Request Model (Defined; Persistence Not Implemented)
 
 The persistence model was defined on 2026-10-23. Paired migration `000007` now creates
 `missing_book_requests`; runtime persistence remains pending. The model-definition step added no
-runtime behavior, and the migration step does not change the service or HTTP flow.
+runtime behavior. Migrations and repository implementations do not yet change the service or HTTP
+flow.
 
 | Field | Meaning and ownership | Stored value |
 |-------|-----------------------|--------------|
@@ -180,6 +182,13 @@ The submitting-user foreign key uses `ON DELETE CASCADE` and `ON UPDATE RESTRICT
 account deletes its requests rather than retaining orphaned rows or copied personal identifiers.
 This rule applies only to missing-book requests; it does not change existing audit restrictions or
 introduce account-deletion functionality.
+
+`CreateMissingBookRequestParams` carries service-validated title/author and server-owned user ID and
+creation time to `MissingBookRepository.Create`. Both implementations use a parameterized insert
+without normalization, timestamp assignment, events or logging. Unexpected database failures become
+`ErrMissingBookInternal`, without wrapping raw diagnostics that may contain submitted text. Context
+cancellation and deadline errors are preserved. The service will own validation and success ordering
+when connected in the next step.
 
 Each successful submission creates a separate row. There is no uniqueness rule on title, author or
 user, no deduplication and no retry/idempotency guarantee. Refreshing the redirected catalog page is

@@ -319,17 +319,19 @@ the date, browser/version, database backend, and result when rerunning this chec
 Cross-origin refusal, expired-session behavior, malformed/oversized bodies, Unicode boundaries,
 HTML escaping and exclusion of private request data are covered by `httptest`. The flow adds no
 request database write and calls no external catalog service. Migration `000007` now creates the
-request table, but repository/service wiring is not implemented yet.
+request table, and both repositories support creation, but service wiring is not implemented yet.
 
 ### Planned Persistence Follow-Up Checks
 
 The accepted checklist above covers the original non-persistent #25 flow. The user subsequently
 agreed to save title, optional author and submitting user in v0.3.2. Migration `000007` is implemented
 with shared SQLite/PostgreSQL checks for text limits, required fields, user references, cascade and
-guarded rollback. Repository persistence, service wiring and the checklist below remain pending.
+guarded rollback. Shared repository tests verify both backends' stored fields, optional author,
+UTC time, repeated submissions, parameterized text, safe database errors and finished contexts.
+Service wiring and HTTP verification remain pending.
 Operator listing and processed/rejected decisions belong to v0.4.3.
 
-- [ ] Verify paired SQLite/PostgreSQL migrations and repository round trips for title, optional
+- [x] Verify paired SQLite/PostgreSQL migrations and repository round trips for title, optional
   author and submitting user, using disposable databases.
 - [ ] Verify that a valid authenticated POST saves the normalized fields with the session user's
   ID, ignoring any submitted user/actor ID, before returning the success redirect and flash.
