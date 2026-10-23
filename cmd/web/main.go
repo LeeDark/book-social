@@ -48,13 +48,14 @@ func main() {
 
 func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	var (
-		err          error
-		db           *sql.DB
-		bookRepo     books.BookRepository
-		operatorRepo books.OperatorRepository
-		libraryRepo  library.Repository
-		userRepo     users.RegistrationRepository
-		sessionRepo  users.SessionRepository
+		err             error
+		db              *sql.DB
+		bookRepo        books.BookRepository
+		operatorRepo    books.OperatorRepository
+		missingBookRepo books.MissingBookRepository
+		libraryRepo     library.Repository
+		userRepo        users.RegistrationRepository
+		sessionRepo     users.SessionRepository
 	)
 
 	switch cfg.Env {
@@ -62,6 +63,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		db, err = sqlite.Open(ctx, cfg.DB.DSN)
 		bookRepo = sqlite.NewBookRepository(db)
 		operatorRepo = sqlite.NewCatalogOperatorRepository(db)
+		missingBookRepo = sqlite.NewMissingBookRepository(db)
 		libraryRepo = sqlite.NewLibraryRepository(db)
 		userRepo = sqlite.NewUserRepository(db)
 		sessionRepo = sqlite.NewSessionRepository(db)
@@ -69,6 +71,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		db, err = postgresql.Open(ctx, cfg.DB.DSN)
 		bookRepo = postgresql.NewBookRepository(db)
 		operatorRepo = postgresql.NewCatalogOperatorRepository(db)
+		missingBookRepo = postgresql.NewMissingBookRepository(db)
 		libraryRepo = postgresql.NewLibraryRepository(db)
 		userRepo = postgresql.NewUserRepository(db)
 		sessionRepo = postgresql.NewSessionRepository(db)
@@ -94,7 +97,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	sessionService := users.NewSessionService(userRepo, sessionRepo, cfg.Auth.SessionLifetime)
 	catalogService := books.NewCatalogService(bookRepo)
 	operatorService := books.NewOperatorService(operatorRepo)
-	missingBookService := books.NewMissingBookService(logger)
+	missingBookService := books.NewMissingBookService(missingBookRepo, logger)
 	libraryService := library.NewService(libraryRepo, bookRepo)
 
 	currentUserMiddleware := httpauth.NewCurrentUserMiddleware(cookies, sessionService)

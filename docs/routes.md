@@ -137,9 +137,11 @@ Only body fields `title` and `author` are used. Invalid fields, malformed encodi
 64 KiB return accessible `422` form errors. Successful submission emits one metadata-only event
 and redirects with `303 /books` and a one-request confirmation flash. Unsafe cross-origin POST
 requests receive `403` before event creation; `no-store` applies to these routes.
-The literal `/books/request` route takes precedence over `/books/{slug}`. The flow does not persist
-a request or call an external service. The user confirmed successful manual browser review and
-accepted #25 on 2026-10-15. Details are in
+The literal `/books/request` route takes precedence over `/books/{slug}`. The service now saves the
+normalized fields, session user ID and UTC time before reporting success; save failures return a
+generic `500` without a success event, flash or redirect. No external service is called. Migration
+`000007` is required. The user accepted the original non-persistent flow on 2026-10-15; real-database
+HTTP acceptance and renewed browser review of persistence remain pending. Details are in
 [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
 
 ## Catalog Filters

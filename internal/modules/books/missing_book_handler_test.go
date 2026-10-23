@@ -38,7 +38,8 @@ func TestMissingBookConfirmationAppearsOnceAfterRedirect(t *testing.T) {
 	logger := slog.New(slog.NewJSONHandler(&logs, nil))
 	flashes := flash.NewManager(false)
 	cookies := auth.NewCookieManager(auth.CookieConfig{})
-	handler := NewMissingBookHandler(NewMissingBookService(logger), flashes, renderer, logger)
+	repo := &fakeMissingBookRepository{}
+	handler := NewMissingBookHandler(NewMissingBookService(repo, logger), flashes, renderer, logger)
 	catalog := NewCatalogHandler(fakeCatalogPageProvider{
 		catalogData: CatalogPageData{Page: view.Page{Title: "Books"}},
 	}, renderer, logger, nil)
@@ -100,6 +101,9 @@ func TestMissingBookConfirmationAppearsOnceAfterRedirect(t *testing.T) {
 	if strings.Count(logs.String(), `"msg":"catalog_missing_book_requested"`) != 1 {
 		t.Fatal("following the redirect or refreshing emitted another event")
 	}
+	if repo.calls != 1 {
+		t.Fatal("following the redirect or refreshing saved another request")
+	}
 }
 
 func (f *fakeMissingBookRenderer) Render(w http.ResponseWriter, status int, page string, data any) error {
@@ -125,6 +129,7 @@ func TestMissingBookHandlerRequest(t *testing.T) {
 		body      string
 		anonymous bool
 		renderErr error
+		saveErr   error
 		status    int
 		location  string
 		field     string
@@ -142,6 +147,7 @@ func TestMissingBookHandlerRequest(t *testing.T) {
 		{name: "anonymous submission", method: http.MethodPost, body: "title=Book", anonymous: true, status: http.StatusSeeOther, location: "/login"},
 		{name: "unsupported method", method: http.MethodPut, body: "title=Book", status: http.StatusMethodNotAllowed},
 		{name: "render failure", method: http.MethodGet, renderErr: errors.New("template unavailable"), status: http.StatusInternalServerError},
+		{name: "save failure", method: http.MethodPost, body: "title=private-title&author=private-author", saveErr: ErrMissingBookInternal, status: http.StatusInternalServerError},
 	}
 
 	for _, tt := range tests {
@@ -149,7 +155,8 @@ func TestMissingBookHandlerRequest(t *testing.T) {
 			var logs bytes.Buffer
 			logger := slog.New(slog.NewJSONHandler(&logs, nil))
 			renderer := &fakeMissingBookRenderer{err: tt.renderErr}
-			handler := NewMissingBookHandler(NewMissingBookService(logger), flash.NewManager(false), renderer, logger)
+			repo := &fakeMissingBookRepository{err: tt.saveErr}
+			handler := NewMissingBookHandler(NewMissingBookService(repo, logger), flash.NewManager(false), renderer, logger)
 			cookies := auth.NewCookieManager(auth.CookieConfig{})
 			currentUser := auth.NewCurrentUserMiddleware(cookies, missingBookUserLoader{})
 			stack := chimiddleware.RequestID(currentUser.Handler(http.HandlerFunc(handler.Request)))
@@ -175,6 +182,16 @@ func TestMissingBookHandlerRequest(t *testing.T) {
 			}
 			if events != wantEvents || strings.Contains(logs.String(), "session-secret") {
 				t.Fatalf("unexpected event count or session-token leak: %s", &logs)
+			}
+			wantSaves := 0
+			if tt.wantEvent || tt.saveErr != nil {
+				wantSaves = 1
+			}
+			if repo.calls != wantSaves {
+				t.Fatalf("save attempts = %d, want %d", repo.calls, wantSaves)
+			}
+			if tt.saveErr != nil && (rec.Body.String() != "internal server error\n" || strings.Contains(logs.String(), "private-title") || strings.Contains(logs.String(), "private-author")) {
+				t.Fatal("save failure disclosed submitted fields or internal diagnostics")
 			}
 			wantFlashes := 0
 			if tt.wantEvent {

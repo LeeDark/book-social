@@ -89,5 +89,6 @@ Current scope:
   feedback (#25) is implemented at `GET/POST /books/request`, with bounded field validation,
   metadata-only logging and a one-request flash. Automated checks pass; the user confirmed
   successful manual browser review and accepted #25 on 2026-10-15. The subsequent agreed v0.3.2
-  follow-up will persist title, optional author and submitting user; it is not implemented yet.
+  follow-up now saves title, optional author and submitting user before success; migration `000007`
+  is required. Real-database HTTP acceptance and renewed browser review remain pending.
   Operator listing and processed/rejected decisions are planned for v0.4.3. v0.3.2 remains active.

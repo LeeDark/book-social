@@ -20,7 +20,8 @@ The user confirmed successful operator browser review on 2026-10-12; #24 is acce
 Missing-book feedback (#25) is implemented with automated verification; the user confirmed successful
 manual browser review on 2026-10-15 and accepted #25's non-persistent flow. The agreed v0.3.2
 follow-up is to persist the requested title, optional author and submitting user. Operator listing
-and processed/rejected decisions are planned for v0.4.3. Persistence is not implemented yet.
+and processed/rejected decisions are planned for v0.4.3. Service/runtime persistence is implemented;
+real-database HTTP acceptance and renewed browser review remain pending.
 
 ## Planning Principles
 

@@ -135,15 +135,18 @@ trimming; a blank author has length zero and `has_author=false`. The actor comes
 identity, not submitted fields. Submitted title/author text, credentials, session tokens, and
 unrelated request data are excluded. This metadata-only event replaces the earlier plan to log
 bounded title/author text and follows #25's restriction on arbitrary free-text logging.
-The POST performs no database write, external lookup, import, email, queue, or administrator inbox
-operation. The log records the fact of submission, not enough data to identify and fulfil the
-requested book. It redirects with `303` to `/books` and a fixed one-request confirmation flash that
-does not promise catalog addition. Following the redirect or refreshing creates no further event.
+The POST now saves normalized title, optional author, the authenticated user ID and a server-assigned
+UTC creation time through the configured SQLite/PostgreSQL repository. Only after saving does it
+emit the metadata-only event and redirect with `303` to `/books` and a fixed one-request confirmation.
+A failed save returns a generic `500` without a success event, flash or redirect. No external lookup,
+import, email, queue or administrator inbox operation is performed. Confirmation does not promise
+catalog addition; following the redirect or refreshing creates no further event or request row.
 
-Manual review was confirmed successful by the user on 2026-10-15; see the
+Manual review of the original non-persistent flow was confirmed successful on 2026-10-15; persistence
+still requires real-database HTTP acceptance and renewed browser review. See the
 [completed missing-book browser checklist](testing.md#manual-browser-smoke-v032-missing-book-feedback-25).
 
-## Planned Missing-Book Persistence Follow-Up (v0.3.2)
+## Missing-Book Persistence Follow-Up (v0.3.2; Acceptance Pending)
 
 After accepting the non-persistent #25 flow, the user expanded v0.3.2 on 2026-10-15:
 
@@ -154,15 +157,15 @@ After accepting the non-persistent #25 flow, the user expanded v0.3.2 on 2026-10
 - Keep title/author values out of logs; saving bounded application data is separate from logging.
 - Paired SQLite/PostgreSQL migration `000007` now creates the request table with constraints and
   guarded rollback. Both storage packages now implement one-insert request creation through
-  `MissingBookRepository`. Service wiring, HTTP outcomes and save-failure behavior remain pending
-  and are not covered by the earlier accepted browser smoke.
+  `MissingBookRepository`. Service/runtime wiring and fake-based HTTP success/failure checks are
+  implemented; real-database HTTP acceptance and renewed browser review remain pending.
 
 ### Stored Request Model (Defined; Persistence Not Implemented)
 
 The persistence model was defined on 2026-10-23. Paired migration `000007` now creates
-`missing_book_requests`; runtime persistence remains pending. The model-definition step added no
-runtime behavior. Migrations and repository implementations do not yet change the service or HTTP
-flow.
+`missing_book_requests`. The service now calls the selected repository before reporting success.
+The earlier model/migration/repository steps were verified independently; full HTTP acceptance
+against both databases remains a subsequent step.
 
 | Field | Meaning and ownership | Stored value |
 |-------|-----------------------|--------------|
@@ -187,8 +190,8 @@ introduce account-deletion functionality.
 creation time to `MissingBookRepository.Create`. Both implementations use a parameterized insert
 without normalization, timestamp assignment, events or logging. Unexpected database failures become
 `ErrMissingBookInternal`, without wrapping raw diagnostics that may contain submitted text. Context
-cancellation and deadline errors are preserved. The service will own validation and success ordering
-when connected in the next step.
+cancellation and deadline errors are preserved. The service owns validation, session-derived user ID,
+UTC time assignment and save-before-event ordering. The handler confirms only a successful result.
 
 Each successful submission creates a separate row. There is no uniqueness rule on title, author or
 user, no deduplication and no retry/idempotency guarantee. Refreshing the redirected catalog page is
@@ -201,9 +204,9 @@ will be initial unprocessed requests; that release will add the required process
 a later migration. This step does not add operator queries, indexes for an undecided listing
 contract, notification delivery, or a background job model.
 
-The existing metadata-only events cannot reconstruct earlier submissions. Persistence will collect
-new requests after implementation. An operator list and the ability to mark requests processed or
-rejected are explicitly planned for v0.4.3, alongside controlled import. v0.3.2 does not add that
+Earlier metadata-only events cannot reconstruct old submissions. Persistence collects new requests
+after deploying the wiring with migration `000007` applied. An operator list and the ability to mark
+requests processed or rejected are explicitly planned for v0.4.3, alongside controlled import. v0.3.2 does not add that
 operator workflow or notifications.
 
 ## Deferred Work

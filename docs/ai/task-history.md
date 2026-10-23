@@ -826,7 +826,7 @@ Residual risks:
   listing and processed/rejected decisions in v0.4.3. Updated contracts, roadmaps and verification
   plans. v0.3.2 remains active until the expanded scope is implemented and verified.
 
-## 2026-10-23 — Missing-book persistence foundation (#25, steps 1–3)
+## 2026-10-23 — Missing-book persistence (#25, steps 1–4)
 
 - Defined `missing_book_requests`: generated ID, session-owned user ID, normalized title,
   optional author as empty text, and application-assigned UTC creation time. No account snapshots,
@@ -839,9 +839,15 @@ Residual risks:
   Unexpected failures return a safe sentinel without driver details; context errors are preserved.
 - Shared disposable-database tests cover stored fields, optional author, Unicode, repeated
   submissions, constraints, cascade, rollback, UTC conversion and safe errors.
+- Connected the selected backend in `cmd/web`. The service validates, saves normalized fields with
+  session user/UTC time, then emits the event; save failure returns `500` without success flash or
+  redirect. Fake-based tests verify ordering, failure privacy, refusals without writes and no repeat
+  save after refreshing the redirected catalog.
 - Passed: focused migration/repository tests, affected-package tests, `make test` (step 2),
   `make test/integration` (steps 2–3, including real PostgreSQL and race checks),
   `make db/migrate/smoke` (step 2), relevant `go vet`, formatting and `git diff --check`.
-  Development databases were not changed.
-- Current boundary: schema and repositories are ready; service/runtime wiring remains step 4.
-  The running form still does not save requests. Operator processing remains v0.4.3.
+  Step 4 passed focused service/HTTP tests, `make test` (race) and `go vet ./...`; default PostgreSQL
+  tests skipped without a DSN. Development databases were not changed.
+- Current boundary: runtime persistence is connected and requires migration `000007`. Real-database
+  HTTP acceptance remains step 5; renewed browser review is pending. Operator processing remains
+  v0.4.3.

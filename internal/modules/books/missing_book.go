@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/LeeDark/book-social/internal/modules/users"
@@ -15,11 +16,13 @@ type MissingBookRequest struct {
 }
 
 type MissingBookService struct {
+	repo   MissingBookRepository
 	logger *slog.Logger
+	now    func() time.Time
 }
 
-func NewMissingBookService(logger *slog.Logger) *MissingBookService {
-	return &MissingBookService{logger: logger}
+func NewMissingBookService(repo MissingBookRepository, logger *slog.Logger) *MissingBookService {
+	return &MissingBookService{repo: repo, logger: logger, now: time.Now}
 }
 
 func (s *MissingBookService) Request(ctx context.Context, actorID int, requestID string, input MissingBookRequest) error {
@@ -34,6 +37,15 @@ func (s *MissingBookService) Request(ctx context.Context, actorID int, requestID
 	}
 	if !validMissingBookText(input.Author) {
 		return CatalogValidationError{Field: "author", Message: "Enter an author of up to 255 characters or leave it empty."}
+	}
+
+	if err := s.repo.Create(ctx, CreateMissingBookRequestParams{
+		UserID:    actorID,
+		Title:     input.Title,
+		Author:    input.Author,
+		CreatedAt: s.now().UTC(),
+	}); err != nil {
+		return err
 	}
 
 	// Submitted text is deliberately excluded, even after validation: book fields

@@ -77,15 +77,16 @@ preserving stable public book slugs. Operators will select existing authors and 
 clear one front-cover URL, and produce an immutable audit record for each successful create or
 correction. The internal authorization capability does not enter page models or templates.
 
-Missing-book feedback currently provides an accepted authenticated MPA form that emits one safe
-structured event without persistence. The v0.3.2 follow-up has a defined stored-request model:
+Missing-book feedback provides an authenticated MPA form. Its original non-persistent flow was
+accepted; the v0.3.2 service now saves a request before emitting one safe structured event:
 request ID, submitting user ID, normalized title, optional author text and UTC creation time.
 The user comes from session identity, an absent author is stored as an empty string, and deleting
 the submitting account will cascade to its requests. Repeated submissions are separate requests;
 there is no required catalog book/author reference or account-data snapshot.
 
-Persistence is not implemented yet. Operator listing and processed/rejected decisions are planned
-for v0.4.3; the v0.3.2 model adds no processing status. Catalog deletion, author/genre administration,
+Real-database HTTP acceptance and renewed browser review remain pending. Operator listing and
+processed/rejected decisions are planned for v0.4.3; the v0.3.2 model adds no processing status.
+Catalog deletion, author/genre administration,
 external import, and cover asset handling remain deferred. Current and planned rules are in
 [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
 

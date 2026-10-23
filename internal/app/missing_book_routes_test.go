@@ -24,6 +24,18 @@ type missingBookRouteUserLoader struct {
 	invalidSession bool
 }
 
+type missingBookRouteRepository struct {
+	calls  int
+	params books.CreateMissingBookRequestParams
+	err    error
+}
+
+func (f *missingBookRouteRepository) Create(_ context.Context, params books.CreateMissingBookRequestParams) error {
+	f.calls++
+	f.params = params
+	return f.err
+}
+
 func (f missingBookRouteUserLoader) LoadCurrentUser(context.Context, []byte, time.Time) (users.User, error) {
 	if f.invalidSession {
 		return users.User{}, users.ErrUnauthenticated
@@ -57,10 +69,14 @@ func TestMissingBookRoutes(t *testing.T) {
 		wantRender     bool
 		wantDetails    bool
 		fragments      []string
+		saveErr        error
 	}{
 		{name: "authenticated GET uses request handler", method: http.MethodGet, path: "/books/request", status: http.StatusOK, wantRender: true,
 			fragments: []string{`method="post" action="/books/request"`, `for="title"`, `for="author"`, "Send request"}},
 		{name: "authenticated POST emits event", method: http.MethodPost, path: "/books/request", body: "title=Book", fetchSite: "same-origin", status: http.StatusSeeOther, location: "/books", wantEvent: true},
+		{name: "normalized fields are saved", method: http.MethodPost, path: "/books/request", body: "title=++Book++&author=++Author++", status: http.StatusSeeOther, location: "/books", wantEvent: true},
+		{name: "save failure returns no success", method: http.MethodPost, path: "/books/request", body: "title=private-title&author=private-author", saveErr: books.ErrMissingBookInternal, status: http.StatusInternalServerError,
+			fragments: []string{"internal server error"}},
 		{name: "255 Unicode characters accepted", method: http.MethodPost, path: "/books/request", body: "title=" + strings.Repeat("ї", 255) + "&author=" + strings.Repeat("ї", 255), status: http.StatusSeeOther, location: "/books", wantEvent: true},
 		{name: "title exceeds Unicode limit", method: http.MethodPost, path: "/books/request", body: "title=" + strings.Repeat("ї", 256), status: http.StatusUnprocessableEntity, wantRender: true,
 			fragments: []string{`href="#title"`, `id="title-error"`}},
@@ -101,11 +117,12 @@ func TestMissingBookRoutes(t *testing.T) {
 			renderer := &missingBookRouteRenderer{renderer: realRenderer}
 			cookies := auth.NewCookieManager(auth.CookieConfig{})
 			flashes := flash.NewManager(false)
+			repo := &missingBookRouteRepository{err: tt.saveErr}
 			deps := Deps{
 				Logger:                logger,
 				CurrentUserMiddleware: auth.NewCurrentUserMiddleware(cookies, missingBookRouteUserLoader{invalidSession: tt.invalidSession}),
 				FlashManager:          flashes,
-				MissingBookHandler:    books.NewMissingBookHandler(books.NewMissingBookService(logger), flashes, renderer, logger),
+				MissingBookHandler:    books.NewMissingBookHandler(books.NewMissingBookService(repo, logger), flashes, renderer, logger),
 			}
 			var detailsSlug string
 			catalog := fakeCatalogHandler{observeContext: func(ctx context.Context) {
@@ -142,6 +159,19 @@ func TestMissingBookRoutes(t *testing.T) {
 			}
 			if got := strings.Count(logs.String(), `"msg":"catalog_missing_book_requested"`); got != wantEvents {
 				t.Fatalf("events = %d, want %d: %s", got, wantEvents, &logs)
+			}
+			wantSaves := wantEvents
+			if tt.saveErr != nil {
+				wantSaves = 1
+			}
+			if repo.calls != wantSaves {
+				t.Fatalf("save attempts = %d, want %d", repo.calls, wantSaves)
+			}
+			if repo.calls != 0 && (repo.params.UserID != 7 || repo.params.CreatedAt.IsZero() || repo.params.CreatedAt.Location() != time.UTC) {
+				t.Fatal("saved identity/time were not supplied by the server")
+			}
+			if tt.name == "normalized fields are saved" && (repo.params.Title != "Book" || repo.params.Author != "Author") {
+				t.Fatal("saved fields were not normalized")
 			}
 			for _, secret := range []string{"query-secret", "body-secret", "comment-secret", "private-title", "private-author", "authorization-secret", "agent-secret", "route-test-session"} {
 				if strings.Contains(logs.String(), secret) {

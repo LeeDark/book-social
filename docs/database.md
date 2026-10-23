@@ -20,12 +20,13 @@ Current state:
   implemented v0.3.1 lifecycle flow.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
-## Missing-Book Request Schema (Persistence Wiring Pending)
+## Missing-Book Request Storage
 
 Paired migration `000007_add_missing_book_requests` creates `missing_book_requests` with
 `id`, `user_id`, `title`, `author`, `created_at`. Both storage packages now implement the
-`books.MissingBookRepository.Create` contract with one parameterized insert. Service wiring remains
-pending; the current HTTP flow still emits metadata-only events without saving requests.
+`books.MissingBookRepository.Create` contract with one parameterized insert. The runtime service
+uses the selected backend to save a request before emitting its metadata-only success event.
+Apply migration `000007` before using the updated form flow; the service does not create the table.
 
 The user reference is required, with `ON DELETE CASCADE` and `ON UPDATE RESTRICT`. Title is
 required normalized text of 1–255 Unicode code points. Author is non-null optional text of 0–255
@@ -48,8 +49,10 @@ Repository writes preserve supplied title/author text, store the supplied user I
 supplied creation time to UTC. Validation, normalization, session identity and time assignment belong
 to the service. Unexpected database failures return only `books.ErrMissingBookInternal`, with no
 wrapped driver error or submitted text; finished contexts retain cancellation/deadline errors.
-Repositories do not log, emit events or provide operator listing/processing methods. Service wiring
-and HTTP verification are subsequent implementation steps.
+Repositories do not log, emit events or provide operator listing/processing methods. The service
+validates and normalizes fields, derives the user from session identity and assigns UTC time. Save
+failure returns a generic HTTP `500` without confirmation or a successful-submission event.
+Real-database HTTP acceptance and renewed browser verification remain pending.
 
 ## Migration Layout
 
@@ -75,7 +78,7 @@ Migration `000004` adds the private `library_items` foundation without repurposi
 library tables.
 Migration `000005` adds the reading-state lifecycle without changing the historical foundation.
 Migration `000006` adds the administrator reference role and catalog audit storage.
-Migration `000007` adds missing-book request storage; it does not yet connect the form to the database.
+Migration `000007` adds missing-book request storage used by the connected form/service flow.
 
 ## Curated Catalog Operations Schema
 

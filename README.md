@@ -13,8 +13,9 @@ passes on SQLite and PostgreSQL; the user confirmed successful manual browser re
 Authenticated missing-book feedback (#25) is implemented with a server-rendered form, safe
 metadata-only event and one-request confirmation. Automated checks pass; the user confirmed
 successful manual browser review and accepted #25 on 2026-10-15.
-The agreed v0.3.2 follow-up will persist title, optional author and submitting user; it is not yet
-implemented. Operator listing and processed/rejected decisions are planned for v0.4.3.
+The v0.3.2 follow-up now saves title, optional author and submitting user before confirmation;
+migration `000007` is required. Real-database HTTP acceptance and renewed browser review remain
+pending. Operator listing and processed/rejected decisions are planned for v0.4.3.
 
 - Home and About pages.
 - Book catalog page.
@@ -219,7 +220,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Persist missing-book requests in v0.3.2, then complete verification and release closure.
+- Verify the persisted missing-book flow in v0.3.2, then complete release closure.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:

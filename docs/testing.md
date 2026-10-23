@@ -317,9 +317,10 @@ the date, browser/version, database backend, and result when rerunning this chec
   title/author or session-token values. Do not copy credentials or cookie values into reports.
 
 Cross-origin refusal, expired-session behavior, malformed/oversized bodies, Unicode boundaries,
-HTML escaping and exclusion of private request data are covered by `httptest`. The flow adds no
-request database write and calls no external catalog service. Migration `000007` now creates the
-request table, and both repositories support creation, but service wiring is not implemented yet.
+HTML escaping and exclusion of private request data are covered by `httptest`. The accepted browser
+checklist above predates persistence. The updated flow now saves through the configured repository
+before its success event/flash/redirect; a failed save returns a generic `500` without confirmation.
+Apply migration `000007` before renewed browser review. No external catalog service is called.
 
 ### Planned Persistence Follow-Up Checks
 
@@ -328,7 +329,10 @@ agreed to save title, optional author and submitting user in v0.3.2. Migration `
 with shared SQLite/PostgreSQL checks for text limits, required fields, user references, cascade and
 guarded rollback. Shared repository tests verify both backends' stored fields, optional author,
 UTC time, repeated submissions, parameterized text, safe database errors and finished contexts.
-Service wiring and HTTP verification remain pending.
+Service/runtime wiring is implemented. Fake-based service/HTTP tests verify normalized fields,
+session identity, UTC assignment, save-before-event ordering, refusals without writes and generic
+save-failure responses without success events/flashes. Real-database HTTP acceptance is step 5;
+renewed browser review remains pending.
 Operator listing and processed/rejected decisions belong to v0.4.3.
 
 - [x] Verify paired SQLite/PostgreSQL migrations and repository round trips for title, optional
