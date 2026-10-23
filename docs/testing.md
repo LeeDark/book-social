@@ -331,15 +331,28 @@ guarded rollback. Shared repository tests verify both backends' stored fields, o
 UTC time, repeated submissions, parameterized text, safe database errors and finished contexts.
 Service/runtime wiring is implemented. Fake-based service/HTTP tests verify normalized fields,
 session identity, UTC assignment, save-before-event ordering, refusals without writes and generic
-save-failure responses without success events/flashes. Real-database HTTP acceptance is step 5;
-renewed browser review remains pending.
+save-failure responses without success events/flashes. Shared real-session HTTP acceptance now
+passes on SQLite and PostgreSQL: normalized persisted fields, session-owned identity, UTC time,
+refusals without new rows/events, one-request confirmation, GET refresh without another write, and
+injected database failures without data loss or diagnostic/text leaks. Renewed browser review remains
+pending; the completed browser checklist above applies to the earlier non-persistent flow.
 Operator listing and processed/rejected decisions belong to v0.4.3.
+
+Run focused HTTP acceptance with:
+
+```bash
+GOCACHE=/tmp/book-social-go-cache go test ./internal/app -run MissingBookHTTPAcceptance -count=1 -v
+```
+
+It runs SQLite and skips PostgreSQL without a disposable DSN. `make test/integration` runs both
+backend scenarios with the race detector using its isolated PostgreSQL database. Failure injection
+adds rejecting triggers only inside disposable test fixtures; application schema is unchanged.
 
 - [x] Verify paired SQLite/PostgreSQL migrations and repository round trips for title, optional
   author and submitting user, using disposable databases.
-- [ ] Verify that a valid authenticated POST saves the normalized fields with the session user's
+- [x] Verify that a valid authenticated POST saves the normalized fields with the session user's
   ID, ignoring any submitted user/actor ID, before returning the success redirect and flash.
-- [ ] Verify invalid, anonymous and cross-origin submissions save no request; a failed save creates
+- [x] Verify invalid, anonymous and cross-origin submissions save no request; a failed save creates
   neither a success confirmation nor a successful-submission event. Logs continue to exclude text.
 - [ ] Repeat the local form/validation/redirect/flash smoke after persistence is implemented.
 

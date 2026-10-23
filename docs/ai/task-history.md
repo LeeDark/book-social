@@ -826,7 +826,7 @@ Residual risks:
   listing and processed/rejected decisions in v0.4.3. Updated contracts, roadmaps and verification
   plans. v0.3.2 remains active until the expanded scope is implemented and verified.
 
-## 2026-10-23 — Missing-book persistence (#25, steps 1–4)
+## 2026-10-23 — Missing-book persistence (#25, steps 1–5)
 
 - Defined `missing_book_requests`: generated ID, session-owned user ID, normalized title,
   optional author as empty text, and application-assigned UTC creation time. No account snapshots,
@@ -843,11 +843,16 @@ Residual risks:
   session user/UTC time, then emits the event; save failure returns `500` without success flash or
   redirect. Fake-based tests verify ordering, failure privacy, refusals without writes and no repeat
   save after refreshing the redirected catalog.
+- Added real-session SQLite/PostgreSQL HTTP acceptance: stored fields and session owner, UTC time,
+  empty author, repeat POSTs, one-request flash, refusals without writes and GETs without repeat
+  saves. Test-only triggers verify failed inserts preserve prior requests and expose no text or
+  database diagnostics in responses/logs.
 - Passed: focused migration/repository tests, affected-package tests, `make test` (step 2),
   `make test/integration` (steps 2–3, including real PostgreSQL and race checks),
   `make db/migrate/smoke` (step 2), relevant `go vet`, formatting and `git diff --check`.
   Step 4 passed focused service/HTTP tests, `make test` (race) and `go vet ./...`; default PostgreSQL
-  tests skipped without a DSN. Development databases were not changed.
-- Current boundary: runtime persistence is connected and requires migration `000007`. Real-database
-  HTTP acceptance remains step 5; renewed browser review is pending. Operator processing remains
-  v0.4.3.
+  tests skipped without a DSN. Step 5 passed focused `MissingBookHTTPAcceptance`, `make test` (race),
+  `make test/integration` (real PostgreSQL), `go vet ./internal/app`, formatting and `git diff --check`.
+  Development databases were not changed; disposable Compose resources were removed.
+- Current boundary: automated persistence acceptance is complete. Final documentation/release
+  checks remain step 6; renewed browser review is pending. Operator processing remains v0.4.3.
