@@ -826,7 +826,7 @@ Residual risks:
   listing and processed/rejected decisions in v0.4.3. Updated contracts, roadmaps and verification
   plans. v0.3.2 remains active until the expanded scope is implemented and verified.
 
-## 2026-10-23 — Missing-book persistence (#25, steps 1–5)
+## 2026-10-23 — Missing-book persistence (#25)
 
 - Defined `missing_book_requests`: generated ID, session-owned user ID, normalized title,
   optional author as empty text, and application-assigned UTC creation time. No account snapshots,
@@ -847,12 +847,11 @@ Residual risks:
   empty author, repeat POSTs, one-request flash, refusals without writes and GETs without repeat
   saves. Test-only triggers verify failed inserts preserve prior requests and expose no text or
   database diagnostics in responses/logs.
-- Passed: focused migration/repository tests, affected-package tests, `make test` (step 2),
-  `make test/integration` (steps 2–3, including real PostgreSQL and race checks),
-  `make db/migrate/smoke` (step 2), relevant `go vet`, formatting and `git diff --check`.
-  Step 4 passed focused service/HTTP tests, `make test` (race) and `go vet ./...`; default PostgreSQL
-  tests skipped without a DSN. Step 5 passed focused `MissingBookHTTPAcceptance`, `make test` (race),
-  `make test/integration` (real PostgreSQL), `go vet ./internal/app`, formatting and `git diff --check`.
-  Development databases were not changed; disposable Compose resources were removed.
-- Current boundary: automated persistence acceptance is complete. Final documentation/release
-  checks remain step 6; renewed browser review is pending. Operator processing remains v0.4.3.
+- Final checks passed: focused missing-book tests, `make test` (race), `make test/integration`
+  (real PostgreSQL), `make db/migrate/smoke`, `go vet ./...`, lint (Go 1.26.4 toolchain), formatting
+  and `git diff --check`. Development databases were not changed; disposable Compose resources
+  were removed.
+- Synchronized runtime/storage contracts, README, context and roadmaps; added a persistence browser
+  checklist with read-only row inspection. Implementation and automated acceptance are complete;
+  renewed user browser review remains pending, so persistence acceptance and v0.3.2 stay open.
+  Operator listing and processing remain v0.4.3.

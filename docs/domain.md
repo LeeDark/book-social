@@ -78,14 +78,16 @@ clear one front-cover URL, and produce an immutable audit record for each succes
 correction. The internal authorization capability does not enter page models or templates.
 
 Missing-book feedback provides an authenticated MPA form. Its original non-persistent flow was
-accepted; the v0.3.2 service now saves a request before emitting one safe structured event:
-request ID, submitting user ID, normalized title, optional author text and UTC creation time.
+accepted; the v0.3.2 service now saves a request before emitting one metadata-only structured event.
+The stored row contains a generated ID, submitting user ID, normalized title, optional author text
+and UTC creation time. Submitted title/author values are not logged.
 The user comes from session identity, an absent author is stored as an empty string, and deleting
 the submitting account will cascade to its requests. Repeated submissions are separate requests;
 there is no required catalog book/author reference or account-data snapshot.
 
-Real-database HTTP acceptance and renewed browser review remain pending. Operator listing and
-processed/rejected decisions are planned for v0.4.3; the v0.3.2 model adds no processing status.
+Real-database HTTP acceptance passes on SQLite/PostgreSQL; renewed browser review remains pending.
+Operator listing and processed/rejected decisions are planned for v0.4.3; the v0.3.2 model adds no
+processing status.
 Catalog deletion, author/genre administration,
 external import, and cover asset handling remain deferred. Current and planned rules are in
 [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).

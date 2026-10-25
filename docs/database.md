@@ -44,7 +44,7 @@ before checking emptiness; SQLite migrations run transactionally through the CLI
 can be rolled back and recreated without changing users, catalog data or audit records.
 
 The full ownership, normalization and later processing boundary is defined in the
-[stored-request contract](catalog_operations_v0_3_2.md#stored-request-model-defined-persistence-not-implemented).
+[stored-request contract](catalog_operations_v0_3_2.md#stored-request-model).
 Repository writes preserve supplied title/author text, store the supplied user ID and convert the
 supplied creation time to UTC. Validation, normalization, session identity and time assignment belong
 to the service. Unexpected database failures return only `books.ErrMissingBookInternal`, with no
@@ -52,7 +52,8 @@ wrapped driver error or submitted text; finished contexts retain cancellation/de
 Repositories do not log, emit events or provide operator listing/processing methods. The service
 validates and normalizes fields, derives the user from session identity and assigns UTC time. Save
 failure returns a generic HTTP `500` without confirmation or a successful-submission event.
-Real-database HTTP acceptance and renewed browser verification remain pending.
+Real-database HTTP acceptance passes on SQLite and PostgreSQL; renewed browser verification remains
+pending. See the [browser checklist](testing.md#manual-browser-smoke-v032-missing-book-persistence-25).
 
 ## Migration Layout
 

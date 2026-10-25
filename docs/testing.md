@@ -322,7 +322,7 @@ checklist above predates persistence. The updated flow now saves through the con
 before its success event/flash/redirect; a failed save returns a generic `500` without confirmation.
 Apply migration `000007` before renewed browser review. No external catalog service is called.
 
-### Planned Persistence Follow-Up Checks
+### Automated Persistence Checks
 
 The accepted checklist above covers the original non-persistent #25 flow. The user subsequently
 agreed to save title, optional author and submitting user in v0.3.2. Migration `000007` is implemented
@@ -354,7 +354,59 @@ adds rejecting triggers only inside disposable test fixtures; application schema
   ID, ignoring any submitted user/actor ID, before returning the success redirect and flash.
 - [x] Verify invalid, anonymous and cross-origin submissions save no request; a failed save creates
   neither a success confirmation nor a successful-submission event. Logs continue to exclude text.
-- [ ] Repeat the local form/validation/redirect/flash smoke after persistence is implemented.
+- [ ] Complete the renewed browser checklist below and record acceptance.
+
+## Manual Browser Smoke: v0.3.2 Missing-Book Persistence (#25)
+
+Status: pending user review. Automated acceptance passed on SQLite and PostgreSQL on 2026-10-23;
+the earlier browser acceptance does not cover persistence. Operator listing and processing are not
+part of v0.3.2, so inspect saved requests with read-only SQL, not an operator page.
+
+Run locally outside the Codex sandbox. The commands below use the default development SQLite
+database; do not reset it. If using another database, keep migration, application and inspection
+paths consistent. Apply pending migrations, then start the app:
+
+```bash
+make db/migrate/up
+APP_DB_DSN=./data/book_social_dev.db APP_LOG_FORMAT=json make run
+```
+
+In another terminal, confirm schema version `7` with `dirty = 0`, note the initial request count
+and find the ID of the ordinary account used for the check (replace the example login):
+
+```bash
+sqlite3 -readonly ./data/book_social_dev.db 'SELECT version, dirty FROM schema_migrations;'
+sqlite3 -readonly ./data/book_social_dev.db 'SELECT COUNT(*) FROM missing_book_requests;'
+sqlite3 -readonly ./data/book_social_dev.db "SELECT id, login FROM users WHERE login = 'your-test-login';"
+```
+
+Inspect saved rows after each submission:
+
+```bash
+sqlite3 -readonly -header -column ./data/book_social_dev.db \
+  'SELECT id, user_id, title, author, created_at FROM missing_book_requests ORDER BY id DESC LIMIT 10;'
+```
+
+- [ ] Open `http://localhost:8080/books/request` anonymously: expect `/login`, no new row.
+  Sign in with the ordinary account and open the form from `/books`.
+- [ ] Repeat the original keyboard, validation and no-store checks above. A whitespace-only title
+  must produce `422`, retain the author and leave the row count unchanged, without confirmation.
+- [ ] Submit a recognizable test title with surrounding spaces and no author. Expect `303 /books`
+  and one confirmation. Verify exactly one new row: trimmed title, empty author, the signed-in
+  account's ID and a current UTC timestamp. Refresh `/books`: no flash and no further row.
+- [ ] Submit another title with an author, both surrounded by spaces. Verify another single row
+  with both values trimmed. Submit the same valid data again: it intentionally creates a separate
+  request, not a duplicate rejection. Restart the application and verify the rows remain.
+- [ ] Check one `catalog_missing_book_requested` event per successful POST, with only request/actor
+  IDs, lengths and author presence, never title/author values. Log envelope fields such as time and
+  level are expected. Do not inject failures into the development database: disposable tests cover
+  safe `500` responses, no success confirmation and preservation of existing requests.
+- [ ] Record date, browser/version, database backend, launch commands and result; explicitly confirm
+  acceptance of persistence. Do not include cookies, credentials or other users' submitted text.
+
+The requests created by this smoke remain in the development database. Earlier metadata-only events
+cannot be restored as requests. A PostgreSQL browser run can use the same behavioral checks with its
+own migrated local database and read-only SQL; automated PostgreSQL acceptance is already recorded.
 
 ## Codex Sandbox Note
 

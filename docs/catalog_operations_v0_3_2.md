@@ -142,9 +142,9 @@ A failed save returns a generic `500` without a success event, flash or redirect
 import, email, queue or administrator inbox operation is performed. Confirmation does not promise
 catalog addition; following the redirect or refreshing creates no further event or request row.
 
-Manual review of the original non-persistent flow was confirmed successful on 2026-10-15; persistence
-still requires real-database HTTP acceptance and renewed browser review. See the
-[completed missing-book browser checklist](testing.md#manual-browser-smoke-v032-missing-book-feedback-25).
+Manual review of the original non-persistent flow was confirmed successful on 2026-10-15.
+Persistence HTTP acceptance passes on SQLite and PostgreSQL; renewed browser review remains pending.
+See the [persistence browser checklist](testing.md#manual-browser-smoke-v032-missing-book-persistence-25).
 
 ## Missing-Book Persistence Follow-Up (v0.3.2; Acceptance Pending)
 
@@ -157,15 +157,15 @@ After accepting the non-persistent #25 flow, the user expanded v0.3.2 on 2026-10
 - Keep title/author values out of logs; saving bounded application data is separate from logging.
 - Paired SQLite/PostgreSQL migration `000007` now creates the request table with constraints and
   guarded rollback. Both storage packages now implement one-insert request creation through
-  `MissingBookRepository`. Service/runtime wiring and fake-based HTTP success/failure checks are
-  implemented; real-database HTTP acceptance and renewed browser review remain pending.
+  `MissingBookRepository`. Service/runtime wiring, fake-based checks and real-session HTTP
+  acceptance on SQLite/PostgreSQL are complete; renewed browser review remains pending.
 
-### Stored Request Model (Defined; Persistence Not Implemented)
+### Stored Request Model
 
 The persistence model was defined on 2026-10-23. Paired migration `000007` now creates
 `missing_book_requests`. The service now calls the selected repository before reporting success.
-The earlier model/migration/repository steps were verified independently; full HTTP acceptance
-against both databases remains a subsequent step.
+Shared migration/repository tests and full HTTP acceptance pass against both databases, including
+save failures without success confirmation, lost prior requests or leaked private text.
 
 | Field | Meaning and ownership | Stored value |
 |-------|-----------------------|--------------|
@@ -206,8 +206,8 @@ contract, notification delivery, or a background job model.
 
 Earlier metadata-only events cannot reconstruct old submissions. Persistence collects new requests
 after deploying the wiring with migration `000007` applied. An operator list and the ability to mark
-requests processed or rejected are explicitly planned for v0.4.3, alongside controlled import. v0.3.2 does not add that
-operator workflow or notifications.
+requests processed or rejected are explicitly planned for v0.4.3, alongside controlled import.
+v0.3.2 does not add that operator workflow or notifications.
 
 ## Deferred Work
 

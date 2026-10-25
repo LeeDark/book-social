@@ -140,8 +140,8 @@ requests receive `403` before event creation; `no-store` applies to these routes
 The literal `/books/request` route takes precedence over `/books/{slug}`. The service now saves the
 normalized fields, session user ID and UTC time before reporting success; save failures return a
 generic `500` without a success event, flash or redirect. No external service is called. Migration
-`000007` is required. The user accepted the original non-persistent flow on 2026-10-15; real-database
-HTTP acceptance and renewed browser review of persistence remain pending. Details are in
+`000007` is required. The user accepted the original non-persistent flow on 2026-10-15. Persistence
+HTTP acceptance passes on SQLite/PostgreSQL; renewed browser review remains pending. Details are in
 [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
 
 ## Catalog Filters

@@ -21,7 +21,7 @@ Missing-book feedback (#25) is implemented with automated verification; the user
 manual browser review on 2026-10-15 and accepted #25's non-persistent flow. The agreed v0.3.2
 follow-up is to persist the requested title, optional author and submitting user. Operator listing
 and processed/rejected decisions are planned for v0.4.3. Service/runtime persistence is implemented;
-real-database HTTP acceptance and renewed browser review remain pending.
+real-database HTTP acceptance passes on SQLite and PostgreSQL. Renewed browser review remains pending.
 
 ## Planning Principles
 
@@ -317,8 +317,9 @@ Status: active. The accepted contract is in
 #24 implementation, automated verification, and user-confirmed browser review are complete.
 The operator workflow is accepted. #25 feedback implementation and automated verification are
 complete; the user confirmed successful manual browser review and accepted it on 2026-10-15.
-The original three scope items are accepted. The subsequently agreed persistence follow-up remains
-open; v0.3.2 is not complete until that work and its verification are accepted.
+The original three scope items are accepted. Persistence implementation and automated verification
+on SQLite/PostgreSQL are complete; its checkbox remains open until renewed browser review and user
+acceptance. v0.3.2 is not yet complete.
 
 Outcome: a small closed cohort can use reproducible catalog data that an operator can correct
 without direct SQL.
