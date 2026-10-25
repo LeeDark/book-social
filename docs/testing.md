@@ -133,6 +133,14 @@ BOOK_SOCIAL_POSTGRES_TEST_DSN='postgres://book_social:book_social@localhost:5432
 `make test/integration` includes these tests and provisions its own isolated PostgreSQL database.
 The dataset and source limitations are in [Demo Catalog Provenance](demo_catalog_provenance.md).
 
+Post-review collation regression checks require explicit `COLLATE "C"` for PostgreSQL seed book
+ID assignment, even in ordinary test runs without a DSN. With PostgreSQL and ICU support, a shared
+seed parity test additionally gives the seed's temporary slug column a non-binary ICU collation
+that demonstrably sorts differently from byte order, then compares the full catalog with SQLite.
+This simulates inherited non-binary ordering without depending on host glibc locales; it does not
+claim a run on an `en_US.UTF-8` database. The ICU case skips explicitly if unavailable; the SQL
+contract and normal backend parity checks remain separate.
+
 ## v0.3.2 Acceptance Coverage (#26)
 
 Scope review on 2026-10-25 includes the accepted persistence expansion of #25. Missing-book

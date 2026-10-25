@@ -3,9 +3,11 @@
 ## Dataset and Responsibilities
 
 The development seed contains 109 books, 24 authors, 23 genres, 109 author links, 109 genre links,
-and no covers. SQLite and PostgreSQL contain the same catalog metadata. Books receive IDs in slug
-order on a fresh database; author and genre IDs are explicit. Apply seed once after migrations to a
-disposable database, not as a repeatable data migration or a production import.
+and no covers. SQLite and PostgreSQL contain the same catalog metadata. Books receive IDs in
+bytewise slug order on a fresh database; PostgreSQL uses explicit `COLLATE "C"`, matching SQLite
+regardless of the database locale. Author and genre IDs are explicit. Apply seed once after migrations to a
+disposable database, not as a repeatable data migration or a production import. This change does
+not renumber existing databases; do not rerun the seed to repair an existing catalog.
 
 Ordinary tests use minimal fixtures in `internal/testutil` or their own scenario data. Only
 dedicated

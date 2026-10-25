@@ -9,8 +9,73 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
+	"strings"
 	"testing"
 )
+
+func TestPostgresDevelopmentSeedUsesBytewiseSlugOrder(t *testing.T) {
+	seed, err := os.ReadFile(filepath.Join(projectRoot(t), "db", "postgresql", "seed.sql"))
+	if err != nil {
+		t.Fatalf("read PostgreSQL seed: %v", err)
+	}
+	// Default-locale integration runs alone cannot detect a missing explicit collation.
+	order := regexp.MustCompile(`FROM\s+seed_book_relationships\s+ORDER BY\s+slug\s+COLLATE\s+"C"\s*;`)
+	if !order.Match(seed) {
+		t.Fatal("generated seed book IDs must use explicit bytewise slug ordering")
+	}
+}
+
+func TestPostgresDevelopmentSeedParityWithNonBinaryCollation(t *testing.T) {
+	dsn := os.Getenv(PostgresTestDSNEnv)
+	if dsn == "" {
+		t.Skipf("set %s to run PostgreSQL seed tests", PostgresTestDSNEnv)
+	}
+	ctx := context.Background()
+	pg := openPostgresTestDB(t, ctx, dsn)
+	ResetPostgresPublicSchema(t, ctx, pg)
+	ApplyPostgresLibraryTestSchema(t, ctx, pg)
+
+	var hasICU bool
+	if err := pg.QueryRowContext(ctx, `
+		SELECT EXISTS (SELECT 1 FROM pg_collation WHERE collprovider = 'i')
+	`).Scan(&hasICU); err != nil {
+		t.Fatalf("check ICU collation support: %v", err)
+	}
+	if !hasICU {
+		t.Skip("PostgreSQL has no ICU collations; bytewise SQL contract remains checked separately")
+	}
+	if _, err := pg.ExecContext(ctx, `
+		CREATE COLLATION seed_slug_order (provider = icu, locale = 'en-u-ka-shifted')
+	`); err != nil {
+		t.Fatalf("create non-binary seed test collation: %v", err)
+	}
+	var bytewise, linguistic bool
+	if err := pg.QueryRowContext(ctx, `
+		SELECT 'a-room' COLLATE "C" < 'about',
+			'a-room' COLLATE seed_slug_order < 'about'
+	`).Scan(&bytewise, &linguistic); err != nil || bytewise == linguistic {
+		t.Fatalf("test collation must differ from byte order: %v", err)
+	}
+
+	seed, err := os.ReadFile(filepath.Join(projectRoot(t), "db", "postgresql", "seed.sql"))
+	if err != nil {
+		t.Fatalf("read PostgreSQL seed: %v", err)
+	}
+	// Emulate a non-binary inherited slug collation without changing the database
+	// locale or requiring a host-specific glibc locale. Only the scratch column changes.
+	seedSQL := strings.Replace(string(seed), "slug TEXT NOT NULL,", `slug TEXT COLLATE seed_slug_order NOT NULL,`, 1)
+	if seedSQL == string(seed) {
+		t.Fatal("seed scratch slug column not found")
+	}
+	if _, err := pg.ExecContext(ctx, seedSQL); err != nil {
+		t.Fatalf("apply seed with non-binary slug collation: %v", err)
+	}
+	assertDevelopmentCatalog(t, pg)
+	sq := NewSQLiteDevelopmentSeedDB(t, ctx)
+	if !reflect.DeepEqual(catalogSnapshot(t, sq), catalogSnapshot(t, pg)) {
+		t.Fatal("non-binary PostgreSQL collation changed seed catalog IDs or relationships")
+	}
+}
 
 func TestSQLiteDevelopmentSeedReproducible(t *testing.T) {
 	ctx := context.Background()

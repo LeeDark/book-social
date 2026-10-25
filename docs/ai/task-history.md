@@ -893,3 +893,14 @@ Residual risks:
 - Passed focused catalog/feedback HTTP tests, `make test` (race), `make test/integration` (real
   PostgreSQL), affected-package vet, lint (Go 1.26.4; zero issues), formatting and `git diff --check`.
   Disposable integration resources were removed; development databases were not changed.
+
+## 2026-10-25 — External review: deterministic PostgreSQL seed ordering (#26)
+
+- Added explicit `COLLATE "C"` to generated seed book ID ordering, matching SQLite independently
+  of database locale. Added an always-run SQL contract regression and an opt-in ICU scratch-column
+  parity case; the contract test failed before the fix. Existing catalogs are not renumbered and
+  must not be repaired by rerunning seed; provenance limits are unchanged.
+- Passed focused seed tests, `make test` (race), `make test/integration` (real PostgreSQL with ICU
+  available, including the non-binary parity case), testutil vet, lint (Go 1.26.4; zero issues),
+  formatting and `git diff --check`. Disposable integration resources were removed; development
+  databases were unchanged. No glibc `en_US.UTF-8` database run is claimed.

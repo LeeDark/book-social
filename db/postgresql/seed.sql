@@ -535,11 +535,11 @@ VALUES ('Murder on the Orient Express',
         'A search party travels across continents to rescue a missing sea captain. The novel combines geography, peril, and discovery in a style suited to young adventure readers.',
         5, 23);
 
--- Stable generated IDs for a fresh disposable database.
+-- Match SQLite byte order regardless of the database locale.
 INSERT INTO books (title, slug, description)
 SELECT title, slug, description
 FROM seed_book_relationships
-ORDER BY slug;
+ORDER BY slug COLLATE "C";
 
 INSERT INTO book_authors (book_id, author_id)
 SELECT books.id, seed_book_relationships.author_id
