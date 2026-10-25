@@ -855,3 +855,9 @@ Residual risks:
   checklist with read-only row inspection. Implementation and automated acceptance are complete;
   renewed user browser review remains pending, so persistence acceptance and v0.3.2 stay open.
   Operator listing and processing remain v0.4.3.
+
+## 2026-10-25 — Missing-book persistence acceptance (#25)
+
+- User confirmed all manual checks passed in Zen Browser with SQLite; browser version and exact
+  launch commands were not reported. Recorded expanded #25 acceptance and completed roadmap scope.
+  PostgreSQL browser review is not claimed; GitHub issue/PR and v0.3.2 release closure are separate.

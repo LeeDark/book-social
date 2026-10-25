@@ -21,7 +21,8 @@ Missing-book feedback (#25) is implemented with automated verification; the user
 manual browser review on 2026-10-15 and accepted #25's non-persistent flow. The agreed v0.3.2
 follow-up is to persist the requested title, optional author and submitting user. Operator listing
 and processed/rejected decisions are planned for v0.4.3. Service/runtime persistence is implemented;
-real-database HTTP acceptance passes on SQLite and PostgreSQL. Renewed browser review remains pending.
+real-database HTTP acceptance passes on SQLite and PostgreSQL. The user confirmed persistence
+browser acceptance on 2026-10-25 (Zen Browser, SQLite). Release closure remains separate.
 
 ## Planning Principles
 
@@ -308,7 +309,7 @@ Status: active. The accepted contract is in
 - [x] Separate test fixtures, deterministic development seed data, and the curated demo catalog;
   document demo metadata provenance and permitted cover use.
 - [x] Add a clear missing-book state and simple feedback path without an external import.
-- [ ] Persist the validated missing-book title, optional author and authenticated submitting user;
+- [x] Persist the validated missing-book title, optional author and authenticated submitting user;
   confirm success only after saving. Keep submitted text out of logs. Operator listing and request
   processing are deferred to v0.4.3.
 - [x] Add only the administrator role, protected routes, catalog find/create/correct operations,
@@ -318,8 +319,8 @@ Status: active. The accepted contract is in
 The operator workflow is accepted. #25 feedback implementation and automated verification are
 complete; the user confirmed successful manual browser review and accepted it on 2026-10-15.
 The original three scope items are accepted. Persistence implementation and automated verification
-on SQLite/PostgreSQL are complete; its checkbox remains open until renewed browser review and user
-acceptance. v0.3.2 is not yet complete.
+on SQLite/PostgreSQL are complete; the user confirmed persistence browser acceptance on 2026-10-25
+(Zen Browser, SQLite). The expanded #25 scope is accepted; v0.3.2 release closure remains separate.
 
 Outcome: a small closed cohort can use reproducible catalog data that an operator can correct
 without direct SQL.

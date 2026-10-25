@@ -90,6 +90,6 @@ Current scope:
   metadata-only logging and a one-request flash. Automated checks pass; the user confirmed
   successful manual browser review and accepted #25 on 2026-10-15. The subsequent agreed v0.3.2
   follow-up now saves title, optional author and submitting user before success; migration `000007`
-  is required. Real-database HTTP acceptance passes on SQLite/PostgreSQL; renewed browser review
-  remains pending.
+  is required. Real-database HTTP acceptance passes on SQLite/PostgreSQL; the user confirmed
+  persistence browser acceptance on 2026-10-25 (Zen Browser, SQLite; version not reported).
   Operator listing and processed/rejected decisions are planned for v0.4.3. v0.3.2 remains active.

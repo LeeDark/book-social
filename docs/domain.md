@@ -85,7 +85,8 @@ The user comes from session identity, an absent author is stored as an empty str
 the submitting account will cascade to its requests. Repeated submissions are separate requests;
 there is no required catalog book/author reference or account-data snapshot.
 
-Real-database HTTP acceptance passes on SQLite/PostgreSQL; renewed browser review remains pending.
+Real-database HTTP acceptance passes on SQLite/PostgreSQL. The user confirmed persistence browser
+review on 2026-10-25 (Zen Browser, SQLite).
 Operator listing and processed/rejected decisions are planned for v0.4.3; the v0.3.2 model adds no
 processing status.
 Catalog deletion, author/genre administration,

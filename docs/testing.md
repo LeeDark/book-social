@@ -334,8 +334,8 @@ session identity, UTC assignment, save-before-event ordering, refusals without w
 save-failure responses without success events/flashes. Shared real-session HTTP acceptance now
 passes on SQLite and PostgreSQL: normalized persisted fields, session-owned identity, UTC time,
 refusals without new rows/events, one-request confirmation, GET refresh without another write, and
-injected database failures without data loss or diagnostic/text leaks. Renewed browser review remains
-pending; the completed browser checklist above applies to the earlier non-persistent flow.
+injected database failures without data loss or diagnostic/text leaks. The user confirmed renewed
+browser review on 2026-10-25 (Zen Browser, SQLite); the checklist above records the earlier flow.
 Operator listing and processed/rejected decisions belong to v0.4.3.
 
 Run focused HTTP acceptance with:
@@ -354,13 +354,15 @@ adds rejecting triggers only inside disposable test fixtures; application schema
   ID, ignoring any submitted user/actor ID, before returning the success redirect and flash.
 - [x] Verify invalid, anonymous and cross-origin submissions save no request; a failed save creates
   neither a success confirmation nor a successful-submission event. Logs continue to exclude text.
-- [ ] Complete the renewed browser checklist below and record acceptance.
+- [x] Complete the renewed browser checklist below and record acceptance.
 
 ## Manual Browser Smoke: v0.3.2 Missing-Book Persistence (#25)
 
-Status: pending user review. Automated acceptance passed on SQLite and PostgreSQL on 2026-10-23;
-the earlier browser acceptance does not cover persistence. Operator listing and processing are not
-part of v0.3.2, so inspect saved requests with read-only SQL, not an operator page.
+Status: complete. On 2026-10-25 the user reported that all manual checks passed in Zen Browser with
+SQLite, confirming persistence acceptance. Browser version and exact launch commands were not
+separately reported. This is user-reported evidence, not a browser run by Codex or a PostgreSQL
+browser check. Automated SQLite/PostgreSQL acceptance passed on 2026-10-23. Operator listing and
+processing are not part of v0.3.2; saved requests are inspected with read-only SQL.
 
 Run locally outside the Codex sandbox. The commands below use the default development SQLite
 database; do not reset it. If using another database, keep migration, application and inspection
@@ -387,22 +389,23 @@ sqlite3 -readonly -header -column ./data/book_social_dev.db \
   'SELECT id, user_id, title, author, created_at FROM missing_book_requests ORDER BY id DESC LIMIT 10;'
 ```
 
-- [ ] Open `http://localhost:8080/books/request` anonymously: expect `/login`, no new row.
+- [x] Open `http://localhost:8080/books/request` anonymously: expect `/login`, no new row.
   Sign in with the ordinary account and open the form from `/books`.
-- [ ] Repeat the original keyboard, validation and no-store checks above. A whitespace-only title
+- [x] Repeat the original keyboard, validation and no-store checks above. A whitespace-only title
   must produce `422`, retain the author and leave the row count unchanged, without confirmation.
-- [ ] Submit a recognizable test title with surrounding spaces and no author. Expect `303 /books`
+- [x] Submit a recognizable test title with surrounding spaces and no author. Expect `303 /books`
   and one confirmation. Verify exactly one new row: trimmed title, empty author, the signed-in
   account's ID and a current UTC timestamp. Refresh `/books`: no flash and no further row.
-- [ ] Submit another title with an author, both surrounded by spaces. Verify another single row
+- [x] Submit another title with an author, both surrounded by spaces. Verify another single row
   with both values trimmed. Submit the same valid data again: it intentionally creates a separate
   request, not a duplicate rejection. Restart the application and verify the rows remain.
-- [ ] Check one `catalog_missing_book_requested` event per successful POST, with only request/actor
+- [x] Check one `catalog_missing_book_requested` event per successful POST, with only request/actor
   IDs, lengths and author presence, never title/author values. Log envelope fields such as time and
   level are expected. Do not inject failures into the development database: disposable tests cover
   safe `500` responses, no success confirmation and preservation of existing requests.
-- [ ] Record date, browser/version, database backend, launch commands and result; explicitly confirm
-  acceptance of persistence. Do not include cookies, credentials or other users' submitted text.
+- [x] Record user-reported acceptance: 2026-10-25, Zen Browser, SQLite, all checks passed.
+  Browser version and exact launch commands were not separately reported. Do not include cookies,
+  credentials or other users' submitted text.
 
 The requests created by this smoke remain in the development database. Earlier metadata-only events
 cannot be restored as requests. A PostgreSQL browser run can use the same behavioral checks with its

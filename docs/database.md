@@ -52,8 +52,9 @@ wrapped driver error or submitted text; finished contexts retain cancellation/de
 Repositories do not log, emit events or provide operator listing/processing methods. The service
 validates and normalizes fields, derives the user from session identity and assigns UTC time. Save
 failure returns a generic HTTP `500` without confirmation or a successful-submission event.
-Real-database HTTP acceptance passes on SQLite and PostgreSQL; renewed browser verification remains
-pending. See the [browser checklist](testing.md#manual-browser-smoke-v032-missing-book-persistence-25).
+Real-database HTTP acceptance passes on SQLite and PostgreSQL. The user confirmed persistence
+browser review on 2026-10-25 (Zen Browser, SQLite). See the
+[browser checklist](testing.md#manual-browser-smoke-v032-missing-book-persistence-25).
 
 ## Migration Layout
 

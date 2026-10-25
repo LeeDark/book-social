@@ -141,7 +141,8 @@ The literal `/books/request` route takes precedence over `/books/{slug}`. The se
 normalized fields, session user ID and UTC time before reporting success; save failures return a
 generic `500` without a success event, flash or redirect. No external service is called. Migration
 `000007` is required. The user accepted the original non-persistent flow on 2026-10-15. Persistence
-HTTP acceptance passes on SQLite/PostgreSQL; renewed browser review remains pending. Details are in
+HTTP acceptance passes on SQLite/PostgreSQL; the user confirmed persistence browser review on
+2026-10-25 (Zen Browser, SQLite). Details are in
 [Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
 
 ## Catalog Filters

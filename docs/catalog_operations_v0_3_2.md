@@ -143,10 +143,11 @@ import, email, queue or administrator inbox operation is performed. Confirmation
 catalog addition; following the redirect or refreshing creates no further event or request row.
 
 Manual review of the original non-persistent flow was confirmed successful on 2026-10-15.
-Persistence HTTP acceptance passes on SQLite and PostgreSQL; renewed browser review remains pending.
+Persistence HTTP acceptance passes on SQLite and PostgreSQL. The user confirmed successful
+persistence browser review on 2026-10-25 (Zen Browser, SQLite; browser version not reported).
 See the [persistence browser checklist](testing.md#manual-browser-smoke-v032-missing-book-persistence-25).
 
-## Missing-Book Persistence Follow-Up (v0.3.2; Acceptance Pending)
+## Missing-Book Persistence Follow-Up (v0.3.2; Accepted)
 
 After accepting the non-persistent #25 flow, the user expanded v0.3.2 on 2026-10-15:
 
@@ -158,7 +159,8 @@ After accepting the non-persistent #25 flow, the user expanded v0.3.2 on 2026-10
 - Paired SQLite/PostgreSQL migration `000007` now creates the request table with constraints and
   guarded rollback. Both storage packages now implement one-insert request creation through
   `MissingBookRepository`. Service/runtime wiring, fake-based checks and real-session HTTP
-  acceptance on SQLite/PostgreSQL are complete; renewed browser review remains pending.
+  acceptance on SQLite/PostgreSQL are complete; user browser acceptance was confirmed on
+  2026-10-25 (Zen Browser, SQLite).
 
 ### Stored Request Model
 
