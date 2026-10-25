@@ -6,18 +6,20 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-v0.3.1 Reading-State Lifecycle is closed on top of the v0.3.0 Private Library Foundation. v0.3.2
-Curated Catalog Operations is active: deterministic demo data/provenance and administrator-only
-catalog find/create/correct pages with transactional audit are implemented. Operator HTTP acceptance
-passes on SQLite and PostgreSQL; the user confirmed successful manual browser review.
-Authenticated missing-book feedback (#25) is implemented with a server-rendered form, safe
-metadata-only event and one-request confirmation. Automated checks pass; the user confirmed
-successful manual browser review and accepted #25 on 2026-10-15.
-The v0.3.2 follow-up now saves title, optional author and submitting user before confirmation;
-migration `000007` is required. Real-database HTTP acceptance passes on SQLite and PostgreSQL;
-the user confirmed persistence browser review on 2026-10-25 (Zen Browser, SQLite).
-Operator listing and processed/rejected decisions are
-planned for v0.4.3.
+v0.3.1 Reading-State Lifecycle is closed on top of the v0.3.0 Private Library Foundation.
+v0.3.2 Curated Catalog Operations implementation and acceptance are complete: deterministic demo
+data/provenance, administrator-only catalog find/create/correct pages with transactional audit,
+and authenticated missing-book requests persisted before confirmation. Apply migrations through
+`000007` before using the updated application.
+
+Final automated checks passed on 2026-10-25, including real SQLite/PostgreSQL acceptance. The user
+accepted the operator flow on 2026-10-12 and missing-book persistence on 2026-10-25 (Zen Browser,
+SQLite). See [verification and acceptance evidence](docs/testing.md#v032-acceptance-coverage-26).
+Final documentation commit/push, CI confirmation and PR/issue closure remain pending under #26;
+this is not a merged, tagged or deployed release.
+
+Demo metadata has documented but unverified external provenance; the seed contains no covers.
+Operator listing and processed/rejected decisions for saved requests remain planned for v0.4.3.
 
 - Home and About pages.
 - Book catalog page.

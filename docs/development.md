@@ -283,7 +283,7 @@ to the matching container database.
 
 ## CI, Compose, And Migrations
 
-CI currently runs code quality checks only:
+The CI `quality` job runs:
 
 ```text
 go test ./...
@@ -291,9 +291,13 @@ go vet ./...
 golangci-lint
 ```
 
-CI does not start Docker Compose services and does not run migration smoke tests yet. The current
-boundary is intentional: migration smoke remains a local/manual check until the `migrate` CLI and
-database setup are made reproducible in CI. A PostgreSQL service job is deferred.
+The separate `integration-postgres` job runs `make test/integration`: it starts an isolated
+PostgreSQL database with Docker Compose, applies migrations up/down/up, runs sequential parity and
+HTTP acceptance tests with the race detector, then removes its own resources. Both jobs run for
+pull requests and pushes to `main`; see `.github/workflows/ci.yml`.
+
+The standalone `make db/migrate/smoke` target for SQLite and the Node slug-suggestion tests remain
+local/manual checks; they are not separate CI steps. CI does not deploy the application.
 
 For local Docker Compose work, use reset/bootstrap for disposable seeded environments:
 

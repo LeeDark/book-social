@@ -54,6 +54,8 @@ Current tests cover:
   owner-scoped refusal
 - administrator-only catalog forms, literal search, immutable slugs, safe audit records, and
   atomic book/link/cover/audit changes, including real SQLite/PostgreSQL HTTP acceptance
+- missing-book validation, session-owned persistence, UTC time, safe events/errors, one-request
+  confirmation and refusals without writes, including real SQLite/PostgreSQL HTTP acceptance
 
 There are also small integration-style HTTP tests that use `httptest` and a temporary SQLite database.
 

@@ -22,7 +22,10 @@ manual browser review on 2026-10-15 and accepted #25's non-persistent flow. The 
 follow-up is to persist the requested title, optional author and submitting user. Operator listing
 and processed/rejected decisions are planned for v0.4.3. Service/runtime persistence is implemented;
 real-database HTTP acceptance passes on SQLite and PostgreSQL. The user confirmed persistence
-browser acceptance on 2026-10-25 (Zen Browser, SQLite). Release closure remains separate.
+browser acceptance on 2026-10-25 (Zen Browser, SQLite). Final automated checks also passed on
+2026-10-25. Implementation and acceptance are complete; #26 remains in documentation/PR closure.
+Final commit/push and CI confirmation are required before issue/PR closure; no release tag or
+deployment is claimed.
 
 ## Planning Principles
 
@@ -303,7 +306,8 @@ Outcome: the private library supports the complete add → update → return →
 
 #### v0.3.2 — Curated Catalog Operations
 
-Status: active. The accepted contract is in
+Status: implementation and acceptance complete; final documentation/PR closure pending (#26).
+The accepted contract is in
 [`catalog_operations_v0_3_2.md`](catalog_operations_v0_3_2.md).
 
 - [x] Separate test fixtures, deterministic development seed data, and the curated demo catalog;
@@ -320,7 +324,10 @@ The operator workflow is accepted. #25 feedback implementation and automated ver
 complete; the user confirmed successful manual browser review and accepted it on 2026-10-15.
 The original three scope items are accepted. Persistence implementation and automated verification
 on SQLite/PostgreSQL are complete; the user confirmed persistence browser acceptance on 2026-10-25
-(Zen Browser, SQLite). The expanded #25 scope is accepted; v0.3.2 release closure remains separate.
+(Zen Browser, SQLite). Final #26 checks passed on 2026-10-25: full race tests, vet/lint, SQLite
+migration/seed smoke, isolated PostgreSQL integration, JavaScript tests and formatting/diff checks.
+See [verification and manual evidence](testing.md#v032-acceptance-coverage-26). Final documentation
+commit/push, CI confirmation and PR/issue closure remain pending; v0.3.3 scope is unchanged.
 
 Outcome: a small closed cohort can use reproducible catalog data that an operator can correct
 without direct SQL.

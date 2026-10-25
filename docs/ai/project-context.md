@@ -56,13 +56,15 @@ Current infrastructure caveat:
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
 - SQLite and PostgreSQL catalog repositories implement the same normalized v0.2 read contract.
 - SQLite and PostgreSQL v0.1 baseline, v0.2 normalization, v0.2.5 auth, v0.3 private-library,
-  v0.3.1 lifecycle, and v0.3.2 administrator/audit migrations exist under `db/*/migrations`.
+  v0.3.1 lifecycle, and v0.3.2 administrator/audit and missing-book request migrations through
+  `000007` exist under `db/*/migrations`.
 - Migration commands use the installed `golang-migrate` CLI through `make db/migrate/up` and `make db/migrate/down`.
 - Reset and Docker/Compose bootstrap apply all migrations first and then seed SQL.
 - `make db/migrate/smoke` checks clean setup, seed counts, the v0.1 relationship migration, the
   v0.2.5 user/session constraints, v0.3 library constraints, and rollback behavior.
-- CI currently keeps migration smoke and a PostgreSQL service job local/manual; PostgreSQL tests
-  use a disposable DSN and should run with `go test -p 1` when sharing one database.
+- CI runs quality checks and `make test/integration` in a separate isolated PostgreSQL job.
+  Standalone SQLite migration smoke and Node slug-suggestion checks remain local/manual.
+  PostgreSQL tests use a disposable DSN and run with `go test -p 1` when sharing one database.
 - Legacy `library`, `shelves`, and `tags` remain demo structures. `library_items` is the separate,
   implemented private-library model.
 - Docker/Compose are supported as local environment workflows for SQLite dev and PostgreSQL stage/prod.
@@ -82,14 +84,17 @@ Current scope:
   catalog/detail pages and list only their own items at `/me/library`.
 - v0.3.1 Reading-State Lifecycle is closed: owner-scoped status changes, timestamp rules,
   optimistic conflicts, catalog state display, and explicit-confirmation removal are implemented.
-- v0.3.2 Curated Catalog Operations is active. Deterministic development/demo data and provenance
+- v0.3.2 Curated Catalog Operations implementation and acceptance are complete. Demo data/provenance
   (#23), the administrator boundary, catalog MPA forms, immutable slugs, and transactional audit
   (#24) are implemented and accepted. Automated HTTP acceptance passes on SQLite and PostgreSQL;
-  the user confirmed successful operator browser review on 2026-10-12. Non-persistent missing-book
+  the user confirmed successful operator browser review on 2026-10-12. Missing-book
   feedback (#25) is implemented at `GET/POST /books/request`, with bounded field validation,
   metadata-only logging and a one-request flash. Automated checks pass; the user confirmed
   successful manual browser review and accepted #25 on 2026-10-15. The subsequent agreed v0.3.2
   follow-up now saves title, optional author and submitting user before success; migration `000007`
   is required. Real-database HTTP acceptance passes on SQLite/PostgreSQL; the user confirmed
   persistence browser acceptance on 2026-10-25 (Zen Browser, SQLite; version not reported).
-  Operator listing and processed/rejected decisions are planned for v0.4.3. v0.3.2 remains active.
+  Final #26 automated checks passed on 2026-10-25 against implementation `78fe3ad`; evidence and
+  consolidated manual acceptance are in `docs/testing.md`. Final documentation commit/push,
+  CI confirmation and PR/issue closure remain pending. No merged, tagged or deployed release is
+  claimed; v0.3.3 scope is unchanged. Operator listing/processing remains v0.4.3.

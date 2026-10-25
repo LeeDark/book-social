@@ -862,7 +862,7 @@ Residual risks:
   launch commands were not reported. Recorded expanded #25 acceptance and completed roadmap scope.
   PostgreSQL browser review is not claimed; GitHub issue/PR and v0.3.2 release closure are separate.
 
-## 2026-10-25 — v0.3.2 closure criteria, coverage and acceptance (#26, steps 1–4)
+## 2026-10-25 — v0.3.2 verification and documentation (#26, steps 1–5)
 
 - Updated #26 to require accepted missing-book persistence rather than forbid it; operator request
   processing remains v0.4.3. Mapped release criteria to existing migration, seed/provenance,
@@ -878,3 +878,8 @@ Residual risks:
   persistence on 2026-10-25 (Zen Browser, SQLite). Preserved missing environment details and the
   distinction from automated PostgreSQL evidence. No behavior changed, so no repeat browser run
   was required or claimed; repeat affected checks only if a later fix changes behavior.
+- Updated current-behavior docs and synchronized public/Ukrainian/private roadmaps: implementation
+  and acceptance are complete, but final commit/push, CI confirmation and PR/issue closure remain
+  pending. Corrected stale planned-operator and CI descriptions, documented migrations through
+  `000007`, and retained unverified legacy provenance/no-cover limits. v0.3.3 and v0.4.3 scope is
+  unchanged; no release tag or deployment is claimed. Documentation diff checks passed.

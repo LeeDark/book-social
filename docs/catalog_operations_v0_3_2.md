@@ -1,10 +1,12 @@
 # Curated Catalog Operations v0.3.2 Contract
 
-This document defines the accepted v0.3.2 contract for issues #23–#25. Demo data/provenance (#23)
-and the operator workflow (#24) are implemented; automated operator HTTP acceptance passes on
-SQLite and PostgreSQL, and the user confirmed successful manual browser review. Missing-book
-feedback (#25) is implemented with automated service and HTTP coverage; the user confirmed
-successful manual browser review and accepted it on 2026-10-15.
+This document defines the accepted v0.3.2 contract for issues #23–#25, including missing-book
+persistence. All functional scope is implemented and accepted. Final automated verification passed
+on 2026-10-25, including SQLite/PostgreSQL HTTP acceptance. Operator browser review was accepted on
+2026-10-12; the original non-persistent feedback flow on 2026-10-15; persistence on 2026-10-25 (Zen
+Browser, SQLite). See [verification and manual evidence](testing.md#v032-acceptance-coverage-26).
+Final documentation commit/push, CI confirmation and PR/issue closure remain under #26; this
+contract does not claim a merged, tagged or deployed release.
 
 ## Purpose and Boundaries
 
@@ -130,22 +132,27 @@ affected input, and use `aria-invalid` and `aria-describedby`. Anonymous or expi
 POST requests receive `403` before event creation.
 
 A valid request emits one structured `catalog_missing_book_requested` event with `request_id`,
-`actor_id`, `title_length`, `author_length`, and `has_author`. Lengths count Unicode code points after
+`actor_id`, `title_length`, `author_length`, and `has_author`. Lengths count Unicode code points
+after
 trimming; a blank author has length zero and `has_author=false`. The actor comes from current-user
 identity, not submitted fields. Submitted title/author text, credentials, session tokens, and
 unrelated request data are excluded. This metadata-only event replaces the earlier plan to log
 bounded title/author text and follows #25's restriction on arbitrary free-text logging.
-The POST now saves normalized title, optional author, the authenticated user ID and a server-assigned
+The POST now saves normalized title, optional author, the authenticated user ID and a
+server-assigned
 UTC creation time through the configured SQLite/PostgreSQL repository. Only after saving does it
-emit the metadata-only event and redirect with `303` to `/books` and a fixed one-request confirmation.
-A failed save returns a generic `500` without a success event, flash or redirect. No external lookup,
+emit the metadata-only event and redirect with `303` to `/books` and a fixed one-request
+confirmation.
+A failed save returns a generic `500` without a success event, flash or redirect. No external
+lookup,
 import, email, queue or administrator inbox operation is performed. Confirmation does not promise
 catalog addition; following the redirect or refreshing creates no further event or request row.
 
 Manual review of the original non-persistent flow was confirmed successful on 2026-10-15.
 Persistence HTTP acceptance passes on SQLite and PostgreSQL. The user confirmed successful
 persistence browser review on 2026-10-25 (Zen Browser, SQLite; browser version not reported).
-See the [persistence browser checklist](testing.md#manual-browser-smoke-v032-missing-book-persistence-25).
+See
+the [persistence browser checklist](testing.md#manual-browser-smoke-v032-missing-book-persistence-25).
 
 ## Missing-Book Persistence Follow-Up (v0.3.2; Accepted)
 
@@ -169,13 +176,13 @@ The persistence model was defined on 2026-10-23. Paired migration `000007` now c
 Shared migration/repository tests and full HTTP acceptance pass against both databases, including
 save failures without success confirmation, lost prior requests or leaked private text.
 
-| Field | Meaning and ownership | Stored value |
-|-------|-----------------------|--------------|
-| `id` | Database-generated request identity | Positive integer primary key |
-| `user_id` | Submitting account, taken from authenticated session identity | Required foreign key to `users.id` |
-| `title` | Reader's requested book title, normalized by the service | Required text, 1–255 Unicode code points after trimming |
-| `author` | Reader's optional author text, normalized by the service | Non-null text, 0–255 Unicode code points; absent or whitespace-only input becomes `""` |
-| `created_at` | Submission time assigned by the application | Required UTC timestamp; RFC3339Nano text in SQLite and `TIMESTAMPTZ` in PostgreSQL |
+| Field        | Meaning and ownership                                         | Stored value                                                                           |
+|--------------|---------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| `id`         | Database-generated request identity                           | Positive integer primary key                                                           |
+| `user_id`    | Submitting account, taken from authenticated session identity | Required foreign key to `users.id`                                                     |
+| `title`      | Reader's requested book title, normalized by the service      | Required text, 1–255 Unicode code points after trimming                                |
+| `author`     | Reader's optional author text, normalized by the service      | Non-null text, 0–255 Unicode code points; absent or whitespace-only input becomes `""` |
+| `created_at` | Submission time assigned by the application                   | Required UTC timestamp; RFC3339Nano text in SQLite and `TIMESTAMPTZ` in PostgreSQL     |
 
 Both text fields use the existing trimming and validation rules: invalid UTF-8 and NUL are rejected.
 Author text is not an `authors` reference, and a request has no required `books` reference: the
@@ -192,7 +199,8 @@ introduce account-deletion functionality.
 creation time to `MissingBookRepository.Create`. Both implementations use a parameterized insert
 without normalization, timestamp assignment, events or logging. Unexpected database failures become
 `ErrMissingBookInternal`, without wrapping raw diagnostics that may contain submitted text. Context
-cancellation and deadline errors are preserved. The service owns validation, session-derived user ID,
+cancellation and deadline errors are preserved. The service owns validation, session-derived user
+ID,
 UTC time assignment and save-before-event ordering. The handler confirms only a successful result.
 
 Each successful submission creates a separate row. There is no uniqueness rule on title, author or

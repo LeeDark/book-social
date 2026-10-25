@@ -7,17 +7,20 @@ Database docs are split by project stage:
 - Auth Foundation v0.2.5 is described below and created by migration `000003`.
 - Private Library Foundation v0.3.0 is described below and created by migration `000004`.
 - Reading-State Lifecycle v0.3.1 is described below and created by migration `000005`.
+- Curated Catalog Operations v0.3.2 adds administrator/audit migration `000006` and missing-book
+  request migration `000007`, described below.
 
 Current state:
 
 - `APP_ENV=dev` uses SQLite and is the active local development path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
-- Baseline, catalog-normalization, auth-foundation, private-library, and lifecycle migration files
-  exist and can be applied with the `golang-migrate` CLI.
+- Paired SQLite/PostgreSQL migrations through `000007` exist and can be applied with the
+  `golang-migrate` CLI before starting the application; runtime wiring does not apply migrations.
 - SQLite and PostgreSQL implement the normalized v0.2 catalog read-side.
 - SQLite and PostgreSQL implement equivalent user and opaque-session persistence contracts.
 - SQLite and PostgreSQL implement equivalent private-library persistence contracts consumed by the
   implemented v0.3.1 lifecycle flow.
+- Both backends implement transactional catalog maintenance/audit and missing-book request creation.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
 
 ## Missing-Book Request Storage

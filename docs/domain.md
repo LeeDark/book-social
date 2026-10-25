@@ -70,12 +70,14 @@ a CSS placeholder. Uploading, proxying, or storing cover files is not part of th
 
 The normalized schema is described in [database_v0_2.md](database_v0_2.md).
 
-### Planned Curated Catalog Operations
+### Curated Catalog Operations
 
-v0.3.2 will let a deliberately appointed administrator find, create, and correct demo books while
-preserving stable public book slugs. Operators will select existing authors and genres, may set or
-clear one front-cover URL, and produce an immutable audit record for each successful create or
-correction. The internal authorization capability does not enter page models or templates.
+v0.3.2 lets a deliberately appointed administrator find, create, and correct demo books while
+preserving stable public book slugs. Operators select existing authors and genres, may set or clear
+one front-cover URL, and produce one audit record for each successful create or correction,
+including no-op corrections. Catalog, relationship, cover and audit writes are atomic. Audit records
+are append-only through the application API, not protected against a database owner using direct
+SQL. The internal authorization capability does not enter page models or templates.
 
 Missing-book feedback provides an authenticated MPA form. Its original non-persistent flow was
 accepted; the v0.3.2 service now saves a request before emitting one metadata-only structured event.
