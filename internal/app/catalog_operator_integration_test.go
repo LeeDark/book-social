@@ -226,6 +226,43 @@ func checkCatalogOperatorHTTPAcceptance(
 		})
 	}
 
+	var booksBeforeIDChecks int
+	if err := db.QueryRow("SELECT COUNT(*) FROM books").Scan(&booksBeforeIDChecks); err != nil {
+		t.Fatalf("count catalog before ID checks: %v", err)
+	}
+	for _, value := range []string{"2147483647", "2147483648", "3000000000", "9223372036854775808"} {
+		t.Run("ID range/"+value, func(t *testing.T) {
+			bookStatus := http.StatusUnprocessableEntity
+			if value == "2147483647" {
+				bookStatus = http.StatusNotFound
+			}
+			for _, method := range []string{http.MethodGet, http.MethodPost} {
+				path := "/admin/catalog/books/" + value + "/edit"
+				assertOperatorHTTPStatus(t, operatorRequest(handler, method, path, form.Encode()), bookStatus)
+			}
+			for _, path := range []string{"/admin/catalog/books/new", editURL} {
+				for _, field := range []string{"author_ids", "genre_ids"} {
+					rejectedForm := maps.Clone(form)
+					rejectedForm.Set(field, value)
+					page := operatorRequest(handler, http.MethodPost, path, rejectedForm.Encode())
+					assertOperatorHTTPStatus(t, page, http.StatusUnprocessableEntity)
+					if !strings.Contains(page.Body.String(), `id="`+field+`-error"`) {
+						t.Fatal("invalid selection lacks an accessible field error")
+					}
+				}
+			}
+			unchanged, err := publicRepo.GetBookBySlug(ctx, "request")
+			if err != nil || !reflect.DeepEqual(visible, unchanged) {
+				t.Fatal("refused ID-range request changed the catalog")
+			}
+			var bookCount int
+			if err := db.QueryRow("SELECT COUNT(*) FROM books").Scan(&bookCount); err != nil || bookCount != booksBeforeIDChecks {
+				t.Fatal("refused ID-range request created another book")
+			}
+			assertOperatorHTTPAudit(t, db, 1, visible.ID, "create", "created")
+		})
+	}
+
 	form.Set("title", "Corrected Acceptance Book")
 	form.Set("description", "corrected-private-description")
 	form.Set("slug", "forged-renamed-slug")

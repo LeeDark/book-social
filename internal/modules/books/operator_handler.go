@@ -112,8 +112,9 @@ func (h *OperatorHandler) EditBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bookID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || bookID <= 0 {
+	// Both backends share the positive PostgreSQL INTEGER ID range.
+	parsedID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 32)
+	if err != nil || parsedID <= 0 {
 		h.renderFind(w, r, http.StatusUnprocessableEntity, OperatorFindPageData{
 			Page:      operatorPage("Catalog maintenance"),
 			FormError: "Choose a valid book from the search results.",
@@ -121,6 +122,7 @@ func (h *OperatorHandler) EditBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	bookID := int(parsedID)
 	book, err := h.service.Get(r.Context(), actorID, bookID)
 	if err != nil {
 		h.operationError(w, r, err)
@@ -266,12 +268,12 @@ func parseOperatorForm(w http.ResponseWriter, r *http.Request, isNew bool) (Oper
 func parseOperatorIDs(values []string, field string, formErrors map[string]string) []int {
 	ids := make([]int, 0, len(values))
 	for _, value := range values {
-		id, err := strconv.Atoi(value)
+		id, err := strconv.ParseInt(value, 10, 32)
 		if err != nil || id <= 0 {
 			formErrors[field] = "Choose existing entries."
 			continue
 		}
-		ids = append(ids, id)
+		ids = append(ids, int(id))
 	}
 	return ids
 }

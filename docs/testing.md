@@ -491,7 +491,18 @@ The requests created by this smoke remain in the development database. Earlier m
 cannot be restored as requests. A PostgreSQL browser run can use the same behavioral checks with its
 own migrated local database and read-only SQL; automated PostgreSQL acceptance is already recorded.
 
-## Post-Review Route Collision Regression (#26)
+## Post-Review Regression Checks (#26)
+
+### Operator ID Range
+
+Operator ID regression tests cover zero/negative values, the supported maximum `2147483647`,
+32-bit overflow (`2147483648`, `3000000000`) and values exceeding 64 bits. Fake-service tests prove
+malformed book IDs never reach lookup and malformed selections never reach writes, for GET/POST
+book routes and create/correct forms. Shared SQLite/PostgreSQL HTTP acceptance verifies consistent
+`422` overflow responses, `404` for an absent in-range book, accessible selection errors and
+unchanged catalog/audit data.
+
+### Missing-Book Route Collision
 
 The feedback form moved from `/books/request` to `/books/request/new` to preserve public book
 URLs, including existing books with slug `request`. Earlier checked browser lists record the old

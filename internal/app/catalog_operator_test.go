@@ -125,6 +125,68 @@ func operatorSubmittedForm() url.Values {
 	}
 }
 
+func TestOperatorHTTPBookIDRange(t *testing.T) {
+	for _, method := range []string{http.MethodGet, http.MethodPost} {
+		for _, value := range []string{"0", "-1", "2147483647", "2147483648", "3000000000", "9223372036854775808"} {
+			t.Run(method+"/"+value, func(t *testing.T) {
+				handler, service := newHTTPOperatorApp(t)
+				path := "/admin/catalog/books/" + value + "/edit"
+				page := operatorRequest(handler, method, path, operatorSubmittedForm().Encode())
+				if value == "2147483647" {
+					status := http.StatusOK
+					if method == http.MethodPost {
+						status = http.StatusSeeOther
+					}
+					assertOperatorHTTPStatus(t, page, status)
+					if service.bookID != 2147483647 {
+						t.Fatal("maximum supported book ID did not reach the service")
+					}
+					return
+				}
+				assertOperatorHTTPStatus(t, page, http.StatusUnprocessableEntity)
+				if service.bookID != 0 || service.writeCalls != 0 {
+					t.Fatal("invalid book ID reached the service")
+				}
+			})
+		}
+	}
+}
+
+func TestOperatorHTTPSelectionIDRange(t *testing.T) {
+	for _, path := range []string{"/admin/catalog/books/new", "/admin/catalog/books/42/edit"} {
+		for _, field := range []string{"author_ids", "genre_ids"} {
+			for _, value := range []string{"0", "-1", "2147483647", "2147483648", "3000000000", "9223372036854775808"} {
+				t.Run(path+"/"+field+"/"+value, func(t *testing.T) {
+					handler, service := newHTTPOperatorApp(t)
+					form := operatorSubmittedForm()
+					form[field] = []string{"1", value}
+					page := operatorRequest(handler, http.MethodPost, path, form.Encode())
+					if value == "2147483647" {
+						assertOperatorHTTPStatus(t, page, http.StatusSeeOther)
+						input := service.creation.BookCorrection
+						if path != "/admin/catalog/books/new" {
+							input = service.correction
+						}
+						ids := input.AuthorIDs
+						if field == "genre_ids" {
+							ids = input.GenreIDs
+						}
+						if service.writeCalls != 1 || !slices.Equal(ids, []int{1, 2147483647}) {
+							t.Fatal("maximum supported selection ID did not reach the service")
+						}
+						return
+					}
+					assertOperatorHTTPStatus(t, page, http.StatusUnprocessableEntity)
+					if service.writeCalls != 0 || !strings.Contains(page.Body.String(), `id="`+field+`-error"`) ||
+						!strings.Contains(page.Body.String(), "Submitted title") {
+						t.Fatal("invalid selection reached a write or lost retained accessible errors")
+					}
+				})
+			}
+		}
+	}
+}
+
 func TestOperatorHTTPPages(t *testing.T) {
 	for _, check := range []struct {
 		name      string

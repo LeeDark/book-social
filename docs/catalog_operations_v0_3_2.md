@@ -65,7 +65,10 @@ case-insensitive substring match against title and slug, ordered by title then I
 shows the form without a full catalog listing. This bounded search needs no pagination for the
 curated demo catalog.
 
-The route ID is a positive book ID. A malformed ID or form field is `422`; an unknown book is `404`.
+Operator book route IDs and selected author/genre IDs use the shared positive PostgreSQL `INTEGER`
+range, `1..2147483647`, on both backends. Out-of-range values are malformed and return `422` before
+the service lookup/write, rather than a PostgreSQL driver error. An unknown book within that range
+returns `404`; unknown author/genre selections return `422`.
 Successful creation redirects with `303` to that book's edit page. Successful correction redirects
 with `303` back to the same edit page. Both set a one-request success flash.
 

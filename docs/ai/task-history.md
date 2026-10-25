@@ -904,3 +904,13 @@ Residual risks:
   available, including the non-binary parity case), testutil vet, lint (Go 1.26.4; zero issues),
   formatting and `git diff --check`. Disposable integration resources were removed; development
   databases were unchanged. No glibc `en_US.UTF-8` database run is claimed.
+
+## 2026-10-25 — External review: operator ID range parity (#26)
+
+- Limited operator route/selection parsing to positive 32-bit IDs shared by SQLite/PostgreSQL.
+  Overflow now returns `422` before lookup/write; absent in-range books still return `404`.
+  Added fake-service boundary tests and shared backend HTTP refusals with unchanged catalog/audit
+  assertions. New range tests failed before the fix; library routes were intentionally unchanged.
+- Passed focused operator tests, `make test` (race), `make test/integration` (real PostgreSQL),
+  affected-package vet, lint (Go 1.26.4; zero issues), formatting and `git diff --check`.
+  Disposable integration resources were removed; development databases were unchanged.

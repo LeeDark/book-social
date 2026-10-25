@@ -121,6 +121,8 @@ redirect to the book's edit page with a fixed one-request flash. Blank search do
 catalog. Validation/conflict pages retain submitted text and existing-author/genre selections,
 with linked field errors. URL-encoded POST bodies are limited to 128 KiB; malformed/oversized forms,
 duplicate scalar fields, and malformed selected IDs return `422` without reaching a catalog write.
+Operator book IDs and author/genre selections must fit `1..2147483647` on both backends.
+Overflow returns `422`; a well-formed but absent book ID returns `404`.
 Only POST-body fields are accepted; correction ignores any submitted slug, actor, or audit fields.
 The creation form proposes an ASCII slug through optional JavaScript until the operator edits it.
 Without JavaScript, the operator enters a slug manually; server validation is always required.
