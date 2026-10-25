@@ -17,6 +17,8 @@ are configured; the reviewed five-book artwork, container lifecycle/real Postgre
 visual acceptance remain pending. See [the cover contract](docs/cover_storage_v0_3_2.md) and
 [delivery/recovery procedure](docs/cover_operations.md). Before recreating an older container,
 preserve its cover files: the new volumes do not migrate its old writable layer automatically.
+Cover-specific automated checks pass on SQLite/PostgreSQL at `27c64d2`; reviewed artwork and manual
+acceptance remain open. See [the separate #28 acceptance record](docs/cover_acceptance_v0_3_2.md).
 
 Final automated checks passed on 2026-10-25, including real SQLite/PostgreSQL acceptance. The user
 accepted the operator flow on 2026-10-12 and missing-book persistence on 2026-10-25 (Zen Browser,

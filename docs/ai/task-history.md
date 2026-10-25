@@ -1119,3 +1119,35 @@ Residual risks:
   No schema/dependency changes or approved artwork added. Container restart/recreate, real PostgreSQL
   restore, five approved images and browser visual acceptance remain pending outside the sandbox;
   the expanded cover scope and #28 remain open.
+
+## 2026-10-25 — Final automated cover verification and pending manual gates (#28, step 7)
+
+- Verified implementation `27c64d2` without changing Go/SQL, dependencies or runtime behavior.
+  Passed focused race checks with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/coverops ./cmd/coverctl ./internal/storage/covers ./internal/http/cover`,
+  full `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test`,
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make db/migrate/smoke`,
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`, and
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues). Passed `node --test internal/web/tests/*.test.cjs`.
+- Passed real PostgreSQL migration up/down/up and sequential race tests for testutil, PostgreSQL
+  repositories, app HTTP and coverops with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test/integration COMPOSE_INTEGRATION='docker compose -p book-social-cover-step7 -f compose.integration.yaml'`.
+  This closes the pending PostgreSQL automated verification of steps 5–6, not dump/restore or
+  operational acceptance. Docker access required escalation; the initially empty project was
+  cleaned up, and a final listing was empty. No retained dev/stage/prod data or volumes were touched.
+- Both CGO-disabled Linux builds passed:
+  `GOTOOLCHAIN=go1.26.4 CGO_ENABLED=0 GOOS=linux GOCACHE=/tmp/book-social-go-cache go build -o /tmp/book-social-cover-step7-web ./cmd/web` and
+  `GOTOOLCHAIN=go1.26.4 CGO_ENABLED=0 GOOS=linux GOCACHE=/tmp/book-social-go-cache go build -o /tmp/book-social-cover-step7-ctl ./cmd/coverctl`.
+  Each emitted a non-fatal read-only module stat-cache warning. Passed dev/stage/prod
+  `docker compose -f compose.yaml -f compose.<environment>.yaml config --quiet`,
+  `rg --files -g '*.go' | xargs gofmt -l` (empty output) and `git diff --check`.
+- Added `docs/cover_acceptance_v0_3_2.md` with command/results, coverage boundaries, exact seeded
+  pilot routes and unchecked manual gates. Linked it from README, testing and the cover contract;
+  corrected test-schema documentation to `000008` and documented coverops integration coverage.
+  Earlier workflow acceptance and prior skipped-test records remain historical, not overwritten.
+- Step 7 remains incomplete overall: no reviewed five-artwork bundle/profile, browser review,
+  container restart/recreate or real PostgreSQL dump/restore evidence is available. No app/server
+  was started in the sandbox. The next acceptance work requires reviewed assets and local execution
+  outside the sandbox using the documented safe procedures. No issue/release closure or commit
+  was performed as part of this pass.

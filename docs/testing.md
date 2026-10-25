@@ -56,6 +56,9 @@ Current tests cover:
   atomic book/link/cover/audit changes, including real SQLite/PostgreSQL HTTP acceptance
 - missing-book validation, session-owned persistence, UTC time, safe events/errors, one-request
   confirmation and refusals without writes, including real SQLite/PostgreSQL HTTP acceptance
+- local cover storage/serving, administrator uploads and atomic reference/audit changes,
+  main/thumbnail card/detail rendering, HTMX failure handling, explicit pilot installation and
+  post-restore verification; see [#28 step-7 evidence and pending acceptance](cover_acceptance_v0_3_2.md)
 
 There are also small integration-style HTTP tests that use `httptest` and a temporary SQLite database.
 
@@ -70,7 +73,7 @@ Current repository and HTTP integration tests create disposable SQLite databases
 - tests insert minimal deterministic data needed by the behavior under test
 
 Shared helpers in `internal/testutil` build SQLite and PostgreSQL test schemas by applying the
-checked-in migrations through missing-book request migration `000007`, then seed a small deterministic
+checked-in migrations through local-cover migration `000008`, then seed a small deterministic
 catalog fixture and ordinary user role. Tests can still keep scenario-specific fixture rows locally
 when they need more data than the default helper provides.
 
@@ -78,7 +81,8 @@ PostgreSQL repository tests are opt-in because they require a real PostgreSQL da
 they skip unless `BOOK_SOCIAL_POSTGRES_TEST_DSN` is set. The reproducible project check is
 `make test/integration`: it starts an isolated Docker Compose database, applies and rolls back the
 PostgreSQL migrations with a pinned `golang-migrate` binary, runs PostgreSQL repository and HTTP
-parity tests (including the private-library flow) sequentially, then removes its own Compose resources.
+parity tests (including private-library and cover flows), plus `internal/coverops` installation checks,
+sequentially, then removes its own Compose resources. This does not rehearse PostgreSQL dump/restore.
 
 The PostgreSQL test DSN must connect to the exact disposable database `book_social_test`. Before
 every schema reset, the helper queries `current_database()` and refuses to run unless it equals

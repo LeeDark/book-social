@@ -4,6 +4,8 @@ Status: implementation contract prepared on 2026-10-25. Steps 2–6 implement lo
 validation, public HTTP delivery, database references/metadata, administrator uploads and shared
 cover rendering/fallback, persistent Compose volume configuration and offline delivery/verification
 tools. The approved pilot, container lifecycle/real PostgreSQL restore and visual acceptance remain pending.
+Step 7's [automated evidence and outstanding manual gates](cover_acceptance_v0_3_2.md) are recorded
+separately; the final automated pass includes real SQLite/PostgreSQL cover workflows.
 This document extends the original
 [URL-only catalog operations contract](catalog_operations_v0_3_2.md); it does not change the
 recorded acceptance of issues #23–#26. Release scope remains in [roadmap.md](roadmap.md).
