@@ -914,3 +914,12 @@ Residual risks:
 - Passed focused operator tests, `make test` (race), `make test/integration` (real PostgreSQL),
   affected-package vet, lint (Go 1.26.4; zero issues), formatting and `git diff --check`.
   Disposable integration resources were removed; development databases were unchanged.
+
+## 2026-10-25 — External review: migration operations documentation (#26)
+
+- Corrected the shared helper's migration baseline to `000007`. Documented writer shutdown,
+  backups and guarded downgrade refusal, target-version dirty markers, and conditional metadata
+  repair only after schema/data inspection; `force` is not SQL recovery or permission to bypass
+  retained data. Synchronized public English/Ukrainian and private English/Russian roadmaps with
+  review fixes, pending route browser re-acceptance and final push/CI/closure gates. No migration,
+  schema, runtime or database state was changed; documentation diff checks passed.

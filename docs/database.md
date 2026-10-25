@@ -45,6 +45,8 @@ responsibilities. The migration does not create a default timestamp or seed requ
 The down migration refuses rollback while requests exist. PostgreSQL takes an exclusive table lock
 before checking emptiness; SQLite migrations run transactionally through the CLI. An empty table
 can be rolled back and recreated without changing users, catalog data or audit records.
+Run downgrade only with writers stopped. A guarded refusal may leave migration metadata dirty;
+see [recovery after a refused downgrade](#recovery-after-a-refused-downgrade).
 
 The full ownership, normalization and later processing boundary is defined in the
 [stored-request contract](catalog_operations_v0_3_2.md#stored-request-model).
@@ -96,6 +98,9 @@ SQLite stores UTC time as RFC3339Nano text; PostgreSQL uses `TIMESTAMPTZ`.
 The down migration refuses rollback if audit rows exist or any user has the `admin` role.
 It never silently deletes audit history or revokes an appointed administrator. Empty rollback
 removes the table and the unassigned role while retaining ordinary users and catalog data.
+Stop all application/background writers before downgrade: PostgreSQL migration `000006` does not
+take the explicit pre-check table lock used by `000007`. A transaction alone does not make its
+emptiness/role check safe against concurrent writes.
 
 The operator service and both repositories now support administrator-only find/create/correct,
 service-owned transactions, append-only audit writes, server-generated summaries, and UTC audit
@@ -172,6 +177,73 @@ make db/migrate/down \
 The project uses the installed `migrate` binary from `golang-migrate`. It records applied
 versions in `schema_migrations`. The Make targets apply all pending migrations on `up` and roll
 back one migration on `down`.
+
+### Safe Downgrade Preconditions
+
+- Identify the exact database/backend, current migration version and compatible application
+  revision. Stop all application instances, background jobs and other writers for the entire
+  downgrade/recovery window; do not rely only on a maintenance page or database migration lock.
+- Take a recoverable backup and record schema/version plus relevant row counts before proceeding.
+  Test the operation on a disposable copy first. Do not use reset or seed scripts on retained data.
+- Inspect the down migration being executed. `000007` refuses if requests exist; `000006` refuses
+  if audit rows or appointed administrators exist. These are data-protection guards, not errors to
+  bypass by deleting requests/audit or silently demoting accounts.
+- If the target schema is incompatible with the retained data, cancel the downgrade and keep the
+  compatible application revision. Do not restart writers until the schema and migration metadata
+  agree and the compatible application has been verified.
+
+### Recovery After a Refused Downgrade
+
+`golang-migrate` v4.19.1 marks the **target** version dirty before executing a migration. A failed
+down from `7` to `6` can therefore show `6 (dirty)` even when the schema/data still match version
+`7`. Dirty metadata alone does not prove which schema remains. `force N` only sets the version and
+clears the dirty flag; it does not execute SQL, undo partial changes or restore lost data.
+
+1. Keep writers stopped. Preserve the migration error/log and backup before any metadata repair.
+   Confirm it was the intended guard refusal, not an unrelated SQL, permission or connection error.
+2. Read `schema_migrations` and inspect the actual schema against the checked-in migrations. Verify
+   tables, columns, constraints/indexes and relevant data, not just table existence. Check for
+   partially applied DDL or leftover downgrade-check tables. Standard CLI transactions are expected
+   to preserve data on these guard failures; custom driver/transaction options require inspection.
+3. Only if the complete pre-downgrade schema and data are confirmed intact may the environment
+   owner use `force` to mark that **verified schema version** clean. Examples:
+
+   | Failed step | Possible dirty marker | Verified schema still present | Conditional repair |
+   |-------------|-----------------------|-------------------------------|--------------------|
+   | `7 → 6`, request guard refused | `6`, dirty | Full version `7`, retained requests/audit/users/catalog | `force 7` |
+   | `6 → 5`, audit/admin guard refused | `5`, dirty | Full version `6`, retained audit/admin/users/catalog | `force 6` |
+
+   For multi-step downgrades, earlier steps may have succeeded: choose the verified schema version,
+   not automatically the original starting version. If schema/data are partial or uncertain, stop;
+   investigate on a copy and use an approved repair or restore plan. Do not guess a version.
+4. Recheck version/dirty state and retained data after an authorized repair. Do not immediately
+   retry the blocked down migration. Cancel the downgrade, verify the compatible application and
+   only then resume service; resolve any intended data transition separately.
+
+Read-only checks for the default SQLite database include:
+
+```bash
+sqlite3 -readonly ./data/book_social_dev.db 'SELECT version, dirty FROM schema_migrations;'
+sqlite3 -readonly ./data/book_social_dev.db '.schema'
+```
+
+For PostgreSQL, use `SELECT version, dirty FROM schema_migrations`, schema inspection in `psql`
+(`\d+ missing_book_requests`, `\d+ catalog_audit_log`, `\d+ roles`) and compare with the checked-in
+migrations. Inspect relevant request/audit counts and user-role assignments on both backends without
+copying private request text into reports.
+
+The following SQLite example is **not a generic fix**: run it only after step 3 has established
+that a refused `7 → 6` left the full version-7 schema/data intact, and the owner authorizes repair:
+
+```bash
+migrate -path ./db/sqlite/migrations -database 'sqlite://./data/book_social_dev.db' force 7
+migrate -path ./db/sqlite/migrations -database 'sqlite://./data/book_social_dev.db' version
+```
+
+For PostgreSQL the same `force N` semantics apply, using its migration directory and the exact
+verified database URL; never reuse the SQLite example or switch targets during recovery.
+
+### Migration CLI Drivers
 
 The installed `migrate` binary must include the database driver being used. Local SQLite
 migrations require a binary with the SQLite driver; PostgreSQL migrations require the PostgreSQL
@@ -318,8 +390,9 @@ Tests do not use the local development database file.
 
 Current SQLite repository and HTTP integration tests create temporary or in-memory SQLite
 databases inside the test process and exercise the normalized catalog, auth, and private-library
-persistence. The shared library helper applies migrations through `000005`, creates a deterministic
-catalog fixture, and verifies the ordinary role, session, and library constraints.
+persistence, catalog operations/audit and missing-book requests. The shared library helpers apply
+all checked-in migrations (currently through `000007`) and create a minimal deterministic catalog
+fixture; ordinary role, session, library, audit and request constraints have focused tests.
 
 This keeps tests fast and isolated without depending on the full development seed dataset.
 PostgreSQL repository tests are opt-in and exercise the same catalog and user/session repository

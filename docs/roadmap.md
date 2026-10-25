@@ -23,9 +23,13 @@ follow-up is to persist the requested title, optional author and submitting user
 and processed/rejected decisions are planned for v0.4.3. Service/runtime persistence is implemented;
 real-database HTTP acceptance passes on SQLite and PostgreSQL. The user confirmed persistence
 browser acceptance on 2026-10-25 (Zen Browser, SQLite). Final automated checks also passed on
-2026-10-25. Implementation and acceptance are complete; #26 remains in documentation/PR closure.
-Final commit/push and CI confirmation are required before issue/PR closure; no release tag or
-deployment is claimed.
+2026-10-25. The original scope is accepted; #26 now covers external-review fixes and final closure.
+Local commits fix the feedback route collision, locale-dependent PostgreSQL seed ordering and
+operator ID overflow; regression checks pass on SQLite/PostgreSQL. Feedback is now at
+`/books/request/new`, preserving public books at `/books/request`; focused browser re-acceptance
+of this change is pending. Final documentation commit, push/CI confirmation and issue/PR closure
+remain pending. PR #27 stays Draft; merge requires separate authorization. No tag or deployment
+is claimed; v0.3.3 scope is unchanged.
 
 ## Planning Principles
 
@@ -306,7 +310,7 @@ Outcome: the private library supports the complete add → update → return →
 
 #### v0.3.2 — Curated Catalog Operations
 
-Status: implementation and acceptance complete; final documentation/PR closure pending (#26).
+Status: original scope accepted; external-review follow-up and final closure pending (#26).
 The accepted contract is in
 [`catalog_operations_v0_3_2.md`](catalog_operations_v0_3_2.md).
 
@@ -328,6 +332,14 @@ on SQLite/PostgreSQL are complete; the user confirmed persistence browser accept
 migration/seed smoke, isolated PostgreSQL integration, JavaScript tests and formatting/diff checks.
 See [verification and manual evidence](testing.md#v032-acceptance-coverage-26). Final documentation
 commit/push, CI confirmation and PR/issue closure remain pending; v0.3.3 scope is unchanged.
+
+Post-review corrections: feedback GET/POST moved to `/books/request/new` without renaming or
+reserving book slugs; PostgreSQL seed uses `COLLATE "C"`; operator IDs use `1..2147483647`.
+Shared backend regressions, full race tests, vet/lint and isolated PostgreSQL checks passed.
+Downgrade documentation now requires stopped writers, backup and schema/data inspection before
+any dirty-version repair; `force` is not automatic SQL recovery. Earlier manual acceptance applies
+to the previous form route: the focused browser recheck remains open. These fixes have not yet
+been pushed; final CI must verify the new published head before closing #26 or preparing PR merge.
 
 Outcome: a small closed cohort can use reproducible catalog data that an operator can correct
 without direct SQL.
