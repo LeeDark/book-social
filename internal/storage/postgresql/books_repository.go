@@ -27,6 +27,7 @@ func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.Boo
 		SELECT b.id, b.title, b.slug, b.description
 		FROM books b
 	`
+
 	conditions := make([]string, 0, 2)
 	args := make([]any, 0, 2)
 
@@ -52,6 +53,7 @@ func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.Boo
 		`)
 		args = append(args, filter.GenreSlug)
 	}
+
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
@@ -67,9 +69,15 @@ func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.Boo
 	if err != nil {
 		return nil, err
 	}
+
 	if err := r.hydrateBookRelationships(ctx, bookList); err != nil {
 		return nil, err
 	}
+
+	if err := r.hydrateBookCovers(ctx, bookList); err != nil {
+		return nil, err
+	}
+
 	return bookList, nil
 }
 

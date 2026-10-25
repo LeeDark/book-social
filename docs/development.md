@@ -45,6 +45,12 @@ Compose volumes remain subsequent steps. Do not treat an image in the local dire
 database association or a backup of SQL.
 See [the cover contract](cover_storage_v0_3_2.md) for limits and failure semantics.
 
+Details now use the main front image; home/catalog/author/library cards prefer its thumbnail or
+otherwise use the main file. The shared placeholder is revealed by `cover-images.js` if loading
+fails, including after HTMX filtering. Run `node --test internal/web/tests/*.test.cjs` for the small
+JavaScript checks. Manual visual verification still needs a local browser outside the sandbox;
+see [step 5](cover_storage_v0_3_2.md#shared-rendering-and-fallback-step-5).
+
 ### Lifecycle and Middleware
 
 The web process listens for `SIGINT` and `SIGTERM` through a root `signal.NotifyContext`. On

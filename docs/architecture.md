@@ -46,7 +46,8 @@ HTTP handler
 - Use migrations for schema evolution; reset and local Compose bootstrap apply migrations before
   deterministic seed data.
 - Keep catalog cards and details on explicit view models: authors and genres are collections, and
-  details may select a `front` cover from cover metadata.
+  only `front` artwork is displayed. Details use its main image; cards prefer a prepared thumbnail.
+  List repositories hydrate cover metadata in a batch, including owner-scoped library lists.
 - Keep HTTP lifecycle policy in `internal/app` and reusable response middleware in
   `internal/http/middleware`.
 - Use `signal.NotifyContext` for process shutdown, a five-second HTTP graceful-shutdown deadline,

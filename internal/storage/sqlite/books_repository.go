@@ -81,6 +81,10 @@ func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.Boo
 		return nil, err
 	}
 
+	if err := r.hydrateBookCovers(ctx, bookList); err != nil {
+		return nil, err
+	}
+
 	return bookList, nil
 }
 

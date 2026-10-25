@@ -323,7 +323,7 @@ func TestCatalogHandlerBookDetailsUsesPlaceholderWithoutFrontCover(t *testing.T)
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 	}
 	body := rec.Body.String()
-	if !strings.Contains(body, `class="book-details__cover cover-3"`) {
+	if !strings.Contains(body, `class="book-cover cover-3"`) {
 		t.Fatalf("body does not contain cover placeholder: %q", body)
 	}
 	if strings.Contains(body, "<img") {

@@ -22,8 +22,8 @@ func TestBookRepositoryListBooksReturnsNormalizedRelationships(t *testing.T) {
 	book := findBookBySlug(t, bookList, "pride-and-prejudice")
 	assertAuthorSlugs(t, book.Authors, []string{"jane-austen", "mary-shelley"})
 	assertGenreSlugs(t, book.Genres, []string{"classic", "romance"})
-	if len(book.Covers) != 0 {
-		t.Fatalf("list book Covers = %#v, want details-only data omitted", book.Covers)
+	if len(book.Covers) != 2 || book.Covers[0].Variant != "front" {
+		t.Fatalf("list book Covers = %#v, want ordered cover metadata", book.Covers)
 	}
 }
 

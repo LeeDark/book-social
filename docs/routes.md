@@ -190,7 +190,9 @@ Unknown filter slugs return an empty catalog result, not a 404.
 - Unknown book slugs return 404.
 - Unknown author slugs return 404.
 - Book details render all related authors and genres. When no `front` cover metadata exists, the
-  page renders its CSS cover placeholder.
+  page renders its CSS cover placeholder. Details use the main front image; home/catalog/author
+  and private-library cards prefer the supplied thumbnail, falling back to the main URL when absent.
+  An external script reveals the placeholder on image errors, also for HTMX catalog fragments.
 - Author pages show the selected author's details and catalog cards with each book's complete
   author and genre lists.
 

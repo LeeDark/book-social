@@ -1044,3 +1044,39 @@ Residual risks:
   adapter, image validation/local storage and their cover tests. This pass changes only whitespace
   in Go files. Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/app ./internal/storage/covers`,
   `gofmt` and `git diff --check`; no additional PostgreSQL run was needed for whitespace-only edits.
+
+## 2026-10-25 — Shared front-cover rendering and fallback (#28, step 5)
+
+- Catalog/home/author cards and owner-scoped library items now read cover metadata in batches
+  in both repositories, reusing the existing cover reader without per-card SQL or file checks.
+  `SelectCardFrontCover` prefers a prepared front thumbnail, otherwise the main URL; details
+  retain the main image. Back/other variants are not displayed as front artwork. External HTTPS
+  covers remain supported. No schema, dependency, catalog selection or write-policy changes.
+- Added shared `book_cover.tmpl` with the existing title-based placeholder, measured dimensions,
+  lazy/async images and a stable 2:3 frame using `object-fit: contain`. Library items now have a
+  responsive cover beside their unchanged status/removal forms. Labelled links/detail frame
+  provide the accessible name; decorative artwork avoids duplicate announcements.
+- Added external `cover-images.js`: captured image errors and cached-failure checks on DOM ready
+  and HTMX load reveal the placeholder without inline handlers/CSP changes. Missing metadata
+  needs no JavaScript; unavailable-image fallback does. A failed thumbnail reveals the placeholder
+  rather than retrying the main image. No image resizing, artwork generation or delivery added.
+- Added selection/library view tests, shared opt-in SQLite/PostgreSQL HTTP scenarios for every
+  card/detail context, main-only/external covers, absent metadata and missing files, plus small
+  JavaScript DOM-double checks for cached/pending/loaded images and HTMX failures. Updated old
+  assertions that intentionally expected no cover metadata in lists or the old detail markup.
+  An initial test wiring compile error was corrected to use the existing library-state adapter.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test ./internal/app ./internal/modules/books ./internal/modules/library ./internal/storage/sqlite ./internal/storage/postgresql`,
+  then final `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test` (race),
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`,
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues), `node --test internal/web/tests/*.test.cjs`, formatting and diff checks.
+  PostgreSQL tests were skipped without `BOOK_SOCIAL_POSTGRES_TEST_DSN`; no real PostgreSQL run
+  is claimed for this step. Local verification when requested:
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test/integration COMPOSE_INTEGRATION='docker compose -p book-social-cover-step5 -f compose.integration.yaml'`
+  using an initially empty disposable project, not a retained environment.
+- Reviewed new/materially changed functions against the readability guide, including blank-line
+  phase boundaries, verb-based operation names and batch-read/error ownership. Updated README,
+  architecture/routes/development, the cover contract and synchronized roadmap status without
+  accepting or closing the expanded release scope. Pilot assets, operational delivery/restore
+  and browser visual acceptance remain pending; manual routes and safe request-blocking checks
+  are in the contract. No server was started in the sandbox.

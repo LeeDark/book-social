@@ -1,0 +1,10 @@
+{{define "book_cover"}}
+    <span class="book-cover {{.CoverClass}}" aria-hidden="true">
+        <span class="book-cover__brand">Book Social</span>
+        <span class="book-cover__title">{{.Title}}</span>
+        <span class="book-cover__rule"></span>
+        {{with .FrontCover}}
+            <img class="book-cover__image" data-cover-image src="{{.URL}}" alt="" loading="lazy" decoding="async"{{if and .Width .Height}} width="{{.Width}}" height="{{.Height}}"{{end}}>
+        {{end}}
+    </span>
+{{end}}

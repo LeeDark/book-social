@@ -1,8 +1,9 @@
 # Cover File Storage and Five-Book Pilot (#28)
 
-Status: implementation contract prepared on 2026-10-25. Steps 2–4 implement local file storage,
-validation, public HTTP delivery, database references/metadata and administrator uploads. The pilot
-and all-card/fallback rendering are not implemented or accepted. This document extends the original
+Status: implementation contract prepared on 2026-10-25. Steps 2–5 implement local file storage,
+validation, public HTTP delivery, database references/metadata, administrator uploads and shared
+cover rendering/fallback. The pilot, operational delivery and visual acceptance remain pending.
+This document extends the original
 [URL-only catalog operations contract](catalog_operations_v0_3_2.md); it does not change the
 recorded acceptance of issues #23–#26. Release scope remains in [roadmap.md](roadmap.md).
 
@@ -216,9 +217,44 @@ exercised as operational acceptance; saving a book never invokes it.
 
 Automated SQLite/PostgreSQL HTTP checks cover upload/create, replacement, keep, URL switch,
 removal, refusals, cleanup, storage failure and audit rollback. Manual browser acceptance, the five
-approved artworks, all-card rendering/fallback, persistent Compose volumes and backup/restore
+approved artworks, persistent Compose volumes and backup/restore
 remain later work. For a local manual check, use the create/edit routes above and the saved book's
-`/books/{slug}` detail page; card rendering is still a placeholder until step 5.
+`/books/{slug}` detail page and the card contexts below.
+
+## Shared Rendering and Fallback (Step 5)
+
+Catalog (including filtered HTMX fragments), home and author cards now receive cover metadata from
+one batch read per book list. Owner-scoped library lists reuse that batch read for their selected
+books. No per-card SQL, filesystem checks or external fetches are performed while rendering HTML.
+Only `front` is displayed: cards prefer its supplied thumbnail, otherwise its main image; details
+always use the main image. Other variants remain in the database but are not shown as front artwork.
+External HTTPS main URLs remain supported. No schema change or dependency was added.
+
+All contexts use `book_cover.tmpl`, retaining the title-based CSS placeholder underneath the image.
+The stable 2:3 frame, optional measured width/height attributes and `object-fit: contain` preserve
+layout and image proportions without stretching/cropping; images use lazy loading and async decode.
+Cover links retain a title-based accessible label, and the detail frame has an accessible image role.
+The artwork is decorative inside those labelled containers to avoid duplicate announcements.
+
+The external `cover-images.js` script hides failed images to reveal the existing placeholder,
+without inline handlers or changes to CSP. It captures non-bubbling image errors for both initial
+and newly inserted images and checks already-completed failures at DOM readiness and `htmx:load`.
+This unavailable-image fallback requires JavaScript; absent metadata renders the placeholder with
+or without JavaScript. A failed thumbnail goes directly to the placeholder, not a second image
+request; a missing thumbnail association uses the main URL from the start.
+
+SQLite HTTP tests cover each context with a local pair, main-only and external covers, an absent
+cover and missing main/thumbnail files (`404` assets with usable `200` HTML). The same scenarios are
+available as opt-in PostgreSQL tests. JavaScript DOM doubles cover initial/cached failures, dynamic
+errors and HTMX insertion; they do not establish browser layout or visual acceptance.
+
+For manual verification outside the sandbox, attach permitted prepared images to one known book,
+then open `/books`, its filtered results, `/books/{slug}`, `/authors/{author-slug}` and `/me/library`
+after adding it. Open `/` when it is in the deterministic featured selection (the pilot includes
+A Christmas Carol). Check mobile/desktop proportions, keyboard links, missing-file and blocked
+external-image fallback, and filtering without a full reload. Do not remove production files to
+test failure; use a disposable local setup or browser request blocking. Pilot assets/profile review
+and operational acceptance remain unclaimed.
 
 ## Delivery and Acceptance Gates
 

@@ -11,8 +11,9 @@ The original v0.3.2 Curated Catalog Operations scope is implemented and accepted
 data/provenance, administrator-only catalog find/create/correct pages with transactional audit,
 and authenticated missing-book requests persisted before confirmation. Apply migrations through
 `000008` before using the updated application. The expanded cover scope now has local file
-storage/HTTP delivery, database references/metadata and administrator uploads. The five-book pilot
-and card/fallback rendering remain pending. See [the cover contract](docs/cover_storage_v0_3_2.md).
+storage/HTTP delivery, database references/metadata, administrator uploads and shared cover rendering
+with unavailable-image fallback. The five-book pilot, persistent Compose volumes, backup/restore
+and visual acceptance remain pending. See [the cover contract](docs/cover_storage_v0_3_2.md).
 
 Final automated checks passed on 2026-10-25, including real SQLite/PostgreSQL acceptance. The user
 accepted the operator flow on 2026-10-12 and missing-book persistence on 2026-10-25 (Zen Browser,
@@ -41,7 +42,9 @@ on 2026-10-25; environment details for this recheck were not separately reported
 - `golang-migrate` CLI wiring and v0.1/v0.2 migrations for SQLite and PostgreSQL.
 - Normalized catalog tables for many-to-many authors/genres and URL-only cover metadata.
 - Catalog cards and book details render all related authors and genres.
-- Book details display the `front` cover URL when available and a CSS placeholder otherwise.
+- Book details use the main `front` image; home/catalog/author/library cards prefer its thumbnail.
+  Missing covers use a CSS placeholder; a small external script reveals it on image-load failure,
+  including after HTMX updates. Images preserve proportions without cropping or stretching.
 - The home page uses the shared catalog-card read model for a deterministic featured selection.
 - Migration-first reset and Docker/Compose bootstrap followed by development seed data.
 - Local migration/seed smoke checks and v0.2 SQLite/PostgreSQL test helpers.
