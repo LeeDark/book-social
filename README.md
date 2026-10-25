@@ -12,8 +12,11 @@ data/provenance, administrator-only catalog find/create/correct pages with trans
 and authenticated missing-book requests persisted before confirmation. Apply migrations through
 `000008` before using the updated application. The expanded cover scope now has local file
 storage/HTTP delivery, database references/metadata, administrator uploads and shared cover rendering
-with unavailable-image fallback. The five-book pilot, persistent Compose volumes, backup/restore
-and visual acceptance remain pending. See [the cover contract](docs/cover_storage_v0_3_2.md).
+with unavailable-image fallback. Persistent Compose volumes and an explicit pilot installer/verifier
+are configured; the reviewed five-book artwork, container lifecycle/real PostgreSQL restore and
+visual acceptance remain pending. See [the cover contract](docs/cover_storage_v0_3_2.md) and
+[delivery/recovery procedure](docs/cover_operations.md). Before recreating an older container,
+preserve its cover files: the new volumes do not migrate its old writable layer automatically.
 
 Final automated checks passed on 2026-10-25, including real SQLite/PostgreSQL acceptance. The user
 accepted the operator flow on 2026-10-12 and missing-book persistence on 2026-10-25 (Zen Browser,

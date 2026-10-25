@@ -389,7 +389,9 @@ applies all SQLite migrations, and then applies `db/sqlite/seed.sql`.
 For manual PostgreSQL reset, use `db/postgresql/reset-dev-db.sh` with PostgreSQL environment
 variables such as `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`.
 
-For Docker database reset, choose the environment you want to recreate.
+The following Docker down/up commands now stop/restart the chosen environment **without resetting
+its database or covers**. Reset requires a separate explicit destructive decision after inspecting
+the exact disposable volumes and taking a paired SQL/file backup. See [cover operations](cover_operations.md).
 
 Dev SQLite:
 

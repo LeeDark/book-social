@@ -40,9 +40,11 @@ cache policy; failures use `no-store`.
 
 The storage API and SQL references/metadata are implemented. Apply migrations through `000008`
 before starting this revision. Administrators can attach/replace prepared files in the existing
-create/edit forms; ordinary edits default to keeping the current cover. Pilot assets and persistent
-Compose volumes remain subsequent steps. Do not treat an image in the local directory as a
-database association or a backup of SQL.
+create/edit forms; ordinary edits default to keeping the current cover. Compose now mounts a separate
+cover volume per environment, and `coverctl` installs/verifies reviewed pilot bundles explicitly.
+Pilot artwork and container lifecycle/restore acceptance remain pending. Before upgrading an older
+container, preserve its files using [the transition and recovery procedure](cover_operations.md).
+Do not treat an image in the local directory as a database association or a backup of SQL.
 See [the cover contract](cover_storage_v0_3_2.md) for limits and failure semantics.
 
 Details now use the main front image; home/catalog/author/library cards prefer its thumbnail or
@@ -288,6 +290,7 @@ The dev Compose environment sets:
 APP_ENV=dev
 APP_HTTP_ADDR=:8080
 APP_DB_DSN=file:/app/data/book_social_dev.db
+APP_COVERS_DIR=/app/covers
 ```
 
 Start the stage app with PostgreSQL:
@@ -304,6 +307,12 @@ make compose/prod/up
 
 Both PostgreSQL Compose workflows run a local `postgres` service and set `APP_DB_DSN`
 to the matching container database.
+
+Every environment mounts its own named cover volume at `/app/covers`. Normal
+`make compose/{dev,stage,prod}/down` retains both database and cover volumes; `down -v` does not.
+Image/container recreation requires the same Compose project/volume selection. Install approved
+pilot bundles and verify restored references with `/app/coverctl`, bypassing the normal entrypoint
+for maintenance. See [cover operations](cover_operations.md) for commands and paired SQL/file backup.
 
 ## CI, Compose, And Migrations
 
@@ -346,14 +355,17 @@ On container startup, `docker/entrypoint.sh` checks the configured SQLite databa
 db/sqlite/seed.sql
 ```
 
-Reset and seed the Docker database from scratch:
+Stop and restart the Docker environment while retaining database and covers:
 
 ```bash
 make compose/dev/down
 make compose/dev/up
 ```
 
-This removes the Compose volume, then lets the entrypoint initialize a fresh seeded SQLite database.
+This now retains both volumes. A reset is a separate destructive operation: back up SQL/files,
+inspect the exact project and volumes, and explicitly approve removal of only disposable targets.
+Do not use `down -v` to stop a retained environment. Restore into fresh targets using
+[the paired procedure](cover_operations.md#restore-into-fresh-targets-only).
 
 ## PostgreSQL In Docker
 
@@ -364,14 +376,14 @@ applies all PostgreSQL migrations and, when the catalog is empty, loads:
 db/postgresql/seed.sql
 ```
 
-Reset and seed the stage PostgreSQL database from scratch:
+Stop and restart the stage PostgreSQL environment, retaining volumes:
 
 ```bash
 make compose/stage/down
 make compose/stage/up
 ```
 
-Reset and seed the prod PostgreSQL database from scratch:
+Stop and restart the prod-like local PostgreSQL environment, retaining volumes:
 
 ```bash
 make compose/prod/down

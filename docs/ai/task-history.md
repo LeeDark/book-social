@@ -1080,3 +1080,42 @@ Residual risks:
   accepting or closing the expanded release scope. Pilot assets, operational delivery/restore
   and browser visual acceptance remain pending; manual routes and safe request-blocking checks
   are in the contract. No server was started in the sandbox.
+
+## 2026-10-25 — Persistent cover volumes and explicit delivery/recovery (#28, step 6)
+
+- Configured `/app/covers` and distinct dev/stage/prod-like named cover volumes. Ordinary
+  `make compose/*/down` now retains SQL and cover volumes instead of using `down -v`; no reset or
+  migration of retained files was performed. The image prepares directory permissions and includes
+  `coverctl`; its existing root runtime user was not changed or misrepresented as non-root.
+- Added bounded offline `internal/coverops` and `cmd/coverctl install|verify`, with small consumer
+  interfaces. Installation pins a versioned manifest checksum, validates exactly the five pilot
+  slugs, review/usage attestations and all file checksums/decoded metadata before publishing.
+  Resolve targets/authorize before publication, then recheck and commit references plus normal
+  audits together. Reinstallation of matching metadata adds no writes/audits. SQL/uncertain commit
+  failure retains immutable files. No source artwork is copied into public storage, no seed is
+  replayed, and no automatic cleanup or restore/overwrite operation was added.
+- Maintenance requires explicit DB/storage targets and stopped-writer confirmation; these flags
+  do not substitute for stopping writers. Verification refuses missing SQLite targets/directories
+  and validates all referenced local variants/main/thumbnail bytes, metadata and pair relationships,
+  including refusal of a local URL without its storage key. External URLs are not fetched.
+- Added synthetic bundle/installer refusal tests, authorization recheck, storage/audit/commit
+  failure retention, real SQLite idempotent installation and a fresh SQL snapshot/file restore,
+  storage reopen, missing-thumbnail and metadata-mismatch checks. Added equivalent opt-in PostgreSQL
+  install/verify tests and included `internal/coverops` in `make test/integration` for CI.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test` (race), followed by
+  final focused `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/coverops ./cmd/coverctl`,
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`, and
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues), `gofmt` and `git diff --check`. PostgreSQL tests skipped without the opt-in DSN;
+  no real PostgreSQL install/dump/restore acceptance is claimed for this step.
+- Passed `docker compose -f compose.yaml -f compose.dev.yaml config --quiet` and the corresponding
+  `compose.stage.yaml`/`compose.prod.yaml` commands. Built the local image with
+  `docker build --progress=plain -t book-social:cover-step6 .` (Docker access required escalation).
+  No app/server container was started and no retained container, volume or database was modified.
+- Added `docs/cover_operations.md` with manifest/explicit installation, safe old-path transition,
+  matching SQL/file backups, fresh-target restore/checksums/reference verification and local lifecycle
+  acceptance steps. Updated README, contract, development/database instructions and synchronized
+  roadmap status. Reviewed all new Go/SQL for naming, context/layer boundaries and blank-line phases.
+  No schema/dependency changes or approved artwork added. Container restart/recreate, real PostgreSQL
+  restore, five approved images and browser visual acceptance remain pending outside the sandbox;
+  the expanded cover scope and #28 remain open.

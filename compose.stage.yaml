@@ -4,6 +4,8 @@ services:
     environment:
       APP_ENV: stage
       APP_DB_DSN: postgres://book_social:book_social@postgres:5432/book_social_stage?sslmode=disable
+    volumes:
+      - covers-stage-data:/app/covers
     depends_on:
       postgres:
         condition: service_healthy
@@ -27,3 +29,4 @@ services:
 
 volumes:
   postgres-stage-data:
+  covers-stage-data:

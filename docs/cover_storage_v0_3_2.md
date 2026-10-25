@@ -1,8 +1,9 @@
 # Cover File Storage and Five-Book Pilot (#28)
 
-Status: implementation contract prepared on 2026-10-25. Steps 2–5 implement local file storage,
+Status: implementation contract prepared on 2026-10-25. Steps 2–6 implement local file storage,
 validation, public HTTP delivery, database references/metadata, administrator uploads and shared
-cover rendering/fallback. The pilot, operational delivery and visual acceptance remain pending.
+cover rendering/fallback, persistent Compose volume configuration and offline delivery/verification
+tools. The approved pilot, container lifecycle/real PostgreSQL restore and visual acceptance remain pending.
 This document extends the original
 [URL-only catalog operations contract](catalog_operations_v0_3_2.md); it does not change the
 recorded acceptance of issues #23–#26. Release scope remains in [roadmap.md](roadmap.md).
@@ -116,7 +117,8 @@ the volume must not be writable by untrusted local processes.
 
 The process opens the store at startup and closes it on shutdown. `APP_COVERS_DIR` defaults to
 `./data/covers`; an explicitly blank value is a configuration error. The default directory is
-ignored by Git. Docker volume wiring and backup/restore remain step 6 work.
+ignored by Git. Compose sets a separate persistent `/app/covers` volume per environment; see
+[delivery and recovery](cover_operations.md) before upgrading a retained container.
 
 `GET` and `HEAD /media/covers/{key}` work without session or flash loading. The handler verifies
 the file's checksum and fully validates its image content on each request before serving; this
@@ -192,7 +194,7 @@ copied into audit summaries or request logs. SQL commit/audit failure retains pu
 files, including on uncertain commit results; no automatic deletion or retry is attempted.
 
 For later cleanup, stop all cover writers and resolve uncertain commits against the actual DB.
-Preserve a matching SQL/file snapshot (operational backup/restore verification remains step 6).
+Preserve a matching SQL/file snapshot using the [paired backup procedure](cover_operations.md#paired-backup).
 Export every referenced local key, including thumbnails and all books:
 
 ```sql
@@ -217,7 +219,7 @@ exercised as operational acceptance; saving a book never invokes it.
 
 Automated SQLite/PostgreSQL HTTP checks cover upload/create, replacement, keep, URL switch,
 removal, refusals, cleanup, storage failure and audit rollback. Manual browser acceptance, the five
-approved artworks, persistent Compose volumes and backup/restore
+approved artworks and container lifecycle/restore acceptance
 remain later work. For a local manual check, use the create/edit routes above and the saved book's
 `/books/{slug}` detail page and the card contexts below.
 
@@ -258,10 +260,14 @@ and operational acceptance remain unclaimed.
 
 ## Delivery and Acceptance Gates
 
-Later steps must provide an idempotent pilot installer that validates the entire bundle and
-resolves slugs before attachment. It must preserve unrelated catalog data and cover variants, and
-must not rerun the development seed to update an existing database. A fresh disposable setup
-applies migrations and seed, then installs the matching pilot files and references.
+Step 6 provides `cmd/coverctl` and `internal/coverops`: an explicit idempotent five-book installer
+with pinned manifest/file checksums and whole-bundle/slug validation before publication, one
+reference/audit transaction, and a post-restore verifier for every local reference. No artwork is
+shipped or accepted by this tool. It preserves unrelated catalog data and cover variants and never
+reruns migrations/seed. A fresh disposable setup applies migrations and seed separately, then
+installs matching reviewed pilot files/references with an existing administrator for the audit.
+See [the operator procedure](cover_operations.md) for manifest format, commands, old-storage
+transition warnings, per-environment volumes, paired backup/restore and pending acceptance gates.
 
 Document backup and restore of both SQL and the cover volume with cover writers stopped, bundle
 version/checksum verification, and post-restore reference checks. The five books must work on

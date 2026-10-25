@@ -12,8 +12,9 @@ The v0.3.2 scope is expanded: persistent cover-file storage and display, followe
 generated demo front covers for the existing 109 books, are now required before release closure.
 Deliver these as two dependent tasks, starting with a five-book pilot. Earlier acceptance below
 applies to the original scope only. Local storage, administrator uploads and shared cover rendering
-are implemented; pilot artwork, persistent container delivery, backup/restore and visual acceptance
-remain pending. The expanded cover scope is not yet accepted.
+are implemented. Persistent Compose volumes and pilot install/verify tools are configured; reviewed
+pilot artwork, container lifecycle/real PostgreSQL restore and visual acceptance remain pending.
+The expanded cover scope is not yet accepted.
 v0.3.4 will add a reviewed book-addition workflow and grow the catalog to 500 books total.
 
 v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation through the first
