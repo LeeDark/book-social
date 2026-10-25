@@ -884,49 +884,21 @@ Residual risks:
   `000007`, and retained unverified legacy provenance/no-cover limits. v0.3.3 and v0.4.3 scope is
   unchanged; no release tag or deployment is claimed. Documentation diff checks passed.
 
-## 2026-10-25 — External review: missing-book route collision (#26)
+## 2026-10-25 — External review, fixes and acceptance (#26)
 
-- Moved feedback GET/POST and catalog links to `/books/request/new`, leaving `/books/request`
-  available for existing and newly created books without renaming or reserving slugs. Updated
-  route/form tests and shared SQLite/PostgreSQL HTTP regressions; synchronized current route docs.
-  Earlier browser acceptance is retained as historical evidence; a focused route recheck is pending.
-- Passed focused catalog/feedback HTTP tests, `make test` (race), `make test/integration` (real
-  PostgreSQL), affected-package vet, lint (Go 1.26.4; zero issues), formatting and `git diff --check`.
-  Disposable integration resources were removed; development databases were not changed.
-
-## 2026-10-25 — External review: deterministic PostgreSQL seed ordering (#26)
-
-- Added explicit `COLLATE "C"` to generated seed book ID ordering, matching SQLite independently
-  of database locale. Added an always-run SQL contract regression and an opt-in ICU scratch-column
-  parity case; the contract test failed before the fix. Existing catalogs are not renumbered and
-  must not be repaired by rerunning seed; provenance limits are unchanged.
-- Passed focused seed tests, `make test` (race), `make test/integration` (real PostgreSQL with ICU
-  available, including the non-binary parity case), testutil vet, lint (Go 1.26.4; zero issues),
-  formatting and `git diff --check`. Disposable integration resources were removed; development
-  databases were unchanged. No glibc `en_US.UTF-8` database run is claimed.
-
-## 2026-10-25 — External review: operator ID range parity (#26)
-
-- Limited operator route/selection parsing to positive 32-bit IDs shared by SQLite/PostgreSQL.
-  Overflow now returns `422` before lookup/write; absent in-range books still return `404`.
-  Added fake-service boundary tests and shared backend HTTP refusals with unchanged catalog/audit
-  assertions. New range tests failed before the fix; library routes were intentionally unchanged.
-- Passed focused operator tests, `make test` (race), `make test/integration` (real PostgreSQL),
-  affected-package vet, lint (Go 1.26.4; zero issues), formatting and `git diff --check`.
-  Disposable integration resources were removed; development databases were unchanged.
-
-## 2026-10-25 — External review: migration operations documentation (#26)
-
-- Corrected the shared helper's migration baseline to `000007`. Documented writer shutdown,
-  backups and guarded downgrade refusal, target-version dirty markers, and conditional metadata
-  repair only after schema/data inspection; `force` is not SQL recovery or permission to bypass
-  retained data. Synchronized public English/Ukrainian and private English/Russian roadmaps with
-  review fixes, pending route browser re-acceptance and final push/CI/closure gates. No migration,
-  schema, runtime or database state was changed; documentation diff checks passed.
-
-## 2026-10-25 — Post-review verification and manual acceptance (#26)
-
-- Final local checks and published-head CI passed on `9d764db`; all four review-fix commits were
-  pushed. User confirmed successful manual recheck of `/books/request/new`; browser/version,
-  backend and launch commands for this run were not separately reported. Synchronized acceptance
-  docs and all roadmaps; PR stays Draft and #26 open pending explicitly authorized final closure.
+- Moved feedback to `/books/request/new`, preserving public URLs for existing/new books with slug
+  `request` without renaming or reserving slugs; added route/form and shared backend regressions.
+- Fixed PostgreSQL seed ID ordering with `COLLATE "C"`; added SQL-contract and non-binary ICU
+  parity regressions. Existing catalogs are not renumbered or repaired by rerunning seed;
+  provenance limits are unchanged. No glibc `en_US.UTF-8` run is claimed.
+- Limited operator route/selection IDs to `1..2147483647`: overflow gives `422` before lookup/write,
+  absent in-range books give `404`. Boundary/backend tests verify unchanged catalog/audit data;
+  range and seed-contract tests failed before their fixes. Library routes were not changed.
+- Corrected the documented migration baseline to `000007`; documented stopped writers, backups,
+  guarded rollback and dirty-version repair only after schema/data inspection. `force` does not
+  restore SQL or authorize data loss. Synchronized current-behavior docs and all four roadmaps.
+- Final local checks and CI passed on published `9d764db`: full race tests, vet/lint (Go 1.26.4;
+  zero issues), SQLite migration/seed smoke, real PostgreSQL integration with ICU, four JavaScript
+  tests and formatting/diff checks. Disposable resources were removed; development DBs were unchanged.
+- User confirmed the new-route manual recheck; browser/version, backend and launch commands were
+  not separately reported. Acceptance is recorded; PR remains Draft and #26 open pending final closure.
