@@ -131,6 +131,76 @@ BOOK_SOCIAL_POSTGRES_TEST_DSN='postgres://book_social:book_social@localhost:5432
 `make test/integration` includes these tests and provisions its own isolated PostgreSQL database.
 The dataset and source limitations are in [Demo Catalog Provenance](demo_catalog_provenance.md).
 
+## v0.3.2 Acceptance Coverage (#26)
+
+Scope review on 2026-10-25 includes the accepted persistence expansion of #25. Missing-book
+submission must save before confirming success; only external lookup/import and operator request
+listing/processing are excluded. No additional implementation or test gaps were identified in this
+criteria-to-coverage review; this does not replace the final release check run.
+
+| Criterion | Existing coverage |
+|-----------|-------------------|
+| Paired migrations `000006`/`000007`, constraints and guarded rollback | `internal/testutil/catalog_operations_migration_test.go`, `missing_book_requests_migration_test.go` |
+| Reproducible demo seed, backend parity, identity sequences and provenance inventory | `internal/testutil/development_seed_test.go`; public catalog/library HTTP checks in `internal/app/development_seed_test.go` |
+| Administrator access, ordinary-user refusal, promotion/demotion and cross-origin refusal | `internal/app/admin_authorization_test.go`; service refusals in `internal/modules/books/operator_test.go` |
+| Create/correct/no-op, immutable public slugs, normalized relationships/cover metadata and atomic audit | `internal/testutil/catalog_operator_test.go`, `internal/app/catalog_operator_integration_test.go`; transaction-step failures in `internal/modules/books/operator_test.go` |
+| Accessible operator forms, retained errors, statuses, flash and slug suggestions | `internal/app/catalog_operator_test.go`, `internal/web/tests/catalog-operator.test.cjs`; user-confirmed operator browser review below |
+| Normalized missing-book fields, session-owned identity, UTC, save-before-event/confirmation and safe failures | `internal/modules/books/missing_book_test.go`, `missing_book_handler_test.go`; `internal/testutil/missing_book_repository_test.go`, `internal/app/missing_book_integration_test.go` |
+| Missing-book validation, escaping, refused submissions without writes, flash lifetime and refresh without repeat writes | `internal/app/missing_book_routes_test.go`, `missing_book_integration_test.go`; user-confirmed persistence browser review below |
+
+The database acceptance suites have SQLite and opt-in PostgreSQL variants. Use
+`make test/integration` for the isolated PostgreSQL run; ordinary focused runs skip PostgreSQL
+without its disposable DSN. Provenance checks verify the documented inventory, not external
+authorship/reuse rights: legacy metadata sources remain unverified and the seed contains no covers.
+
+### Final Automated Check Run (2026-10-25)
+
+All checks below passed against implementation commit `78fe3ad`, with the local #26 documentation
+changes still uncommitted. No implementation or test changes were required.
+
+```bash
+GOCACHE=/tmp/book-social-go-cache make test
+GOCACHE=/tmp/book-social-go-cache go vet ./...
+make db/migrate/smoke
+GOCACHE=/tmp/book-social-go-cache make test/integration
+node internal/web/tests/catalog-operator.test.cjs
+GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache ./bin/golangci-lint run ./... --config=./.golangci.yml
+git ls-files '*.go' | xargs gofmt -l
+git diff --check
+```
+
+`make test` passed with the race detector; its opt-in PostgreSQL cases skipped without a DSN.
+The separate integration target passed with real isolated PostgreSQL, migration up/down/up and
+sequential repository/HTTP acceptance. Its container and network were removed; development databases
+were not changed. SQLite migration/seed/legacy-data smoke passed, all four JavaScript tests passed,
+lint reported `0 issues`, and formatting/diff checks reported no findings.
+
+`gh pr checks 27` confirmed `quality` and `integration-postgres` passed for published head
+`78fe3ad` ([CI run](https://github.com/LeeDark/book-social/actions/runs/40187677075)). This is not CI
+verification of uncommitted documentation: recheck CI after the final commit/push. Existing manual
+acceptance is recorded separately below; no new browser run or release closure is claimed here.
+
+### Consolidated Manual Acceptance (#26)
+
+The accepted user reports below cover the v0.3.2 operator and missing-book flows. Dates identify
+the original reviews, not new runs performed during release closure.
+
+| Review date | Accepted scope and checklist | Reported environment |
+|-------------|------------------------------|----------------------|
+| 2026-10-12 | [Operator #24](#manual-browser-smoke-v032-operator-24): access refusal, appointment/demotion, find/create/correct, immutable public URL, retained accessible errors, slug suggestions and flashes | Browser/version, database backend and exact launch commands not separately reported |
+| 2026-10-15 | [Original feedback #25](#manual-browser-smoke-v032-missing-book-feedback-25): authentication, form/keyboard validation, confirmation, empty-state links, no-store and safe events; no request persistence at that time | Browser/version, database backend and exact launch commands not separately reported |
+| 2026-10-25 | [Persistence #25](#manual-browser-smoke-v032-missing-book-persistence-25): form/validation, stored normalized title/optional author, session owner/UTC time, no repeat write on refresh, distinct repeated submissions, safe events and survival after restart | Zen Browser, SQLite; browser version and exact launch commands not separately reported |
+
+The October 15 report alone does not establish persistence acceptance; that is supplied by the
+October 25 report. All three are user-confirmed evidence, not browser checks run by Codex.
+PostgreSQL has automated acceptance evidence, not a reported manual browser review. The reports
+do not establish production deployment or a fresh release-wide browser run on `78fe3ad`.
+
+The #26 coverage review and automated checks required no implementation changes, so no additional
+manual run is required for this step. If a subsequent fix changes behavior, repeat only the
+affected checklist locally outside the sandbox and record its date, environment and outcome.
+Documentation closure, final CI confirmation after commit/push and PR readiness remain separate.
+
 ## Testing Guidance
 
 Operator service tests cover normalization, permission refusal, immutable slugs, controlled UTC

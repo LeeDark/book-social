@@ -861,3 +861,20 @@ Residual risks:
 - User confirmed all manual checks passed in Zen Browser with SQLite; browser version and exact
   launch commands were not reported. Recorded expanded #25 acceptance and completed roadmap scope.
   PostgreSQL browser review is not claimed; GitHub issue/PR and v0.3.2 release closure are separate.
+
+## 2026-10-25 — v0.3.2 closure criteria, coverage and acceptance (#26, steps 1–4)
+
+- Updated #26 to require accepted missing-book persistence rather than forbid it; operator request
+  processing remains v0.4.3. Mapped release criteria to existing migration, seed/provenance,
+  authorization, operator/audit and missing-book tests in `docs/testing.md`; no additional code/test
+  changes were needed. Focused Go checks passed on SQLite and with fakes; PostgreSQL skipped without
+  a DSN.
+- Final automated checks passed on implementation `78fe3ad`: `make test` (race), `go vet ./...`,
+  `make db/migrate/smoke`, `make test/integration` (real PostgreSQL), four JavaScript tests, lint
+  (Go 1.26.4; zero issues), formatting and `git diff --check`. Disposable PostgreSQL resources were
+  removed; development databases were unchanged. PR #27 CI passed for `78fe3ad`; recheck after the
+  final documentation commit/push. Documentation closure and PR readiness remain subsequent steps.
+- Consolidated existing manual acceptance: operator on 2026-10-12, original feedback on 2026-10-15,
+  persistence on 2026-10-25 (Zen Browser, SQLite). Preserved missing environment details and the
+  distinction from automated PostgreSQL evidence. No behavior changed, so no repeat browser run
+  was required or claimed; repeat affected checks only if a later fix changes behavior.
