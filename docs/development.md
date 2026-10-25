@@ -39,9 +39,10 @@ hard links and directory syncing. Successful image responses have a one-year imm
 cache policy; failures use `no-store`.
 
 The storage API and SQL references/metadata are implemented. Apply migrations through `000008`
-before starting this revision. Operator uploads, pilot assets and persistent Compose volumes are
-subsequent steps. No browser workflow for attaching local files is available
-yet. Do not treat an image in the local directory as a database association or a backup of SQL.
+before starting this revision. Administrators can attach/replace prepared files in the existing
+create/edit forms; ordinary edits default to keeping the current cover. Pilot assets and persistent
+Compose volumes remain subsequent steps. Do not treat an image in the local directory as a
+database association or a backup of SQL.
 See [the cover contract](cover_storage_v0_3_2.md) for limits and failure semantics.
 
 ### Lifecycle and Middleware

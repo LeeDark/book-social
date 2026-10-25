@@ -1,8 +1,8 @@
 # Cover File Storage and Five-Book Pilot (#28)
 
-Status: implementation contract prepared on 2026-10-25. Steps 2–3 implement local file storage,
-validation, public HTTP delivery and database references/metadata. Operator uploads and the pilot
-are not implemented or accepted. This document extends the original
+Status: implementation contract prepared on 2026-10-25. Steps 2–4 implement local file storage,
+validation, public HTTP delivery, database references/metadata and administrator uploads. The pilot
+and all-card/fallback rendering are not implemented or accepted. This document extends the original
 [URL-only catalog operations contract](catalog_operations_v0_3_2.md); it does not change the
 recorded acceptance of issues #23–#26. Release scope remains in [roadmap.md](roadmap.md).
 
@@ -131,9 +131,8 @@ Step 3 provides `StoredCoverFile`/`LocalFrontCover` and transactional `SetLocalF
 both repositories, with complete local/thumbnail metadata returned by operator and detail reads.
 Replacing an external URL clears local fields; unchanged URLs preserve them. See
 [database semantics and guarded downgrade](database.md#local-cover-references-28-step-3).
-File verification and administrator authorization remain the caller's responsibility. The browser
-form/service still accepts external HTTPS URLs only; local uploads and keep/remove actions below
-are step 4 work. Do not install local pilot references into the existing browser workflow yet.
+Step 4 wires file verification/publication and administrator authorization into the browser
+form/service. Direct repository callers still own those prerequisites and the audit transaction.
 
 An administrator explicitly chooses keep, upload/replace, set external HTTPS URL, or remove.
 An ordinary metadata edit defaults to keep. Reject contradictory actions and files before writing.
@@ -156,6 +155,70 @@ Replaced and detached files remain on disk initially. Cleanup is a separate oper
 procedure with a reference check, a dry-run inventory and stopped cover writers; it must consider
 both main and thumbnail references across all books. No automatic garbage collection or physical
 deletion is part of the user-facing remove action.
+
+### Operator Workflow (Step 4)
+
+Apply migrations through `000008`, configure `APP_COVERS_DIR` with a writable local directory and
+use an appointed administrator. Open `/admin/catalog` to find a book and its edit page, or
+`/admin/catalog/books/new` to create one. The existing authorization, no-store, same-origin POST
+protection and one-request success flashes apply to both URL-encoded and multipart requests.
+
+The multipart form offers these actions without JavaScript:
+
+| Action | Required input | Result |
+|--------|----------------|--------|
+| Keep current cover (default) | No URL or files | Save book text/relationships without changing the cover |
+| Upload or replace local cover | Main image; optional thumbnail | Verify both images and their relationship, publish files, then attach metadata |
+| Set external HTTPS URL | HTTPS URL; no files | Save the URL and clear old local/derivative metadata without fetching it |
+| Remove front cover | No URL or files | Remove only the `front` database association; retain other variants and files |
+
+The edit form links to the current image and leaves replacement URL/file fields empty. An omitted
+action means keep; a blank URL no longer implicitly removes the cover. Old forms supplying a URL
+without an explicit external action must be reopened. Unknown actions, duplicate actions/files,
+unknown file fields, thumbnail-only uploads and contradictory URL/file input return `422`.
+
+The whole multipart body is limited to 12 MiB, text to 128 KiB, each image to 5 MiB; the format and
+dimension limits above also apply. File names and MIME hints must match decoded content. Both files
+and thumbnail proportions/format are checked before publishing either file. File streams are
+closed and multipart temporary files removed on success and failure. Text/selections/action survive
+validation errors; browsers cannot refill file inputs, so select files again before retrying.
+
+The service checks administrator capability and the target book before publication outside the
+SQL transaction, then checks them again inside the write transaction. A no-op upload still adds
+one audit entry with an empty changed-group summary. Replacing/removing just the thumbnail at the
+same main URL is a `front_cover` change. Input file names, image bytes and URL/text values are not
+copied into audit summaries or request logs. SQL commit/audit failure retains published
+files, including on uncertain commit results; no automatic deletion or retry is attempted.
+
+For later cleanup, stop all cover writers and resolve uncertain commits against the actual DB.
+Preserve a matching SQL/file snapshot (operational backup/restore verification remains step 6).
+Export every referenced local key, including thumbnails and all books:
+
+```sql
+SELECT storage_key
+FROM covers
+WHERE storage_key IS NOT NULL
+UNION
+SELECT thumbnail_storage_key
+FROM covers
+WHERE thumbnail_storage_key IS NOT NULL;
+```
+
+Compare this set with an inventory of regular files directly under the storage root matching the
+canonical key pattern. Produce and review a dry-run list of unreferenced files; missing referenced
+files require restoration, not cleanup. Leave unknown names, directories and `.upload-*` remnants
+for separate inspection. While writers remain stopped, recheck each candidate against the latest
+references and move only explicitly reviewed files to quarantine outside the public serving root.
+Retain inventory/checksums so moves can be reversed, never overwrite quarantine files, and do not
+use wildcard/recursive deletion. Verify all SQL references before restarting writers. Permanent
+deletion needs a separate operator decision. This maintenance procedure is documented but not yet
+exercised as operational acceptance; saving a book never invokes it.
+
+Automated SQLite/PostgreSQL HTTP checks cover upload/create, replacement, keep, URL switch,
+removal, refusals, cleanup, storage failure and audit rollback. Manual browser acceptance, the five
+approved artworks, all-card rendering/fallback, persistent Compose volumes and backup/restore
+remain later work. For a local manual check, use the create/edit routes above and the saved book's
+`/books/{slug}` detail page; card rendering is still a placeholder until step 5.
 
 ## Delivery and Acceptance Gates
 

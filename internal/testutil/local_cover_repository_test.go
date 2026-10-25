@@ -158,6 +158,7 @@ func checkLocalCoverRepository(t *testing.T, postgres bool) {
 		t.Fatal(err)
 	}
 	operator.FrontCoverURL = "https://example.test/replaced.png"
+	operator.FrontCoverAction = books.CoverExternal
 	if err := service.Correct(ctx, 1, 1, operator.BookCorrection); err != nil {
 		t.Fatal(err)
 	}
@@ -171,6 +172,7 @@ func checkLocalCoverRepository(t *testing.T, postgres bool) {
 		t.Fatalf("external cover = %+v, %v", operator, err)
 	}
 	operator.FrontCoverURL = ""
+	operator.FrontCoverAction = books.CoverRemove
 	if err := service.Correct(ctx, 1, 1, operator.BookCorrection); err != nil {
 		t.Fatal(err)
 	}

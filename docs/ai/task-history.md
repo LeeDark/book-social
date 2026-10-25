@@ -980,3 +980,67 @@ Residual risks:
   still accepts external HTTPS URLs; upload actions and ordinary edits retaining a local cover
   are step 4 work. Card rendering, fallback, pilot assets, volume delivery and restore remain
   later steps. No browser run or operational acceptance is claimed; #28 remains open.
+
+## 2026-10-25 — Operator cover upload and explicit actions (#28, step 4)
+
+- Extended existing create/edit forms with multipart main/optional-thumbnail uploads and explicit
+  keep/upload/external/remove actions. Omitted action defaults to keep; replacement URL/file inputs
+  start empty while the current cover remains linked. A blank URL no longer implicitly removes a
+  cover. Updated legacy URL test inputs to choose their action explicitly; old forms must be reopened.
+- Added a small books-owned preparation interface and app adapter to the existing local store.
+  Both images and their relationship are validated before publishing either. Authorization/target
+  lookup precede publication outside SQL; the write transaction rechecks authorization/existence
+  before attaching metadata and its audit. Ordinary edits skip cover writes, main-only replacement
+  clears the old thumbnail, and thumbnail-only changes at the same URL are audited as `front_cover`.
+- Enforced 12 MiB multipart bodies, 128 KiB text and 5 MiB per file; rejected contradictory actions,
+  duplicate/unknown file fields, invalid images/MIME and thumbnail-only requests. Upload streams
+  close and multipart temporary files are removed after requests. Failures never set a success
+  flash; SQL/audit failure retains previous references and published files without automatic deletion.
+- Added adapter/service tests plus shared real-session SQLite/PostgreSQL HTTP scenarios for create,
+  upload, identical upload, thumbnail removal, local replacement, default keep, HTTPS switch,
+  front-only removal, authorization/cross-origin refusals, limits, temporary cleanup, storage error
+  and audit rollback for correction/creation. Logs are checked against submitted names/content.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test` (race),
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`, and focused final race checks:
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/modules/books ./internal/app -run 'Test(Operator|CoverPreparer|SQLiteCatalogOperatorHTTPAcceptance)'`.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test/integration COMPOSE_INTEGRATION='docker compose -p book-social-cover-step4 -f compose.integration.yaml'`
+  against an initially empty, separate disposable PostgreSQL project. Its container/network/test DB
+  were removed by the existing cleanup; retained development/stage/prod databases were not changed.
+  Docker access required sandbox escalation. Existing migrations passed up/down/up; no migration added.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues), `node --test internal/web/tests/catalog-operator.test.cjs`, and
+  `GOTOOLCHAIN=go1.26.4 CGO_ENABLED=0 GOOS=linux GOCACHE=/tmp/book-social-go-cache go build -o /tmp/book-social-cover-step4 ./cmd/web`.
+  Build succeeded with a non-fatal read-only module stat-cache warning. Initial expected regressions
+  from implicit URL actions were updated; a nil/nil lint finding was fixed. Formatting/diff checks passed.
+- Updated README and operator/storage/database/development/route documentation. No dependencies,
+  pilot artwork, all-card/fallback rendering, volumes or backup/restore were added. Manual browser
+  acceptance is pending; open `/admin/catalog`, `/admin/catalog/books/new`, a selected book's edit
+  page and `/books/{slug}` locally. No web server was started inside the sandbox; #28 remains open.
+
+## 2026-10-25 — Cover implementation readability follow-up (#28)
+
+- Renamed the cover preparation operation to `ValidateAndStore` and its service helper to
+  `publishCover`, making publication side effects explicit. Expanded stored-file mappings and
+  renamed the validation boolean to `isValid` according to `docs/code-readability.md`.
+- Split HTTP acceptance coverage into named scenarios with explicit independent fixtures and
+  focused helpers. Creation rollback now requires `ErrBookNotFound`, not just any lookup error.
+  Removed the context-bearing reader struct in favor of a context-first bounded read helper;
+  added a regression test for cancellation between source reads without publishing a file.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test` (race),
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`, and
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues). Focused race checks passed with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/storage/covers ./internal/modules/books ./internal/app -run 'Test(Put|Operator|CoverPreparer|SQLiteCatalogOperatorHTTPAcceptance)'`.
+- Verified scenario independence with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test ./internal/app -run '^TestSQLiteCatalogOperatorHTTPAcceptance$/^local_replacement_clears_the_old_thumbnail$' -count=1`.
+  Passed real PostgreSQL migrations and integration checks with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test/integration COMPOSE_INTEGRATION='docker compose -p book-social-cover-readability -f compose.integration.yaml'`.
+  Docker access required escalation; the initially empty disposable project was cleaned up,
+  without accessing retained development/stage/prod databases. Formatting and diff checks passed.
+- No HTTP behavior, schema or dependency changes. Existing shared test-helper signatures with
+  `(t, ctx)` remain deferred to a separate focused cleanup; untouched code was not bulk-reformatted.
+- Follow-up visual-structure pass added the missed blank-line phase boundaries in cover action
+  normalization/publication/comparison, operator service/form handling/view mapping, the app
+  adapter, image validation/local storage and their cover tests. This pass changes only whitespace
+  in Go files. Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/app ./internal/storage/covers`,
+  `gofmt` and `git diff --check`; no additional PostgreSQL run was needed for whitespace-only edits.

@@ -38,13 +38,21 @@ func (f File) URL() string {
 	return "/media/covers/" + f.Key
 }
 
+// Inspect validates prepared bytes without publishing a file. It lets a caller
+// validate a main/thumbnail pair before either becomes visible in storage.
+func Inspect(data []byte, filename, declaredType string) (File, error) {
+	return inspectImage(data, filename, declaredType)
+}
+
 func inspectImage(data []byte, filename, declaredType string) (File, error) {
 	invalid := func(reason string) (File, error) {
 		return File{}, fmt.Errorf("%w: %s", ErrInvalidImage, reason)
 	}
+
 	if len(data) == 0 || len(data) > MaxFileBytes {
 		return invalid("file size exceeds limits")
 	}
+
 	config, format, err := image.DecodeConfig(bytes.NewReader(data))
 	if err != nil {
 		return invalid("unrecognized image header")
@@ -75,6 +83,7 @@ func inspectImage(data []byte, filename, declaredType string) (File, error) {
 	default:
 		return invalid("unsupported image format")
 	}
+
 	nameExtension := strings.ToLower(filepath.Ext(filename))
 	if format == "jpeg" && nameExtension == ".jpeg" {
 		nameExtension = ".jpg"
@@ -82,6 +91,7 @@ func inspectImage(data []byte, filename, declaredType string) (File, error) {
 	if nameExtension != extension {
 		return invalid("filename extension does not match image")
 	}
+
 	if declaredType != "" {
 		mediaType, _, err := mime.ParseMediaType(declaredType)
 		if err != nil || mediaType != contentType {
@@ -96,8 +106,10 @@ func inspectImage(data []byte, filename, declaredType string) (File, error) {
 	if decoded.Bounds().Dx() != config.Width || decoded.Bounds().Dy() != config.Height {
 		return invalid("inconsistent image dimensions")
 	}
+
 	checksum := sha256.Sum256(data)
 	digest := hex.EncodeToString(checksum[:])
+
 	return File{
 		Key:            digest + extension,
 		MIMEType:       contentType,
@@ -117,6 +129,7 @@ func validatePNGChunks(data []byte) error {
 		if end > uint64(len(data)) {
 			return ErrInvalidImage
 		}
+
 		switch string(data[offset+4 : offset+8]) {
 		case "acTL", "fcTL", "fdAT":
 			return ErrInvalidImage
@@ -124,10 +137,13 @@ func validatePNGChunks(data []byte) error {
 			if length == 0 && end == uint64(len(data)) {
 				return nil
 			}
+
 			return ErrInvalidImage
 		}
+
 		offset = int(end)
 	}
+
 	return ErrInvalidImage
 }
 
@@ -136,16 +152,19 @@ func validateWebPChunks(data []byte) error {
 		uint64(binary.LittleEndian.Uint32(data[4:8]))+8 != uint64(len(data)) {
 		return ErrInvalidImage
 	}
+
 	frames := 0
 	for offset := 12; offset < len(data); {
 		if offset+8 > len(data) {
 			return ErrInvalidImage
 		}
+
 		length := uint64(binary.LittleEndian.Uint32(data[offset+4 : offset+8]))
 		end := uint64(offset) + 8 + length + length%2
 		if end > uint64(len(data)) {
 			return ErrInvalidImage
 		}
+
 		switch string(data[offset : offset+4]) {
 		case "ANIM", "ANMF":
 			return ErrInvalidImage
@@ -156,10 +175,13 @@ func validateWebPChunks(data []byte) error {
 		case "VP8 ", "VP8L":
 			frames++
 		}
+
 		offset = int(end)
 	}
+
 	if frames != 1 {
 		return ErrInvalidImage
 	}
+
 	return nil
 }

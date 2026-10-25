@@ -125,6 +125,9 @@ func (r *CatalogOperatorRepository) GetOperatorBook(ctx context.Context, bookID 
 	}
 	if err == nil {
 		book.FrontCover = &frontCover
+		if frontCover.StorageKey == nil {
+			book.FrontCoverAction = books.CoverExternal
+		}
 	}
 
 	book.AuthorIDs, err = r.selectedIDs(ctx, `

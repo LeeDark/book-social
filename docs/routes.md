@@ -67,8 +67,8 @@ Local cover files use verified MIME types, SHA-256 ETags and
 supported. Missing, invalid or damaged files return `404`; unexpected storage failures return
 a generic `500`. Errors use `no-store`; methods other than GET/HEAD return `405`. Keys must match
 `<lowercase-sha256>.<jpg|png|webp>`; directory listings and temporary files are not exposed.
-Step 3 of #28 adds repository-level database references/metadata. Operator upload and local-cover
-maintenance through the browser remain step 4 work; no local-cover mutation route is exposed yet.
+Step 4 of #28 supports local-cover maintenance through the existing administrator create/edit POST
+routes below; no separate upload endpoint or external-URL download/proxy is added.
 
 Authentication routes use the v0.2.5 opaque DB-backed session foundation:
 
@@ -130,9 +130,20 @@ and retain existing `no-store` and cross-origin policies. Book forms use Post/Re
 malformed input is `422`, unknown book IDs are `404`, and duplicate create slugs are `409`.
 Successful writes redirect to the book's edit page with a fixed one-request flash. Blank search does
 not list the catalog. Validation/conflict pages retain submitted text and existing-author/genre
-selections, with linked field errors. URL-encoded POST bodies are limited to 128 KiB;
-malformed/oversized forms, duplicate scalar fields, and malformed selected IDs return `422` without
-reaching a catalog write.
+selections, with linked field errors. Forms submit multipart data; URL-encoded POSTs remain accepted.
+URL-encoded bodies and multipart text are limited to 128 KiB; the entire multipart body is limited
+to 12 MiB, with at most one main image and one optional thumbnail, each at most 5 MiB. Temporary
+files and open upload streams are cleaned after every parsed request. Malformed/oversized forms,
+duplicate scalar/file fields, unknown file fields and malformed selected IDs return `422` without
+reaching a catalog write. File inputs must be selected again after validation/conflict errors.
+
+`front_cover_action` is `keep` (also the omitted default), `upload`, `external` or `remove`.
+`front_cover_url` is supplied only for `external`; `front_cover_file` and optional
+`front_cover_thumbnail` are supplied only for `upload`. Contradictory actions/values are `422`.
+Only validated image bytes supply keys/technical metadata; form fields cannot select storage paths.
+Ordinary text edits keep local or external covers. Successful file publication precedes the SQL
+transaction; file/reference/audit failures never set a success flash. SQL rollback preserves the
+previous cover and may leave unreferenced immutable files for later controlled cleanup.
 Operator book IDs and author/genre selections must fit `1..2147483647` on both backends.
 Overflow returns `422`; a well-formed but absent book ID returns `404`.
 Only POST-body fields are accepted; correction ignores any submitted slug, actor, or audit fields.

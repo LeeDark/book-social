@@ -30,17 +30,20 @@ func TestPutFormatsAndReopen(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			data := imageData(t, format)
 			file, err := store.Put(context.Background(), bytes.NewReader(data), "../../untrusted."+format, "image/"+format)
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			_ = store.Close()
 			reopened := newStore(t, directory)
 			got, metadata, err := reopened.Read(file.Key)
 			if err != nil || !bytes.Equal(got, data) || metadata != file {
 				t.Fatalf("Read() = %v, %+v, %v", got, metadata, err)
 			}
+
 			checksum := sha256.Sum256(data)
 			if file.ChecksumSHA256 != hex.EncodeToString(checksum[:]) || file.Width != 2 || file.Height != 3 ||
 				file.ByteSize != int64(len(data)) || file.MIMEType != "image/"+format ||
@@ -56,24 +59,31 @@ func TestPutRejectsInvalidImagesWithoutWriting(t *testing.T) {
 	validPNG := imageData(t, "png")
 	validJPEG := imageData(t, "jpeg")
 	validWebP := imageData(t, "webp")
+
 	badCRC := bytes.Clone(validPNG)
 	badCRC[len(badCRC)-1] ^= 1
+
 	oversizedDimensions := bytes.Clone(validPNG)
 	binary.BigEndian.PutUint32(oversizedDimensions[16:20], MaxDimension+1)
 	binary.BigEndian.PutUint32(oversizedDimensions[20:24], MaxDimension+2)
 	binary.BigEndian.PutUint32(oversizedDimensions[29:33], crc32.ChecksumIEEE(oversizedDimensions[12:29]))
+
 	tooManyPixels := bytes.Clone(oversizedDimensions)
 	binary.BigEndian.PutUint32(tooManyPixels[16:20], 3500)
 	binary.BigEndian.PutUint32(tooManyPixels[20:24], 4000)
 	binary.BigEndian.PutUint32(tooManyPixels[29:33], crc32.ChecksumIEEE(tooManyPixels[12:29]))
+
 	animatedPNG := append(bytes.Clone(validPNG[:33]), pngChunk("acTL", make([]byte, 8))...)
 	animatedPNG = append(animatedPNG, validPNG[33:]...)
+
 	animatedWebP := append(bytes.Clone(validWebP), []byte("ANIM\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00")...)
 	binary.LittleEndian.PutUint32(animatedWebP[4:8], uint32(len(animatedWebP)-8))
+
 	landscape := new(bytes.Buffer)
 	if err := png.Encode(landscape, image.NewRGBA(image.Rect(0, 0, 3, 2))); err != nil {
 		t.Fatal(err)
 	}
+
 	tests := []struct {
 		name, filename, mime string
 		data                 []byte
@@ -93,6 +103,7 @@ func TestPutRejectsInvalidImagesWithoutWriting(t *testing.T) {
 		{name: "animated PNG", filename: "a.png", data: animatedPNG},
 		{name: "animated WebP", filename: "a.webp", data: animatedWebP},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			directory := t.TempDir()
@@ -110,6 +121,7 @@ func TestPutConcurrentIdenticalFiles(t *testing.T) {
 	directory := t.TempDir()
 	store := newStore(t, directory)
 	data := imageData(t, "png")
+
 	var wg sync.WaitGroup
 	for range 8 {
 		wg.Go(func() {
@@ -119,6 +131,7 @@ func TestPutConcurrentIdenticalFiles(t *testing.T) {
 		})
 	}
 	wg.Wait()
+
 	file, err := store.Put(context.Background(), bytes.NewReader(data), "a.png", "")
 	if err != nil {
 		t.Fatal(err)
@@ -134,6 +147,7 @@ func TestPutDoesNotOverwriteCorruptExistingFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	path := filepath.Join(directory, file.Key)
 	// This is still a decodable PNG, but its bytes no longer match the key.
 	changed := append(bytes.Clone(data[:33]), pngChunk("tEXt", []byte("Comment\x00modified"))...)
@@ -141,12 +155,14 @@ func TestPutDoesNotOverwriteCorruptExistingFile(t *testing.T) {
 	if err := os.WriteFile(path, changed, 0640); err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := store.Put(context.Background(), bytes.NewReader(data), "a.png", ""); !errors.Is(err, ErrCorruptFile) {
 		t.Fatalf("Put() error = %v, want ErrCorruptFile", err)
 	}
 	if _, _, err := store.Read(file.Key); !errors.Is(err, ErrCorruptFile) {
 		t.Fatalf("Read() error = %v, want ErrCorruptFile", err)
 	}
+
 	got, err := os.ReadFile(path)
 	if err != nil || !bytes.Equal(got, changed) {
 		t.Fatalf("existing file changed: %q, %v", got, err)
@@ -162,11 +178,13 @@ func TestReadRejectsUnsafeKeysAndSymlinks(t *testing.T) {
 			t.Errorf("Read(%q) error = %v, want ErrInvalidKey", key, err)
 		}
 	}
+
 	data := imageData(t, "png")
 	file, err := inspectImage(data, "a.png", "")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	outside := filepath.Join(t.TempDir(), "outside.png")
 	if err := os.WriteFile(outside, data, 0640); err != nil {
 		t.Fatal(err)
@@ -174,6 +192,7 @@ func TestReadRejectsUnsafeKeysAndSymlinks(t *testing.T) {
 	if err := os.Symlink(outside, filepath.Join(directory, file.Key)); err != nil {
 		t.Fatal(err)
 	}
+
 	if _, _, err := store.Read(file.Key); err == nil {
 		t.Fatal("Read() accepted symlink")
 	}
@@ -185,25 +204,30 @@ func TestReadRejectsUnsafeKeysAndSymlinks(t *testing.T) {
 func TestPutInputAndStorageFailures(t *testing.T) {
 	directory := t.TempDir()
 	store := newStore(t, directory)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	if _, err := store.Put(ctx, bytes.NewReader(imageData(t, "png")), "a.png", ""); !errors.Is(err, context.Canceled) {
 		t.Fatalf("Put() error = %v, want cancellation", err)
 	}
+
 	inputErr := errors.New("broken input stream")
 	if _, err := store.Put(context.Background(), failedReader{inputErr}, "a.png", ""); !errors.Is(err, inputErr) {
 		t.Fatalf("Put() error = %v, want input error", err)
 	}
 	assertOnlyFile(t, directory, "")
+
 	if err := store.Close(); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := store.Put(context.Background(), bytes.NewReader(imageData(t, "png")), "a.png", ""); err == nil {
 		t.Fatal("Put() succeeded with closed storage")
 	}
+
 	if _, err := New(""); err == nil {
 		t.Fatal("New() accepted empty directory")
 	}
+
 	blocked := filepath.Join(t.TempDir(), "file")
 	if err := os.WriteFile(blocked, nil, 0600); err != nil {
 		t.Fatal(err)
@@ -215,23 +239,28 @@ func TestPutInputAndStorageFailures(t *testing.T) {
 
 func newStore(t *testing.T, directory string) *Store {
 	t.Helper()
+
 	store, err := New(directory)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = store.Close() })
+
 	return store
 }
 
 func imageData(t *testing.T, format string) []byte {
 	t.Helper()
+
 	if format == "webp" {
 		data, err := hex.DecodeString(portraitWebP)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		return data
 	}
+
 	var data bytes.Buffer
 	var err error
 	img := image.NewRGBA(image.Rect(0, 0, 2, 3))
@@ -243,6 +272,7 @@ func imageData(t *testing.T, format string) []byte {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return data.Bytes()
 }
 
@@ -252,11 +282,13 @@ func pngChunk(kind string, payload []byte) []byte {
 	copy(chunk[4:8], kind)
 	copy(chunk[8:], payload)
 	binary.BigEndian.PutUint32(chunk[len(chunk)-4:], crc32.ChecksumIEEE(chunk[4:len(chunk)-4]))
+
 	return chunk
 }
 
 func assertOnlyFile(t *testing.T, directory, key string) {
 	t.Helper()
+
 	entries, err := os.ReadDir(directory)
 	if err != nil {
 		t.Fatal(err)
@@ -267,6 +299,35 @@ func assertOnlyFile(t *testing.T, directory, key string) {
 	if len(entries) != 1 || entries[0].Name() != key {
 		t.Fatalf("storage entries = %v, want only %q", entries, key)
 	}
+}
+
+func TestPutStopsBetweenSourceReads(t *testing.T) {
+	directory := t.TempDir()
+	store := newStore(t, directory)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	reader := cancelAfterRead{
+		source: bytes.NewReader(imageData(t, "png")),
+		cancel: cancel,
+	}
+
+	_, err := store.Put(ctx, reader, "cover.png", "image/png")
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("Put() error = %v, want cancellation between reads", err)
+	}
+	assertOnlyFile(t, directory, "")
+}
+
+type cancelAfterRead struct {
+	source io.Reader
+	cancel context.CancelFunc
+}
+
+func (r cancelAfterRead) Read(p []byte) (int, error) {
+	n, err := r.source.Read(p)
+	r.cancel()
+	return n, err
 }
 
 type failedReader struct{ err error }

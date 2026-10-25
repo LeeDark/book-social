@@ -116,12 +116,13 @@ func operatorRequest(handler http.Handler, method, path, body string) *httptest.
 
 func operatorSubmittedForm() url.Values {
 	return url.Values{
-		"title":           {"Submitted title"},
-		"slug":            {"submitted-slug"},
-		"description":     {"Submitted description"},
-		"author_ids":      {"1", "1"},
-		"genre_ids":       {"2"},
-		"front_cover_url": {"https://example.test/submitted.jpg"},
+		"title":              {"Submitted title"},
+		"slug":               {"submitted-slug"},
+		"description":        {"Submitted description"},
+		"author_ids":         {"1", "1"},
+		"genre_ids":          {"2"},
+		"front_cover_url":    {"https://example.test/submitted.jpg"},
+		"front_cover_action": {"external"},
 	}
 }
 

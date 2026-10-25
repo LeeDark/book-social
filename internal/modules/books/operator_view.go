@@ -35,13 +35,15 @@ type OperatorFormPageData struct {
 // OperatorForm retains submitted text and selections when validation fails.
 // It contains no authorization capability or audit input.
 type OperatorForm struct {
-	Title         string
-	Slug          string
-	Description   string
-	FrontCoverURL string
-	AuthorIDs     []string
-	GenreIDs      []string
-	Errors        map[string]string
+	Title            string
+	Slug             string
+	Description      string
+	FrontCoverURL    string
+	FrontCoverAction CoverAction
+	CurrentCoverURL  string
+	AuthorIDs        []string
+	GenreIDs         []string
+	Errors           map[string]string
 }
 
 type OperatorChoice struct {
@@ -67,13 +69,14 @@ func operatorEditURL(bookID int) string {
 
 func operatorFormFromBook(book OperatorBook) OperatorForm {
 	return OperatorForm{
-		Title:         book.Title,
-		Slug:          book.Slug,
-		Description:   book.Description,
-		FrontCoverURL: book.FrontCoverURL,
-		AuthorIDs:     operatorIDValues(book.AuthorIDs),
-		GenreIDs:      operatorIDValues(book.GenreIDs),
-		Errors:        make(map[string]string),
+		Title:            book.Title,
+		Slug:             book.Slug,
+		Description:      book.Description,
+		FrontCoverAction: CoverKeep,
+		CurrentCoverURL:  book.FrontCoverURL,
+		AuthorIDs:        operatorIDValues(book.AuthorIDs),
+		GenreIDs:         operatorIDValues(book.GenreIDs),
+		Errors:           make(map[string]string),
 	}
 }
 
@@ -82,6 +85,7 @@ func operatorIDValues(ids []int) []string {
 	for _, id := range ids {
 		values = append(values, strconv.Itoa(id))
 	}
+
 	return values
 }
 

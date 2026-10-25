@@ -68,11 +68,12 @@ func checkCatalogOperator(t *testing.T, usePostgres bool) {
 		input := books.BookCreation{
 			Slug: "permanent-slug",
 			BookCorrection: books.BookCorrection{
-				Title:         " Original Title ",
-				Description:   "description",
-				AuthorIDs:     []int{2, 1, 2},
-				GenreIDs:      []int{2, 1, 2},
-				FrontCoverURL: "https://example.test/new.jpg",
+				Title:            " Original Title ",
+				Description:      "description",
+				AuthorIDs:        []int{2, 1, 2},
+				GenreIDs:         []int{2, 1, 2},
+				FrontCoverURL:    "https://example.test/new.jpg",
+				FrontCoverAction: books.CoverExternal,
 			},
 		}
 
@@ -87,10 +88,11 @@ func checkCatalogOperator(t *testing.T, usePostgres bool) {
 		}
 		assertOperatorAudit(t, db, 1, id, "create", "created")
 		after := books.BookCorrection{
-			Title:       "Changed Title",
-			Description: "changed",
-			AuthorIDs:   []int{3},
-			GenreIDs:    []int{3},
+			Title:            "Changed Title",
+			FrontCoverAction: books.CoverRemove,
+			Description:      "changed",
+			AuthorIDs:        []int{3},
+			GenreIDs:         []int{3},
 		}
 		if err := service.Correct(ctx, 1, id, after); err != nil {
 			t.Fatalf("correct book: %v", err)
@@ -186,6 +188,7 @@ func checkCatalogOperator(t *testing.T, usePostgres bool) {
 		`, 1)
 
 		book.FrontCoverURL = ""
+		book.FrontCoverAction = books.CoverRemove
 		if err := service.Correct(ctx, 1, 1, book.BookCorrection); err != nil {
 			t.Fatal(err)
 		}
@@ -308,20 +311,22 @@ func checkCatalogOperator(t *testing.T, usePostgres bool) {
 		if _, err := service.Create(ctx, 1, books.BookCreation{
 			Slug: "rolled-back",
 			BookCorrection: books.BookCorrection{
-				Title:         "Rolled Back",
-				AuthorIDs:     []int{1},
-				GenreIDs:      []int{1},
-				FrontCoverURL: "https://example.test/a.jpg",
+				Title:            "Rolled Back",
+				AuthorIDs:        []int{1},
+				GenreIDs:         []int{1},
+				FrontCoverURL:    "https://example.test/a.jpg",
+				FrontCoverAction: books.CoverExternal,
 			},
 		}); !errors.Is(err, books.ErrCatalogInternal) {
 			t.Fatalf("failed create = %v", err)
 		}
 		if err := service.Correct(ctx, 1, 1, books.BookCorrection{
-			Title:         "Rolled Back",
-			Description:   "changed",
-			AuthorIDs:     []int{2},
-			GenreIDs:      []int{2},
-			FrontCoverURL: "https://example.test/b.jpg",
+			Title:            "Rolled Back",
+			Description:      "changed",
+			AuthorIDs:        []int{2},
+			GenreIDs:         []int{2},
+			FrontCoverURL:    "https://example.test/b.jpg",
+			FrontCoverAction: books.CoverExternal,
 		}); !errors.Is(err, books.ErrCatalogInternal) {
 			t.Fatalf("failed correction = %v", err)
 		}

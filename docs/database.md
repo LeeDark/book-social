@@ -47,10 +47,12 @@ clears the old thumbnail. The existing HTTPS URL setter clears all local/derivat
 metadata when the URL changes, preserves metadata for the identical URL, and deletes only `front`
 when empty. No write physically deletes files.
 
-The current form/service remains an external-HTTPS-URL workflow: local upload actions and ordinary
-metadata edits retaining a local cover are step 4 work. Do not provision local covers for browser
-maintenance before that workflow is implemented. Direct repository calls are an internal boundary,
-not a new operator CLI or public endpoint.
+Step 4 wires file verification and publication into the operator service before starting its SQL
+write transaction. The transaction rechecks administrator capability and book existence, then
+saves the reference and audit together. Explicit keep skips cover writes; metadata edits therefore
+retain a local cover. Audit summaries include main or thumbnail changes, including thumbnail-only
+changes at the same main URL. Repository methods remain an internal boundary, not an operator CLI.
+See [the operator workflow](cover_storage_v0_3_2.md#operator-workflow-step-4).
 
 The down migration refuses while any local storage reference exists. It preserves external covers
 on an allowed downgrade; it never silently strips local keys or thumbnails. Stop cover writers and

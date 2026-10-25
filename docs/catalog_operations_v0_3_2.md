@@ -10,8 +10,8 @@ contract does not claim a merged, tagged or deployed release.
 
 The expanded v0.3.2 cover-file scope under #28 is specified separately in
 [Cover File Storage and Five-Book Pilot](cover_storage_v0_3_2.md). Local storage and HTTP delivery
-are implemented in step 2; step 3 adds SQL references/metadata. Operator uploads and pilot
-acceptance remain pending.
+are implemented in step 2; step 3 adds SQL references/metadata and step 4 adds administrator uploads
+and explicit keep/external/remove actions. Pilot acceptance remains pending.
 The URL-only behavior and exclusions below describe the original accepted scope;
 they do not exclude the later cover-file extension from the release.
 

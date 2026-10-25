@@ -11,8 +11,8 @@ The original v0.3.2 Curated Catalog Operations scope is implemented and accepted
 data/provenance, administrator-only catalog find/create/correct pages with transactional audit,
 and authenticated missing-book requests persisted before confirmation. Apply migrations through
 `000008` before using the updated application. The expanded cover scope now has local file
-storage/HTTP delivery and database references/metadata; operator uploads and the five-book pilot
-are still pending. See [the cover contract](docs/cover_storage_v0_3_2.md).
+storage/HTTP delivery, database references/metadata and administrator uploads. The five-book pilot
+and card/fallback rendering remain pending. See [the cover contract](docs/cover_storage_v0_3_2.md).
 
 Final automated checks passed on 2026-10-25, including real SQLite/PostgreSQL acceptance. The user
 accepted the operator flow on 2026-10-12 and missing-book persistence on 2026-10-25 (Zen Browser,

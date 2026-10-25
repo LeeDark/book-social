@@ -28,11 +28,14 @@ func (e CatalogValidationError) Error() string {
 
 // BookCorrection deliberately has no slug field: public URLs cannot be renamed.
 type BookCorrection struct {
-	Title         string
-	Description   string
-	AuthorIDs     []int
-	GenreIDs      []int
-	FrontCoverURL string
+	Title               string
+	Description         string
+	AuthorIDs           []int
+	GenreIDs            []int
+	FrontCoverURL       string
+	FrontCoverAction    CoverAction
+	FrontCoverFile      *CoverUploadFile
+	FrontCoverThumbnail *CoverUploadFile
 }
 
 type BookCreation struct {
@@ -87,12 +90,20 @@ type OperatorRepository interface {
 }
 
 type OperatorService struct {
-	repo OperatorRepository
-	now  func() time.Time
+	repo          OperatorRepository
+	coverPreparer CoverPreparer
+	now           func() time.Time
 }
 
 func NewOperatorService(repo OperatorRepository) *OperatorService {
 	return &OperatorService{repo: repo, now: time.Now}
+}
+
+func NewOperatorServiceWithCovers(repo OperatorRepository, preparer CoverPreparer) *OperatorService {
+	service := NewOperatorService(repo)
+	service.coverPreparer = preparer
+
+	return service
 }
 
 func requireOperator(ctx context.Context, repo interface {
@@ -109,6 +120,7 @@ func requireOperator(ctx context.Context, repo interface {
 	if !isAdmin {
 		return ErrOperatorForbidden
 	}
+
 	return nil
 }
 
@@ -121,6 +133,7 @@ func (s *OperatorService) Find(ctx context.Context, actorID int, query string) (
 	if query == "" {
 		return []Book{}, nil
 	}
+
 	return s.repo.FindBooks(ctx, query)
 }
 
@@ -131,6 +144,7 @@ func (s *OperatorService) Get(ctx context.Context, actorID, bookID int) (Operato
 	if bookID <= 0 {
 		return OperatorBook{}, CatalogValidationError{Field: "id", Message: "Choose a valid book."}
 	}
+
 	return s.repo.GetOperatorBook(ctx, bookID)
 }
 
@@ -138,10 +152,30 @@ func (s *OperatorService) Options(ctx context.Context, actorID int) (CatalogOpti
 	if err := requireOperator(ctx, s.repo, actorID); err != nil {
 		return CatalogOptions{}, err
 	}
+
 	return s.repo.ListOptions(ctx)
 }
 
 func (s *OperatorService) Create(ctx context.Context, actorID int, input BookCreation) (int, error) {
+	var local *LocalFrontCover
+	if input.FrontCoverAction == CoverUpload {
+		normalized, err := normalizeBookCorrection(input.BookCorrection)
+		if err != nil {
+			return 0, err
+		}
+
+		input.BookCorrection = normalized
+		input.Slug = strings.TrimSpace(input.Slug)
+		if len(input.Slug) > 255 || !catalogSlugPattern.MatchString(input.Slug) {
+			return 0, CatalogValidationError{Field: "slug", Message: "Use lowercase letters, numbers, and single hyphens, up to 255 characters."}
+		}
+
+		local, err = s.publishCover(ctx, actorID, 0, input.BookCorrection)
+		if err != nil {
+			return 0, err
+		}
+	}
+
 	var bookID int
 	err := s.repo.WithinCatalogTransaction(ctx, func(tx OperatorTransaction) error {
 		if err := requireOperator(ctx, tx, actorID); err != nil {
@@ -152,6 +186,7 @@ func (s *OperatorService) Create(ctx context.Context, actorID int, input BookCre
 		if err != nil {
 			return err
 		}
+
 		input.BookCorrection = normalized
 		input.Slug = strings.TrimSpace(input.Slug)
 		if len(input.Slug) > 255 || !catalogSlugPattern.MatchString(input.Slug) {
@@ -160,6 +195,7 @@ func (s *OperatorService) Create(ctx context.Context, actorID int, input BookCre
 				Message: "Use lowercase letters, numbers, and single hyphens, up to 255 characters.",
 			}
 		}
+
 		if err := tx.ValidateRelationships(ctx, input.AuthorIDs, input.GenreIDs); err != nil {
 			return err
 		}
@@ -168,15 +204,35 @@ func (s *OperatorService) Create(ctx context.Context, actorID int, input BookCre
 		if err != nil {
 			return err
 		}
-		return s.finishWrite(ctx, tx, actorID, bookID, input.BookCorrection, "create", "created")
+
+		return s.finishWrite(ctx, tx, actorID, bookID, input.BookCorrection, local, "create", "created")
 	})
 	if err != nil {
 		return 0, err
 	}
+
 	return bookID, nil
 }
 
 func (s *OperatorService) Correct(ctx context.Context, actorID, bookID int, input BookCorrection) error {
+	var local *LocalFrontCover
+	if input.FrontCoverAction == CoverUpload {
+		if bookID <= 0 {
+			return CatalogValidationError{Field: "id", Message: "Choose a valid book."}
+		}
+
+		normalized, err := normalizeBookCorrection(input)
+		if err != nil {
+			return err
+		}
+
+		input = normalized
+		local, err = s.publishCover(ctx, actorID, bookID, input)
+		if err != nil {
+			return err
+		}
+	}
+
 	return s.repo.WithinCatalogTransaction(ctx, func(tx OperatorTransaction) error {
 		if err := requireOperator(ctx, tx, actorID); err != nil {
 			return err
@@ -189,6 +245,7 @@ func (s *OperatorService) Correct(ctx context.Context, actorID, bookID int, inpu
 		if err != nil {
 			return err
 		}
+
 		before, err := tx.GetOperatorBook(ctx, bookID)
 		if err != nil {
 			return err
@@ -200,8 +257,9 @@ func (s *OperatorService) Correct(ctx context.Context, actorID, bookID int, inpu
 		if err := tx.CorrectBook(ctx, bookID, normalized); err != nil {
 			return err
 		}
-		summary := changedBookGroups(before.BookCorrection, normalized)
-		return s.finishWrite(ctx, tx, actorID, bookID, normalized, "correct", summary)
+
+		summary := changedBookGroups(before.BookCorrection, normalized, coverChanged(before, normalized, local))
+		return s.finishWrite(ctx, tx, actorID, bookID, normalized, local, "correct", summary)
 	})
 }
 
@@ -210,13 +268,25 @@ func (s *OperatorService) finishWrite(
 	tx OperatorTransaction,
 	actorID, bookID int,
 	input BookCorrection,
+	local *LocalFrontCover,
 	action, summary string,
 ) error {
 	if err := tx.ReplaceRelationships(ctx, bookID, input.AuthorIDs, input.GenreIDs); err != nil {
 		return err
 	}
-	if err := tx.SetFrontCover(ctx, bookID, input.FrontCoverURL); err != nil {
-		return err
+
+	switch input.FrontCoverAction {
+	case CoverExternal, CoverRemove:
+		if err := tx.SetFrontCover(ctx, bookID, input.FrontCoverURL); err != nil {
+			return err
+		}
+	case CoverUpload:
+		if local == nil {
+			return ErrCatalogInternal
+		}
+		if err := tx.SetLocalFrontCover(ctx, bookID, *local); err != nil {
+			return err
+		}
 	}
 
 	return tx.AppendAudit(ctx, CatalogAudit{
@@ -274,6 +344,7 @@ func normalizeBookCorrection(input BookCorrection) (BookCorrection, error) {
 	if err != nil {
 		return BookCorrection{}, err
 	}
+
 	input.GenreIDs, err = normalizeSelectedIDs(input.GenreIDs, "genre_ids")
 	if err != nil {
 		return BookCorrection{}, err
@@ -293,7 +364,8 @@ func normalizeBookCorrection(input BookCorrection) (BookCorrection, error) {
 			}
 		}
 	}
-	return input, nil
+
+	return normalizeCoverChange(input)
 }
 
 func normalizeSelectedIDs(ids []int, field string) ([]int, error) {
@@ -307,7 +379,7 @@ func normalizeSelectedIDs(ids []int, field string) ([]int, error) {
 	return slices.Compact(result), nil
 }
 
-func changedBookGroups(before, after BookCorrection) string {
+func changedBookGroups(before, after BookCorrection, frontCoverChanged bool) string {
 	groups := make([]string, 0, 5)
 	if before.Title != after.Title {
 		groups = append(groups, "title")
@@ -321,7 +393,7 @@ func changedBookGroups(before, after BookCorrection) string {
 	if !sameSelectedIDs(before.GenreIDs, after.GenreIDs) {
 		groups = append(groups, "genres")
 	}
-	if before.FrontCoverURL != after.FrontCoverURL {
+	if frontCoverChanged {
 		groups = append(groups, "front_cover")
 	}
 	slices.Sort(groups)

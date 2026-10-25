@@ -90,11 +90,12 @@ func TestOperatorCreateNormalizesInputAndAuditsInTransaction(t *testing.T) {
 	input := BookCreation{
 		Slug: " demo-book ",
 		BookCorrection: BookCorrection{
-			Title:         " Demo Book ",
-			Description:   " untouched text ",
-			AuthorIDs:     []int{2, 1, 2},
-			GenreIDs:      []int{3, 3},
-			FrontCoverURL: " https://example.test/cover.jpg ",
+			Title:            " Demo Book ",
+			Description:      " untouched text ",
+			AuthorIDs:        []int{2, 1, 2},
+			GenreIDs:         []int{3, 3},
+			FrontCoverURL:    " https://example.test/cover.jpg ",
+			FrontCoverAction: CoverExternal,
 		},
 	}
 
@@ -295,7 +296,7 @@ func TestOperatorWriteFailuresDoNotCommit(t *testing.T) {
 				store := &fakeOperatorStore{admin: true, fail: failure}
 				service := NewOperatorService(store)
 				var err error
-				input := BookCorrection{Title: "Book"}
+				input := BookCorrection{Title: "Book", FrontCoverAction: CoverRemove}
 				if operation == "create" {
 					var id int
 					id, err = service.Create(context.Background(), 7, BookCreation{Slug: "book", BookCorrection: input})
@@ -338,21 +339,23 @@ func TestOperatorCorrectionAuditGroupsAndImmutableSlug(t *testing.T) {
 		{
 			name: "all groups",
 			after: BookCorrection{
-				Title:       "New",
-				Description: "After",
-				AuthorIDs:   []int{3},
-				GenreIDs:    []int{2},
+				Title:            "New",
+				FrontCoverAction: CoverRemove,
+				Description:      "After",
+				AuthorIDs:        []int{3},
+				GenreIDs:         []int{2},
 			},
 			summary: "authors,description,front_cover,genres,title",
 		},
 		{
 			name: "same sets and values",
 			after: BookCorrection{
-				Title:         "Old",
-				Description:   "Before",
-				AuthorIDs:     []int{1, 2, 1},
-				GenreIDs:      []int{1},
-				FrontCoverURL: before.FrontCoverURL,
+				Title:            "Old",
+				Description:      "Before",
+				AuthorIDs:        []int{1, 2, 1},
+				GenreIDs:         []int{1},
+				FrontCoverURL:    before.FrontCoverURL,
+				FrontCoverAction: CoverExternal,
 			},
 		},
 	} {

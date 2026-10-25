@@ -17,10 +17,12 @@ import (
 	"time"
 
 	"github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/cover"
 	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/modules/books"
 	"github.com/LeeDark/book-social/internal/modules/users"
+	"github.com/LeeDark/book-social/internal/storage/covers"
 	"github.com/LeeDark/book-social/internal/storage/postgresql"
 	"github.com/LeeDark/book-social/internal/storage/sqlite"
 	"github.com/LeeDark/book-social/internal/testutil"
@@ -88,6 +90,11 @@ func checkCatalogOperatorHTTPAcceptance(
 	var logs bytes.Buffer
 	logger := slog.New(slog.NewJSONHandler(&logs, nil))
 	flashes := flash.NewManager(false)
+	coverStore, err := covers.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = coverStore.Close() })
 	sessions := users.NewSessionService(userRepo, sessionRepo, time.Hour)
 	for _, session := range []struct {
 		userID int
@@ -107,8 +114,9 @@ func checkCatalogOperatorHTTPAcceptance(
 		FlashManager:          flashes,
 		MissingBookHandler:    books.NewMissingBookHandler(books.NewMissingBookService(missingBookRepo, logger), flashes, renderer, logger),
 		AdminCatalogHandler: books.NewOperatorHandler(
-			books.NewOperatorService(operatorRepo), flashes, renderer, logger,
+			books.NewOperatorServiceWithCovers(operatorRepo, NewCoverPreparer(coverStore)), flashes, renderer, logger,
 		),
+		CoverHandler: cover.NewHandler(coverStore, logger),
 	}
 	catalog := books.NewCatalogService(publicRepo)
 	application := New(
@@ -271,6 +279,7 @@ func checkCatalogOperatorHTTPAcceptance(
 	form["author_ids"] = []string{"3"}
 	form["genre_ids"] = []string{"3"}
 	form.Set("front_cover_url", "")
+	form.Set("front_cover_action", "remove")
 	corrected := operatorRequest(handler, http.MethodPost, editURL, form.Encode())
 	assertOperatorHTTPStatus(t, corrected, http.StatusSeeOther)
 	if corrected.Header().Get("Location") != editURL {
@@ -328,6 +337,8 @@ func checkCatalogOperatorHTTPAcceptance(
 	assertOperatorHTTPStatus(t, crossOrigin, http.StatusForbidden)
 	assertOperatorHTTPAudit(t, db, 3, visible.ID, "correct", "")
 
+	checkOperatorCoverHTTP(t, db, handler, operatorRepo, publicRepo, coverStore)
+
 	beforeFailure, err := publicRepo.GetBookBySlug(ctx, "request")
 	if err != nil {
 		t.Fatal("load catalog snapshot before audit failure")
@@ -341,6 +352,7 @@ func checkCatalogOperatorHTTPAcceptance(
 	form.Set("author_ids", "1")
 	form.Set("genre_ids", "1")
 	form.Set("front_cover_url", "https://example.test/rolled-back.jpg")
+	form.Set("front_cover_action", "external")
 	failedCorrection := operatorRequest(handler, http.MethodPost, editURL, form.Encode())
 	assertOperatorHTTPStatus(t, failedCorrection, http.StatusInternalServerError)
 	afterFailure, err := publicRepo.GetBookBySlug(ctx, "request")
@@ -353,10 +365,12 @@ func checkCatalogOperatorHTTPAcceptance(
 	if _, err := publicRepo.GetBookBySlug(ctx, "rolled-back-http"); !errors.Is(err, books.ErrBookNotFound) {
 		t.Fatal("HTTP audit failure left a created book")
 	}
+	checkOperatorUploadFailures(t, handler, operatorRepo, publicRepo, coverStore)
 
 	for _, forbidden := range []string{
 		"operator-test-session", "reader-test-session", "private-form-description",
 		"corrected-private-description", "forged-audit-summary", "IsAdmin", "is_admin",
+		"private-upload-name.png", "private-invalid-image", "failed-upload.png",
 	} {
 		if strings.Contains(logs.String(), forbidden) {
 			t.Fatal("operator HTTP logs contain protected request data")

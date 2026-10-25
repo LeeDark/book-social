@@ -16,7 +16,7 @@
             </div>
         {{end}}
 
-        <form method="post" action="{{.ActionURL}}" novalidate{{if .IsNew}} data-operator-new-form{{end}}>
+        <form method="post" action="{{.ActionURL}}" enctype="multipart/form-data" novalidate{{if .IsNew}} data-operator-new-form{{end}}>
             <label for="title">Title</label>
             <input id="title" name="title" value="{{.Form.Title}}" required aria-describedby="title-help{{if index .Form.Errors "title"}} title-error{{end}}"{{if index .Form.Errors "title"}} aria-invalid="true"{{end}}>
             <small id="title-help">Required, up to 255 characters.</small>
@@ -57,10 +57,27 @@
                 {{with index .Form.Errors "genre_ids"}}<small id="genre_ids-error">{{.}}</small>{{end}}
             </fieldset>
 
-            <label for="front_cover_url">Front-cover URL</label>
+            <fieldset id="front_cover" tabindex="-1" aria-describedby="cover-help{{if index .Form.Errors "front_cover"}} front_cover-error{{end}}"{{if index .Form.Errors "front_cover"}} aria-invalid="true"{{end}}>
+            <legend>Front cover</legend>
+            {{if .Form.CurrentCoverURL}}<p><a href="{{.Form.CurrentCoverURL}}">Open current cover</a></p>{{end}}
+            <label for="front_cover_action">Cover action</label>
+            <select id="front_cover_action" name="front_cover_action"{{if index .Form.Errors "front_cover_action"}} aria-invalid="true" aria-describedby="front_cover_action-error"{{end}}>
+                <option value="keep"{{if or (eq .Form.FrontCoverAction "") (eq .Form.FrontCoverAction "keep")}} selected{{end}}>Keep current cover</option>
+                <option value="upload"{{if eq .Form.FrontCoverAction "upload"}} selected{{end}}>Upload or replace local cover</option>
+                <option value="external"{{if eq .Form.FrontCoverAction "external"}} selected{{end}}>Set external HTTPS URL</option>
+                <option value="remove"{{if eq .Form.FrontCoverAction "remove"}} selected{{end}}>Remove front cover</option>
+            </select>
+            {{with index .Form.Errors "front_cover_action"}}<small id="front_cover_action-error">{{.}}</small>{{end}}
+            <label for="front_cover_url">External HTTPS URL</label>
             <input id="front_cover_url" name="front_cover_url" type="url" value="{{.Form.FrontCoverURL}}" aria-describedby="cover-help{{if index .Form.Errors "front_cover_url"}} front_cover_url-error{{end}}"{{if index .Form.Errors "front_cover_url"}} aria-invalid="true"{{end}}>
-            <small id="cover-help">Optional HTTPS URL. Leave empty to remove the front cover. Other cover variants are preserved. No image is downloaded or uploaded.</small>
             {{with index .Form.Errors "front_cover_url"}}<small id="front_cover_url-error">{{.}}</small>{{end}}
+            <label for="front_cover_file">Main cover image</label>
+            <input id="front_cover_file" name="front_cover_file" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="cover-help">
+            <label for="front_cover_thumbnail">Thumbnail (optional)</label>
+            <input id="front_cover_thumbnail" name="front_cover_thumbnail" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="cover-help">
+            <small id="cover-help">Choose one action. Supply a URL only for the external action, or files only for upload. JPEG, PNG or static WebP; portrait, up to 5 MiB each, 4096 pixels per side and 12 million pixels. Thumbnail: same format and proportions, smaller dimensions. Limit all text to 128 KiB and the request to 12 MiB. After an error, select files again. Removing a cover preserves other variants.</small>
+            {{with index .Form.Errors "front_cover"}}<small id="front_cover-error">{{.}}</small>{{end}}
+            </fieldset>
 
             <button type="submit">{{if .IsNew}}Create book{{else}}Save corrections{{end}}</button>
         </form>

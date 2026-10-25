@@ -104,7 +104,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	userService := users.NewService(userRepo, users.NewPasswordPolicy())
 	sessionService := users.NewSessionService(userRepo, sessionRepo, cfg.Auth.SessionLifetime)
 	catalogService := books.NewCatalogService(bookRepo)
-	operatorService := books.NewOperatorService(operatorRepo)
+	operatorService := books.NewOperatorServiceWithCovers(operatorRepo, app.NewCoverPreparer(coverStore))
 	missingBookService := books.NewMissingBookService(missingBookRepo, logger)
 	libraryService := library.NewService(libraryRepo, bookRepo)
 
