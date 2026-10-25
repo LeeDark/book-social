@@ -8,6 +8,11 @@ Browser, SQLite). See [verification and manual evidence](testing.md#v032-accepta
 Final documentation commit/push, CI confirmation and PR/issue closure remain under #26; this
 contract does not claim a merged, tagged or deployed release.
 
+The expanded v0.3.2 cover-file scope under #28 is specified separately in
+[Cover File Storage and Five-Book Pilot](cover_storage_v0_3_2.md). It is planned, not implemented
+or accepted. The URL-only behavior and exclusions below describe the original accepted scope;
+they do not exclude the later cover-file extension from the release.
+
 ## Purpose and Boundaries
 
 v0.3.2 maintains a small, curated demo catalog for a closed cohort. It does not introduce an

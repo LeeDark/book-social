@@ -902,3 +902,15 @@ Residual risks:
   tests and formatting/diff checks. Disposable resources were removed; development DBs were unchanged.
 - User confirmed the new-route manual recheck; browser/version, backend and launch commands were
   not separately reported. Acceptance is recorded; PR remains Draft and #26 open pending final closure.
+
+## 2026-10-25 — Cover storage contract and shared pilot (#28, step 1)
+
+- Added `cover_storage_v0_3_2.md` with five seed-backed pilot slugs, prepared-image limits,
+  local/external reference semantics, safe immutable naming, replacement/removal and filesystem/SQL
+  failure rules. WebP 600×900 main / 240×360 thumbnail remains a proposal pending visual pilot review.
+- Linked the extension from the original catalog contract while retaining its historical URL-only
+  scope. Storage, migrations, dependencies, artwork and operational acceptance are not implemented
+  or claimed. No runtime code or seed data changed.
+- Verified all five slugs in both seeds with `rg -n -F`, local document targets with `test -f`,
+  and whitespace with `git diff --check` and `git diff --no-index --check` for the new document.
+  Runtime tests were not run for this documentation-only step.
