@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "bundle_id": "pilot-v1-draft-2026-10-25",
+  "covers": [
+    {
+      "slug": "a-christmas-carol",
+      "reviewed": false,
+      "usage_basis": "AI-generated project demo illustration with no external reference images supplied. See ../artwork-provenance.json. Human review pending; not a cover of a specific edition.",
+      "main": {
+        "file": "a-christmas-carol-main.webp",
+        "sha256": "56dcf67a699b5f6338c2eab9970ea7f7d74ccc615ca37f95a5da681ec1f44d96"
+      },
+      "thumbnail": {
+        "file": "a-christmas-carol-thumb.webp",
+        "sha256": "c086678a748336df71f01253160dc70b8611d50c1aa3f446e9c33eb251950ad9"
+      }
+    },
+    {
+      "slug": "pride-and-prejudice",
+      "reviewed": false,
+      "usage_basis": "AI-generated project demo illustration with no external reference images supplied. See ../artwork-provenance.json. Human review pending; not a cover of a specific edition.",
+      "main": {
+        "file": "pride-and-prejudice-main.webp",
+        "sha256": "e1e7359beab7509356565ca690a7aa65f97706b02f60cbff82388bdd28645230"
+      },
+      "thumbnail": {
+        "file": "pride-and-prejudice-thumb.webp",
+        "sha256": "6cb9b1c87ad8c3aaff1f825a304f7e8d2969a62547fb8f0cd0ac902a552a3a14"
+      }
+    },
+    {
+      "slug": "frankenstein",
+      "reviewed": false,
+      "usage_basis": "AI-generated project demo illustration with no external reference images supplied. See ../artwork-provenance.json. Human review pending; not a cover of a specific edition.",
+      "main": {
+        "file": "frankenstein-main.webp",
+        "sha256": "5fbe59dc755b18f6d0dc0e1b55dff4b4fda7f7991896aa76ab4a36d37468c8fc"
+      },
+      "thumbnail": {
+        "file": "frankenstein-thumb.webp",
+        "sha256": "196b782faae8afae9a68d21215331c648dac7383c6c8a4c8884d57dfc42b461d"
+      }
+    },
+    {
+      "slug": "alices-adventures-in-wonderland",
+      "reviewed": false,
+      "usage_basis": "AI-generated project demo illustration with no external reference images supplied. See ../artwork-provenance.json. Human review pending; not a cover of a specific edition.",
+      "main": {
+        "file": "alices-adventures-in-wonderland-main.webp",
+        "sha256": "7553ebbe0ddae9d78bc273d691bdd1734226e351a43cef92db70cdd63dcf5fba"
+      },
+      "thumbnail": {
+        "file": "alices-adventures-in-wonderland-thumb.webp",
+        "sha256": "63f1d586824b0daedaba450882b986dd8db36e7da702a882f971807a855b2edc"
+      }
+    },
+    {
+      "slug": "twenty-thousand-leagues-under-the-seas",
+      "reviewed": false,
+      "usage_basis": "AI-generated project demo illustration with no external reference images supplied. See ../artwork-provenance.json. Human review pending; not a cover of a specific edition.",
+      "main": {
+        "file": "twenty-thousand-leagues-under-the-seas-main.webp",
+        "sha256": "8a8963e7d19827fc144b7e36a1506681877c088f78bb054af4743c4901e80f4f"
+      },
+      "thumbnail": {
+        "file": "twenty-thousand-leagues-under-the-seas-thumb.webp",
+        "sha256": "e6a67e234770939aa108b50e064f81f4f19cd06f5fc35eefdd4874a58741efd2"
+      }
+    }
+  ]
+}

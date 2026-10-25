@@ -41,6 +41,13 @@ checksums belong in the companion task's manifest, keyed by slug. Generated artw
 identified as project demo illustrations, not covers of particular editions. Existing metadata
 provenance limitations in [demo_catalog_provenance.md](demo_catalog_provenance.md) remain.
 
+A first unapproved candidate set is available in
+[`assets/demo-covers/pilot-v1`](../assets/demo-covers/pilot-v1/README.ru.md), with an offline
+[review gallery](../assets/demo-covers/pilot-v1/review.html), preserved generated PNG sources,
+prepared WebP main/thumbnail files, exact prompts, provenance and checksums. All manifest entries
+remain `reviewed: false`; it is not installed or accepted. Candidate availability does not freeze
+the proposed profile or authorize the remaining 104 illustrations.
+
 ## Prepared Images and Limits
 
 The proposed pilot delivery profile is static WebP, 2:3, 600 × 900 main image and 240 × 360

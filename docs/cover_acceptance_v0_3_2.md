@@ -75,6 +75,13 @@ not retention of those temporary logs, records the results.
 
 ## Required Local Acceptance
 
+Pilot preparation update on 2026-10-25: five candidate illustrations and their draft manifest,
+sources, prompts/provenance and checksums are prepared in
+[`assets/demo-covers/pilot-v1`](../assets/demo-covers/pilot-v1/README.ru.md). The
+[offline gallery](../assets/demo-covers/pilot-v1/review.html) shows real 240×360 thumbnails and
+links to 600×900 main files. No user approval, application installation or browser acceptance is
+recorded; the following gates remain unchecked. The installer deliberately rejects this draft.
+
 Use a disposable local environment outside the Codex sandbox. Do not experiment on retained data
 or remove cover files to simulate failure. Before upgrading an old container, preserve its old
 cover directory as described in [the transition warning](cover_operations.md#persistent-container-storage).
