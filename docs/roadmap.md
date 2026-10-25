@@ -8,6 +8,12 @@ does not change the active priority or release scope until an item is explicitly
 
 ## Current Planning Status
 
+The v0.3.2 scope is expanded: persistent cover-file storage and display, followed by reviewed
+generated demo front covers for the existing 109 books, are now required before release closure.
+Deliver these as two dependent tasks, starting with a five-book pilot. Earlier acceptance below
+applies to the original scope only; the cover work is planned, not implemented or accepted.
+v0.3.4 will add a reviewed book-addition workflow and grow the catalog to 500 books total.
+
 v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation through the first
 browser-facing flow: registration, login, idempotent logout, protected `/me`, auth navigation, and
 one-request success flashes. Its manual browser smoke and release closure are complete.
@@ -311,12 +317,25 @@ Outcome: the private library supports the complete add → update → return →
 
 #### v0.3.2 — Curated Catalog Operations
 
-Status: scope and post-review browser recheck accepted; final documentation/PR closure pending (#26).
-The accepted contract is in
+Status: original scope and post-review browser recheck accepted; expanded cover scope is open.
+The original accepted contract, which predates file storage and still describes URL-only covers, is in
 [`catalog_operations_v0_3_2.md`](catalog_operations_v0_3_2.md).
 
-- [x] Separate test fixtures, deterministic development seed data, and the curated demo catalog;
-  document demo metadata provenance and permitted cover use.
+- [x] Separate ordinary test fixtures from deterministic development seed data; inventory the
+  existing 109-book dataset and document its unverified external metadata provenance and absent covers.
+- [ ] Task 1 — Cover-file storage and display: persistent local storage with a Docker volume,
+  HTTP serving, database references and technical metadata; reconcile local files with existing
+  external HTTPS cover URLs. Show front covers on book pages and all book cards, retaining a
+  placeholder for missing or unavailable images. Document backup/restore and reproducible delivery
+  of matching seed data and files. Verify the complete path on five pilot books, including restart
+  and redeployment. This is a bounded cover feature, not a general media platform.
+- [ ] Task 2 — Demo front covers for all 109 existing books, dependent on Task 1: approve the
+  visual approach on the same five-book pilot, then prepare and review the remaining covers in
+  batches. Use image generation, optionally with 2–3 suitable reference images per book; record
+  reference sources and permitted use. Choose uniform dimensions and a web format during the pilot
+  (proposal: 2:3, 600×900 main image, 240×360 thumbnail, WebP); retain originals and a manifest
+  linking book slugs, files, generation details and review status. Label these as project demo
+  artwork, not covers of specific editions. Ship all 109 approved front covers reproducibly.
 - [x] Add a clear missing-book state and simple feedback path without an external import.
 - [x] Persist the validated missing-book title, optional author and authenticated submitting user;
   confirm success only after saving. Keep submitted text out of logs. Operator listing and request
@@ -343,8 +362,12 @@ to the previous form route; the user separately confirmed the new-route recheck 
 without reporting environment details. Fixes through `9d764db` are pushed, and final local checks
 and published-head CI passed. Commit/push of this acceptance record and final closure remain.
 
-Outcome: a small closed cohort can use reproducible catalog data that an operator can correct
-without direct SQL.
+The earlier verification and #26 closure notes above cover the original implementation only.
+The two new cover tasks need separate tracking and acceptance before v0.3.2 can close.
+Cover completion does not establish the accuracy or provenance of legacy book descriptions.
+
+Outcome: the existing 109 books have reproducible, reviewed demo front-cover files shown throughout
+the MPA, and an operator can correct catalog data without direct SQL.
 
 #### v0.3.3 — Reliability and Release Closure
 
@@ -359,6 +382,11 @@ Outcome: the complete private-library flow is releasable and operable as a curat
 
 #### v0.3.4 — Public Demo Polish
 
+- [ ] Define and implement a reviewed workflow for adding new books, then expand from 109 to
+  500 books total with checked metadata and demo front covers using the v0.3.2 storage/generation
+  workflow. Compare individual operator entry, a validated JSON/CSV batch and source-assisted
+  drafts; select the mechanism before expansion. Check duplicates, metadata provenance and
+  description quality; keep additions reproducible. External-provider import remains v0.4 work.
 - [ ] Polish the shared MPA interface: typography, layout, responsive behavior, form states, empty
   states, contrast, and keyboard navigation.
 - [ ] Expand the home and About pages with the learning project's purpose, implemented
@@ -368,8 +396,8 @@ Outcome: the complete private-library flow is releasable and operable as a curat
 - [ ] Add baseline public-page metadata; canonical URLs, redirects, and sitemap behavior remain
   v0.4 work.
 
-Outcome: Book Social can be shown as a clear, polished public demonstration without claiming a
-public beta or a finished social service.
+Outcome: Book Social can be shown as a clear, polished public demonstration with 500 reviewed books
+and demo front covers, without claiming a public beta or a finished social service.
 
 #### v0.3.5 — Hetzner Cloud Hosted Stage
 
@@ -409,7 +437,9 @@ components without changing the application architecture.
 
 ### Catalog and Operator Scope
 
-- [ ] Separate test fixtures, deterministic development seed data, and a curated demo catalog.
+- [x] Separate ordinary test fixtures from deterministic development seed data.
+- [ ] Complete v0.3.2 cover storage/display and reviewed demo front covers for the existing 109
+  books; complete the reviewed addition workflow and expand to 500 books total in v0.3.4.
 - [ ] Prepare a reproducible demo catalog suitable for product demonstrations and a small closed
   user cohort.
 - [ ] Document data provenance and permitted cover usage for demo records.
@@ -638,6 +668,10 @@ import script.
 Outcome: the team can prove a batch-import workflow without modifying the public catalog.
 
 #### v0.5.2 — Reviewed Publication and Licensed Covers
+
+Build on the demo cover-file storage introduced in v0.3.2 and reused for the 500-book catalog in
+v0.3.4. This stage adds admission and rights evidence for externally sourced batch cover assets;
+it does not postpone basic demo-file storage or display until v0.5.
 
 - [ ] Promote accepted staging records only through an explicit operator decision; provide a
   read-only public progress/result page with source, version, scope, and limitations.
