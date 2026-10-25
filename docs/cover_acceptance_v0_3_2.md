@@ -1,8 +1,9 @@
 # Cover Verification and Pending Acceptance (#28, Step 7)
 
 Status on 2026-10-25: automated verification passes on implementation `27c64d2`.
-Step 7 is **not fully accepted**: reviewed pilot artwork, real container lifecycle/restore and
-browser evidence are still missing. This record does not close #28 or the expanded v0.3.2 scope
+Step 7 is **not fully accepted**: real container lifecycle/restore and browser evidence are still
+missing. Reviewed artwork and isolated SQLite installation are now recorded below.
+This record does not close #28 or the expanded v0.3.2 scope
 and does not replace the earlier acceptance of the original #23–#26 workflows.
 
 The [contract](cover_storage_v0_3_2.md) defines behavior; [cover operations](cover_operations.md)
@@ -79,18 +80,25 @@ Pilot preparation update on 2026-10-25: five candidate illustrations and their d
 sources, prompts/provenance and checksums are prepared in
 [`assets/demo-covers/pilot-v1`](../assets/demo-covers/pilot-v1/README.ru.md). The
 [offline gallery](../assets/demo-covers/pilot-v1/review.html) shows real 240×360 thumbnails and
-links to 600×900 main files. No user approval, application installation or browser acceptance is
-recorded; the following gates remain unchecked. The installer deliberately rejects this draft.
+links to 600×900 main files. The installer deliberately rejects this historical draft.
 
-Use a disposable local environment outside the Codex sandbox. Do not experiment on retained data
+The user subsequently approved all five illustrations and the delivery profile on 2026-10-25.
+The separate [approved release](../assets/demo-covers/pilot-v1-approved/README.ru.md) passed
+actual offline installation twice in a fresh SQLite environment: five changes then zero,
+five audits total, five main/thumbnail pairs verified. See the
+[installation protocol](cover_pilot_installation_v0_3_2.md) for hashes, commands and preservation
+checks. This does not imply browser, container or recovery acceptance.
+
+For remaining browser/container/recovery checks, use a disposable local environment outside the
+Codex sandbox. Do not experiment on retained data
 or remove cover files to simulate failure. Before upgrading an old container, preserve its old
 cover directory as described in [the transition warning](cover_operations.md#persistent-container-storage).
 
-- [ ] Supply the five reviewed main/optional-thumbnail artworks, source/provenance/usage evidence,
-  bundle version and independently pinned manifest/archive checksums. The proposed WebP/2:3
-  600×900 main and 240×360 thumbnail profile is still a proposal, not accepted output.
-- [ ] Provision a fresh matching migrations/seed environment and an explicit administrator;
-  install the bundle twice and record changed counts, audit counts and `coverctl verify` results.
+- [x] Supply five reviewed artworks, source/provenance/usage evidence, version and pinned
+  manifest/archive checksums. WebP/2:3 600×900 main and 240×360 thumbnail approved for the pilot;
+  application visual acceptance remains pending.
+- [x] Provision fresh matching migrations/seed and an explicit administrator; install twice and
+  record changed/audit counts and `coverctl verify` results (offline disposable SQLite).
 - [ ] Check each pilot on details, catalog, author and private-library pages, including main-only
   fallback and external HTTPS compatibility. Confirm proportion preservation and readable artwork
   on mobile and desktop, keyboard links and accessible labels.

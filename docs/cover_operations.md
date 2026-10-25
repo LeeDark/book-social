@@ -2,8 +2,10 @@
 
 This is a local operator procedure, not production deployment automation. Use the image and
 migrations from the same application revision. Apply migrations through `000008` before maintenance.
-The installer never migrates, seeds, downloads, resizes or deletes files. No approved pilot artwork
-ships yet; solid-color files in tests are not demo artwork or evidence of visual acceptance.
+The installer never migrates, seeds, downloads, resizes or deletes files. The separately
+[approved pilot](../assets/demo-covers/pilot-v1-approved/README.ru.md) has passed an
+[isolated SQLite installation](cover_pilot_installation_v0_3_2.md). It is not installed automatically;
+solid-color files in tests are not demo artwork or evidence of visual acceptance.
 
 ## Persistent Container Storage
 

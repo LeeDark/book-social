@@ -3,7 +3,8 @@
 Status: implementation contract prepared on 2026-10-25. Steps 2–6 implement local file storage,
 validation, public HTTP delivery, database references/metadata, administrator uploads and shared
 cover rendering/fallback, persistent Compose volume configuration and offline delivery/verification
-tools. The approved pilot, container lifecycle/real PostgreSQL restore and visual acceptance remain pending.
+tools. The five-artwork pilot and profile are user-approved and passed isolated SQLite installation;
+container lifecycle/real PostgreSQL restore and visual acceptance remain pending.
 Step 7's [automated evidence and outstanding manual gates](cover_acceptance_v0_3_2.md) are recorded
 separately; the final automated pass includes real SQLite/PostgreSQL cover workflows.
 This document extends the original
@@ -41,19 +42,20 @@ checksums belong in the companion task's manifest, keyed by slug. Generated artw
 identified as project demo illustrations, not covers of particular editions. Existing metadata
 provenance limitations in [demo_catalog_provenance.md](demo_catalog_provenance.md) remain.
 
-A first unapproved candidate set is available in
-[`assets/demo-covers/pilot-v1`](../assets/demo-covers/pilot-v1/README.ru.md), with an offline
-[review gallery](../assets/demo-covers/pilot-v1/review.html), preserved generated PNG sources,
-prepared WebP main/thumbnail files, exact prompts, provenance and checksums. All manifest entries
-remain `reviewed: false`; it is not installed or accepted. Candidate availability does not freeze
-the proposed profile or authorize the remaining 104 illustrations.
+The user approved all five illustrations and their delivery profile on 2026-10-25. The separate
+[`pilot-v1-approved` release](../assets/demo-covers/pilot-v1-approved/README.ru.md) retains original
+PNGs, prepared WebPs, prompts, provenance, review decision and pinned checksums. The
+[installation protocol](cover_pilot_installation_v0_3_2.md) records actual offline SQLite installation
+twice (five changes then zero), five audits and verification. The historical
+[`pilot-v1` draft](../assets/demo-covers/pilot-v1/README.ru.md) remains unchanged and un-installable.
+This approval does not accept application rendering or authorize the remaining 104 illustrations.
 
 ## Prepared Images and Limits
 
-The proposed pilot delivery profile is static WebP, 2:3, 600 × 900 main image and 240 × 360
+The user-approved pilot delivery profile is static WebP, 2:3, 600 × 900 main image and 240 × 360
 thumbnail. Review legibility, detail, proportions and file weight at mobile and desktop sizes
-before freezing that profile or generating the remaining 104 covers. No format or visual
-acceptance is claimed by this document.
+before expanding that profile to the remaining 104 covers. In-application visual acceptance
+is still pending.
 
 The initial validation contract is:
 

@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "tool": "built-in image_gen",
+  "model": "Not exposed by the tool; no model identifier inferred.",
+  "external_reference_images": [],
+  "attempts": [
+    {
+      "slug": "a-christmas-carol",
+      "attempt": 1,
+      "status": "failed_output_moderation_no_image_saved",
+      "prompt": "Use case: illustration-story. Asset type: original project-demo front-cover artwork for the novel A Christmas Carol, not a replica of any published edition. Generate ONE finished flat portrait image, exact 2:3 aspect ratio (prefer 1024x1536), full bleed, no book mockup or spine. Scene: a snow-covered Victorian London street at dusk, warm light from a modest window, one solitary elderly man in a long coat walking toward the light; a humane, quietly hopeful Christmas atmosphere. Style: a cohesive literary collection, painterly gouache with subtle engraved linework and paper texture, strong clear silhouettes, restrained fine detail that reads at a 240x360 thumbnail. Composition: ample quiet space for large high-contrast serif typography at the top, main illustration below, small author credit at the bottom, generous safe margins. Render these exact words only: title \"A CHRISTMAS CAROL\", author \"CHARLES DICKENS\". Title substantially larger than author, beautifully typeset and easy to read. No publisher logos, badges, edition claims, watermark, copied cover composition, film likenesses, extra text or decorative fake lettering. Opaque background.",
+      "request_id": "74ac022e-0c25-4bfe-aa39-fa7534439fda"
+    },
+    {
+      "slug": "a-christmas-carol",
+      "attempt": 2,
+      "status": "generated_candidate_pending_human_review",
+      "prompt": "Create one original portrait 2:3 illustration for a project demo book cover inspired by A Christmas Carol. A peaceful snowy nineteenth-century London street with softly glowing windows and falling snow at twilight. Warm, welcoming atmosphere. Painterly gouache and delicate engraved texture, clear shapes suitable for a small book-catalog thumbnail. Flat full-bleed artwork, not a photograph of a book. No people, no text, no logos, no watermark. This is an original illustration, not an existing edition cover. Opaque background.",
+      "generated_output_basename": "exec-d26a3075-2a09-419a-bab7-e066d35b6e02.png"
+    },
+    {
+      "slug": "pride-and-prejudice",
+      "attempt": 1,
+      "status": "generated_candidate_pending_human_review",
+      "prompt": "Use case: illustration-story. Asset type: original project-demo front-cover illustration for a literary book-catalog pilot, not a replica of an edition. Create ONE finished flat full-bleed portrait image in exact 2:3 aspect ratio (prefer 1024x1536). Cohesive collection style: richly painted gouache, delicate engraved linework, subtle paper texture, strong atmospheric light, clear readable focal shapes at a 240x360 thumbnail. Opaque background. No text, lettering, title, logo, watermark, book mockup, spine, publisher branding or copied movie/edition design. Subject inspired by Pride and Prejudice: a graceful English Regency country manor beyond an old garden gate, a winding garden path with climbing roses and a broad rolling countryside, a dignified, quietly romantic early morning atmosphere. Architecture and garden are the focal point; no people. Original painterly literary illustration, visually balanced and restrained, not photorealistic.",
+      "generated_output_basename": "exec-2a189f83-748e-40f9-bce6-c2d5152b1c14.png"
+    },
+    {
+      "slug": "frankenstein",
+      "attempt": 1,
+      "status": "generated_candidate_pending_human_review",
+      "prompt": "Use case: illustration-story. Asset type: original project-demo front-cover illustration for a literary book-catalog pilot, not a replica of an edition. Create ONE finished flat full-bleed portrait image in exact 2:3 aspect ratio (prefer 1024x1536). Cohesive collection style: richly painted gouache, delicate engraved linework, subtle paper texture, strong atmospheric light, clear readable focal shapes at a 240x360 thumbnail. Opaque background. No text, lettering, title, logo, watermark, book mockup, spine, publisher branding or copied movie/edition design. Subject inspired by Frankenstein: a solitary distant human silhouette on a vast Alpine glacier beneath dramatic mountain peaks, a subtle warm lantern against the cold dusk, a contemplative Gothic atmosphere of isolation and moral responsibility. The figure is small and indistinct, the mountains and ice dominate. No laboratory cliches, no gore, no green skin, no neck bolts, no recognizable film creature. Original literary illustration.",
+      "generated_output_basename": "exec-57f048e1-0747-4969-b2bd-0ea8df1a418a.png"
+    },
+    {
+      "slug": "alices-adventures-in-wonderland",
+      "attempt": 1,
+      "status": "generated_candidate_pending_human_review",
+      "prompt": "Use case: illustration-story. Asset type: original project-demo front-cover illustration for a literary book-catalog pilot, not a replica of an edition. Create ONE finished flat full-bleed portrait image in exact 2:3 aspect ratio (prefer 1024x1536). Cohesive collection style: richly painted gouache, delicate engraved linework, subtle paper texture, strong atmospheric light, clear readable focal shapes at a 240x360 thumbnail. Opaque background. No text, lettering, title, logo, watermark, book mockup, spine, publisher branding or copied movie/edition design. Subject inspired by Alice\\u0027s Adventures in Wonderland: a small white rabbit in a waistcoat beside a pocket watch at the entrance of a fantastical woodland passage; oversized mushrooms, twisting roots, curious tiny doors and soft shafts of forest light create depth. Whimsical wonder rather than horror, coherent readable composition, no human characters, no film-adaptation styling. Original storybook imagery.",
+      "generated_output_basename": "exec-fabb1b13-4c5a-432b-9a88-8fb83bc65037.png"
+    },
+    {
+      "slug": "twenty-thousand-leagues-under-the-seas",
+      "attempt": 1,
+      "status": "generated_candidate_pending_human_review",
+      "prompt": "Use case: illustration-story. Asset type: original project-demo front-cover illustration for a literary book-catalog pilot, not a replica of an edition. Create ONE finished flat full-bleed portrait image in exact 2:3 aspect ratio (prefer 1024x1536). Cohesive collection style: richly painted gouache, delicate engraved linework, subtle paper texture, strong atmospheric light, clear readable focal shapes at a 240x360 thumbnail. Opaque background. No text, lettering, title, logo, watermark, book mockup, spine, publisher branding or copied movie/edition design. Subject inspired by Twenty Thousand Leagues Under the Seas: an original elegant nineteenth-century submarine silhouette travelling over a deep underwater reef, shafts of light descending from far above, a large graceful octopus partly visible among coral and sea plants in the foreground. A feeling of oceanic scale, exploration and mysterious quiet, not an action attack. No recognizable film submarine or modern military vessel. Original painterly adventure illustration.",
+      "generated_output_basename": "exec-cbeb6a5e-57c2-47ca-9654-b4897dd8b8bb.png"
+    }
+  ]
+}

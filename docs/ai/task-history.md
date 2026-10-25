@@ -1185,3 +1185,33 @@ Residual risks:
 - Linked the candidates from the contract and acceptance record. User review, approved manifest
   release/checksums and application/browser/operational acceptance remain pending. The five
   candidates do not authorize generation of the remaining 104 covers or close #28. No commit made.
+
+## 2026-10-25 — Approved five-cover delivery and isolated installation (#28, acceptance step 2)
+
+- User explicitly confirmed all five illustrations and WebP 600×900 / 240×360 pilot profile.
+  Preserved the historical draft unchanged; created `assets/demo-covers/pilot-v1-approved` with
+  byte-identical PNGs/WebPs, prompts, gallery, approval provenance and a reviewed manifest.
+  Bundle ID: `pilot-v1-approved-2026-10-25`; manifest SHA-256:
+  `4f80285da167fbf1695d58b5ec96abbe125cf222f9ff1e3f78ee248b9f7de6f8`.
+  Retained 20-file checksums and a normalized local archive with separately recorded SHA-256
+  `ec447dccefe6a93061991d5b1e2a6164182753f1e4dfc04c1617e370fcb088a4`.
+- Created `/tmp/book-social-pilot-approved.sJzxYR`, applied all eight SQLite migrations and the
+  matching seed once. Explicitly provisioned a non-login admin fixture for audit, not a default
+  account. Initial state: 109 books, zero covers/audits. Ran the real coverctl binary with
+  explicit paths and stopped-writer confirmation. Initial verify: zero; first installation:
+  five changes/five audits; verify: five pairs; second installation: zero changes/five total
+  audits; verify: five pairs again.
+- Compared dumps of all 14 unrelated SQL tables before/after first install: identical.
+  Compared the full DB dump after first/second install: identical. Integrity and foreign-key
+  checks passed; ten canonical WebP files matched approved hashes and mode 0640.
+  This fresh seed had no pre-existing cover variants; preservation of other variants remains
+  synthetic-test evidence. No retained DB/container/volume was accessed or app/server started.
+- Passed asset byte-count/hash/approval assertions, payload/archive checksum checks, gzip integrity,
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/coverops ./cmd/coverctl`
+  and `git diff --check`. Built coverctl successfully with a non-fatal read-only module stat-cache
+  warning. No Go/SQL implementation, migration or dependency changes; no full suite or PostgreSQL
+  run in this pass. Reviewed the new documented provisioning SQL against the readability guide.
+- Added `docs/cover_pilot_installation_v0_3_2.md`, checked the first two acceptance gates and
+  synchronized operational/contract/roadmap status. Browser/HTMX/mobile acceptance, container
+  restart/recreation, actual paired SQLite/PostgreSQL recovery and remaining artwork stay pending.
+  Temporary targets are inspectable but not durable storage. No commit or issue/release closure.
