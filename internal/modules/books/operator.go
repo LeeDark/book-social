@@ -41,8 +41,9 @@ type BookCreation struct {
 }
 
 type OperatorBook struct {
-	ID   int
-	Slug string
+	ID         int
+	Slug       string
+	FrontCover *Cover
 	BookCorrection
 }
 
@@ -76,6 +77,7 @@ type OperatorTransaction interface {
 	CorrectBook(ctx context.Context, bookID int, input BookCorrection) error
 	ReplaceRelationships(ctx context.Context, bookID int, authorIDs, genreIDs []int) error
 	SetFrontCover(ctx context.Context, bookID int, coverURL string) error
+	SetLocalFrontCover(ctx context.Context, bookID int, cover LocalFrontCover) error
 	AppendAudit(ctx context.Context, audit CatalogAudit) error
 }
 

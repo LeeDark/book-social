@@ -119,6 +119,13 @@ func (r *CatalogOperatorRepository) GetOperatorBook(ctx context.Context, bookID 
 		return books.OperatorBook{}, books.ErrCatalogInternal
 	}
 	book.Description = nullStringValue(description)
+	frontCover, err := r.getFrontCover(ctx, bookID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return books.OperatorBook{}, err
+	}
+	if err == nil {
+		book.FrontCover = &frontCover
+	}
 
 	book.AuthorIDs, err = r.selectedIDs(ctx, `
 		SELECT author_id
@@ -358,7 +365,14 @@ func (r *CatalogOperatorRepository) SetFrontCover(ctx context.Context, bookID in
 			byte_size = NULL,
 			width = NULL,
 			height = NULL,
-			checksum_sha256 = NULL
+			checksum_sha256 = NULL,
+			storage_key = NULL,
+			thumbnail_storage_key = NULL,
+			thumbnail_mime_type = NULL,
+			thumbnail_byte_size = NULL,
+			thumbnail_width = NULL,
+			thumbnail_height = NULL,
+			thumbnail_checksum_sha256 = NULL
 		WHERE covers.url <> excluded.url
 	`, bookID, coverURL)
 	if err != nil {

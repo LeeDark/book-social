@@ -1,8 +1,8 @@
 # Cover File Storage and Five-Book Pilot (#28)
 
-Status: implementation contract prepared on 2026-10-25. Step 2 implements local file storage,
-validation and public HTTP delivery. Database attachment, operator uploads and the pilot are
-not implemented or accepted. This document extends the original
+Status: implementation contract prepared on 2026-10-25. Steps 2–3 implement local file storage,
+validation, public HTTP delivery and database references/metadata. Operator uploads and the pilot
+are not implemented or accepted. This document extends the original
 [URL-only catalog operations contract](catalog_operations_v0_3_2.md); it does not change the
 recorded acceptance of issues #23–#26. Release scope remains in [roadmap.md](roadmap.md).
 
@@ -73,8 +73,8 @@ public serving directory.
 
 Use `APP_COVERS_DIR` for the storage root and a persistent Docker volume for container runs.
 Store only relative storage keys and public URLs in SQL, never host paths or image bytes.
-Extend `covers` with an optional local storage key and the derivative metadata needed for an
-optional thumbnail; choose the minimal paired SQLite/PostgreSQL migration during implementation.
+Paired SQLite/PostgreSQL migration `000008` extends `covers` with an optional local storage key
+and the derivative metadata needed for an optional thumbnail.
 Existing main-image metadata columns remain authoritative for the main file.
 
 An external cover has an HTTPS URL and no local storage key. A local cover has a validated storage
@@ -126,6 +126,14 @@ Conditional requests and byte ranges are supported. Missing, invalid or damaged 
 responses use `no-store`; other methods return `405`. All routes retain global security headers.
 
 ## Attachment, Replacement and Failure Rules
+
+Step 3 provides `StoredCoverFile`/`LocalFrontCover` and transactional `SetLocalFrontCover` on
+both repositories, with complete local/thumbnail metadata returned by operator and detail reads.
+Replacing an external URL clears local fields; unchanged URLs preserve them. See
+[database semantics and guarded downgrade](database.md#local-cover-references-28-step-3).
+File verification and administrator authorization remain the caller's responsibility. The browser
+form/service still accepts external HTTPS URLs only; local uploads and keep/remove actions below
+are step 4 work. Do not install local pilot references into the existing browser workflow yet.
 
 An administrator explicitly chooses keep, upload/replace, set external HTTPS URL, or remove.
 An ordinary metadata edit defaults to keep. Reject contradictory actions and files before writing.

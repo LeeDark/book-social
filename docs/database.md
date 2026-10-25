@@ -8,13 +8,13 @@ Database docs are split by project stage:
 - Private Library Foundation v0.3.0 is described below and created by migration `000004`.
 - Reading-State Lifecycle v0.3.1 is described below and created by migration `000005`.
 - Curated Catalog Operations v0.3.2 adds administrator/audit migration `000006` and missing-book
-  request migration `000007`, described below.
+  request migration `000007`. The cover-file extension adds migration `000008`, described below.
 
 Current state:
 
 - `APP_ENV=dev` uses SQLite and is the active local development path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL using `APP_DB_DSN`.
-- Paired SQLite/PostgreSQL migrations through `000007` exist and can be applied with the
+- Paired SQLite/PostgreSQL migrations through `000008` exist and can be applied with the
   `golang-migrate` CLI before starting the application; runtime wiring does not apply migrations.
 - SQLite and PostgreSQL implement the normalized v0.2 catalog read-side.
 - SQLite and PostgreSQL implement equivalent user and opaque-session persistence contracts.
@@ -22,6 +22,43 @@ Current state:
   implemented v0.3.1 lifecycle flow.
 - Both backends implement transactional catalog maintenance/audit and missing-book request creation.
 - Docker/Compose has local workflows for SQLite dev and PostgreSQL stage/prod.
+
+## Local Cover References (#28, Step 3)
+
+Apply paired migration `000008_add_local_cover_files` before running this application revision.
+It extends `covers` with nullable `storage_key`, `thumbnail_storage_key`, `thumbnail_mime_type`,
+`thumbnail_byte_size`, `thumbnail_width`, `thumbnail_height` and `thumbnail_checksum_sha256`.
+Existing main-image metadata columns remain in use. Image bytes and absolute filesystem paths
+are not stored in SQL. No covers or pilot files are seeded by the migration.
+
+Existing URL-only covers and their metadata/IDs remain unchanged. A local `front` has a canonical
+SHA-256 storage key, matching `/media/covers/{key}` URL, complete MIME/size/dimension/checksum
+metadata and an optional complete thumbnail group. A thumbnail uses the main image's format and
+aspect ratio with strictly smaller dimensions; its URL is derived from its key. Named constraints
+enforce this consistency and the prepared-file limits on both backends. `UNIQUE(book_id, variant)`
+and existing foreign keys remain unchanged.
+
+`SetLocalFrontCover` accepts typed metadata for already validated/published files and derives the
+main URL. It validates reference consistency and upserts only `front`; it does not read files or
+authorize the actor. The service/caller must verify the files, authorize the action and use
+`WithinCatalogTransaction` to save the reference and audit together. Public detail reads and
+operator reads return local keys and optional thumbnail metadata. Replacing with a main file only
+clears the old thumbnail. The existing HTTPS URL setter clears all local/derivative and technical
+metadata when the URL changes, preserves metadata for the identical URL, and deletes only `front`
+when empty. No write physically deletes files.
+
+The current form/service remains an external-HTTPS-URL workflow: local upload actions and ordinary
+metadata edits retaining a local cover are step 4 work. Do not provision local covers for browser
+maintenance before that workflow is implemented. Direct repository calls are an internal boundary,
+not a new operator CLI or public endpoint.
+
+The down migration refuses while any local storage reference exists. It preserves external covers
+on an allowed downgrade; it never silently strips local keys or thumbnails. Stop cover writers and
+back up SQL/files before any downgrade. PostgreSQL takes an exclusive lock on `covers` before
+checking; SQLite executes the guard and column removal transactionally via the migration CLI.
+A refused down from version `8` targets `7 (dirty)`; inspect actual schema/data before any metadata
+repair, following the recovery procedure below. This is not permission to delete references or
+run `force` automatically.
 
 ## Missing-Book Request Storage
 
@@ -86,6 +123,7 @@ library tables.
 Migration `000005` adds the reading-state lifecycle without changing the historical foundation.
 Migration `000006` adds the administrator reference role and catalog audit storage.
 Migration `000007` adds missing-book request storage used by the connected form/service flow.
+Migration `000008` adds local cover references and optional derivative metadata.
 
 ## Curated Catalog Operations Schema
 
@@ -185,7 +223,8 @@ back one migration on `down`.
   downgrade/recovery window; do not rely only on a maintenance page or database migration lock.
 - Take a recoverable backup and record schema/version plus relevant row counts before proceeding.
   Test the operation on a disposable copy first. Do not use reset or seed scripts on retained data.
-- Inspect the down migration being executed. `000007` refuses if requests exist; `000006` refuses
+- Inspect the down migration being executed. `000008` refuses if local cover references exist;
+  `000007` refuses if requests exist; `000006` refuses
   if audit rows or appointed administrators exist. These are data-protection guards, not errors to
   bypass by deleting requests/audit or silently demoting accounts.
 - If the target schema is incompatible with the retained data, cancel the downgrade and keep the
@@ -391,7 +430,7 @@ Tests do not use the local development database file.
 Current SQLite repository and HTTP integration tests create temporary or in-memory SQLite
 databases inside the test process and exercise the normalized catalog, auth, and private-library
 persistence, catalog operations/audit and missing-book requests. The shared library helpers apply
-all checked-in migrations (currently through `000007`) and create a minimal deterministic catalog
+all checked-in migrations (currently through `000008`) and create a minimal deterministic catalog
 fixture; ordinary role, session, library, audit and request constraints have focused tests.
 
 This keeps tests fast and isolated without depending on the full development seed dataset.

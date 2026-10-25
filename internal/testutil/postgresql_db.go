@@ -86,7 +86,8 @@ func ApplyPostgresCatalogTestSchema(t *testing.T, ctx context.Context, db *sql.D
 
 func ApplyPostgresCatalogV2TestSchema(t *testing.T, ctx context.Context, db *sql.DB) {
 	t.Helper()
-	applyPostgresCatalogTestMigrations(t, ctx, db, "000003")
+	// Catalog reads use the current schema; historical migrations are tested separately.
+	applyPostgresCatalogTestMigrations(t, ctx, db, "")
 }
 
 func ApplyPostgresLibraryTestSchema(t *testing.T, ctx context.Context, db *sql.DB) {

@@ -73,6 +73,10 @@ func (f *fakeOperatorStore) SetFrontCover(context.Context, int, string) error {
 	return f.step("cover")
 }
 
+func (f *fakeOperatorStore) SetLocalFrontCover(context.Context, int, LocalFrontCover) error {
+	return f.step("cover")
+}
+
 func (f *fakeOperatorStore) AppendAudit(_ context.Context, audit CatalogAudit) error {
 	f.audit = audit
 	return f.step("audit")

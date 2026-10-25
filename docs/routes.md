@@ -67,7 +67,8 @@ Local cover files use verified MIME types, SHA-256 ETags and
 supported. Missing, invalid or damaged files return `404`; unexpected storage failures return
 a generic `500`. Errors use `no-store`; methods other than GET/HEAD return `405`. Keys must match
 `<lowercase-sha256>.<jpg|png|webp>`; directory listings and temporary files are not exposed.
-Database attachment and operator upload of local covers are not implemented in step 2 of #28.
+Step 3 of #28 adds repository-level database references/metadata. Operator upload and local-cover
+maintenance through the browser remain step 4 work; no local-cover mutation route is exposed yet.
 
 Authentication routes use the v0.2.5 opaque DB-backed session foundation:
 

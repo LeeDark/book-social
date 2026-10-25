@@ -945,3 +945,38 @@ Residual risks:
   Compose volumes and backup/restore remain later steps. Files require a trusted local directory
   with hard-link/directory-sync support; serving currently revalidates/decodes each requested file.
   No server, manual browser run, restart/redeployment or operational acceptance was performed.
+
+## 2026-10-25 — Local cover references and metadata parity (#28, step 3)
+
+- Added paired migration `000008_add_local_cover_files`: a nullable main storage key and complete
+  optional thumbnail metadata on `covers`, retaining existing IDs, external URLs/metadata,
+  uniqueness and foreign keys. Named constraints check canonical keys/URLs, measured metadata
+  limits and thumbnail format/proportions/distinct key. Guarded down refuses existing local
+  references; PostgreSQL locks `covers` before the check. No image bytes or pilot records added.
+- Added typed `StoredCoverFile`/`LocalFrontCover` and transactional `SetLocalFrontCover` to both
+  repositories. Public detail and operator reads round-trip all local metadata. Main-only
+  replacement clears an old thumbnail; changed external URLs clear all local fields, unchanged
+  URLs retain metadata, and removal preserves other variants and physical files. The caller must
+  verify published bytes and authorize/write the audit in the same transaction.
+- Added shared SQLite/PostgreSQL repository and migration tests for local/external transitions,
+  metadata round trips, invalid references, thumbnail consistency, audit failure/rollback and
+  safe downgrade/reapply. Updated catalog fixtures to the current read schema and migration
+  smoke's rollback depth. Historical migration tests retain their explicit version boundaries.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test` (race),
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make db/migrate/smoke`, and
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`.
+  Focused race tests were repeated after the final reference-validation changes:
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/modules/books ./internal/testutil ./internal/storage/sqlite -run 'Test(LocalFrontCover|SQLiteLocalCover|SQLiteCatalogOperator|BookRepositoryGet)'`.
+- Passed real PostgreSQL migration up/down/up, repository and HTTP checks with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test/integration COMPOSE_INTEGRATION='docker compose -p book-social-cover-step3 -f compose.integration.yaml'`.
+  Repeated after the final constraint/error-handling changes. Docker access required escalation;
+  the separate project was initially empty and its disposable container/network/DB were removed
+  by the existing cleanup. Development/stage/prod databases were not accessed or migrated.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues after replacing an optional nil/nil helper result with explicit no-row handling),
+  formatting and diff checks. Updated README/database/contract/route/development documentation;
+  apply `000008` before starting this application revision.
+- Local attachment is an internal repository boundary only. The existing browser form/service
+  still accepts external HTTPS URLs; upload actions and ordinary edits retaining a local cover
+  are step 4 work. Card rendering, fallback, pilot assets, volume delivery and restore remain
+  later steps. No browser run or operational acceptance is claimed; #28 remains open.

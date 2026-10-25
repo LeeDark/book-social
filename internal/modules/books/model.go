@@ -25,6 +25,8 @@ type Cover struct {
 	Width          *int
 	Height         *int
 	ChecksumSHA256 *string
+	StorageKey     *string
+	Thumbnail      *StoredCoverFile
 }
 
 type Book struct {

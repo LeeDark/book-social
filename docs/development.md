@@ -38,8 +38,9 @@ served publicly at `/media/covers/{key}` without session loading. The filesystem
 hard links and directory syncing. Successful image responses have a one-year immutable public
 cache policy; failures use `no-store`.
 
-The storage API is implemented, but operator uploads, SQL attachment, pilot assets and persistent
-Compose volumes are subsequent steps. No browser workflow for attaching local files is available
+The storage API and SQL references/metadata are implemented. Apply migrations through `000008`
+before starting this revision. Operator uploads, pilot assets and persistent Compose volumes are
+subsequent steps. No browser workflow for attaching local files is available
 yet. Do not treat an image in the local directory as a database association or a backup of SQL.
 See [the cover contract](cover_storage_v0_3_2.md) for limits and failure semantics.
 
