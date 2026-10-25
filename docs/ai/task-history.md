@@ -1151,3 +1151,37 @@ Residual risks:
   was started in the sandbox. The next acceptance work requires reviewed assets and local execution
   outside the sandbox using the documented safe procedures. No issue/release closure or commit
   was performed as part of this pass.
+
+## 2026-10-25 — First five-cover artwork candidates (#28, pilot preparation)
+
+- Used the imagegen skill and built-in `image_gen` (no CLI/API fallback) for five original project
+  demo illustrations. No external reference images or web sources were supplied. The tool did not
+  expose a model identifier. The first Christmas prompt failed output moderation with no returned
+  image; a simplified benign scene succeeded. Actual prompts/attempts are retained in `prompts.json`.
+- Saved every selected generated PNG into `assets/demo-covers/pilot-v1/sources` without changing
+  its bytes (1024×1536). Prepared WebP 600×900 main and 240×360 thumbnails by deterministic resizing
+  and encoding with ImageMagick 6.9.12-98 (`-strip -quality 84`/`82`), without cropping or stretching.
+  Main files are 99–158 KB and thumbnails 18–30 KB. No text is embedded; application book labels
+  remain authoritative. Original and thumbnail outputs were visually inspected as a preflight,
+  not user approval or a browser/profile acceptance decision.
+- Added an offline `review.html`, Russian README, exact prompt set, provenance with intended use,
+  absence of supplied third-party references, limitations and pending review fields; no exclusive
+  copyright or legal-clearance claim. All five draft manifest entries remain `reviewed: false`.
+  Manifest SHA-256: `b31e1837d8c2ceff092cb8a7298b3ba9ab4dd2f848c7521d7b3698fa88335e3f`.
+  Added payload `SHA256SUMS`, a normalized local `pilot-v1-draft.tar.gz` with a separate digest file,
+  and a scoped ignore rule for archives so Git does not duplicate the preserved source payload.
+- Passed `identify -format '%f|%m|%w|%h|%n\n' assets/demo-covers/pilot-v1/sources/*.png assets/demo-covers/pilot-v1/bundle/*.webp`,
+  read-only Node assertions for exactly five slugs, every source/output checksum and size, geometry,
+  static format and pending review status, `sha256sum -c SHA256SUMS` from the set directory,
+  `sha256sum -c pilot-v1-draft.tar.gz.sha256` from its parent, `gzip -t` on the archive and
+  `git diff --check`. A first combined Node/identify probe encountered sandbox `spawnSync EPERM`;
+  running identification directly and passing its results to the read-only assertions succeeded.
+- Confirmed `coverctl install -writers-stopped -bundle assets/demo-covers/pilot-v1/bundle
+  -manifest-sha256 <draft hash> -actor-id 1` rejects the unreviewed manifest with exit 1, using
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go run ./cmd/coverctl`, `APP_ENV=dev` and
+  explicit absent DB/storage targets under a fresh `/tmp/book-social-cover-draft-check.*` directory.
+  Neither target was created. No retained DB, public cover store, app code or schema was changed;
+  no app was started or artwork installed. Application tests were not rerun for asset-only changes.
+- Linked the candidates from the contract and acceptance record. User review, approved manifest
+  release/checksums and application/browser/operational acceptance remain pending. The five
+  candidates do not authorize generation of the remaining 104 covers or close #28. No commit made.
