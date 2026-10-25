@@ -10,14 +10,15 @@ The router applies middleware in this order:
 SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> dynamic timeout -> no-store -> current-user -> flash -> CrossOriginProtection -> route guard/handler
 ```
 
-`TrustedRealIP` is a no-op unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured, forwarded
-client-IP headers are accepted only from an immediate peer inside one of those networks; otherwise
-the logger uses the connection `RemoteAddr`.
+`TrustedRealIP` is a no-op unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured,
+forwarded client-IP headers are accepted only from an immediate peer inside one of those networks;
+otherwise the logger uses the connection `RemoteAddr`.
 
-`http.CrossOriginProtection` is applied to dynamic MPA routes and has no insecure bypass patterns. Unsafe browser requests
-identified as cross-origin by Fetch Metadata or `Origin` receive `403` before reaching a handler;
-same-origin requests and safe methods continue normally. Requests without either browser signal are
-accepted as non-browser/unknown clients, so HTTPS and `SameSite=Lax` remain separate defenses.
+`http.CrossOriginProtection` is applied to dynamic MPA routes and has no insecure bypass patterns.
+Unsafe browser requests identified as cross-origin by Fetch Metadata or `Origin` receive `403`
+before reaching a handler; same-origin requests and safe methods continue normally. Requests without
+either browser signal are accepted as non-browser/unknown clients, so HTTPS and `SameSite=Lax`
+remain separate defenses.
 
 The application timeout is added only to dynamic MPA page routes:
 
@@ -26,8 +27,9 @@ GET /, /about, /books, /books/{slug}, /authors/{slug} -> Timeout(30s)
 GET/POST /books/request/new -> Timeout(30s)
 ```
 
-`/healthz`, `/static/*`, and the fallback 404 handler do not use the application timeout. The 404
-handler still loads current-user and flash request state so its navigation matches dynamic pages.
+`/healthz`, `/static/*`, `/media/covers/*`, and the fallback 404 handler do not use the application
+timeout. The 404 handler still loads current-user and flash request state so its navigation matches
+dynamic pages.
 Server transport timeouts remain configured separately in `internal/app/server.go`.
 
 Every response receives the conservative browser policy from `internal/http/middleware/security.go`:
@@ -57,7 +59,15 @@ GET /books               Catalog page
 GET /books/{slug}        Book details page
 GET /authors/{slug}      Author page
 GET /static/*            Static files
+GET/HEAD /media/covers/{key}  Public local cover file; no session/flash loading
 ```
+
+Local cover files use verified MIME types, SHA-256 ETags and
+`Cache-Control: public, max-age=31536000, immutable`. Conditional and byte-range requests are
+supported. Missing, invalid or damaged files return `404`; unexpected storage failures return
+a generic `500`. Errors use `no-store`; methods other than GET/HEAD return `405`. Keys must match
+`<lowercase-sha256>.<jpg|png|webp>`; directory listings and temporary files are not exposed.
+Database attachment and operator upload of local covers are not implemented in step 2 of #28.
 
 Authentication routes use the v0.2.5 opaque DB-backed session foundation:
 
@@ -115,12 +125,13 @@ POST /admin/catalog/books/{id}/edit    book form
 ```
 
 Admin routes redirect anonymous users to `/login`, return `403` for ordinary authenticated users,
-and retain existing `no-store` and cross-origin policies. Book forms use Post/Redirect/Get; malformed
-input is `422`, unknown book IDs are `404`, and duplicate create slugs are `409`. Successful writes
-redirect to the book's edit page with a fixed one-request flash. Blank search does not list the
-catalog. Validation/conflict pages retain submitted text and existing-author/genre selections,
-with linked field errors. URL-encoded POST bodies are limited to 128 KiB; malformed/oversized forms,
-duplicate scalar fields, and malformed selected IDs return `422` without reaching a catalog write.
+and retain existing `no-store` and cross-origin policies. Book forms use Post/Redirect/Get;
+malformed input is `422`, unknown book IDs are `404`, and duplicate create slugs are `409`.
+Successful writes redirect to the book's edit page with a fixed one-request flash. Blank search does
+not list the catalog. Validation/conflict pages retain submitted text and existing-author/genre
+selections, with linked field errors. URL-encoded POST bodies are limited to 128 KiB;
+malformed/oversized forms, duplicate scalar fields, and malformed selected IDs return `422` without
+reaching a catalog write.
 Operator book IDs and author/genre selections must fit `1..2147483647` on both backends.
 Overflow returns `422`; a well-formed but absent book ID returns `404`.
 Only POST-body fields are accepted; correction ignores any submitted slug, actor, or audit fields.

@@ -1,7 +1,8 @@
 # Cover File Storage and Five-Book Pilot (#28)
 
-Status: implementation contract prepared on 2026-10-25. Storage, uploads, image delivery and
-the pilot are not implemented or accepted. This document extends the original
+Status: implementation contract prepared on 2026-10-25. Step 2 implements local file storage,
+validation and public HTTP delivery. Database attachment, operator uploads and the pilot are
+not implemented or accepted. This document extends the original
 [URL-only catalog operations contract](catalog_operations_v0_3_2.md); it does not change the
 recorded acceptance of issues #23–#26. Release scope remains in [roadmap.md](roadmap.md).
 
@@ -92,6 +93,37 @@ source or manifest files. Use the verified MIME type and the existing security-h
 Immutable URLs may be cached; a replacement receives a new URL when its bytes change. Cover
 assets are public even when displayed in a private library; serving must expose no membership
 or account data. Volume configuration and permissions must survive container recreation.
+
+### Implemented Storage Boundary (Step 2)
+
+`internal/storage/covers` creates/opens the configured root and exposes `Put`, `Read` and `Close`.
+`Put` accepts a context, input stream, original filename and optional declared MIME type. It
+validates prepared portrait images and returns the generated key, public URL and measured
+metadata. The original filename is only an extension hint, never a destination path. An omitted
+MIME type is detected; a supplied mismatch is rejected. PNG animation chunks and WebP animation
+flags/chunks are rejected explicitly in addition to full decoding. The WebP decoder is
+`golang.org/x/image/webp` v0.47.0, a Go implementation requiring no CGO; its module also upgrades
+the existing indirect `golang.org/x/sys` requirement to v0.49.0.
+
+Files are synced before publication by a no-overwrite hard link inside an `os.Root`; the directory
+is synced before success. The storage filesystem must support hard links and directory syncing.
+Existing content must match byte-for-byte before a key can be reused. Regular files only are
+read; symlinks and keys outside the flat naming contract are rejected. A crash can leave an
+unreferenced `.upload-*` temporary file, which is never publicly served. No deletion API is exposed.
+The configured directory and its OS permissions are controlled by the environment owner;
+the volume must not be writable by untrusted local processes.
+
+The process opens the store at startup and closes it on shutdown. `APP_COVERS_DIR` defaults to
+`./data/covers`; an explicitly blank value is a configuration error. The default directory is
+ignored by Git. Docker volume wiring and backup/restore remain step 6 work.
+
+`GET` and `HEAD /media/covers/{key}` work without session or flash loading. The handler verifies
+the file's checksum and fully validates its image content on each request before serving; this
+bounded initial implementation trades decode work for detecting damaged or incorrectly supplied
+files. It returns the image MIME type, SHA-256 ETag and a one-year immutable public cache policy.
+Conditional requests and byte ranges are supported. Missing, invalid or damaged files return
+`404`; unexpected storage failures return a generic `500` and server-side diagnostics. Error
+responses use `no-store`; other methods return `405`. All routes retain global security headers.
 
 ## Attachment, Replacement and Failure Rules
 

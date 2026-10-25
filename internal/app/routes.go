@@ -14,6 +14,9 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 	r.Handle("/static/*", appmiddleware.StaticCache(http.StripPrefix(
 		"/static/",
 		http.FileServer(http.Dir("./internal/web/static")))))
+	if deps.CoverHandler != nil {
+		r.Handle("/media/covers/*", deps.CoverHandler)
+	}
 
 	r.Get("/healthz", healthz)
 	r.Group(func(dynamic chi.Router) {

@@ -14,12 +14,14 @@ import (
 	"github.com/LeeDark/book-social/internal/buildinfo"
 	"github.com/LeeDark/book-social/internal/config"
 	httpauth "github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/cover"
 	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/logging"
 	"github.com/LeeDark/book-social/internal/modules/books"
 	"github.com/LeeDark/book-social/internal/modules/library"
 	"github.com/LeeDark/book-social/internal/modules/users"
+	"github.com/LeeDark/book-social/internal/storage/covers"
 	"github.com/LeeDark/book-social/internal/storage/postgresql"
 	"github.com/LeeDark/book-social/internal/storage/sqlite"
 )
@@ -90,6 +92,12 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		return fmt.Errorf("create renderer: %w", err)
 	}
 
+	coverStore, err := covers.New(cfg.Covers.Dir)
+	if err != nil {
+		return fmt.Errorf("create cover storage: %w", err)
+	}
+	defer func() { _ = coverStore.Close() }()
+
 	cookies := newSessionCookieManager(cfg)
 	flashes := flash.NewManager(cfg.Env != config.EnvDev)
 
@@ -122,6 +130,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	libraryHandler := library.NewHandler(libraryService, flashes, renderer, logger)
 	operatorHandler := books.NewOperatorHandler(operatorService, flashes, renderer, logger)
 	missingBookHandler := books.NewMissingBookHandler(missingBookService, flashes, renderer, logger)
+	coverHandler := cover.NewHandler(coverStore, logger)
 
 	deps := app.Deps{
 		Config:                cfg,
@@ -133,6 +142,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		LibraryHandler:        libraryHandler,
 		AdminCatalogHandler:   operatorHandler,
 		MissingBookHandler:    missingBookHandler,
+		CoverHandler:          coverHandler,
 	}
 
 	application := app.New(deps, homeHandler, catalogHandler)

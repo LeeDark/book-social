@@ -914,3 +914,34 @@ Residual risks:
 - Verified all five slugs in both seeds with `rg -n -F`, local document targets with `test -f`,
   and whitespace with `git diff --check` and `git diff --no-index --check` for the new document.
   Runtime tests were not run for this documentation-only step.
+
+## 2026-10-25 — Bounded local cover storage and HTTP delivery (#28, step 2)
+
+- Added `internal/storage/covers`: bounded JPEG/PNG/static-WebP decoding, animation rejection,
+  verified metadata and SHA-256 keys, `os.Root` path confinement, synced temporary writes and
+  atomic no-overwrite publication with byte verification on reuse. Invalid inputs do not publish
+  files; stored corruption and symlinks are rejected. No file deletion or SQL attachment API added.
+- Added public GET/HEAD `/media/covers/{key}` with verified MIME, ETag, immutable caching,
+  conditional/range requests and no-store errors. Wired startup/shutdown and `APP_COVERS_DIR`
+  (default `./data/covers`, ignored by Git); session/flash middleware is not used for image serving.
+- Added `golang.org/x/image` v0.47.0 for pure-Go WebP decoding and the required indirect `x/sys`
+  update to v0.49.0. Allowed only the WebP package in depguard; `go mod tidy` also corrected the
+  existing bcrypt module's direct classification. Updated contract/development/route docs.
+- Passed focused storage/HTTP/config/route tests, `GOCACHE=/tmp/book-social-go-cache make test`
+  (race, Go 1.27.1), and `GOCACHE=/tmp/book-social-go-cache go vet ./...`.
+  PostgreSQL opt-in tests were skipped without a DSN; no schema/SQL change was made.
+- Passed project-toolchain verification:
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/storage/covers ./internal/http/cover ./internal/config ./internal/app -run 'Test(Put|Read|Image|Damaged|Cover|Load)'`,
+  followed by the storage package's race tests after strengthening its checksum regression;
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues); and
+  `GOTOOLCHAIN=go1.26.4 CGO_ENABLED=0 GOOS=linux GOCACHE=/tmp/book-social-go-cache go build -o /tmp/book-social-cover-step2 ./cmd/web`.
+  Build exited successfully despite a non-fatal read-only module stat-cache warning.
+- Initial dependency access/tidy attempts hit sandbox restrictions and succeeded after escalation.
+  The first lint attempt could not parse Go 1.27 standard-library sources with a Go 1.26-built
+  linter; the documented Go 1.26.4 invocation resolved that mismatch. One lint suggestion was
+  corrected before the final clean run. Formatting and diff checks passed.
+- Operator upload, database links/metadata persistence, card rendering/fallback, pilot artwork,
+  Compose volumes and backup/restore remain later steps. Files require a trusted local directory
+  with hard-link/directory-sync support; serving currently revalidates/decodes each requested file.
+  No server, manual browser run, restart/redeployment or operational acceptance was performed.

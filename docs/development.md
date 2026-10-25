@@ -29,6 +29,22 @@ make test
 
 ## HTTP Lifecycle And Response Policy
 
+### Local Cover Files (#28, Step 2)
+
+`APP_COVERS_DIR` selects the local cover directory (default `./data/covers`). The process creates
+it if missing and opens it at startup; the process account needs directory access and write
+permission. Files are validated JPEG/PNG/static WebP, stored under immutable SHA-256 names and
+served publicly at `/media/covers/{key}` without session loading. The filesystem must support
+hard links and directory syncing. Successful image responses have a one-year immutable public
+cache policy; failures use `no-store`.
+
+The storage API is implemented, but operator uploads, SQL attachment, pilot assets and persistent
+Compose volumes are subsequent steps. No browser workflow for attaching local files is available
+yet. Do not treat an image in the local directory as a database association or a backup of SQL.
+See [the cover contract](cover_storage_v0_3_2.md) for limits and failure semantics.
+
+### Lifecycle and Middleware
+
 The web process listens for `SIGINT` and `SIGTERM` through a root `signal.NotifyContext`. On
 shutdown it stops accepting new connections and waits up to five seconds for the HTTP server to
 finish active requests. `http.ErrServerClosed` is treated as a normal result; listener and
