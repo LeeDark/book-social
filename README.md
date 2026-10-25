@@ -15,15 +15,15 @@ and authenticated missing-book requests persisted before confirmation. Apply mig
 Final automated checks passed on 2026-10-25, including real SQLite/PostgreSQL acceptance. The user
 accepted the operator flow on 2026-10-12 and missing-book persistence on 2026-10-25 (Zen Browser,
 SQLite). See [verification and acceptance evidence](docs/testing.md#v032-acceptance-coverage-26).
-Final documentation commit/push, CI confirmation and PR/issue closure remain pending under #26;
-this is not a merged, tagged or deployed release.
+Post-review fixes are pushed through `9d764db`; CI passed on that head. Final acceptance
+documentation and PR/issue closure remain under #26; no merged, tagged or deployed release is claimed.
 
 Demo metadata has documented but unverified external provenance; the seed contains no covers.
 Operator listing and processed/rejected decisions for saved requests remain planned for v0.4.3.
 
 Post-review correction: the feedback form is now at `/books/request/new`, avoiding a collision
-with public books whose slug is `request`. A focused browser recheck of this route change remains
-pending; earlier manual acceptance does not cover it.
+with public books whose slug is `request`. The user confirmed successful focused browser recheck
+on 2026-10-25; environment details for this recheck were not separately reported.
 
 - Home and About pages.
 - Book catalog page.

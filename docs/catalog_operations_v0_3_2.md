@@ -125,8 +125,9 @@ POST /books/request/new    title, author
 The form uses two path segments after `/books`, outside the public single-slug namespace.
 Books with slug `request`, whether existing or newly created, remain readable at `/books/request`.
 The former form URL is not redirected or reserved; reopen old forms from the catalog to submit
-at the new path. This route change requires a focused repeat of the browser checklist; earlier
-manual acceptance below describes the previous route.
+at the new path. The user confirmed successful focused browser recheck on 2026-10-25; environment
+details for that run were not separately reported. Earlier manual acceptance below describes the
+previous route; post-review checks and new-route acceptance are recorded in `testing.md`.
 
 The form is available only to an authenticated user and is linked from the public catalog and its
 empty state, including HTMX partial responses. Both fields are trimmed: `title` is required and

@@ -923,3 +923,10 @@ Residual risks:
   retained data. Synchronized public English/Ukrainian and private English/Russian roadmaps with
   review fixes, pending route browser re-acceptance and final push/CI/closure gates. No migration,
   schema, runtime or database state was changed; documentation diff checks passed.
+
+## 2026-10-25 — Post-review verification and manual acceptance (#26)
+
+- Final local checks and published-head CI passed on `9d764db`; all four review-fix commits were
+  pushed. User confirmed successful manual recheck of `/books/request/new`; browser/version,
+  backend and launch commands for this run were not separately reported. Synchronized acceptance
+  docs and all roadmaps; PR stays Draft and #26 open pending explicitly authorized final closure.

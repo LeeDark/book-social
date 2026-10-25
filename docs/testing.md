@@ -512,14 +512,23 @@ Shared SQLite/PostgreSQL HTTP acceptance now checks an existing request-slug boo
 created one with the real feedback handler enabled, for anonymous and signed-in readers. The
 updated feedback tests exercise authentication, validation, saving and redirects at the new URL.
 
-Focused browser recheck remains pending; run locally outside the sandbox:
+Status: complete. On 2026-10-25 the user confirmed successful manual recheck of the changed route.
+This is user-reported evidence, not a Codex browser run. Browser/version, database backend and
+exact launch commands for this recheck were not separately reported; the earlier Zen Browser /
+SQLite report must not be assumed to describe this run.
 
-- [ ] Open `/books` and its empty state; their feedback links must open `/books/request/new`.
+- [x] Open `/books` and its empty state; their feedback links must open `/books/request/new`.
   Anonymous access must redirect to login; after sign-in verify the form action uses the new URL.
-- [ ] Submit invalid input, then a valid request; verify retained errors, saved fields and
+- [x] Submit invalid input, then a valid request; verify retained errors, saved fields and
   `303 /books` with a one-request confirmation. Refresh must not create another row.
-- [ ] If a book with slug `request` exists, open `/books/request` signed in and anonymously:
+- [x] If a book with slug `request` exists, open `/books/request` signed in and anonymously:
   it must show that book, never the feedback form. If no such book exists, expect `404`.
+
+Final post-review automated checks passed on implementation/documentation head `9d764db`:
+full race tests, vet/lint, SQLite migration/seed smoke, isolated PostgreSQL integration, four
+JavaScript tests and formatting/diff checks. Published-head CI `quality` and `integration-postgres`
+also passed ([run](https://github.com/LeeDark/book-social/actions/runs/40196345659)). Final issue/PR
+closure remains separate; this acceptance does not authorize merge or claim deployment.
 
 ## Codex Sandbox Note
 

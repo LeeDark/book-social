@@ -95,9 +95,10 @@ Current scope:
   is required. Real-database HTTP acceptance passes on SQLite/PostgreSQL; the user confirmed
   persistence browser acceptance on 2026-10-25 (Zen Browser, SQLite; version not reported).
   Final #26 automated checks passed on 2026-10-25 against implementation `78fe3ad`; evidence and
-  consolidated manual acceptance are in `docs/testing.md`. Final documentation commit/push,
-  CI confirmation and PR/issue closure remain pending. No merged, tagged or deployed release is
+  consolidated manual acceptance are in `docs/testing.md`. Post-review fixes through `9d764db`
+  are pushed and CI passed; final acceptance documentation and PR/issue closure remain. No release is
   claimed; v0.3.3 scope is unchanged. Operator listing/processing remains v0.4.3.
 - Post-review correction: feedback moved to `/books/request/new` to preserve `/books/request`
   for existing/new books with slug `request`. Route and backend HTTP regressions cover the change;
-  focused browser re-acceptance is pending. Earlier acceptance applies to the previous route.
+  the user confirmed successful browser recheck on 2026-10-25. Environment details for this run
+  were not separately reported; do not inherit them from the earlier acceptance.
