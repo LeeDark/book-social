@@ -483,6 +483,25 @@ The requests created by this smoke remain in the development database. Earlier m
 cannot be restored as requests. A PostgreSQL browser run can use the same behavioral checks with its
 own migrated local database and read-only SQL; automated PostgreSQL acceptance is already recorded.
 
+## Post-Review Route Collision Regression (#26)
+
+The feedback form moved from `/books/request` to `/books/request/new` to preserve public book
+URLs, including existing books with slug `request`. Earlier checked browser lists record the old
+route and are historical evidence, not acceptance of this change. No slug is renamed or reserved.
+
+Shared SQLite/PostgreSQL HTTP acceptance now checks an existing request-slug book and a newly
+created one with the real feedback handler enabled, for anonymous and signed-in readers. The
+updated feedback tests exercise authentication, validation, saving and redirects at the new URL.
+
+Focused browser recheck remains pending; run locally outside the sandbox:
+
+- [ ] Open `/books` and its empty state; their feedback links must open `/books/request/new`.
+  Anonymous access must redirect to login; after sign-in verify the form action uses the new URL.
+- [ ] Submit invalid input, then a valid request; verify retained errors, saved fields and
+  `303 /books` with a one-request confirmation. Refresh must not create another row.
+- [ ] If a book with slug `request` exists, open `/books/request` signed in and anonymously:
+  it must show that book, never the feedback form. If no such book exists, expect `404`.
+
 ## Codex Sandbox Note
 
 Do not start the web server inside the Codex sandbox for verification.

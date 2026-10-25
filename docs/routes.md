@@ -23,7 +23,7 @@ The application timeout is added only to dynamic MPA page routes:
 
 ```text
 GET /, /about, /books, /books/{slug}, /authors/{slug} -> Timeout(30s)
-GET/POST /books/request -> Timeout(30s)
+GET/POST /books/request/new -> Timeout(30s)
 ```
 
 `/healthz`, `/static/*`, and the fallback 404 handler do not use the application timeout. The 404
@@ -128,8 +128,8 @@ Without JavaScript, the operator enters a slug manually; server validation is al
 The missing-book feedback routes for #25 are wired into the runtime:
 
 ```text
-GET  /books/request                    missing-book form
-POST /books/request                    title, author
+GET  /books/request/new                    missing-book form
+POST /books/request/new                    title, author
 ```
 
 The form uses `RequireAuthentication`; anonymous or expired sessions receive `303 /login`.
@@ -137,7 +137,10 @@ Only body fields `title` and `author` are used. Invalid fields, malformed encodi
 64 KiB return accessible `422` form errors. Successful submission emits one metadata-only event
 and redirects with `303 /books` and a one-request confirmation flash. Unsafe cross-origin POST
 requests receive `403` before event creation; `no-store` applies to these routes.
-The literal `/books/request` route takes precedence over `/books/{slug}`. The service now saves the
+The two-segment `/books/request/new` form path does not collide with `/books/{slug}`:
+`/books/request` remains the public URL of a book whose slug is `request`. The previous form URL
+is not redirected, since that would hide existing books. Old form POSTs must be reopened from
+the catalog at the new URL. The service saves the
 normalized fields, session user ID and UTC time before reporting success; save failures return a
 generic `500` without a success event, flash or redirect. No external service is called. Migration
 `000007` is required. The user accepted the original non-persistent flow on 2026-10-15. Persistence

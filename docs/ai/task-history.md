@@ -883,3 +883,13 @@ Residual risks:
   pending. Corrected stale planned-operator and CI descriptions, documented migrations through
   `000007`, and retained unverified legacy provenance/no-cover limits. v0.3.3 and v0.4.3 scope is
   unchanged; no release tag or deployment is claimed. Documentation diff checks passed.
+
+## 2026-10-25 — External review: missing-book route collision (#26)
+
+- Moved feedback GET/POST and catalog links to `/books/request/new`, leaving `/books/request`
+  available for existing and newly created books without renaming or reserving slugs. Updated
+  route/form tests and shared SQLite/PostgreSQL HTTP regressions; synchronized current route docs.
+  Earlier browser acceptance is retained as historical evidence; a focused route recheck is pending.
+- Passed focused catalog/feedback HTTP tests, `make test` (race), `make test/integration` (real
+  PostgreSQL), affected-package vet, lint (Go 1.26.4; zero issues), formatting and `git diff --check`.
+  Disposable integration resources were removed; development databases were not changed.

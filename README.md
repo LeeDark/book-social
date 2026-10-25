@@ -21,6 +21,10 @@ this is not a merged, tagged or deployed release.
 Demo metadata has documented but unverified external provenance; the seed contains no covers.
 Operator listing and processed/rejected decisions for saved requests remain planned for v0.4.3.
 
+Post-review correction: the feedback form is now at `/books/request/new`, avoiding a collision
+with public books whose slug is `request`. A focused browser recheck of this route change remains
+pending; earlier manual acceptance does not cover it.
+
 - Home and About pages.
 - Book catalog page.
 - Book details page.

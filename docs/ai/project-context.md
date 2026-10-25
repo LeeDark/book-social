@@ -88,7 +88,7 @@ Current scope:
   (#23), the administrator boundary, catalog MPA forms, immutable slugs, and transactional audit
   (#24) are implemented and accepted. Automated HTTP acceptance passes on SQLite and PostgreSQL;
   the user confirmed successful operator browser review on 2026-10-12. Missing-book
-  feedback (#25) is implemented at `GET/POST /books/request`, with bounded field validation,
+  feedback (#25) is implemented at `GET/POST /books/request/new`, with bounded field validation,
   metadata-only logging and a one-request flash. Automated checks pass; the user confirmed
   successful manual browser review and accepted #25 on 2026-10-15. The subsequent agreed v0.3.2
   follow-up now saves title, optional author and submitting user before success; migration `000007`
@@ -98,3 +98,6 @@ Current scope:
   consolidated manual acceptance are in `docs/testing.md`. Final documentation commit/push,
   CI confirmation and PR/issue closure remain pending. No merged, tagged or deployed release is
   claimed; v0.3.3 scope is unchanged. Operator listing/processing remains v0.4.3.
+- Post-review correction: feedback moved to `/books/request/new` to preserve `/books/request`
+  for existing/new books with slug `request`. Route and backend HTTP regressions cover the change;
+  focused browser re-acceptance is pending. Earlier acceptance applies to the previous route.

@@ -71,38 +71,40 @@ func TestMissingBookRoutes(t *testing.T) {
 		fragments      []string
 		saveErr        error
 	}{
-		{name: "authenticated GET uses request handler", method: http.MethodGet, path: "/books/request", status: http.StatusOK, wantRender: true,
-			fragments: []string{`method="post" action="/books/request"`, `for="title"`, `for="author"`, "Send request"}},
-		{name: "authenticated POST emits event", method: http.MethodPost, path: "/books/request", body: "title=Book", fetchSite: "same-origin", status: http.StatusSeeOther, location: "/books", wantEvent: true},
-		{name: "normalized fields are saved", method: http.MethodPost, path: "/books/request", body: "title=++Book++&author=++Author++", status: http.StatusSeeOther, location: "/books", wantEvent: true},
-		{name: "save failure returns no success", method: http.MethodPost, path: "/books/request", body: "title=private-title&author=private-author", saveErr: books.ErrMissingBookInternal, status: http.StatusInternalServerError,
+		{name: "authenticated GET uses request handler", method: http.MethodGet, path: "/books/request/new", status: http.StatusOK, wantRender: true,
+			fragments: []string{`method="post" action="/books/request/new"`, `for="title"`, `for="author"`, "Send request"}},
+		{name: "authenticated POST emits event", method: http.MethodPost, path: "/books/request/new", body: "title=Book", fetchSite: "same-origin", status: http.StatusSeeOther, location: "/books", wantEvent: true},
+		{name: "normalized fields are saved", method: http.MethodPost, path: "/books/request/new", body: "title=++Book++&author=++Author++", status: http.StatusSeeOther, location: "/books", wantEvent: true},
+		{name: "save failure returns no success", method: http.MethodPost, path: "/books/request/new", body: "title=private-title&author=private-author", saveErr: books.ErrMissingBookInternal, status: http.StatusInternalServerError,
 			fragments: []string{"internal server error"}},
-		{name: "255 Unicode characters accepted", method: http.MethodPost, path: "/books/request", body: "title=" + strings.Repeat("ї", 255) + "&author=" + strings.Repeat("ї", 255), status: http.StatusSeeOther, location: "/books", wantEvent: true},
-		{name: "title exceeds Unicode limit", method: http.MethodPost, path: "/books/request", body: "title=" + strings.Repeat("ї", 256), status: http.StatusUnprocessableEntity, wantRender: true,
+		{name: "255 Unicode characters accepted", method: http.MethodPost, path: "/books/request/new", body: "title=" + strings.Repeat("ї", 255) + "&author=" + strings.Repeat("ї", 255), status: http.StatusSeeOther, location: "/books", wantEvent: true},
+		{name: "title exceeds Unicode limit", method: http.MethodPost, path: "/books/request/new", body: "title=" + strings.Repeat("ї", 256), status: http.StatusUnprocessableEntity, wantRender: true,
 			fragments: []string{`href="#title"`, `id="title-error"`}},
-		{name: "invalid UTF-8 title", method: http.MethodPost, path: "/books/request", body: "title=%FF", status: http.StatusUnprocessableEntity, wantRender: true,
+		{name: "invalid UTF-8 title", method: http.MethodPost, path: "/books/request/new", body: "title=%FF", status: http.StatusUnprocessableEntity, wantRender: true,
 			fragments: []string{`id="title-error"`}},
-		{name: "NUL in author", method: http.MethodPost, path: "/books/request", body: "title=Book&author=Author%00", status: http.StatusUnprocessableEntity, wantRender: true,
+		{name: "NUL in author", method: http.MethodPost, path: "/books/request/new", body: "title=Book&author=Author%00", status: http.StatusUnprocessableEntity, wantRender: true,
 			fragments: []string{`id="author-error"`}},
-		{name: "query cannot supply required title", method: http.MethodPost, path: "/books/request?title=QueryTitle", status: http.StatusUnprocessableEntity, wantRender: true,
+		{name: "query cannot supply required title", method: http.MethodPost, path: "/books/request/new?title=QueryTitle", status: http.StatusUnprocessableEntity, wantRender: true,
 			fragments: []string{`id="title-error"`}},
-		{name: "extra submitted data is not logged", method: http.MethodPost, path: "/books/request?password=query-secret", body: "title=private-title&author=private-author&password=body-secret&comments=comment-secret&actor_id=999", status: http.StatusSeeOther, location: "/books", wantEvent: true},
-		{name: "anonymous GET redirects to login", method: http.MethodGet, path: "/books/request", anonymous: true, status: http.StatusSeeOther, location: "/login"},
-		{name: "anonymous POST redirects without event", method: http.MethodPost, path: "/books/request", body: "title=Book", anonymous: true, status: http.StatusSeeOther, location: "/login"},
-		{name: "expired session GET redirects", method: http.MethodGet, path: "/books/request", invalidSession: true, status: http.StatusSeeOther, location: "/login"},
-		{name: "expired session POST creates no event", method: http.MethodPost, path: "/books/request", body: "title=Book", invalidSession: true, status: http.StatusSeeOther, location: "/login"},
-		{name: "invalid POST renders validation error", method: http.MethodPost, path: "/books/request", status: http.StatusUnprocessableEntity, wantRender: true,
+		{name: "extra submitted data is not logged", method: http.MethodPost, path: "/books/request/new?password=query-secret", body: "title=private-title&author=private-author&password=body-secret&comments=comment-secret&actor_id=999", status: http.StatusSeeOther, location: "/books", wantEvent: true},
+		{name: "anonymous GET redirects to login", method: http.MethodGet, path: "/books/request/new", anonymous: true, status: http.StatusSeeOther, location: "/login"},
+		{name: "anonymous POST redirects without event", method: http.MethodPost, path: "/books/request/new", body: "title=Book", anonymous: true, status: http.StatusSeeOther, location: "/login"},
+		{name: "expired session GET redirects", method: http.MethodGet, path: "/books/request/new", invalidSession: true, status: http.StatusSeeOther, location: "/login"},
+		{name: "expired session POST creates no event", method: http.MethodPost, path: "/books/request/new", body: "title=Book", invalidSession: true, status: http.StatusSeeOther, location: "/login"},
+		{name: "invalid POST renders validation error", method: http.MethodPost, path: "/books/request/new", status: http.StatusUnprocessableEntity, wantRender: true,
 			fragments: []string{`role="alert"`, `href="#title"`, `aria-describedby="title-help title-error"`, `aria-invalid="true"`, `id="title-error"`}},
-		{name: "invalid author retains and escapes values", method: http.MethodPost, path: "/books/request", body: "title=%3Cscript%3E&author=" + strings.Repeat("a", 256), status: http.StatusUnprocessableEntity, wantRender: true,
+		{name: "invalid author retains and escapes values", method: http.MethodPost, path: "/books/request/new", body: "title=%3Cscript%3E&author=" + strings.Repeat("a", 256), status: http.StatusUnprocessableEntity, wantRender: true,
 			fragments: []string{`value="&lt;script&gt;"`, `value="` + strings.Repeat("a", 256) + `"`, `href="#author"`, `aria-describedby="author-help author-error"`, `id="author-error"`}},
-		{name: "malformed POST renders form error", method: http.MethodPost, path: "/books/request", body: "title=%zz", status: http.StatusUnprocessableEntity, wantRender: true,
+		{name: "malformed POST renders form error", method: http.MethodPost, path: "/books/request/new", body: "title=%zz", status: http.StatusUnprocessableEntity, wantRender: true,
 			fragments: []string{`role="alert"`, "Enter a valid request with a title and optional author."}},
-		{name: "oversized POST creates no event", method: http.MethodPost, path: "/books/request", body: "title=" + strings.Repeat("a", 64<<10), status: http.StatusUnprocessableEntity, wantRender: true,
+		{name: "oversized POST creates no event", method: http.MethodPost, path: "/books/request/new", body: "title=" + strings.Repeat("a", 64<<10), status: http.StatusUnprocessableEntity, wantRender: true,
 			fragments: []string{`role="alert"`, "Enter a valid request with a title and optional author."}},
-		{name: "cross-site POST rejected before handler", method: http.MethodPost, path: "/books/request", body: "title=Book", fetchSite: "cross-site", status: http.StatusForbidden},
-		{name: "foreign origin POST rejected before handler", method: http.MethodPost, path: "/books/request", body: "title=Book", origin: "https://attacker.example", status: http.StatusForbidden},
-		{name: "anonymous cross-site POST rejected", method: http.MethodPost, path: "/books/request", body: "title=Book", anonymous: true, fetchSite: "cross-site", status: http.StatusForbidden},
+		{name: "cross-site POST rejected before handler", method: http.MethodPost, path: "/books/request/new", body: "title=Book", fetchSite: "cross-site", status: http.StatusForbidden},
+		{name: "foreign origin POST rejected before handler", method: http.MethodPost, path: "/books/request/new", body: "title=Book", origin: "https://attacker.example", status: http.StatusForbidden},
+		{name: "anonymous cross-site POST rejected", method: http.MethodPost, path: "/books/request/new", body: "title=Book", anonymous: true, fetchSite: "cross-site", status: http.StatusForbidden},
 		{name: "book slug still reaches details", method: http.MethodGet, path: "/books/existing-book", status: http.StatusOK, wantDetails: true},
+		{name: "anonymous request slug reaches details", method: http.MethodGet, path: "/books/request", anonymous: true, status: http.StatusOK, wantDetails: true},
+		{name: "authenticated request slug reaches details", method: http.MethodGet, path: "/books/request", status: http.StatusOK, wantDetails: true},
 	}
 
 	for _, tt := range tests {
@@ -207,7 +209,7 @@ func TestMissingBookRoutes(t *testing.T) {
 			}
 			wantSlug := ""
 			if tt.wantDetails {
-				wantSlug = "existing-book"
+				wantSlug = strings.TrimPrefix(tt.path, "/books/")
 			}
 			if detailsSlug != wantSlug {
 				t.Fatalf("details slug = %q, want %q", detailsSlug, wantSlug)

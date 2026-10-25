@@ -115,9 +115,15 @@ commit in the same transaction as catalog changes; an audit failure rolls all ca
 ## Missing-Book Feedback (#25)
 
 ```text
-GET  /books/request
-POST /books/request    title, author
+GET  /books/request/new
+POST /books/request/new    title, author
 ```
+
+The form uses two path segments after `/books`, outside the public single-slug namespace.
+Books with slug `request`, whether existing or newly created, remain readable at `/books/request`.
+The former form URL is not redirected or reserved; reopen old forms from the catalog to submit
+at the new path. This route change requires a focused repeat of the browser checklist; earlier
+manual acceptance below describes the previous route.
 
 The form is available only to an authenticated user and is linked from the public catalog and its
 empty state, including HTMX partial responses. Both fields are trimmed: `title` is required and

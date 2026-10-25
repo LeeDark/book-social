@@ -18,7 +18,7 @@
             </div>
         {{end}}
 
-        <form method="post" action="/books/request" novalidate>
+        <form method="post" action="/books/request/new" novalidate>
             <label for="title">Book title</label>
             <input id="title" name="title" value="{{.Form.Title}}" required aria-describedby="title-help{{if index .Form.Errors "title"}} title-error{{end}}"{{if index .Form.Errors "title"}} aria-invalid="true"{{end}}>
             <small id="title-help">Required, up to 255 characters.</small>

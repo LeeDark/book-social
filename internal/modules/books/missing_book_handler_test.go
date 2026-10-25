@@ -47,10 +47,10 @@ func TestMissingBookConfirmationAppearsOnceAfterRedirect(t *testing.T) {
 	router.Use(appmiddleware.NoStore)
 	router.Use(auth.NewCurrentUserMiddleware(cookies, missingBookUserLoader{}).Handler)
 	router.Use(flashes.Handler)
-	router.With(auth.RequireAuthentication).Post("/books/request", handler.Request)
+	router.With(auth.RequireAuthentication).Post("/books/request/new", handler.Request)
 	router.Get("/books", catalog.Catalog)
 
-	post := httptest.NewRequest(http.MethodPost, "/books/request", strings.NewReader("title=PrivateBook&author=PrivateAuthor"))
+	post := httptest.NewRequest(http.MethodPost, "/books/request/new", strings.NewReader("title=PrivateBook&author=PrivateAuthor"))
 	post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	session := &http.Cookie{Name: "book_social_session", Value: "session-secret"}
 	post.AddCookie(session)
@@ -160,7 +160,7 @@ func TestMissingBookHandlerRequest(t *testing.T) {
 			cookies := auth.NewCookieManager(auth.CookieConfig{})
 			currentUser := auth.NewCurrentUserMiddleware(cookies, missingBookUserLoader{})
 			stack := chimiddleware.RequestID(currentUser.Handler(http.HandlerFunc(handler.Request)))
-			req := httptest.NewRequest(tt.method, "/books/request?title=QueryTitle", strings.NewReader(tt.body))
+			req := httptest.NewRequest(tt.method, "/books/request/new?title=QueryTitle", strings.NewReader(tt.body))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			req.Header.Set("X-Request-Id", "request-25")
 			if !tt.anonymous {

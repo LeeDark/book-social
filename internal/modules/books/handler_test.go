@@ -86,7 +86,7 @@ func TestCatalogHandlerCatalogReturnsOK(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), "Signal in the Stacks") {
 		t.Fatalf("body does not contain rendered book title: %q", rec.Body.String())
 	}
-	for _, fragment := range []string{`href="/books/request"`, `src="/static/js/vendor/htmx.min.js"`, `hx-get="/books?author=jon-a-vale"`, `hx-get="/books?genre=mystery"`} {
+	for _, fragment := range []string{`href="/books/request/new"`, `src="/static/js/vendor/htmx.min.js"`, `hx-get="/books?author=jon-a-vale"`, `hx-get="/books?genre=mystery"`} {
 		if !strings.Contains(rec.Body.String(), fragment) {
 			t.Fatalf("body does not contain %q: %q", fragment, rec.Body.String())
 		}
@@ -171,7 +171,7 @@ func TestCatalogHandlerCatalogRendersEmptyState(t *testing.T) {
 				t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 			}
 			body := rec.Body.String()
-			for _, fragment := range []string{"No books found", "View catalog", "Go home", `href="/books/request"`} {
+			for _, fragment := range []string{"No books found", "View catalog", "Go home", `href="/books/request/new"`} {
 				if !strings.Contains(body, fragment) {
 					t.Fatalf("body does not contain %q: %q", fragment, body)
 				}

@@ -30,8 +30,9 @@ func (app *App) RegisterRoutes(r chi.Router, deps Deps) {
 		dynamic.Get("/about", app.HomeHandler.About)
 		dynamic.Get("/books", app.CatalogHandler.Catalog)
 		if app.MissingBookHandler != nil {
-			dynamic.With(httpauth.RequireAuthentication).Get("/books/request", app.MissingBookHandler.Request)
-			dynamic.With(httpauth.RequireAuthentication).Post("/books/request", app.MissingBookHandler.Request)
+			// Keep the form outside the single-segment public book slug namespace.
+			dynamic.With(httpauth.RequireAuthentication).Get("/books/request/new", app.MissingBookHandler.Request)
+			dynamic.With(httpauth.RequireAuthentication).Post("/books/request/new", app.MissingBookHandler.Request)
 		}
 		dynamic.Get("/books/{slug}", app.CatalogHandler.BookDetails)
 		dynamic.Get("/authors/{slug}", app.CatalogHandler.Author)

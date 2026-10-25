@@ -57,6 +57,10 @@ func checkMissingBookHTTPAcceptance(
 	`); err != nil {
 		t.Fatalf("create reader fixtures: %v", err)
 	}
+	// Model an existing catalog row from before the feedback route was introduced.
+	if _, err := db.Exec(`INSERT INTO books (title, slug) VALUES ('Existing request book', 'request')`); err != nil {
+		t.Fatalf("create existing request-slug book: %v", err)
+	}
 	startedAt := time.Now().UTC().Add(-time.Second)
 	for _, session := range []struct {
 		userID  int
@@ -125,8 +129,15 @@ func checkMissingBookHTTPAcceptance(
 		return rec
 	}
 
-	page := perform(t, request(http.MethodGet, "/books/request", "", "missing-reader-one-session"), http.StatusOK, 0, 0)
-	if !strings.Contains(page.Body.String(), `action="/books/request"`) {
+	for _, token := range []string{"", "missing-reader-one-session"} {
+		book := perform(t, request(http.MethodGet, "/books/request", "", token), http.StatusOK, 0, 0)
+		if !strings.Contains(book.Body.String(), "Existing request book") ||
+			strings.Contains(book.Body.String(), `action="/books/request/new"`) {
+			t.Fatal("existing request-slug book was shadowed by the feedback form")
+		}
+	}
+	page := perform(t, request(http.MethodGet, "/books/request/new", "", "missing-reader-one-session"), http.StatusOK, 0, 0)
+	if !strings.Contains(page.Body.String(), `action="/books/request/new"`) {
 		t.Fatal("authenticated form is missing")
 	}
 	form := url.Values{
@@ -134,7 +145,7 @@ func checkMissingBookHTTPAcceptance(
 		"user_id": {"2"}, "actor_id": {"2"}, "created_at": {"2000-01-01T00:00:00Z"},
 		"password": {"private-password"}, "comments": {"private-comment"},
 	}
-	created := perform(t, request(http.MethodPost, "/books/request?user_id=2", form.Encode(), "missing-reader-one-session"), http.StatusSeeOther, 1, 1)
+	created := perform(t, request(http.MethodPost, "/books/request/new?user_id=2", form.Encode(), "missing-reader-one-session"), http.StatusSeeOther, 1, 1)
 	if created.Header().Get("Location") != "/books" {
 		t.Fatal("successful save did not redirect to catalog")
 	}
@@ -165,10 +176,10 @@ func checkMissingBookHTTPAcceptance(
 	if !cleared || strings.Contains(refresh.Body.String(), message) {
 		t.Fatal("confirmation was not consumed after one request")
 	}
-	perform(t, request(http.MethodPost, "/books/request", "title=private-title+only&author=++", "missing-reader-two-session"), http.StatusSeeOther, 2, 1)
+	perform(t, request(http.MethodPost, "/books/request/new", "title=private-title+only&author=++", "missing-reader-two-session"), http.StatusSeeOther, 2, 1)
 	assertLastMissingBookRequest(t, db, 2, "private-title only", "", startedAt)
 	// A new POST is a new submission; only redirected GETs must avoid repeat writes.
-	perform(t, request(http.MethodPost, "/books/request", form.Encode(), "missing-reader-one-session"), http.StatusSeeOther, 3, 1)
+	perform(t, request(http.MethodPost, "/books/request/new", form.Encode(), "missing-reader-one-session"), http.StatusSeeOther, 3, 1)
 	assertLastMissingBookRequest(t, db, 1, "private-title Книга", "private-author", startedAt)
 
 	for _, tt := range []struct {
@@ -188,7 +199,7 @@ func checkMissingBookHTTPAcceptance(
 		{name: "foreign origin", body: form.Encode(), token: "missing-reader-one-session", origin: "https://attacker.example", status: http.StatusForbidden},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			req := request(http.MethodPost, "/books/request", tt.body, tt.token)
+			req := request(http.MethodPost, "/books/request/new", tt.body, tt.token)
 			req.Header.Set("Sec-Fetch-Site", tt.fetchSite)
 			req.Header.Set("Origin", tt.origin)
 			refused := perform(t, req, tt.status, 3, 0)
@@ -225,7 +236,7 @@ func checkMissingBookHTTPAcceptance(
 	if _, err := db.Exec(failureSQL); err != nil {
 		t.Fatalf("inject storage failure: %v", err)
 	}
-	failed := perform(t, request(http.MethodPost, "/books/request", form.Encode(), "missing-reader-one-session"), http.StatusInternalServerError, 3, 0)
+	failed := perform(t, request(http.MethodPost, "/books/request/new", form.Encode(), "missing-reader-one-session"), http.StatusInternalServerError, 3, 0)
 	if failed.Header().Get("Location") != "" || failed.Body.String() != "internal server error\n" {
 		t.Fatal("failed save returned a success redirect or disclosed diagnostics")
 	}

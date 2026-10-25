@@ -34,6 +34,7 @@ func TestSQLiteCatalogOperatorHTTPAcceptance(t *testing.T) {
 		sqlite.NewBookRepository(db),
 		sqlite.NewUserRepository(db),
 		sqlite.NewSessionRepository(db),
+		sqlite.NewMissingBookRepository(db),
 	)
 }
 
@@ -45,6 +46,7 @@ func TestPostgresCatalogOperatorHTTPAcceptance(t *testing.T) {
 		postgresql.NewBookRepository(db),
 		postgresql.NewUserRepository(db),
 		postgresql.NewSessionRepository(db),
+		postgresql.NewMissingBookRepository(db),
 	)
 }
 
@@ -55,6 +57,7 @@ func checkCatalogOperatorHTTPAcceptance(
 	publicRepo books.BookRepository,
 	userRepo users.RegistrationRepository,
 	sessionRepo users.SessionRepository,
+	missingBookRepo books.MissingBookRepository,
 ) {
 	t.Helper()
 	testutil.ChdirProjectRoot(t)
@@ -102,6 +105,7 @@ func checkCatalogOperatorHTTPAcceptance(
 		Renderer:              renderer,
 		CurrentUserMiddleware: auth.NewCurrentUserMiddleware(auth.NewCookieManager(auth.CookieConfig{}), sessions),
 		FlashManager:          flashes,
+		MissingBookHandler:    books.NewMissingBookHandler(books.NewMissingBookService(missingBookRepo, logger), flashes, renderer, logger),
 		AdminCatalogHandler: books.NewOperatorHandler(
 			books.NewOperatorService(operatorRepo), flashes, renderer, logger,
 		),
@@ -124,16 +128,17 @@ func checkCatalogOperatorHTTPAcceptance(
 	if strings.Contains(blank.Body.String(), "Pride and Prejudice") {
 		t.Fatal("blank operator search listed the catalog")
 	}
+	assertOperatorHTTPStatus(t, operatorRequest(handler, http.MethodGet, "/books/request", ""), http.StatusNotFound)
 
 	form := operatorSubmittedForm()
 	form.Set("title", " Acceptance Book ")
 	form.Set("description", "private-form-description")
-	form.Set("slug", "acceptance-book")
+	form.Set("slug", "request")
 	form["author_ids"] = []string{"2", "1", "2"}
 	form["genre_ids"] = []string{"2", "1", "2"}
 	created := operatorRequest(handler, http.MethodPost, "/admin/catalog/books/new", form.Encode())
 	assertOperatorHTTPStatus(t, created, http.StatusSeeOther)
-	visible, err := publicRepo.GetBookBySlug(ctx, "acceptance-book")
+	visible, err := publicRepo.GetBookBySlug(ctx, "request")
 	if err != nil || visible.Title != "Acceptance Book" {
 		t.Fatal("created book is not visible through the public repository")
 	}
@@ -148,6 +153,19 @@ func checkCatalogOperatorHTTPAcceptance(
 		t.Fatal("HTTP creation lost normalized selections or cover metadata")
 	}
 	assertOperatorHTTPFlash(t, handler, created, editURL, "Book created.")
+	for _, token := range []string{"", "reader-test-session"} {
+		request := httptest.NewRequest(http.MethodGet, "/books/request", nil)
+		if token != "" {
+			request.AddCookie(&http.Cookie{Name: "book_social_session", Value: token})
+		}
+		page := httptest.NewRecorder()
+		handler.ServeHTTP(page, request)
+		assertOperatorHTTPStatus(t, page, http.StatusOK)
+		if !strings.Contains(page.Body.String(), "Acceptance Book") ||
+			strings.Contains(page.Body.String(), `action="/books/request/new"`) {
+			t.Fatal("new request-slug book was shadowed by the feedback form")
+		}
+	}
 
 	for _, check := range []struct {
 		name       string
@@ -160,7 +178,7 @@ func checkCatalogOperatorHTTPAcceptance(
 			name:       "duplicate slug",
 			path:       "/admin/catalog/books/new",
 			field:      "slug",
-			value:      "acceptance-book",
+			value:      "request",
 			wantStatus: http.StatusConflict,
 		},
 		{
@@ -200,7 +218,7 @@ func checkCatalogOperatorHTTPAcceptance(
 			if !strings.Contains(refused.Body.String(), `role="alert"`) {
 				t.Fatal("HTTP refusal lacks an accessible form error")
 			}
-			unchanged, err := publicRepo.GetBookBySlug(ctx, "acceptance-book")
+			unchanged, err := publicRepo.GetBookBySlug(ctx, "request")
 			if err != nil || !reflect.DeepEqual(visible, unchanged) {
 				t.Fatal("refused HTTP write modified catalog data")
 			}
@@ -223,13 +241,13 @@ func checkCatalogOperatorHTTPAcceptance(
 	}
 	assertOperatorHTTPFlash(t, handler, corrected, editURL, "Book corrections saved.")
 	assertOperatorHTTPAudit(t, db, 2, visible.ID, "correct", "authors,description,front_cover,genres,title")
-	publicPage := operatorRequest(handler, http.MethodGet, "/books/acceptance-book", "")
+	publicPage := operatorRequest(handler, http.MethodGet, "/books/request", "")
 	assertOperatorHTTPStatus(t, publicPage, http.StatusOK)
 	if !strings.Contains(publicPage.Body.String(), "Corrected Acceptance Book") {
 		t.Fatal("permanent public URL did not reflect corrections")
 	}
 	stored, err = operatorRepo.GetOperatorBook(ctx, visible.ID)
-	if err != nil || stored.Slug != "acceptance-book" || stored.FrontCoverURL != "" ||
+	if err != nil || stored.Slug != "request" || stored.FrontCoverURL != "" ||
 		!slices.Equal(stored.AuthorIDs, []int{3}) || !slices.Equal(stored.GenreIDs, []int{3}) {
 		t.Fatal("HTTP correction did not preserve identity and replace metadata")
 	}
@@ -273,7 +291,7 @@ func checkCatalogOperatorHTTPAcceptance(
 	assertOperatorHTTPStatus(t, crossOrigin, http.StatusForbidden)
 	assertOperatorHTTPAudit(t, db, 3, visible.ID, "correct", "")
 
-	beforeFailure, err := publicRepo.GetBookBySlug(ctx, "acceptance-book")
+	beforeFailure, err := publicRepo.GetBookBySlug(ctx, "request")
 	if err != nil {
 		t.Fatal("load catalog snapshot before audit failure")
 	}
@@ -288,7 +306,7 @@ func checkCatalogOperatorHTTPAcceptance(
 	form.Set("front_cover_url", "https://example.test/rolled-back.jpg")
 	failedCorrection := operatorRequest(handler, http.MethodPost, editURL, form.Encode())
 	assertOperatorHTTPStatus(t, failedCorrection, http.StatusInternalServerError)
-	afterFailure, err := publicRepo.GetBookBySlug(ctx, "acceptance-book")
+	afterFailure, err := publicRepo.GetBookBySlug(ctx, "request")
 	if err != nil || !reflect.DeepEqual(beforeFailure, afterFailure) {
 		t.Fatal("HTTP audit failure left partial catalog corrections")
 	}
