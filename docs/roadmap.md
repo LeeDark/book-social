@@ -17,8 +17,10 @@ Five pilot artworks and their profile are user-approved; isolated SQLite install
 (five changes then zero). The user confirmed mobile pilot display, library, home, HTMX and
 blocked-image fallback in Zen; see [browser evidence](cover_acceptance_v0_3_2.md#user-reported-browser-evidence).
 Actual [SQLite restart/recreation](cover_container_lifecycle_v0_3_2.md) passed with unchanged
-SQL/files and successful HTTP checks. PostgreSQL lifecycle, paired SQLite/PostgreSQL recovery
-and remaining detailed browser checks are still pending.
+SQL/files and successful HTTP checks. Paired [offline SQLite/PostgreSQL recovery](cover_recovery_v0_3_2.md)
+also passed, followed by successful restored-state HTTP/HTMX/image checks for both engines.
+PostgreSQL restart/recreation, restored-state visual review and remaining detailed browser checks
+are still pending.
 The expanded cover scope is not yet accepted.
 v0.3.4 will add a reviewed book-addition workflow and grow the catalog to 500 books total.
 

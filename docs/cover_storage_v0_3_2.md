@@ -6,7 +6,9 @@ cover rendering/fallback, persistent Compose volume configuration and offline de
 tools. The five-artwork pilot and profile are user-approved and passed isolated SQLite installation;
 the user confirmed mobile pilot display, library, home, HTMX and blocked-image fallback in Zen.
 Actual [SQLite restart/recreation](cover_container_lifecycle_v0_3_2.md) passed on 2026-10-30.
-PostgreSQL lifecycle, paired operational recovery and remaining detailed browser checks remain pending.
+Paired [offline SQLite/PostgreSQL recovery](cover_recovery_v0_3_2.md) passed on 2026-10-30.
+Both restored states also passed real HTTP checks with unchanged SQL and repeated offline verify.
+PostgreSQL restart/recreation, restored-state visual review and remaining detailed browser checks remain pending.
 Step 7's [automated evidence and outstanding manual gates](cover_acceptance_v0_3_2.md) are recorded
 separately; the final automated pass includes real SQLite/PostgreSQL cover workflows.
 This document extends the original
