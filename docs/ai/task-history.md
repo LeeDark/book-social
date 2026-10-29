@@ -1251,3 +1251,43 @@ Residual risks:
   network and two named volumes retained, not deleted. No visual browser execution, PostgreSQL
   lifecycle or paired operational recovery claimed. No code/dependency changes or full unit
   suite run. `git diff --check` passed; no commit or issue/release closure.
+
+## 2026-10-30 — Paired offline SQLite/PostgreSQL recovery (#28, acceptance step 5)
+
+- Reused only stopped step-4 SQLite test volumes, mounted read-only, and captured a SQLite
+  backup-API snapshot plus complete covers tar. Restored into a fresh private directory;
+  integrity/FK checks, migration 8|0, counts 109/5/5 and all five cover pairs passed. Full SQL dump
+  SHA-256 matched the source (`6e332156b18b19f18a92ab9d6a79ffe994a978d3f5014a2c07282d933feef698`).
+- Created isolated PostgreSQL 18 project `book-social-cover-step5-lhkev5`, no host ports, a new
+  source DB and approved pilot with explicit audit-only admin. With all app/cover writers absent,
+  captured pg_dump custom archive using client 18.4 plus full cover tar. Created and checked
+  empty `cover_restore`; restored with exit-on-error/single-transaction, no migration/seed replay.
+  Counts 109/5/5, migration 8|false, validated constraints and coverctl verify passed.
+- Strict full logical dump comparison initially differed on two equivalent CHECK array-cast
+  representations; inspected exact differences. All other schema/data/sequence/index lines
+  matched after excluding random restrict tokens. All 20 restored WebPs matched approved bundle
+  bytes and hashes. Backup SHA256SUMS checks passed for both pairs.
+- Added `docs/cover_recovery_v0_3_2.md` and synchronized checklist/contract/roadmaps. Private
+  snapshots/restored files retained under `/tmp/book-social-cover-recovery.LhkEv5` (not a durable
+  backup policy); PostgreSQL stopped cleanly with test databases/volume retained. No retained
+  dev/stage/prod access, deletion, app server, browser or full unit suite run. Prior app-run
+  permission was step-4-only; restored-state HTTP/browser checks remain pending. Docker escalation
+  was used; host chmod on container-owned backup files failed, then exact-file container chmod
+  succeeded. Reviewed provisioning/query SQL phases; `git diff --check` passed. No commit.
+
+## 2026-10-30 — Authorized restored-state HTTP verification (#28, step 5 follow-up)
+
+- User explicitly authorized test app execution for step 5. Added temporary Compose override
+  with two loopback-only dynamic-port apps in the existing isolated step-5 project, same image
+  as offline recovery. Used direct `/app/book-social` entrypoint (no bootstrap/migrations/seed),
+  restored SQLite DB/files and PostgreSQL `cover_restore` plus read-only restored cover files.
+- Both Node HTTP probes passed five detail pages, all ten WebPs with MIME/SHA-256 verification,
+  catalog, home, five authors and HTMX catalog thumbnail. No real browser/JavaScript or signed-in
+  library flow was exercised. After stopping apps, both coverctl verifies passed five pairs.
+  SQLite integrity/FK and full dump hash unchanged; PostgreSQL full logical dump before/after
+  identical excluding random restrict tokens, migration/counts unchanged at 8|false and 109/5/5.
+- Stopped PostgreSQL; all three test containers exited 0, data/backups/volume retained. No retained
+  working environment access or deletion. Updated recovery protocol/checklist/contract/roadmaps.
+  Compose validation and `git diff --check` passed; no full suite rerun for documentation-only
+  changes. Visual post-restore acceptance and PostgreSQL restart/recreation remain pending.
+  Docker/network escalation required; no implementation changes or commit.

@@ -1,7 +1,7 @@
 # Cover Verification and Pending Acceptance (#28, Step 7)
 
 Status on 2026-10-25: automated verification passes on implementation `27c64d2`.
-Step 7 is **not fully accepted**: PostgreSQL lifecycle and paired operational recovery remain pending.
+Step 7 is **not fully accepted**: PostgreSQL restart/recreation and remaining visual browser acceptance remain pending.
 Reviewed artwork, isolated SQLite installation and user-reported pilot browser checks are recorded below.
 This record does not close #28 or the expanded v0.3.2 scope
 and does not replace the earlier acceptance of the original #23–#26 workflows.
@@ -127,8 +127,12 @@ cover directory as described in [the transition warning](cover_operations.md#per
 - [x] Restart/recreate SQLite app with the same named volumes: SQL/files, HTTP and stopped-writer verify passed.
   See [lifecycle protocol](cover_container_lifecycle_v0_3_2.md).
 - [ ] Repeat lifecycle checks for PostgreSQL and visually inspect pages after recreation.
-- [ ] Rehearse matching SQL/file backup and restore into fresh SQLite and PostgreSQL targets;
-  compare checksums, migration state, reference counts, metadata and HTTP/browser results.
+- [x] Rehearse paired SQL/file backup and offline restore into fresh SQLite and PostgreSQL targets;
+  checksums, migration state, references, data and metadata passed. See
+  [recovery protocol](cover_recovery_v0_3_2.md), including two equivalent PostgreSQL CHECK cast rewrites.
+- [x] Check restored-state HTTP on SQLite/PostgreSQL: detail/catalog/home/author pages, HTMX and
+  all ten image responses per engine passed; SQL unchanged, stopped-writer verify repeated.
+- [ ] Visually inspect restored-state pages in a real browser; HTTP probes are not visual review.
 - [ ] Record environment, application/image revision, actual commands, bundle checksums,
   browser/version, viewport sizes, date, observed results and the user's acceptance decision.
 
