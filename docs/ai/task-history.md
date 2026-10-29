@@ -1215,3 +1215,39 @@ Residual risks:
   synchronized operational/contract/roadmap status. Browser/HTMX/mobile acceptance, container
   restart/recreation, actual paired SQLite/PostgreSQL recovery and remaining artwork stay pending.
   Temporary targets are inspectable but not durable storage. No commit or issue/release closure.
+
+## 2026-10-30 — Record user-reported pilot browser acceptance (#28)
+
+- Updated the acceptance checklist, cover contract and public/private roadmap status to reflect
+  the user's 2026-10-26 Zen browser confirmations: mobile pilot display, five books in the library,
+  home card, HTMX filtering, request-blocked image placeholders and recovery after unblocking.
+  A supplied screenshot shows Pride and Prejudice details at mobile width. Exact browser version
+  and viewport dimensions were not supplied; no desktop/accessibility, main-only, external HTTPS
+  or JavaScript-disabled result was inferred. These remain explicit detailed acceptance checks.
+- Rechecked earlier implementation/verification records: named volumes and Compose configuration,
+  storage close/reopen and fresh SQLite restore tests were completed, but actual app-container
+  restart/recreation was not. Acceptance step 4 and paired operational SQLite/PostgreSQL recovery
+  remain open; the earlier implementation step 4 (administrator uploads) is a different step.
+- Documentation only; no runtime changes, database/container operations or new browser execution.
+  Ran `git diff --check` and checked the new relative evidence links. No application tests rerun
+  for this documentation-only change. No commit or issue/release closure.
+
+## 2026-10-30 — Actual isolated SQLite Compose lifecycle (#28, acceptance step 4)
+
+- User explicitly authorized sandbox app execution for this step. Created empty isolated project
+  `book-social-cover-step4-lk4lab` with the real base/dev Compose files and a temporary override
+  for unique container/image and loopback-only dynamic port. No retained environment was touched.
+  Built image `sha256:f347346b046fdb8f6460afa0397b7692efac48981755eb671ca38f27c06de561`.
+- Applied migrations/seed to new SQLite volume, explicitly provisioned non-login audit admin,
+  installed approved pilot and verified five references. Tested actual restart (same ID, new
+  StartedAt) and force recreation (new ID, same named volumes). All ten file hashes and entire
+  SQL dump remained identical: 109 books, five covers, five audits, integrity ok, no FK violations.
+- Before/after both operations, Node HTTP assertions passed for five details, ten WebPs with
+  MIME/checksum validation, catalog, home, five author pages and HTMX catalog thumbnail. Ran
+  coverctl verify with all writers stopped at initial/after-restart/after-recreation checkpoints.
+  Compose config and build passed. Docker/network access required escalation.
+- Added `docs/cover_container_lifecycle_v0_3_2.md` with exact environment, commands, observations
+  and limits; synchronized checklist/contract/roadmaps. App is stopped; test container, image,
+  network and two named volumes retained, not deleted. No visual browser execution, PostgreSQL
+  lifecycle or paired operational recovery claimed. No code/dependency changes or full unit
+  suite run. `git diff --check` passed; no commit or issue/release closure.
