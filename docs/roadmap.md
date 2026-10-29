@@ -14,7 +14,11 @@ Deliver these as two dependent tasks, starting with a five-book pilot. Earlier a
 applies to the original scope only. Local storage, administrator uploads and shared cover rendering
 are implemented. Persistent Compose volumes and pilot install/verify tools are configured.
 Five pilot artworks and their profile are user-approved; isolated SQLite installation passed twice
-(five changes then zero). Container lifecycle/real PostgreSQL restore and visual acceptance remain pending.
+(five changes then zero). The user confirmed mobile pilot display, library, home, HTMX and
+blocked-image fallback in Zen; see [browser evidence](cover_acceptance_v0_3_2.md#user-reported-browser-evidence).
+Actual [SQLite restart/recreation](cover_container_lifecycle_v0_3_2.md) passed with unchanged
+SQL/files and successful HTTP checks. PostgreSQL lifecycle, paired SQLite/PostgreSQL recovery
+and remaining detailed browser checks are still pending.
 The expanded cover scope is not yet accepted.
 v0.3.4 will add a reviewed book-addition workflow and grow the catalog to 500 books total.
 

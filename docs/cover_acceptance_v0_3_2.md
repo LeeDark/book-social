@@ -1,8 +1,8 @@
 # Cover Verification and Pending Acceptance (#28, Step 7)
 
 Status on 2026-10-25: automated verification passes on implementation `27c64d2`.
-Step 7 is **not fully accepted**: real container lifecycle/restore and browser evidence are still
-missing. Reviewed artwork and isolated SQLite installation are now recorded below.
+Step 7 is **not fully accepted**: PostgreSQL lifecycle and paired operational recovery remain pending.
+Reviewed artwork, isolated SQLite installation and user-reported pilot browser checks are recorded below.
 This record does not close #28 or the expanded v0.3.2 scope
 and does not replace the earlier acceptance of the original #23–#26 workflows.
 
@@ -87,7 +87,26 @@ The separate [approved release](../assets/demo-covers/pilot-v1-approved/README.r
 actual offline installation twice in a fresh SQLite environment: five changes then zero,
 five audits total, five main/thumbnail pairs verified. See the
 [installation protocol](cover_pilot_installation_v0_3_2.md) for hashes, commands and preservation
-checks. This does not imply browser, container or recovery acceptance.
+checks. Installation alone does not imply browser, container or recovery acceptance.
+
+### User-Reported Browser Evidence
+
+Recorded in documentation on 2026-10-30 from the user's confirmations in this conversation on
+2026-10-26. Browser: Zen; mobile-sized responsive viewport. Exact browser version and viewport
+dimensions were not supplied. This is user-reported local testing, not an agent-run browser test.
+
+The user confirmed correct cover display on pages and all five books in their private library;
+then confirmed mobile proportions, A Christmas Carol's home card and HTMX filtering. A supplied
+screenshot shows Pride and Prejudice's details page at mobile width. Finally, after following the
+request-blocking procedure for `/media/covers/`, the user confirmed the expected placeholders,
+HTMX fallback and recovery after unblocking. Files and SQL were not removed to simulate failure.
+
+These confirmations accept the reported pilot display/fallback checks, not every independent
+criterion below. Desktop sizing, explicit keyboard/accessibility checks, main-only delivery,
+external HTTPS compatibility and JavaScript-disabled placeholders were not separately reported.
+At the time of those browser reports, container restart/recreation and paired recovery were unverified. Storage
+close/reopen tests, repeated offline installation and Compose configuration validation are not
+evidence of actual container restart or recreation.
 
 For remaining browser/container/recovery checks, use a disposable local environment outside the
 Codex sandbox. Do not experiment on retained data
@@ -96,16 +115,18 @@ cover directory as described in [the transition warning](cover_operations.md#per
 
 - [x] Supply five reviewed artworks, source/provenance/usage evidence, version and pinned
   manifest/archive checksums. WebP/2:3 600×900 main and 240×360 thumbnail approved for the pilot;
-  application visual acceptance remains pending.
+  user-reported mobile pilot display/fallback checks are recorded above.
 - [x] Provision fresh matching migrations/seed and an explicit administrator; install twice and
   record changed/audit counts and `coverctl verify` results (offline disposable SQLite).
-- [ ] Check each pilot on details, catalog, author and private-library pages, including main-only
-  fallback and external HTTPS compatibility. Confirm proportion preservation and readable artwork
-  on mobile and desktop, keyboard links and accessible labels.
-- [ ] Check A Christmas Carol's featured home card without changing the deterministic home selection.
-- [ ] Exercise HTMX filtering and unavailable-image fallback using browser request blocking.
-  Check missing-metadata placeholders with JavaScript disabled; load-error fallback requires JS.
-- [ ] Restart and recreate app with the same Compose project/volumes and verify files/URLs again.
+- [x] User confirms pilot covers on pages and all five in the private library, mobile display,
+  HTMX filtering and A Christmas Carol's featured home card.
+- [x] User confirms unavailable-image placeholders, including HTMX, with browser request blocking,
+  and restored images after unblocking; load-error fallback requires JS.
+- [ ] Separately verify main-only delivery, external HTTPS compatibility, desktop presentation,
+  keyboard links and accessible labels, and missing-metadata placeholders with JavaScript disabled.
+- [x] Restart/recreate SQLite app with the same named volumes: SQL/files, HTTP and stopped-writer verify passed.
+  See [lifecycle protocol](cover_container_lifecycle_v0_3_2.md).
+- [ ] Repeat lifecycle checks for PostgreSQL and visually inspect pages after recreation.
 - [ ] Rehearse matching SQL/file backup and restore into fresh SQLite and PostgreSQL targets;
   compare checksums, migration state, reference counts, metadata and HTTP/browser results.
 - [ ] Record environment, application/image revision, actual commands, bundle checksums,
