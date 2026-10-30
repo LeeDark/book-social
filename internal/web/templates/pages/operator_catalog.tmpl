@@ -1,0 +1,35 @@
+{{define "title"}}{{.Title}}{{end}}
+
+{{define "main"}}
+    <section aria-labelledby="operator-heading">
+        <header class="section-heading">
+            <h1 id="operator-heading">Catalog maintenance</h1>
+        </header>
+        <p>Find a book to correct its metadata, or <a href="/admin/catalog/books/new">create a book</a>.</p>
+
+        {{if .FormError}}<p role="alert">{{.FormError}}</p>{{end}}
+        <form method="get" action="/admin/catalog">
+            <label for="catalog-query">Title or slug</label>
+            <input id="catalog-query" name="q" type="search" value="{{.Query}}">
+            <button type="submit">Find books</button>
+        </form>
+
+        {{if .Query}}
+            {{if .Books}}
+                <ul>
+                    {{range .Books}}
+                        <li>
+                            <a href="{{.EditURL}}">Correct {{.Title}}</a>
+                            <small>{{.Slug}}</small>
+                            · <a href="{{.BookURL}}">View public page</a>
+                        </li>
+                    {{end}}
+                </ul>
+            {{else}}
+                <p role="status">No matching books. Try another title or slug, or create a book.</p>
+            {{end}}
+        {{else}}
+            <p>Enter a title or slug to search. The full catalog is not listed here.</p>
+        {{end}}
+    </section>
+{{end}}

@@ -1,0 +1,86 @@
+{{define "title"}}{{.Title}}{{end}}
+
+{{define "main"}}
+    <section aria-labelledby="operator-book-heading">
+        <h1 id="operator-book-heading">{{.Title}}</h1>
+        <p><a href="/admin/catalog">Find another book</a>{{if not .IsNew}} · <a href="{{.BookURL}}">View public page</a>{{end}}</p>
+
+        {{if .Form.Errors}}
+            <div role="alert" aria-labelledby="operator-errors-heading">
+                <h2 id="operator-errors-heading">Please check the form</h2>
+                <ul>
+                    {{range $field, $message := .Form.Errors}}
+                        <li>{{if eq $field "form"}}{{$message}}{{else}}<a href="#{{$field}}">{{$message}}</a>{{end}}</li>
+                    {{end}}
+                </ul>
+            </div>
+        {{end}}
+
+        <form method="post" action="{{.ActionURL}}" enctype="multipart/form-data" novalidate{{if .IsNew}} data-operator-new-form{{end}}>
+            <label for="title">Title</label>
+            <input id="title" name="title" value="{{.Form.Title}}" required aria-describedby="title-help{{if index .Form.Errors "title"}} title-error{{end}}"{{if index .Form.Errors "title"}} aria-invalid="true"{{end}}>
+            <small id="title-help">Required, up to 255 characters.</small>
+            {{with index .Form.Errors "title"}}<small id="title-error">{{.}}</small>{{end}}
+
+            {{if .IsNew}}
+                <label for="slug">Slug</label>
+                <input id="slug" name="slug" value="{{.Form.Slug}}" required maxlength="255" aria-describedby="slug-help{{if index .Form.Errors "slug"}} slug-error{{end}}"{{if index .Form.Errors "slug"}} aria-invalid="true"{{end}}>
+                <small id="slug-help">Lowercase ASCII letters, numbers and single hyphens. You may edit the suggestion. This public URL cannot be changed after creation. Without JavaScript, enter a slug yourself.</small>
+                {{with index .Form.Errors "slug"}}<small id="slug-error">{{.}}</small>{{end}}
+            {{else}}
+                <p>Permanent slug: <code>{{.Form.Slug}}</code>. The public URL cannot be changed.</p>
+            {{end}}
+
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="6"{{if index .Form.Errors "description"}} aria-invalid="true" aria-describedby="description-error"{{end}}>{{.Form.Description}}</textarea>
+            {{with index .Form.Errors "description"}}<small id="description-error">{{.}}</small>{{end}}
+
+            <fieldset id="author_ids" tabindex="-1" aria-describedby="authors-help{{if index .Form.Errors "author_ids"}} author_ids-error{{end}}"{{if index .Form.Errors "author_ids"}} aria-invalid="true"{{end}}>
+                <legend>Authors</legend>
+                <small id="authors-help">Choose any existing authors, or leave all unchecked.</small>
+                {{range .Authors}}
+                    <label for="author-{{.Value}}"><input id="author-{{.Value}}" name="author_ids" type="checkbox" value="{{.Value}}"{{if .Selected}} checked{{end}}> {{.Label}}</label>
+                {{else}}
+                    <p>No authors are available.</p>
+                {{end}}
+                {{with index .Form.Errors "author_ids"}}<small id="author_ids-error">{{.}}</small>{{end}}
+            </fieldset>
+
+            <fieldset id="genre_ids" tabindex="-1" aria-describedby="genres-help{{if index .Form.Errors "genre_ids"}} genre_ids-error{{end}}"{{if index .Form.Errors "genre_ids"}} aria-invalid="true"{{end}}>
+                <legend>Genres</legend>
+                <small id="genres-help">Choose any existing genres, or leave all unchecked.</small>
+                {{range .Genres}}
+                    <label for="genre-{{.Value}}"><input id="genre-{{.Value}}" name="genre_ids" type="checkbox" value="{{.Value}}"{{if .Selected}} checked{{end}}> {{.Label}}</label>
+                {{else}}
+                    <p>No genres are available.</p>
+                {{end}}
+                {{with index .Form.Errors "genre_ids"}}<small id="genre_ids-error">{{.}}</small>{{end}}
+            </fieldset>
+
+            <fieldset id="front_cover" tabindex="-1" aria-describedby="cover-help{{if index .Form.Errors "front_cover"}} front_cover-error{{end}}"{{if index .Form.Errors "front_cover"}} aria-invalid="true"{{end}}>
+            <legend>Front cover</legend>
+            {{if .Form.CurrentCoverURL}}<p><a href="{{.Form.CurrentCoverURL}}">Open current cover</a></p>{{end}}
+            <label for="front_cover_action">Cover action</label>
+            <select id="front_cover_action" name="front_cover_action"{{if index .Form.Errors "front_cover_action"}} aria-invalid="true" aria-describedby="front_cover_action-error"{{end}}>
+                <option value="keep"{{if or (eq .Form.FrontCoverAction "") (eq .Form.FrontCoverAction "keep")}} selected{{end}}>Keep current cover</option>
+                <option value="upload"{{if eq .Form.FrontCoverAction "upload"}} selected{{end}}>Upload or replace local cover</option>
+                <option value="external"{{if eq .Form.FrontCoverAction "external"}} selected{{end}}>Set external HTTPS URL</option>
+                <option value="remove"{{if eq .Form.FrontCoverAction "remove"}} selected{{end}}>Remove front cover</option>
+            </select>
+            {{with index .Form.Errors "front_cover_action"}}<small id="front_cover_action-error">{{.}}</small>{{end}}
+            <label for="front_cover_url">External HTTPS URL</label>
+            <input id="front_cover_url" name="front_cover_url" type="url" value="{{.Form.FrontCoverURL}}" aria-describedby="cover-help{{if index .Form.Errors "front_cover_url"}} front_cover_url-error{{end}}"{{if index .Form.Errors "front_cover_url"}} aria-invalid="true"{{end}}>
+            {{with index .Form.Errors "front_cover_url"}}<small id="front_cover_url-error">{{.}}</small>{{end}}
+            <label for="front_cover_file">Main cover image</label>
+            <input id="front_cover_file" name="front_cover_file" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="cover-help">
+            <label for="front_cover_thumbnail">Thumbnail (optional)</label>
+            <input id="front_cover_thumbnail" name="front_cover_thumbnail" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="cover-help">
+            <small id="cover-help">Choose one action. Supply a URL only for the external action, or files only for upload. JPEG, PNG or static WebP; portrait, up to 5 MiB each, 4096 pixels per side and 12 million pixels. Thumbnail: same format and proportions, smaller dimensions. Limit all text to 128 KiB and the request to 12 MiB. After an error, select files again. Removing a cover preserves other variants.</small>
+            {{with index .Form.Errors "front_cover"}}<small id="front_cover-error">{{.}}</small>{{end}}
+            </fieldset>
+
+            <button type="submit">{{if .IsNew}}Create book{{else}}Save corrections{{end}}</button>
+        </form>
+    </section>
+    {{if .IsNew}}<script defer src="/static/js/catalog-operator.js"></script>{{end}}
+{{end}}

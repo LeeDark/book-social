@@ -86,7 +86,8 @@ func ApplyPostgresCatalogTestSchema(t *testing.T, ctx context.Context, db *sql.D
 
 func ApplyPostgresCatalogV2TestSchema(t *testing.T, ctx context.Context, db *sql.DB) {
 	t.Helper()
-	applyPostgresCatalogTestMigrations(t, ctx, db, "000003")
+	// Catalog reads use the current schema; historical migrations are tested separately.
+	applyPostgresCatalogTestMigrations(t, ctx, db, "")
 }
 
 func ApplyPostgresLibraryTestSchema(t *testing.T, ctx context.Context, db *sql.DB) {
@@ -174,4 +175,21 @@ func SeedPostgresCatalogV2TestData(t *testing.T, ctx context.Context, db *sql.DB
 	}
 
 	execStatements(t, ctx, db, statements)
+
+	// Explicit fixture IDs do not advance PostgreSQL identity sequences.
+	// Subsequent operator writes must receive IDs after the fixture records.
+	execStatements(t, ctx, db, []string{
+		`SELECT setval(pg_get_serial_sequence('authors', 'id'), (
+			SELECT MAX(id)
+			FROM authors
+		))`,
+		`SELECT setval(pg_get_serial_sequence('genres', 'id'), (
+			SELECT MAX(id)
+			FROM genres
+		))`,
+		`SELECT setval(pg_get_serial_sequence('books', 'id'), (
+			SELECT MAX(id)
+			FROM books
+		))`,
+	})
 }

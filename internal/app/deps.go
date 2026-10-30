@@ -2,6 +2,7 @@ package app
 
 import (
 	"log/slog"
+	"net/http"
 
 	"github.com/LeeDark/book-social/internal/config"
 	"github.com/LeeDark/book-social/internal/http/auth"
@@ -18,4 +19,7 @@ type Deps struct {
 	FlashManager          *flash.Manager
 	AuthHandler           *AuthHandler
 	LibraryHandler        *library.Handler
+	AdminCatalogHandler   AdminCatalogHandler
+	MissingBookHandler    MissingBookHandler
+	CoverHandler          http.Handler
 }

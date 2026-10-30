@@ -8,13 +8,45 @@ does not change the active priority or release scope until an item is explicitly
 
 ## Current Planning Status
 
+The v0.3.2 scope is expanded: persistent cover-file storage and display, followed by reviewed
+generated demo front covers for the existing 109 books, are now required before release closure.
+Deliver these as two dependent tasks, starting with a five-book pilot. Earlier acceptance below
+applies to the original scope only. Local storage, administrator uploads and shared cover rendering
+are implemented. Persistent Compose volumes and pilot install/verify tools are configured.
+Five pilot artworks and their profile are user-approved; isolated SQLite installation passed twice
+(five changes then zero). The user confirmed mobile pilot display, library, home, HTMX and
+blocked-image fallback in Zen; see [browser evidence](cover_acceptance_v0_3_2.md#user-reported-browser-evidence).
+Actual [SQLite restart/recreation](cover_container_lifecycle_v0_3_2.md) passed with unchanged
+SQL/files and successful HTTP checks. Paired [offline SQLite/PostgreSQL recovery](cover_recovery_v0_3_2.md)
+also passed, followed by successful restored-state HTTP/HTMX/image checks for both engines.
+[PostgreSQL restart/recreation and focused desktop/fallback checks](cover_postgres_browser_v0_3_2.md)
+passed; wider visual/accessibility review and final user acceptance remain pending.
+The expanded cover scope is not yet accepted.
+v0.3.4 will add a reviewed book-addition workflow and grow the catalog to 500 books total.
+
 v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation through the first
 browser-facing flow: registration, login, idempotent logout, protected `/me`, auth navigation, and
 one-request success flashes. Its manual browser smoke and release closure are complete.
 
 v0.3.0 Private Library Foundation and v0.3.1 Reading-State Lifecycle are closed. The v0.3.1
 release completed automated verification, SQLite migration smoke, and the mandatory manual browser
-smoke. No later release scope is active yet.
+smoke. Active scope: **v0.3.2 Curated Catalog Operations**. Demo data/provenance (#23) and the
+operator workflow (#24) are implemented, with SQLite/PostgreSQL automated acceptance passing.
+The user confirmed successful operator browser review on 2026-10-12; #24 is accepted.
+Missing-book feedback (#25) is implemented with automated verification; the user confirmed successful
+manual browser review on 2026-10-15 and accepted #25's non-persistent flow. The agreed v0.3.2
+follow-up is to persist the requested title, optional author and submitting user. Operator listing
+and processed/rejected decisions are planned for v0.4.3. Service/runtime persistence is implemented;
+real-database HTTP acceptance passes on SQLite and PostgreSQL. The user confirmed persistence
+browser acceptance on 2026-10-25 (Zen Browser, SQLite). Final automated checks also passed on
+2026-10-25. The original scope is accepted; #26 now covers external-review fixes and final closure.
+Local commits fix the feedback route collision, locale-dependent PostgreSQL seed ordering and
+operator ID overflow; regression checks pass on SQLite/PostgreSQL. Feedback is now at
+`/books/request/new`, preserving public books at `/books/request`; the user confirmed successful
+browser recheck on 2026-10-25 (environment not separately reported). Fixes are pushed through
+`9d764db`, with both CI jobs passing. Final acceptance documentation and issue/PR closure
+remain pending. PR #27 stays Draft; merge requires separate authorization. No tag or deployment
+is claimed; v0.3.3 scope is unchanged.
 
 ## Planning Principles
 
@@ -295,14 +327,57 @@ Outcome: the private library supports the complete add → update → return →
 
 #### v0.3.2 — Curated Catalog Operations
 
-- [ ] Separate test fixtures, deterministic development seed data, and the curated demo catalog;
-  document demo metadata provenance and permitted cover use.
-- [ ] Add a clear missing-book state and simple feedback path without an external import.
-- [ ] Add only the administrator role, protected routes, catalog find/create/correct operations,
+Status: original scope and post-review browser recheck accepted; expanded cover scope is open.
+The original accepted contract, which predates file storage and still describes URL-only covers, is in
+[`catalog_operations_v0_3_2.md`](catalog_operations_v0_3_2.md).
+
+- [x] Separate ordinary test fixtures from deterministic development seed data; inventory the
+  existing 109-book dataset and document its unverified external metadata provenance and absent covers.
+- [ ] Task 1 — Cover-file storage and display: persistent local storage with a Docker volume,
+  HTTP serving, database references and technical metadata; reconcile local files with existing
+  external HTTPS cover URLs. Show front covers on book pages and all book cards, retaining a
+  placeholder for missing or unavailable images. Document backup/restore and reproducible delivery
+  of matching seed data and files. Verify the complete path on five pilot books, including restart
+  and redeployment. This is a bounded cover feature, not a general media platform.
+- [ ] Task 2 — Demo front covers for all 109 existing books, dependent on Task 1: approve the
+  visual approach on the same five-book pilot, then prepare and review the remaining covers in
+  batches. Use image generation, optionally with 2–3 suitable reference images per book; record
+  reference sources and permitted use. Choose uniform dimensions and a web format during the pilot
+  (proposal: 2:3, 600×900 main image, 240×360 thumbnail, WebP); retain originals and a manifest
+  linking book slugs, files, generation details and review status. Label these as project demo
+  artwork, not covers of specific editions. Ship all 109 approved front covers reproducibly.
+- [x] Add a clear missing-book state and simple feedback path without an external import.
+- [x] Persist the validated missing-book title, optional author and authenticated submitting user;
+  confirm success only after saving. Keep submitted text out of logs. Operator listing and request
+  processing are deferred to v0.4.3.
+- [x] Add only the administrator role, protected routes, catalog find/create/correct operations,
   and critical-change audit records needed to maintain the demo catalog.
 
-Outcome: a small closed cohort can use reproducible catalog data that an operator can correct
-without direct SQL.
+#24 implementation, automated verification, and user-confirmed browser review are complete.
+The operator workflow is accepted. #25 feedback implementation and automated verification are
+complete; the user confirmed successful manual browser review and accepted it on 2026-10-15.
+The original three scope items are accepted. Persistence implementation and automated verification
+on SQLite/PostgreSQL are complete; the user confirmed persistence browser acceptance on 2026-10-25
+(Zen Browser, SQLite). Final #26 checks passed on 2026-10-25: full race tests, vet/lint, SQLite
+migration/seed smoke, isolated PostgreSQL integration, JavaScript tests and formatting/diff checks.
+See [verification and manual evidence](testing.md#v032-acceptance-coverage-26). Final documentation
+acceptance documentation and PR/issue closure remain pending; v0.3.3 scope is unchanged.
+
+Post-review corrections: feedback GET/POST moved to `/books/request/new` without renaming or
+reserving book slugs; PostgreSQL seed uses `COLLATE "C"`; operator IDs use `1..2147483647`.
+Shared backend regressions, full race tests, vet/lint and isolated PostgreSQL checks passed.
+Downgrade documentation now requires stopped writers, backup and schema/data inspection before
+any dirty-version repair; `force` is not automatic SQL recovery. Earlier manual acceptance applies
+to the previous form route; the user separately confirmed the new-route recheck on 2026-10-25
+without reporting environment details. Fixes through `9d764db` are pushed, and final local checks
+and published-head CI passed. Commit/push of this acceptance record and final closure remain.
+
+The earlier verification and #26 closure notes above cover the original implementation only.
+The two new cover tasks need separate tracking and acceptance before v0.3.2 can close.
+Cover completion does not establish the accuracy or provenance of legacy book descriptions.
+
+Outcome: the existing 109 books have reproducible, reviewed demo front-cover files shown throughout
+the MPA, and an operator can correct catalog data without direct SQL.
 
 #### v0.3.3 — Reliability and Release Closure
 
@@ -317,6 +392,11 @@ Outcome: the complete private-library flow is releasable and operable as a curat
 
 #### v0.3.4 — Public Demo Polish
 
+- [ ] Define and implement a reviewed workflow for adding new books, then expand from 109 to
+  500 books total with checked metadata and demo front covers using the v0.3.2 storage/generation
+  workflow. Compare individual operator entry, a validated JSON/CSV batch and source-assisted
+  drafts; select the mechanism before expansion. Check duplicates, metadata provenance and
+  description quality; keep additions reproducible. External-provider import remains v0.4 work.
 - [ ] Polish the shared MPA interface: typography, layout, responsive behavior, form states, empty
   states, contrast, and keyboard navigation.
 - [ ] Expand the home and About pages with the learning project's purpose, implemented
@@ -326,8 +406,8 @@ Outcome: the complete private-library flow is releasable and operable as a curat
 - [ ] Add baseline public-page metadata; canonical URLs, redirects, and sitemap behavior remain
   v0.4 work.
 
-Outcome: Book Social can be shown as a clear, polished public demonstration without claiming a
-public beta or a finished social service.
+Outcome: Book Social can be shown as a clear, polished public demonstration with 500 reviewed books
+and demo front covers, without claiming a public beta or a finished social service.
 
 #### v0.3.5 — Hetzner Cloud Hosted Stage
 
@@ -367,13 +447,15 @@ components without changing the application architecture.
 
 ### Catalog and Operator Scope
 
-- [ ] Separate test fixtures, deterministic development seed data, and a curated demo catalog.
+- [x] Separate ordinary test fixtures from deterministic development seed data.
+- [ ] Complete v0.3.2 cover storage/display and reviewed demo front covers for the existing 109
+  books; complete the reviewed addition workflow and expand to 500 books total in v0.3.4.
 - [ ] Prepare a reproducible demo catalog suitable for product demonstrations and a small closed
   user cohort.
 - [ ] Document data provenance and permitted cover usage for demo records.
-- [ ] Protect minimal admin routes with an administrator role.
-- [ ] Allow an operator to find, create, and correct the metadata needed by the demo catalog.
-- [ ] Record critical administrative changes with actor, entity, action, and time.
+- [x] Protect minimal admin routes with an administrator role.
+- [x] Allow an operator to find, create, and correct the metadata needed by the demo catalog.
+- [x] Record critical administrative changes with actor, entity, action, and time.
 
 ### Engineering Scope
 
@@ -455,6 +537,8 @@ Outcome: a user reliably finds an existing catalog record and can add it to thei
 
 #### v0.4.3 — First Controlled Import
 
+- [ ] Show an authorized operator the missing-book requests saved since v0.3.2, including title,
+  optional author and submitting user; allow marking a request processed or rejected.
 - [ ] Implement one source-specific lookup/import by ISBN or external ID, started only by an
   authenticated operator.
 - [ ] Add source provenance, rate/timeout controls, idempotency, conflict review, and explicit
@@ -594,6 +678,10 @@ import script.
 Outcome: the team can prove a batch-import workflow without modifying the public catalog.
 
 #### v0.5.2 — Reviewed Publication and Licensed Covers
+
+Build on the demo cover-file storage introduced in v0.3.2 and reused for the 500-book catalog in
+v0.3.4. This stage adds admission and rights evidence for externally sourced batch cover assets;
+it does not postpone basic demo-file storage or display until v0.5.
 
 - [ ] Promote accepted staging records only through an explicit operator decision; provide a
   read-only public progress/result page with source, version, scope, and limitations.

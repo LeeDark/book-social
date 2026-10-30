@@ -70,6 +70,31 @@ a CSS placeholder. Uploading, proxying, or storing cover files is not part of th
 
 The normalized schema is described in [database_v0_2.md](database_v0_2.md).
 
+### Curated Catalog Operations
+
+v0.3.2 lets a deliberately appointed administrator find, create, and correct demo books while
+preserving stable public book slugs. Operators select existing authors and genres, may set or clear
+one front-cover URL, and produce one audit record for each successful create or correction,
+including no-op corrections. Catalog, relationship, cover and audit writes are atomic. Audit records
+are append-only through the application API, not protected against a database owner using direct
+SQL. The internal authorization capability does not enter page models or templates.
+
+Missing-book feedback provides an authenticated MPA form. Its original non-persistent flow was
+accepted; the v0.3.2 service now saves a request before emitting one metadata-only structured event.
+The stored row contains a generated ID, submitting user ID, normalized title, optional author text
+and UTC creation time. Submitted title/author values are not logged.
+The user comes from session identity, an absent author is stored as an empty string, and deleting
+the submitting account will cascade to its requests. Repeated submissions are separate requests;
+there is no required catalog book/author reference or account-data snapshot.
+
+Real-database HTTP acceptance passes on SQLite/PostgreSQL. The user confirmed persistence browser
+review on 2026-10-25 (Zen Browser, SQLite).
+Operator listing and processed/rejected decisions are planned for v0.4.3; the v0.3.2 model adds no
+processing status.
+Catalog deletion, author/genre administration,
+external import, and cover asset handling remain deferred. Current and planned rules are in
+[Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
+
 ### User and Authentication Foundation
 
 The current `users` module provides:
@@ -80,7 +105,8 @@ The current `users` module provides:
 - credential verification with one neutral invalid-credentials outcome;
 - a dummy bcrypt verification path for an unknown account;
 - DB-backed opaque-session creation, lookup, expiry, and invalidation;
-- minimal current-user identity without password hash or role internals.
+- current-user identity without password hash, with an internal `IsAdmin` capability loaded from
+  the current database role on each authenticated request.
 
 Sessions have a seven-day absolute lifetime without sliding renewal. The raw high-entropy token is
 browser-facing; persistence receives only its 32-byte SHA-256 hash. Missing, invalid, or expired

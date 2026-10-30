@@ -32,6 +32,25 @@ func TestLoadDefaultsToSevenDaySessionLifetime(t *testing.T) {
 	}
 }
 
+func TestCoverDirectoryConfiguration(t *testing.T) {
+	unsetEnv(t, "APP_COVERS_DIR")
+	cfg, err := Load()
+	if err != nil || cfg.Covers.Dir != "./data/covers" {
+		t.Fatalf("default cover directory = %q, %v", cfg.Covers.Dir, err)
+	}
+	t.Setenv("APP_COVERS_DIR", "/var/lib/book-social/covers")
+	cfg, err = Load()
+	if err != nil || cfg.Covers.Dir != "/var/lib/book-social/covers" {
+		t.Fatalf("configured cover directory = %q, %v", cfg.Covers.Dir, err)
+	}
+	for _, value := range []string{"", "  "} {
+		t.Setenv("APP_COVERS_DIR", value)
+		if _, err := Load(); err == nil || !strings.Contains(err.Error(), "APP_COVERS_DIR") {
+			t.Fatalf("Load() error = %v, want cover directory error", err)
+		}
+	}
+}
+
 func TestLoadAcceptsSupportedEnvs(t *testing.T) {
 	tests := []string{EnvDev, EnvStage, EnvProd}
 

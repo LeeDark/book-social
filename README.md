@@ -6,8 +6,32 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-v0.3.1 Reading-State Lifecycle is implemented on top of the v0.3.0 Private Library Foundation and
-is awaiting external review and the mandatory local browser smoke check:
+v0.3.1 Reading-State Lifecycle is closed on top of the v0.3.0 Private Library Foundation.
+The original v0.3.2 Curated Catalog Operations scope is implemented and accepted: deterministic demo
+data/provenance, administrator-only catalog find/create/correct pages with transactional audit,
+and authenticated missing-book requests persisted before confirmation. Apply migrations through
+`000008` before using the updated application. The expanded cover scope now has local file
+storage/HTTP delivery, database references/metadata, administrator uploads and shared cover rendering
+with unavailable-image fallback. Persistent Compose volumes and an explicit pilot installer/verifier
+are configured; the reviewed five-book artwork, container lifecycle/real PostgreSQL restore and
+visual acceptance remain pending. See [the cover contract](docs/cover_storage_v0_3_2.md) and
+[delivery/recovery procedure](docs/cover_operations.md). Before recreating an older container,
+preserve its cover files: the new volumes do not migrate its old writable layer automatically.
+Cover-specific automated checks pass on SQLite/PostgreSQL at `27c64d2`; reviewed artwork and manual
+acceptance remain open. See [the separate #28 acceptance record](docs/cover_acceptance_v0_3_2.md).
+
+Final automated checks passed on 2026-10-25, including real SQLite/PostgreSQL acceptance. The user
+accepted the operator flow on 2026-10-12 and missing-book persistence on 2026-10-25 (Zen Browser,
+SQLite). See [verification and acceptance evidence](docs/testing.md#v032-acceptance-coverage-26).
+Post-review fixes are pushed through `9d764db`; CI passed on that head. Final acceptance
+documentation and PR/issue closure remain under #26; no merged, tagged or deployed release is claimed.
+
+Demo metadata has documented but unverified external provenance; the seed contains no covers.
+Operator listing and processed/rejected decisions for saved requests remain planned for v0.4.3.
+
+Post-review correction: the feedback form is now at `/books/request/new`, avoiding a collision
+with public books whose slug is `request`. The user confirmed successful focused browser recheck
+on 2026-10-25; environment details for this recheck were not separately reported.
 
 - Home and About pages.
 - Book catalog page.
@@ -23,7 +47,9 @@ is awaiting external review and the mandatory local browser smoke check:
 - `golang-migrate` CLI wiring and v0.1/v0.2 migrations for SQLite and PostgreSQL.
 - Normalized catalog tables for many-to-many authors/genres and URL-only cover metadata.
 - Catalog cards and book details render all related authors and genres.
-- Book details display the `front` cover URL when available and a CSS placeholder otherwise.
+- Book details use the main `front` image; home/catalog/author/library cards prefer its thumbnail.
+  Missing covers use a CSS placeholder; a small external script reveals it on image-load failure,
+  including after HTMX updates. Images preserve proportions without cropping or stretching.
 - The home page uses the shared catalog-card read model for a deterministic featured selection.
 - Migration-first reset and Docker/Compose bootstrap followed by development seed data.
 - Local migration/seed smoke checks and v0.2 SQLite/PostgreSQL test helpers.
@@ -199,6 +225,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Domain model](docs/domain.md)
 - [Go and SQL readability](docs/code-readability.md)
 - [Private Library v0.3 contract](docs/library_v0_3.md)
+- [Curated Catalog Operations v0.3.2 contract](docs/catalog_operations_v0_3_2.md)
 - [Database v0.1](docs/database_v0_1.md)
 - [Database v0.2](docs/database_v0_2.md)
 - [MPA auth contract](docs/drafts/auth-contract.ru.md)
@@ -211,7 +238,7 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Complete external review, PostgreSQL verification, and mandatory local smoke for v0.3.1.
+- Complete v0.3.2 release closure after accepted missing-book persistence verification.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:

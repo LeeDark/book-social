@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Book Social — пилотные демо-обложки, draft v1</title>
+    <style>
+        body { margin: 2rem auto; padding: 0 1rem; max-width: 90rem; font: 16px/1.5 system-ui, sans-serif; color: #e2e8f0; background: #17202c; }
+        h1 { line-height: 1.2; }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+        article { padding: 1rem; background: #253244; border-radius: 0.5rem; }
+        h2 { font-size: 1.2rem; min-height: 3.6em; }
+        img { display: block; width: 240px; height: 360px; max-width: 100%; object-fit: contain; }
+        a { color: #a5d8ff; }
+        code { overflow-wrap: anywhere; }
+    </style>
+</head>
+<body>
+    <h1>Пять пилотных демо-иллюстраций — draft v1</h1>
+    <p>Оригинальные AI-иллюстрации проекта, не обложки конкретных изданий. Внешние изображения-референсы не использовались.</p>
+    <p>Ни одна обложка пока не утверждена. Здесь показаны реальные миниатюры 240×360; нажатие открывает WebP 600×900. Сервер и JavaScript не нужны.</p>
+    <p>Проверь согласованность серии, узнаваемость сюжета, контраст, детали в миниатюре и отсутствие нежелательного сходства с изданиями/экранизациями. Проверка этих файлов не заменяет просмотр в приложении.</p>
+    <main class="gallery">
+        <article>
+            <h2>A Christmas Carol</h2>
+            <p>Charles Dickens · <code>a-christmas-carol</code></p>
+            <a href="bundle/a-christmas-carol-main.webp"><img src="bundle/a-christmas-carol-thumb.webp" width="240" height="360" alt="Кандидат демо-иллюстрации для A Christmas Carol"></a>
+            <p><a href="bundle/a-christmas-carol-main.webp">Основной WebP 600×900</a> · <a href="sources/a-christmas-carol.png">Исходный PNG</a></p>
+        </article>
+        <article>
+            <h2>Pride and Prejudice</h2>
+            <p>Jane Austen · <code>pride-and-prejudice</code></p>
+            <a href="bundle/pride-and-prejudice-main.webp"><img src="bundle/pride-and-prejudice-thumb.webp" width="240" height="360" alt="Кандидат демо-иллюстрации для Pride and Prejudice"></a>
+            <p><a href="bundle/pride-and-prejudice-main.webp">Основной WebP 600×900</a> · <a href="sources/pride-and-prejudice.png">Исходный PNG</a></p>
+        </article>
+        <article>
+            <h2>Frankenstein</h2>
+            <p>Mary Shelley · <code>frankenstein</code></p>
+            <a href="bundle/frankenstein-main.webp"><img src="bundle/frankenstein-thumb.webp" width="240" height="360" alt="Кандидат демо-иллюстрации для Frankenstein"></a>
+            <p><a href="bundle/frankenstein-main.webp">Основной WebP 600×900</a> · <a href="sources/frankenstein.png">Исходный PNG</a></p>
+        </article>
+        <article>
+            <h2>Alice's Adventures in Wonderland</h2>
+            <p>Lewis Carroll · <code>alices-adventures-in-wonderland</code></p>
+            <a href="bundle/alices-adventures-in-wonderland-main.webp"><img src="bundle/alices-adventures-in-wonderland-thumb.webp" width="240" height="360" alt="Кандидат демо-иллюстрации для Alice's Adventures in Wonderland"></a>
+            <p><a href="bundle/alices-adventures-in-wonderland-main.webp">Основной WebP 600×900</a> · <a href="sources/alices-adventures-in-wonderland.png">Исходный PNG</a></p>
+        </article>
+        <article>
+            <h2>Twenty Thousand Leagues Under the Seas</h2>
+            <p>Jules Verne · <code>twenty-thousand-leagues-under-the-seas</code></p>
+            <a href="bundle/twenty-thousand-leagues-under-the-seas-main.webp"><img src="bundle/twenty-thousand-leagues-under-the-seas-thumb.webp" width="240" height="360" alt="Кандидат демо-иллюстрации для Twenty Thousand Leagues Under the Seas"></a>
+            <p><a href="bundle/twenty-thousand-leagues-under-the-seas-main.webp">Основной WebP 600×900</a> · <a href="sources/twenty-thousand-leagues-under-the-seas.png">Исходный PNG</a></p>
+        </article>
+    </main>
+    <p><a href="artwork-provenance.json">Provenance и размеры/checksums</a> · <a href="prompts.json">Точные запросы генерации</a> · <a href="bundle/manifest.json">Неутверждённый manifest</a></p>
+</body>
+</html>

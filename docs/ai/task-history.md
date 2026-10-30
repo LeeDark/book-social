@@ -769,3 +769,557 @@ Residual risks:
 - `ListBookStates` uses one SQL placeholder per displayed book. The current 109-book catalog is
   well below SQLite and PostgreSQL parameter limits; add pagination or another batching strategy
   before the catalog grows materially.
+
+## 2026-10-04 — v0.3.2 scope agreed
+
+- Activated curated catalog operations: deterministic demo data/provenance, administrator
+  create/correct operations with audit, and authenticated missing-book feedback.
+- External import, catalog deletion, author/genre administration and media storage were deferred.
+  Feedback was initially non-persistent; its scope was expanded on 2026-10-15.
+
+## 2026-10-11 — Development seed and provenance (#23)
+
+- Separated minimal test fixtures from the deterministic 109-book SQLite/PostgreSQL development
+  seed. Fresh IDs follow slug order; existing databases are unaffected.
+- Recorded metadata lineage, unknown source/reuse rights and cover limitations. Unverified covers
+  remain absent; broader reuse still requires source verification or reviewed replacement text.
+- Added seed parity, generated-ID/sequence, provenance and HTTP acceptance checks.
+- Passed: `make test` (race), `make test/integration` (PostgreSQL), `make db/migrate/smoke`,
+  `go vet ./...` and `git diff --check`. #23 accepted.
+
+## 2026-10-11–12 — Administrator catalog workflow (#24)
+
+- Added paired migration `000006`: unassigned administrator role and audit storage. Rollback
+  refuses existing audit data or an appointed administrator.
+- Added current-role authorization and five guarded MPA routes for find/create/correct. Anonymous
+  users receive `303 /login`; ordinary users receive `403`. Promotion/demotion affects the next
+  request; administrator capability stays out of page models.
+- Implemented accessible retained form errors, immutable correction slugs, optional ASCII slug
+  suggestions, existing-author/genre selections, HTTPS cover metadata and one-request flashes.
+  Unknown IDs return `404`, malformed input `422`, duplicate slugs `409`.
+- Book/link/cover changes and one UTC audit entry commit together, including no-op corrections.
+  Audit summaries contain only changed field groups; direct SQL by the owner is not prevented.
+- SQLite/PostgreSQL HTTP acceptance verifies authorization, public URLs, safe logs and rollback
+  after audit failure. Optional author/genre selections remain valid.
+- Passed: `make test` (race), `make test/integration`, `make db/migrate/smoke`,
+  `go vet ./...`, `node internal/web/tests/catalog-operator.test.cjs` (four tests),
+  formatting and `git diff --check`. Lint passed with Go 1.26.4 after resolving the active
+  Go 1.27.1/toolchain incompatibility.
+- User confirmed browser review and accepted #24 on 2026-10-12. Browser version/backend were not
+  reported. Acceptance was recorded in the docs, roadmaps and GitHub criteria without closing
+  the issue or declaring the release complete.
+
+## 2026-10-14–15 — Missing-book form, acceptance and scope expansion (#25)
+
+- Added authenticated `GET/POST /books/request`, catalog/empty-state links, required title,
+  optional author, accessible `422` errors and `303 /books` with one-request confirmation.
+  Fields are trimmed and limited to 255 Unicode code points; invalid UTF-8, NUL and
+  malformed/oversized bodies are rejected. Existing auth, cross-origin and no-store policies apply.
+- The original flow logs only request/actor IDs, field lengths and author presence. It stores no
+  book text, so earlier events cannot identify or recover the requested books.
+- Service/HTTP tests cover validation, escaping, anonymous/expired sessions, cross-origin refusal,
+  private-data exclusion and flash lifetime. `make test` (race), `go vet ./...`, formatting
+  and `git diff --check` passed; PostgreSQL tests skipped without a DSN.
+- User confirmed browser review and accepted the original flow on 2026-10-15; browser version,
+  backend and launch command were not reported.
+- Subsequently agreed: save title, optional author and submitting user in v0.3.2; add operator
+  listing and processed/rejected decisions in v0.4.3. Updated contracts, roadmaps and verification
+  plans. v0.3.2 remains active until the expanded scope is implemented and verified.
+
+## 2026-10-23 — Missing-book persistence (#25)
+
+- Defined `missing_book_requests`: generated ID, session-owned user ID, normalized title,
+  optional author as empty text, and application-assigned UTC creation time. No account snapshots,
+  catalog references, deduplication or processing status; repeated submissions are separate rows.
+- Added paired migration `000007` with required fields, Unicode length checks and
+  `ON DELETE CASCADE` / `ON UPDATE RESTRICT`. Non-empty rollback is refused; PostgreSQL locks
+  the table before checking emptiness. Updated migration-version and SQLite smoke rollback checks.
+- Added `MissingBookRepository.Create` and SQLite/PostgreSQL implementations using one
+  parameterized insert. Time uses UTC RFC3339Nano text in SQLite and `TIMESTAMPTZ` in PostgreSQL.
+  Unexpected failures return a safe sentinel without driver details; context errors are preserved.
+- Shared disposable-database tests cover stored fields, optional author, Unicode, repeated
+  submissions, constraints, cascade, rollback, UTC conversion and safe errors.
+- Connected the selected backend in `cmd/web`. The service validates, saves normalized fields with
+  session user/UTC time, then emits the event; save failure returns `500` without success flash or
+  redirect. Fake-based tests verify ordering, failure privacy, refusals without writes and no repeat
+  save after refreshing the redirected catalog.
+- Added real-session SQLite/PostgreSQL HTTP acceptance: stored fields and session owner, UTC time,
+  empty author, repeat POSTs, one-request flash, refusals without writes and GETs without repeat
+  saves. Test-only triggers verify failed inserts preserve prior requests and expose no text or
+  database diagnostics in responses/logs.
+- Final checks passed: focused missing-book tests, `make test` (race), `make test/integration`
+  (real PostgreSQL), `make db/migrate/smoke`, `go vet ./...`, lint (Go 1.26.4 toolchain), formatting
+  and `git diff --check`. Development databases were not changed; disposable Compose resources
+  were removed.
+- Synchronized runtime/storage contracts, README, context and roadmaps; added a persistence browser
+  checklist with read-only row inspection. Implementation and automated acceptance are complete;
+  renewed user browser review remains pending, so persistence acceptance and v0.3.2 stay open.
+  Operator listing and processing remain v0.4.3.
+
+## 2026-10-25 — Missing-book persistence acceptance (#25)
+
+- User confirmed all manual checks passed in Zen Browser with SQLite; browser version and exact
+  launch commands were not reported. Recorded expanded #25 acceptance and completed roadmap scope.
+  PostgreSQL browser review is not claimed; GitHub issue/PR and v0.3.2 release closure are separate.
+
+## 2026-10-25 — v0.3.2 verification and documentation (#26, steps 1–5)
+
+- Updated #26 to require accepted missing-book persistence rather than forbid it; operator request
+  processing remains v0.4.3. Mapped release criteria to existing migration, seed/provenance,
+  authorization, operator/audit and missing-book tests in `docs/testing.md`; no additional code/test
+  changes were needed. Focused Go checks passed on SQLite and with fakes; PostgreSQL skipped without
+  a DSN.
+- Final automated checks passed on implementation `78fe3ad`: `make test` (race), `go vet ./...`,
+  `make db/migrate/smoke`, `make test/integration` (real PostgreSQL), four JavaScript tests, lint
+  (Go 1.26.4; zero issues), formatting and `git diff --check`. Disposable PostgreSQL resources were
+  removed; development databases were unchanged. PR #27 CI passed for `78fe3ad`; recheck after the
+  final documentation commit/push. Documentation closure and PR readiness remain subsequent steps.
+- Consolidated existing manual acceptance: operator on 2026-10-12, original feedback on 2026-10-15,
+  persistence on 2026-10-25 (Zen Browser, SQLite). Preserved missing environment details and the
+  distinction from automated PostgreSQL evidence. No behavior changed, so no repeat browser run
+  was required or claimed; repeat affected checks only if a later fix changes behavior.
+- Updated current-behavior docs and synchronized public/Ukrainian/private roadmaps: implementation
+  and acceptance are complete, but final commit/push, CI confirmation and PR/issue closure remain
+  pending. Corrected stale planned-operator and CI descriptions, documented migrations through
+  `000007`, and retained unverified legacy provenance/no-cover limits. v0.3.3 and v0.4.3 scope is
+  unchanged; no release tag or deployment is claimed. Documentation diff checks passed.
+
+## 2026-10-25 — External review, fixes and acceptance (#26)
+
+- Moved feedback to `/books/request/new`, preserving public URLs for existing/new books with slug
+  `request` without renaming or reserving slugs; added route/form and shared backend regressions.
+- Fixed PostgreSQL seed ID ordering with `COLLATE "C"`; added SQL-contract and non-binary ICU
+  parity regressions. Existing catalogs are not renumbered or repaired by rerunning seed;
+  provenance limits are unchanged. No glibc `en_US.UTF-8` run is claimed.
+- Limited operator route/selection IDs to `1..2147483647`: overflow gives `422` before lookup/write,
+  absent in-range books give `404`. Boundary/backend tests verify unchanged catalog/audit data;
+  range and seed-contract tests failed before their fixes. Library routes were not changed.
+- Corrected the documented migration baseline to `000007`; documented stopped writers, backups,
+  guarded rollback and dirty-version repair only after schema/data inspection. `force` does not
+  restore SQL or authorize data loss. Synchronized current-behavior docs and all four roadmaps.
+- Final local checks and CI passed on published `9d764db`: full race tests, vet/lint (Go 1.26.4;
+  zero issues), SQLite migration/seed smoke, real PostgreSQL integration with ICU, four JavaScript
+  tests and formatting/diff checks. Disposable resources were removed; development DBs were unchanged.
+- User confirmed the new-route manual recheck; browser/version, backend and launch commands were
+  not separately reported. Acceptance is recorded; PR remains Draft and #26 open pending final closure.
+
+## 2026-10-25 — Cover storage contract and shared pilot (#28, step 1)
+
+- Added `cover_storage_v0_3_2.md` with five seed-backed pilot slugs, prepared-image limits,
+  local/external reference semantics, safe immutable naming, replacement/removal and filesystem/SQL
+  failure rules. WebP 600×900 main / 240×360 thumbnail remains a proposal pending visual pilot review.
+- Linked the extension from the original catalog contract while retaining its historical URL-only
+  scope. Storage, migrations, dependencies, artwork and operational acceptance are not implemented
+  or claimed. No runtime code or seed data changed.
+- Verified all five slugs in both seeds with `rg -n -F`, local document targets with `test -f`,
+  and whitespace with `git diff --check` and `git diff --no-index --check` for the new document.
+  Runtime tests were not run for this documentation-only step.
+
+## 2026-10-25 — Bounded local cover storage and HTTP delivery (#28, step 2)
+
+- Added `internal/storage/covers`: bounded JPEG/PNG/static-WebP decoding, animation rejection,
+  verified metadata and SHA-256 keys, `os.Root` path confinement, synced temporary writes and
+  atomic no-overwrite publication with byte verification on reuse. Invalid inputs do not publish
+  files; stored corruption and symlinks are rejected. No file deletion or SQL attachment API added.
+- Added public GET/HEAD `/media/covers/{key}` with verified MIME, ETag, immutable caching,
+  conditional/range requests and no-store errors. Wired startup/shutdown and `APP_COVERS_DIR`
+  (default `./data/covers`, ignored by Git); session/flash middleware is not used for image serving.
+- Added `golang.org/x/image` v0.47.0 for pure-Go WebP decoding and the required indirect `x/sys`
+  update to v0.49.0. Allowed only the WebP package in depguard; `go mod tidy` also corrected the
+  existing bcrypt module's direct classification. Updated contract/development/route docs.
+- Passed focused storage/HTTP/config/route tests, `GOCACHE=/tmp/book-social-go-cache make test`
+  (race, Go 1.27.1), and `GOCACHE=/tmp/book-social-go-cache go vet ./...`.
+  PostgreSQL opt-in tests were skipped without a DSN; no schema/SQL change was made.
+- Passed project-toolchain verification:
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/storage/covers ./internal/http/cover ./internal/config ./internal/app -run 'Test(Put|Read|Image|Damaged|Cover|Load)'`,
+  followed by the storage package's race tests after strengthening its checksum regression;
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues); and
+  `GOTOOLCHAIN=go1.26.4 CGO_ENABLED=0 GOOS=linux GOCACHE=/tmp/book-social-go-cache go build -o /tmp/book-social-cover-step2 ./cmd/web`.
+  Build exited successfully despite a non-fatal read-only module stat-cache warning.
+- Initial dependency access/tidy attempts hit sandbox restrictions and succeeded after escalation.
+  The first lint attempt could not parse Go 1.27 standard-library sources with a Go 1.26-built
+  linter; the documented Go 1.26.4 invocation resolved that mismatch. One lint suggestion was
+  corrected before the final clean run. Formatting and diff checks passed.
+- Operator upload, database links/metadata persistence, card rendering/fallback, pilot artwork,
+  Compose volumes and backup/restore remain later steps. Files require a trusted local directory
+  with hard-link/directory-sync support; serving currently revalidates/decodes each requested file.
+  No server, manual browser run, restart/redeployment or operational acceptance was performed.
+
+## 2026-10-25 — Local cover references and metadata parity (#28, step 3)
+
+- Added paired migration `000008_add_local_cover_files`: a nullable main storage key and complete
+  optional thumbnail metadata on `covers`, retaining existing IDs, external URLs/metadata,
+  uniqueness and foreign keys. Named constraints check canonical keys/URLs, measured metadata
+  limits and thumbnail format/proportions/distinct key. Guarded down refuses existing local
+  references; PostgreSQL locks `covers` before the check. No image bytes or pilot records added.
+- Added typed `StoredCoverFile`/`LocalFrontCover` and transactional `SetLocalFrontCover` to both
+  repositories. Public detail and operator reads round-trip all local metadata. Main-only
+  replacement clears an old thumbnail; changed external URLs clear all local fields, unchanged
+  URLs retain metadata, and removal preserves other variants and physical files. The caller must
+  verify published bytes and authorize/write the audit in the same transaction.
+- Added shared SQLite/PostgreSQL repository and migration tests for local/external transitions,
+  metadata round trips, invalid references, thumbnail consistency, audit failure/rollback and
+  safe downgrade/reapply. Updated catalog fixtures to the current read schema and migration
+  smoke's rollback depth. Historical migration tests retain their explicit version boundaries.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test` (race),
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make db/migrate/smoke`, and
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`.
+  Focused race tests were repeated after the final reference-validation changes:
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/modules/books ./internal/testutil ./internal/storage/sqlite -run 'Test(LocalFrontCover|SQLiteLocalCover|SQLiteCatalogOperator|BookRepositoryGet)'`.
+- Passed real PostgreSQL migration up/down/up, repository and HTTP checks with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test/integration COMPOSE_INTEGRATION='docker compose -p book-social-cover-step3 -f compose.integration.yaml'`.
+  Repeated after the final constraint/error-handling changes. Docker access required escalation;
+  the separate project was initially empty and its disposable container/network/DB were removed
+  by the existing cleanup. Development/stage/prod databases were not accessed or migrated.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues after replacing an optional nil/nil helper result with explicit no-row handling),
+  formatting and diff checks. Updated README/database/contract/route/development documentation;
+  apply `000008` before starting this application revision.
+- Local attachment is an internal repository boundary only. The existing browser form/service
+  still accepts external HTTPS URLs; upload actions and ordinary edits retaining a local cover
+  are step 4 work. Card rendering, fallback, pilot assets, volume delivery and restore remain
+  later steps. No browser run or operational acceptance is claimed; #28 remains open.
+
+## 2026-10-25 — Operator cover upload and explicit actions (#28, step 4)
+
+- Extended existing create/edit forms with multipart main/optional-thumbnail uploads and explicit
+  keep/upload/external/remove actions. Omitted action defaults to keep; replacement URL/file inputs
+  start empty while the current cover remains linked. A blank URL no longer implicitly removes a
+  cover. Updated legacy URL test inputs to choose their action explicitly; old forms must be reopened.
+- Added a small books-owned preparation interface and app adapter to the existing local store.
+  Both images and their relationship are validated before publishing either. Authorization/target
+  lookup precede publication outside SQL; the write transaction rechecks authorization/existence
+  before attaching metadata and its audit. Ordinary edits skip cover writes, main-only replacement
+  clears the old thumbnail, and thumbnail-only changes at the same URL are audited as `front_cover`.
+- Enforced 12 MiB multipart bodies, 128 KiB text and 5 MiB per file; rejected contradictory actions,
+  duplicate/unknown file fields, invalid images/MIME and thumbnail-only requests. Upload streams
+  close and multipart temporary files are removed after requests. Failures never set a success
+  flash; SQL/audit failure retains previous references and published files without automatic deletion.
+- Added adapter/service tests plus shared real-session SQLite/PostgreSQL HTTP scenarios for create,
+  upload, identical upload, thumbnail removal, local replacement, default keep, HTTPS switch,
+  front-only removal, authorization/cross-origin refusals, limits, temporary cleanup, storage error
+  and audit rollback for correction/creation. Logs are checked against submitted names/content.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test` (race),
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`, and focused final race checks:
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/modules/books ./internal/app -run 'Test(Operator|CoverPreparer|SQLiteCatalogOperatorHTTPAcceptance)'`.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test/integration COMPOSE_INTEGRATION='docker compose -p book-social-cover-step4 -f compose.integration.yaml'`
+  against an initially empty, separate disposable PostgreSQL project. Its container/network/test DB
+  were removed by the existing cleanup; retained development/stage/prod databases were not changed.
+  Docker access required sandbox escalation. Existing migrations passed up/down/up; no migration added.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues), `node --test internal/web/tests/catalog-operator.test.cjs`, and
+  `GOTOOLCHAIN=go1.26.4 CGO_ENABLED=0 GOOS=linux GOCACHE=/tmp/book-social-go-cache go build -o /tmp/book-social-cover-step4 ./cmd/web`.
+  Build succeeded with a non-fatal read-only module stat-cache warning. Initial expected regressions
+  from implicit URL actions were updated; a nil/nil lint finding was fixed. Formatting/diff checks passed.
+- Updated README and operator/storage/database/development/route documentation. No dependencies,
+  pilot artwork, all-card/fallback rendering, volumes or backup/restore were added. Manual browser
+  acceptance is pending; open `/admin/catalog`, `/admin/catalog/books/new`, a selected book's edit
+  page and `/books/{slug}` locally. No web server was started inside the sandbox; #28 remains open.
+
+## 2026-10-25 — Cover implementation readability follow-up (#28)
+
+- Renamed the cover preparation operation to `ValidateAndStore` and its service helper to
+  `publishCover`, making publication side effects explicit. Expanded stored-file mappings and
+  renamed the validation boolean to `isValid` according to `docs/code-readability.md`.
+- Split HTTP acceptance coverage into named scenarios with explicit independent fixtures and
+  focused helpers. Creation rollback now requires `ErrBookNotFound`, not just any lookup error.
+  Removed the context-bearing reader struct in favor of a context-first bounded read helper;
+  added a regression test for cancellation between source reads without publishing a file.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test` (race),
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`, and
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues). Focused race checks passed with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/storage/covers ./internal/modules/books ./internal/app -run 'Test(Put|Operator|CoverPreparer|SQLiteCatalogOperatorHTTPAcceptance)'`.
+- Verified scenario independence with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test ./internal/app -run '^TestSQLiteCatalogOperatorHTTPAcceptance$/^local_replacement_clears_the_old_thumbnail$' -count=1`.
+  Passed real PostgreSQL migrations and integration checks with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test/integration COMPOSE_INTEGRATION='docker compose -p book-social-cover-readability -f compose.integration.yaml'`.
+  Docker access required escalation; the initially empty disposable project was cleaned up,
+  without accessing retained development/stage/prod databases. Formatting and diff checks passed.
+- No HTTP behavior, schema or dependency changes. Existing shared test-helper signatures with
+  `(t, ctx)` remain deferred to a separate focused cleanup; untouched code was not bulk-reformatted.
+- Follow-up visual-structure pass added the missed blank-line phase boundaries in cover action
+  normalization/publication/comparison, operator service/form handling/view mapping, the app
+  adapter, image validation/local storage and their cover tests. This pass changes only whitespace
+  in Go files. Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test ./internal/modules/books ./internal/app ./internal/storage/covers`,
+  `gofmt` and `git diff --check`; no additional PostgreSQL run was needed for whitespace-only edits.
+
+## 2026-10-25 — Shared front-cover rendering and fallback (#28, step 5)
+
+- Catalog/home/author cards and owner-scoped library items now read cover metadata in batches
+  in both repositories, reusing the existing cover reader without per-card SQL or file checks.
+  `SelectCardFrontCover` prefers a prepared front thumbnail, otherwise the main URL; details
+  retain the main image. Back/other variants are not displayed as front artwork. External HTTPS
+  covers remain supported. No schema, dependency, catalog selection or write-policy changes.
+- Added shared `book_cover.tmpl` with the existing title-based placeholder, measured dimensions,
+  lazy/async images and a stable 2:3 frame using `object-fit: contain`. Library items now have a
+  responsive cover beside their unchanged status/removal forms. Labelled links/detail frame
+  provide the accessible name; decorative artwork avoids duplicate announcements.
+- Added external `cover-images.js`: captured image errors and cached-failure checks on DOM ready
+  and HTMX load reveal the placeholder without inline handlers/CSP changes. Missing metadata
+  needs no JavaScript; unavailable-image fallback does. A failed thumbnail reveals the placeholder
+  rather than retrying the main image. No image resizing, artwork generation or delivery added.
+- Added selection/library view tests, shared opt-in SQLite/PostgreSQL HTTP scenarios for every
+  card/detail context, main-only/external covers, absent metadata and missing files, plus small
+  JavaScript DOM-double checks for cached/pending/loaded images and HTMX failures. Updated old
+  assertions that intentionally expected no cover metadata in lists or the old detail markup.
+  An initial test wiring compile error was corrected to use the existing library-state adapter.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test ./internal/app ./internal/modules/books ./internal/modules/library ./internal/storage/sqlite ./internal/storage/postgresql`,
+  then final `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test` (race),
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`,
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues), `node --test internal/web/tests/*.test.cjs`, formatting and diff checks.
+  PostgreSQL tests were skipped without `BOOK_SOCIAL_POSTGRES_TEST_DSN`; no real PostgreSQL run
+  is claimed for this step. Local verification when requested:
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test/integration COMPOSE_INTEGRATION='docker compose -p book-social-cover-step5 -f compose.integration.yaml'`
+  using an initially empty disposable project, not a retained environment.
+- Reviewed new/materially changed functions against the readability guide, including blank-line
+  phase boundaries, verb-based operation names and batch-read/error ownership. Updated README,
+  architecture/routes/development, the cover contract and synchronized roadmap status without
+  accepting or closing the expanded release scope. Pilot assets, operational delivery/restore
+  and browser visual acceptance remain pending; manual routes and safe request-blocking checks
+  are in the contract. No server was started in the sandbox.
+
+## 2026-10-25 — Persistent cover volumes and explicit delivery/recovery (#28, step 6)
+
+- Configured `/app/covers` and distinct dev/stage/prod-like named cover volumes. Ordinary
+  `make compose/*/down` now retains SQL and cover volumes instead of using `down -v`; no reset or
+  migration of retained files was performed. The image prepares directory permissions and includes
+  `coverctl`; its existing root runtime user was not changed or misrepresented as non-root.
+- Added bounded offline `internal/coverops` and `cmd/coverctl install|verify`, with small consumer
+  interfaces. Installation pins a versioned manifest checksum, validates exactly the five pilot
+  slugs, review/usage attestations and all file checksums/decoded metadata before publishing.
+  Resolve targets/authorize before publication, then recheck and commit references plus normal
+  audits together. Reinstallation of matching metadata adds no writes/audits. SQL/uncertain commit
+  failure retains immutable files. No source artwork is copied into public storage, no seed is
+  replayed, and no automatic cleanup or restore/overwrite operation was added.
+- Maintenance requires explicit DB/storage targets and stopped-writer confirmation; these flags
+  do not substitute for stopping writers. Verification refuses missing SQLite targets/directories
+  and validates all referenced local variants/main/thumbnail bytes, metadata and pair relationships,
+  including refusal of a local URL without its storage key. External URLs are not fetched.
+- Added synthetic bundle/installer refusal tests, authorization recheck, storage/audit/commit
+  failure retention, real SQLite idempotent installation and a fresh SQL snapshot/file restore,
+  storage reopen, missing-thumbnail and metadata-mismatch checks. Added equivalent opt-in PostgreSQL
+  install/verify tests and included `internal/coverops` in `make test/integration` for CI.
+- Passed `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test` (race), followed by
+  final focused `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/coverops ./cmd/coverctl`,
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`, and
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues), `gofmt` and `git diff --check`. PostgreSQL tests skipped without the opt-in DSN;
+  no real PostgreSQL install/dump/restore acceptance is claimed for this step.
+- Passed `docker compose -f compose.yaml -f compose.dev.yaml config --quiet` and the corresponding
+  `compose.stage.yaml`/`compose.prod.yaml` commands. Built the local image with
+  `docker build --progress=plain -t book-social:cover-step6 .` (Docker access required escalation).
+  No app/server container was started and no retained container, volume or database was modified.
+- Added `docs/cover_operations.md` with manifest/explicit installation, safe old-path transition,
+  matching SQL/file backups, fresh-target restore/checksums/reference verification and local lifecycle
+  acceptance steps. Updated README, contract, development/database instructions and synchronized
+  roadmap status. Reviewed all new Go/SQL for naming, context/layer boundaries and blank-line phases.
+  No schema/dependency changes or approved artwork added. Container restart/recreate, real PostgreSQL
+  restore, five approved images and browser visual acceptance remain pending outside the sandbox;
+  the expanded cover scope and #28 remain open.
+
+## 2026-10-25 — Final automated cover verification and pending manual gates (#28, step 7)
+
+- Verified implementation `27c64d2` without changing Go/SQL, dependencies or runtime behavior.
+  Passed focused race checks with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/coverops ./cmd/coverctl ./internal/storage/covers ./internal/http/cover`,
+  full `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test`,
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make db/migrate/smoke`,
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go vet ./...`, and
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache GOLANGCI_LINT_CACHE=/tmp/book-social-lint-cache bin/golangci-lint run ./... --config=./.golangci.yml`
+  (zero issues). Passed `node --test internal/web/tests/*.test.cjs`.
+- Passed real PostgreSQL migration up/down/up and sequential race tests for testutil, PostgreSQL
+  repositories, app HTTP and coverops with
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache make test/integration COMPOSE_INTEGRATION='docker compose -p book-social-cover-step7 -f compose.integration.yaml'`.
+  This closes the pending PostgreSQL automated verification of steps 5–6, not dump/restore or
+  operational acceptance. Docker access required escalation; the initially empty project was
+  cleaned up, and a final listing was empty. No retained dev/stage/prod data or volumes were touched.
+- Both CGO-disabled Linux builds passed:
+  `GOTOOLCHAIN=go1.26.4 CGO_ENABLED=0 GOOS=linux GOCACHE=/tmp/book-social-go-cache go build -o /tmp/book-social-cover-step7-web ./cmd/web` and
+  `GOTOOLCHAIN=go1.26.4 CGO_ENABLED=0 GOOS=linux GOCACHE=/tmp/book-social-go-cache go build -o /tmp/book-social-cover-step7-ctl ./cmd/coverctl`.
+  Each emitted a non-fatal read-only module stat-cache warning. Passed dev/stage/prod
+  `docker compose -f compose.yaml -f compose.<environment>.yaml config --quiet`,
+  `rg --files -g '*.go' | xargs gofmt -l` (empty output) and `git diff --check`.
+- Added `docs/cover_acceptance_v0_3_2.md` with command/results, coverage boundaries, exact seeded
+  pilot routes and unchecked manual gates. Linked it from README, testing and the cover contract;
+  corrected test-schema documentation to `000008` and documented coverops integration coverage.
+  Earlier workflow acceptance and prior skipped-test records remain historical, not overwritten.
+- Step 7 remains incomplete overall: no reviewed five-artwork bundle/profile, browser review,
+  container restart/recreate or real PostgreSQL dump/restore evidence is available. No app/server
+  was started in the sandbox. The next acceptance work requires reviewed assets and local execution
+  outside the sandbox using the documented safe procedures. No issue/release closure or commit
+  was performed as part of this pass.
+
+## 2026-10-25 — First five-cover artwork candidates (#28, pilot preparation)
+
+- Used the imagegen skill and built-in `image_gen` (no CLI/API fallback) for five original project
+  demo illustrations. No external reference images or web sources were supplied. The tool did not
+  expose a model identifier. The first Christmas prompt failed output moderation with no returned
+  image; a simplified benign scene succeeded. Actual prompts/attempts are retained in `prompts.json`.
+- Saved every selected generated PNG into `assets/demo-covers/pilot-v1/sources` without changing
+  its bytes (1024×1536). Prepared WebP 600×900 main and 240×360 thumbnails by deterministic resizing
+  and encoding with ImageMagick 6.9.12-98 (`-strip -quality 84`/`82`), without cropping or stretching.
+  Main files are 99–158 KB and thumbnails 18–30 KB. No text is embedded; application book labels
+  remain authoritative. Original and thumbnail outputs were visually inspected as a preflight,
+  not user approval or a browser/profile acceptance decision.
+- Added an offline `review.html`, Russian README, exact prompt set, provenance with intended use,
+  absence of supplied third-party references, limitations and pending review fields; no exclusive
+  copyright or legal-clearance claim. All five draft manifest entries remain `reviewed: false`.
+  Manifest SHA-256: `b31e1837d8c2ceff092cb8a7298b3ba9ab4dd2f848c7521d7b3698fa88335e3f`.
+  Added payload `SHA256SUMS`, a normalized local `pilot-v1-draft.tar.gz` with a separate digest file,
+  and a scoped ignore rule for archives so Git does not duplicate the preserved source payload.
+- Passed `identify -format '%f|%m|%w|%h|%n\n' assets/demo-covers/pilot-v1/sources/*.png assets/demo-covers/pilot-v1/bundle/*.webp`,
+  read-only Node assertions for exactly five slugs, every source/output checksum and size, geometry,
+  static format and pending review status, `sha256sum -c SHA256SUMS` from the set directory,
+  `sha256sum -c pilot-v1-draft.tar.gz.sha256` from its parent, `gzip -t` on the archive and
+  `git diff --check`. A first combined Node/identify probe encountered sandbox `spawnSync EPERM`;
+  running identification directly and passing its results to the read-only assertions succeeded.
+- Confirmed `coverctl install -writers-stopped -bundle assets/demo-covers/pilot-v1/bundle
+  -manifest-sha256 <draft hash> -actor-id 1` rejects the unreviewed manifest with exit 1, using
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go run ./cmd/coverctl`, `APP_ENV=dev` and
+  explicit absent DB/storage targets under a fresh `/tmp/book-social-cover-draft-check.*` directory.
+  Neither target was created. No retained DB, public cover store, app code or schema was changed;
+  no app was started or artwork installed. Application tests were not rerun for asset-only changes.
+- Linked the candidates from the contract and acceptance record. User review, approved manifest
+  release/checksums and application/browser/operational acceptance remain pending. The five
+  candidates do not authorize generation of the remaining 104 covers or close #28. No commit made.
+
+## 2026-10-25 — Approved five-cover delivery and isolated installation (#28, acceptance step 2)
+
+- User explicitly confirmed all five illustrations and WebP 600×900 / 240×360 pilot profile.
+  Preserved the historical draft unchanged; created `assets/demo-covers/pilot-v1-approved` with
+  byte-identical PNGs/WebPs, prompts, gallery, approval provenance and a reviewed manifest.
+  Bundle ID: `pilot-v1-approved-2026-10-25`; manifest SHA-256:
+  `4f80285da167fbf1695d58b5ec96abbe125cf222f9ff1e3f78ee248b9f7de6f8`.
+  Retained 20-file checksums and a normalized local archive with separately recorded SHA-256
+  `ec447dccefe6a93061991d5b1e2a6164182753f1e4dfc04c1617e370fcb088a4`.
+- Created `/tmp/book-social-pilot-approved.sJzxYR`, applied all eight SQLite migrations and the
+  matching seed once. Explicitly provisioned a non-login admin fixture for audit, not a default
+  account. Initial state: 109 books, zero covers/audits. Ran the real coverctl binary with
+  explicit paths and stopped-writer confirmation. Initial verify: zero; first installation:
+  five changes/five audits; verify: five pairs; second installation: zero changes/five total
+  audits; verify: five pairs again.
+- Compared dumps of all 14 unrelated SQL tables before/after first install: identical.
+  Compared the full DB dump after first/second install: identical. Integrity and foreign-key
+  checks passed; ten canonical WebP files matched approved hashes and mode 0640.
+  This fresh seed had no pre-existing cover variants; preservation of other variants remains
+  synthetic-test evidence. No retained DB/container/volume was accessed or app/server started.
+- Passed asset byte-count/hash/approval assertions, payload/archive checksum checks, gzip integrity,
+  `GOTOOLCHAIN=go1.26.4 GOCACHE=/tmp/book-social-go-cache go test -race -count=1 ./internal/coverops ./cmd/coverctl`
+  and `git diff --check`. Built coverctl successfully with a non-fatal read-only module stat-cache
+  warning. No Go/SQL implementation, migration or dependency changes; no full suite or PostgreSQL
+  run in this pass. Reviewed the new documented provisioning SQL against the readability guide.
+- Added `docs/cover_pilot_installation_v0_3_2.md`, checked the first two acceptance gates and
+  synchronized operational/contract/roadmap status. Browser/HTMX/mobile acceptance, container
+  restart/recreation, actual paired SQLite/PostgreSQL recovery and remaining artwork stay pending.
+  Temporary targets are inspectable but not durable storage. No commit or issue/release closure.
+
+## 2026-10-30 — Record user-reported pilot browser acceptance (#28)
+
+- Updated the acceptance checklist, cover contract and public/private roadmap status to reflect
+  the user's 2026-10-26 Zen browser confirmations: mobile pilot display, five books in the library,
+  home card, HTMX filtering, request-blocked image placeholders and recovery after unblocking.
+  A supplied screenshot shows Pride and Prejudice details at mobile width. Exact browser version
+  and viewport dimensions were not supplied; no desktop/accessibility, main-only, external HTTPS
+  or JavaScript-disabled result was inferred. These remain explicit detailed acceptance checks.
+- Rechecked earlier implementation/verification records: named volumes and Compose configuration,
+  storage close/reopen and fresh SQLite restore tests were completed, but actual app-container
+  restart/recreation was not. Acceptance step 4 and paired operational SQLite/PostgreSQL recovery
+  remain open; the earlier implementation step 4 (administrator uploads) is a different step.
+- Documentation only; no runtime changes, database/container operations or new browser execution.
+  Ran `git diff --check` and checked the new relative evidence links. No application tests rerun
+  for this documentation-only change. No commit or issue/release closure.
+
+## 2026-10-30 — Actual isolated SQLite Compose lifecycle (#28, acceptance step 4)
+
+- User explicitly authorized sandbox app execution for this step. Created empty isolated project
+  `book-social-cover-step4-lk4lab` with the real base/dev Compose files and a temporary override
+  for unique container/image and loopback-only dynamic port. No retained environment was touched.
+  Built image `sha256:f347346b046fdb8f6460afa0397b7692efac48981755eb671ca38f27c06de561`.
+- Applied migrations/seed to new SQLite volume, explicitly provisioned non-login audit admin,
+  installed approved pilot and verified five references. Tested actual restart (same ID, new
+  StartedAt) and force recreation (new ID, same named volumes). All ten file hashes and entire
+  SQL dump remained identical: 109 books, five covers, five audits, integrity ok, no FK violations.
+- Before/after both operations, Node HTTP assertions passed for five details, ten WebPs with
+  MIME/checksum validation, catalog, home, five author pages and HTMX catalog thumbnail. Ran
+  coverctl verify with all writers stopped at initial/after-restart/after-recreation checkpoints.
+  Compose config and build passed. Docker/network access required escalation.
+- Added `docs/cover_container_lifecycle_v0_3_2.md` with exact environment, commands, observations
+  and limits; synchronized checklist/contract/roadmaps. App is stopped; test container, image,
+  network and two named volumes retained, not deleted. No visual browser execution, PostgreSQL
+  lifecycle or paired operational recovery claimed. No code/dependency changes or full unit
+  suite run. `git diff --check` passed; no commit or issue/release closure.
+
+## 2026-10-30 — Paired offline SQLite/PostgreSQL recovery (#28, acceptance step 5)
+
+- Reused only stopped step-4 SQLite test volumes, mounted read-only, and captured a SQLite
+  backup-API snapshot plus complete covers tar. Restored into a fresh private directory;
+  integrity/FK checks, migration 8|0, counts 109/5/5 and all five cover pairs passed. Full SQL dump
+  SHA-256 matched the source (`6e332156b18b19f18a92ab9d6a79ffe994a978d3f5014a2c07282d933feef698`).
+- Created isolated PostgreSQL 18 project `book-social-cover-step5-lhkev5`, no host ports, a new
+  source DB and approved pilot with explicit audit-only admin. With all app/cover writers absent,
+  captured pg_dump custom archive using client 18.4 plus full cover tar. Created and checked
+  empty `cover_restore`; restored with exit-on-error/single-transaction, no migration/seed replay.
+  Counts 109/5/5, migration 8|false, validated constraints and coverctl verify passed.
+- Strict full logical dump comparison initially differed on two equivalent CHECK array-cast
+  representations; inspected exact differences. All other schema/data/sequence/index lines
+  matched after excluding random restrict tokens. All 20 restored WebPs matched approved bundle
+  bytes and hashes. Backup SHA256SUMS checks passed for both pairs.
+- Added `docs/cover_recovery_v0_3_2.md` and synchronized checklist/contract/roadmaps. Private
+  snapshots/restored files retained under `/tmp/book-social-cover-recovery.LhkEv5` (not a durable
+  backup policy); PostgreSQL stopped cleanly with test databases/volume retained. No retained
+  dev/stage/prod access, deletion, app server, browser or full unit suite run. Prior app-run
+  permission was step-4-only; restored-state HTTP/browser checks remain pending. Docker escalation
+  was used; host chmod on container-owned backup files failed, then exact-file container chmod
+  succeeded. Reviewed provisioning/query SQL phases; `git diff --check` passed. No commit.
+
+## 2026-10-30 — Authorized restored-state HTTP verification (#28, step 5 follow-up)
+
+- User explicitly authorized test app execution for step 5. Added temporary Compose override
+  with two loopback-only dynamic-port apps in the existing isolated step-5 project, same image
+  as offline recovery. Used direct `/app/book-social` entrypoint (no bootstrap/migrations/seed),
+  restored SQLite DB/files and PostgreSQL `cover_restore` plus read-only restored cover files.
+- Both Node HTTP probes passed five detail pages, all ten WebPs with MIME/SHA-256 verification,
+  catalog, home, five authors and HTMX catalog thumbnail. No real browser/JavaScript or signed-in
+  library flow was exercised. After stopping apps, both coverctl verifies passed five pairs.
+  SQLite integrity/FK and full dump hash unchanged; PostgreSQL full logical dump before/after
+  identical excluding random restrict tokens, migration/counts unchanged at 8|false and 109/5/5.
+- Stopped PostgreSQL; all three test containers exited 0, data/backups/volume retained. No retained
+  working environment access or deletion. Updated recovery protocol/checklist/contract/roadmaps.
+  Compose validation and `git diff --check` passed; no full suite rerun for documentation-only
+  changes. Visual post-restore acceptance and PostgreSQL restart/recreation remain pending.
+  Docker/network escalation required; no implementation changes or commit.
+
+## 2026-10-30 — #28 closeout evidence review (acceptance step 6)
+
+- Consolidated links to implementation, approved pilot, user-reported Zen mobile checks, SQLite
+  lifecycle and SQLite/PostgreSQL recovery evidence in the acceptance checklist.
+- Kept #28 open: PostgreSQL app restart/recreation, visual checks following recreation/restore,
+  detailed desktop/accessibility and fallback checks, and final user acceptance remain outstanding.
+  Browser version and viewport dimensions were not supplied. The 104 remaining illustrations are
+  a separate task. No user acceptance or issue closure was inferred.
+- Documentation-only review; `git diff --check` passed. No new runtime tests, commit or external
+  issue mutation.
+
+## 2026-10-30 — PostgreSQL lifecycle and focused browser checks (#28)
+
+- Exercised isolated recovered PostgreSQL application with a new test-only named cover volume.
+  Restart retained container ID and changed StartedAt; force recreation changed ID while retaining
+  the same DB/cover targets. HTTP checks and stopped-writer coverctl verify passed; full source
+  versus restored logical dumps differed only in the two previously documented equivalent CHECK
+  casts. Raw hash including random pg_dump restrict tokens was not comparable. Compose warned
+  that the deliberately pre-created volume was not Compose-created; inspect confirmed the mount.
+- Inspected desktop 1440×1000 Chrome 155 screenshots of Pride details on restored SQLite and
+  recreated PostgreSQL. DevTools checked heading/link accessibility tree, decorative image
+  semantics and first Tab focus. This is not a full accessibility or all-page visual audit.
+- Created a separate SQLite fixture for browser checks: main-only card used the main file;
+  external HTTPS image rendered with a controlled DevTools WebP response and showed placeholder
+  when blocked; missing-metadata placeholder displayed with JS disabled. No external provider
+  availability was asserted. Fixture SQL followed the readability guide and passed integrity/FK.
+- Added `docs/cover_postgres_browser_v0_3_2.md`, updated checklist/contract/roadmaps. All test
+  apps and PostgreSQL stopped cleanly; test volumes and private temporary screenshots retained.
+  Browser emitted Crashpad/inotify warnings but checks and screenshots succeeded. Wider visual
+  and accessibility review and final user acceptance remain open. No code change or full suite;
+  `git diff --check` passed. No commit or issue closure.

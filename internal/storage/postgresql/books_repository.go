@@ -27,6 +27,7 @@ func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.Boo
 		SELECT b.id, b.title, b.slug, b.description
 		FROM books b
 	`
+
 	conditions := make([]string, 0, 2)
 	args := make([]any, 0, 2)
 
@@ -52,6 +53,7 @@ func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.Boo
 		`)
 		args = append(args, filter.GenreSlug)
 	}
+
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
@@ -67,9 +69,15 @@ func (r *BookRepository) ListBooksFiltered(ctx context.Context, filter books.Boo
 	if err != nil {
 		return nil, err
 	}
+
 	if err := r.hydrateBookRelationships(ctx, bookList); err != nil {
 		return nil, err
 	}
+
+	if err := r.hydrateBookCovers(ctx, bookList); err != nil {
+		return nil, err
+	}
+
 	return bookList, nil
 }
 
@@ -218,7 +226,7 @@ func (r *BookRepository) hydrateBookCovers(ctx context.Context, bookList []books
 	}
 	bookIndexes, args := indexBooks(bookList)
 	query := `
-		SELECT c.book_id, c.id, c.variant, c.url, c.mime_type, c.byte_size, c.width, c.height, c.checksum_sha256
+		SELECT c.book_id, ` + coverColumns + `
 		FROM covers c
 		WHERE c.book_id IN (` + queryPlaceholders(len(args)) + `)
 		ORDER BY c.book_id ASC, CASE WHEN c.variant = 'front' THEN 0 ELSE 1 END ASC, c.variant COLLATE "C" ASC, c.id ASC;
@@ -232,17 +240,10 @@ func (r *BookRepository) hydrateBookCovers(ctx context.Context, bookList []books
 	}()
 	for rows.Next() {
 		var bookID int
-		var cover books.Cover
-		var mimeType, checksum sql.NullString
-		var byteSize, width, height sql.NullInt64
-		if err := rows.Scan(&bookID, &cover.ID, &cover.Variant, &cover.URL, &mimeType, &byteSize, &width, &height, &checksum); err != nil {
+		cover, err := scanCover(rows, &bookID)
+		if err != nil {
 			return fmt.Errorf("scan book cover row: %w", err)
 		}
-		cover.MIMEType = nullStringPointer(mimeType)
-		cover.ByteSize = nullInt64Pointer(byteSize)
-		cover.Width = nullIntPointer(width)
-		cover.Height = nullIntPointer(height)
-		cover.ChecksumSHA256 = nullStringPointer(checksum)
 		index, ok := bookIndexes[bookID]
 		if !ok {
 			return fmt.Errorf("scan book cover row: unknown book id %d", bookID)
