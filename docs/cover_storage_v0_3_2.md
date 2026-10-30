@@ -8,7 +8,8 @@ the user confirmed mobile pilot display, library, home, HTMX and blocked-image f
 Actual [SQLite restart/recreation](cover_container_lifecycle_v0_3_2.md) passed on 2026-10-30.
 Paired [offline SQLite/PostgreSQL recovery](cover_recovery_v0_3_2.md) passed on 2026-10-30.
 Both restored states also passed real HTTP checks with unchanged SQL and repeated offline verify.
-PostgreSQL restart/recreation, restored-state visual review and remaining detailed browser checks remain pending.
+[PostgreSQL restart/recreation and focused desktop/fallback checks](cover_postgres_browser_v0_3_2.md)
+also passed. Wider visual/accessibility review and final user acceptance remain pending.
 Step 7's [automated evidence and outstanding manual gates](cover_acceptance_v0_3_2.md) are recorded
 separately; the final automated pass includes real SQLite/PostgreSQL cover workflows.
 This document extends the original
