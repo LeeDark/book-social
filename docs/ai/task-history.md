@@ -1291,3 +1291,35 @@ Residual risks:
   Compose validation and `git diff --check` passed; no full suite rerun for documentation-only
   changes. Visual post-restore acceptance and PostgreSQL restart/recreation remain pending.
   Docker/network escalation required; no implementation changes or commit.
+
+## 2026-10-30 — #28 closeout evidence review (acceptance step 6)
+
+- Consolidated links to implementation, approved pilot, user-reported Zen mobile checks, SQLite
+  lifecycle and SQLite/PostgreSQL recovery evidence in the acceptance checklist.
+- Kept #28 open: PostgreSQL app restart/recreation, visual checks following recreation/restore,
+  detailed desktop/accessibility and fallback checks, and final user acceptance remain outstanding.
+  Browser version and viewport dimensions were not supplied. The 104 remaining illustrations are
+  a separate task. No user acceptance or issue closure was inferred.
+- Documentation-only review; `git diff --check` passed. No new runtime tests, commit or external
+  issue mutation.
+
+## 2026-10-30 — PostgreSQL lifecycle and focused browser checks (#28)
+
+- Exercised isolated recovered PostgreSQL application with a new test-only named cover volume.
+  Restart retained container ID and changed StartedAt; force recreation changed ID while retaining
+  the same DB/cover targets. HTTP checks and stopped-writer coverctl verify passed; full source
+  versus restored logical dumps differed only in the two previously documented equivalent CHECK
+  casts. Raw hash including random pg_dump restrict tokens was not comparable. Compose warned
+  that the deliberately pre-created volume was not Compose-created; inspect confirmed the mount.
+- Inspected desktop 1440×1000 Chrome 155 screenshots of Pride details on restored SQLite and
+  recreated PostgreSQL. DevTools checked heading/link accessibility tree, decorative image
+  semantics and first Tab focus. This is not a full accessibility or all-page visual audit.
+- Created a separate SQLite fixture for browser checks: main-only card used the main file;
+  external HTTPS image rendered with a controlled DevTools WebP response and showed placeholder
+  when blocked; missing-metadata placeholder displayed with JS disabled. No external provider
+  availability was asserted. Fixture SQL followed the readability guide and passed integrity/FK.
+- Added `docs/cover_postgres_browser_v0_3_2.md`, updated checklist/contract/roadmaps. All test
+  apps and PostgreSQL stopped cleanly; test volumes and private temporary screenshots retained.
+  Browser emitted Crashpad/inotify warnings but checks and screenshots succeeded. Wider visual
+  and accessibility review and final user acceptance remain open. No code change or full suite;
+  `git diff --check` passed. No commit or issue closure.

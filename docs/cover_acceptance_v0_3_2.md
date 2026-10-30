@@ -1,10 +1,27 @@
 # Cover Verification and Pending Acceptance (#28, Step 7)
 
 Status on 2026-10-25: automated verification passes on implementation `27c64d2`.
-Step 7 is **not fully accepted**: PostgreSQL restart/recreation and remaining visual browser acceptance remain pending.
+Step 7 is **not fully accepted**: focused desktop/fallback checks are recorded; remaining detailed
+visual/accessibility review and the user's final acceptance decision are pending.
 Reviewed artwork, isolated SQLite installation and user-reported pilot browser checks are recorded below.
 This record does not close #28 or the expanded v0.3.2 scope
 and does not replace the earlier acceptance of the original #23–#26 workflows.
+
+## Closeout Review
+
+Reviewed on 2026-10-30 for acceptance step 6. Implementation and automated checks are recorded
+below; the user approved the five illustrations and reported the Zen mobile pilot checks below.
+Actual SQLite container restart/recreation is recorded in the
+[lifecycle protocol](cover_container_lifecycle_v0_3_2.md). Paired SQLite/PostgreSQL recovery and
+restored-state HTTP checks are recorded in the [recovery protocol](cover_recovery_v0_3_2.md).
+
+The user has not yet made a final acceptance decision for #28. PostgreSQL restart/recreation and
+focused browser/fallback checks now have [evidence](cover_postgres_browser_v0_3_2.md). The remaining
+visual/accessibility boundaries are listed below. The exact
+Zen version and viewport sizes were not recorded. Do not interpret pilot artwork approval or the
+successful mobile report as completion of those gates. Once the remaining evidence and user
+decision are recorded, update the roadmap and close #28 through the authorized project workflow.
+The separate task for the remaining 104 artworks is outside #28's storage and delivery scope.
 
 The [contract](cover_storage_v0_3_2.md) defines behavior; [cover operations](cover_operations.md)
 defines installation, old-storage migration precautions and paired SQL/file recovery.
@@ -122,17 +139,22 @@ cover directory as described in [the transition warning](cover_operations.md#per
   HTMX filtering and A Christmas Carol's featured home card.
 - [x] User confirms unavailable-image placeholders, including HTMX, with browser request blocking,
   and restored images after unblocking; load-error fallback requires JS.
-- [ ] Separately verify main-only delivery, external HTTPS compatibility, desktop presentation,
-  keyboard links and accessible labels, and missing-metadata placeholders with JavaScript disabled.
+- [x] Verify main-only delivery, controlled external HTTPS response/failure, and missing-metadata
+  placeholder with JavaScript disabled, using an isolated SQLite fixture and headless Chrome.
+- [x] Check desktop restored Pride details in both engines, and focused accessible heading/link,
+  decorative image semantics and first Tab focus. See [browser evidence](cover_postgres_browser_v0_3_2.md).
+- [ ] Complete broader desktop/keyboard/screen-reader/contrast review if required for final acceptance;
+  visual inspection did not cover every pilot page or a real external provider.
 - [x] Restart/recreate SQLite app with the same named volumes: SQL/files, HTTP and stopped-writer verify passed.
   See [lifecycle protocol](cover_container_lifecycle_v0_3_2.md).
-- [ ] Repeat lifecycle checks for PostgreSQL and visually inspect pages after recreation.
+- [x] Repeat lifecycle checks for PostgreSQL and visually inspect Pride details after recreation.
 - [x] Rehearse paired SQL/file backup and offline restore into fresh SQLite and PostgreSQL targets;
   checksums, migration state, references, data and metadata passed. See
   [recovery protocol](cover_recovery_v0_3_2.md), including two equivalent PostgreSQL CHECK cast rewrites.
 - [x] Check restored-state HTTP on SQLite/PostgreSQL: detail/catalog/home/author pages, HTMX and
   all ten image responses per engine passed; SQL unchanged, stopped-writer verify repeated.
-- [ ] Visually inspect restored-state pages in a real browser; HTTP probes are not visual review.
+- [x] Visually inspect restored SQLite and PostgreSQL Pride details in headless Chrome on desktop;
+  HTTP probes alone are not visual review. Wider page/library coverage remains separate.
 - [ ] Record environment, application/image revision, actual commands, bundle checksums,
   browser/version, viewport sizes, date, observed results and the user's acceptance decision.
 

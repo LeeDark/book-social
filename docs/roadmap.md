@@ -19,8 +19,8 @@ blocked-image fallback in Zen; see [browser evidence](cover_acceptance_v0_3_2.md
 Actual [SQLite restart/recreation](cover_container_lifecycle_v0_3_2.md) passed with unchanged
 SQL/files and successful HTTP checks. Paired [offline SQLite/PostgreSQL recovery](cover_recovery_v0_3_2.md)
 also passed, followed by successful restored-state HTTP/HTMX/image checks for both engines.
-PostgreSQL restart/recreation, restored-state visual review and remaining detailed browser checks
-are still pending.
+[PostgreSQL restart/recreation and focused desktop/fallback checks](cover_postgres_browser_v0_3_2.md)
+passed; wider visual/accessibility review and final user acceptance remain pending.
 The expanded cover scope is not yet accepted.
 v0.3.4 will add a reviewed book-addition workflow and grow the catalog to 500 books total.
 
