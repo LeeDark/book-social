@@ -1323,3 +1323,13 @@ Residual risks:
   Browser emitted Crashpad/inotify warnings but checks and screenshots succeeded. Wider visual
   and accessibility review and final user acceptance remain open. No code change or full suite;
   `git diff --check` passed. No commit or issue closure.
+
+## 2026-10-30 — User acceptance and issue #28 closure
+
+- The user confirmed #28 complete, accepting the documented limits of the focused visual and
+  accessibility review, and explicitly requested push, PR update and issue closure.
+- Pushed `31b2e65` and earlier local commits to the existing feature branch. Updated draft PR #27
+  with cover implementation, verification, acceptance and the separate remaining #29 scope.
+- Recorded the decision in issue #28 and closed it as completed. #29 and PR #27 remain open;
+  no merge, release tag or deployment occurred. Updated overlapping roadmaps and the acceptance
+  contract to distinguish accepted #28 from the still-open expanded v0.3.2 scope.

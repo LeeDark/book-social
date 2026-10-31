@@ -1,11 +1,11 @@
 # Cover Verification and Pending Acceptance (#28, Step 7)
 
 Status on 2026-10-25: automated verification passes on implementation `27c64d2`.
-Step 7 is **not fully accepted**: focused desktop/fallback checks are recorded; remaining detailed
-visual/accessibility review and the user's final acceptance decision are pending.
+The user accepted #28 on 2026-10-30, including the documented limits of the focused
+desktop/accessibility checks. Issue #28 was closed as completed; #29 and v0.3.2 remain open.
 Reviewed artwork, isolated SQLite installation and user-reported pilot browser checks are recorded below.
-This record does not close #28 or the expanded v0.3.2 scope
-and does not replace the earlier acceptance of the original #23–#26 workflows.
+This record does not accept the separate #29 artwork task or close v0.3.2, and does not replace
+the earlier acceptance of the original #23–#26 workflows.
 
 ## Closeout Review
 
@@ -15,12 +15,11 @@ Actual SQLite container restart/recreation is recorded in the
 [lifecycle protocol](cover_container_lifecycle_v0_3_2.md). Paired SQLite/PostgreSQL recovery and
 restored-state HTTP checks are recorded in the [recovery protocol](cover_recovery_v0_3_2.md).
 
-The user has not yet made a final acceptance decision for #28. PostgreSQL restart/recreation and
-focused browser/fallback checks now have [evidence](cover_postgres_browser_v0_3_2.md). The remaining
-visual/accessibility boundaries are listed below. The exact
-Zen version and viewport sizes were not recorded. Do not interpret pilot artwork approval or the
-successful mobile report as completion of those gates. Once the remaining evidence and user
-decision are recorded, update the roadmap and close #28 through the authorized project workflow.
+The user explicitly confirmed #28 complete on 2026-10-30 after reviewing the documented test
+boundaries; [issue #28](https://github.com/LeeDark/book-social/issues/28) is closed as completed.
+PostgreSQL restart/recreation and focused browser/fallback checks have
+[evidence](cover_postgres_browser_v0_3_2.md). The Zen version and exact viewport sizes were not
+recorded. The wider review below remains optional follow-up, not a claim of exhaustive coverage.
 The separate task for the remaining 104 artworks is outside #28's storage and delivery scope.
 
 The [contract](cover_storage_v0_3_2.md) defines behavior; [cover operations](cover_operations.md)
@@ -143,7 +142,7 @@ cover directory as described in [the transition warning](cover_operations.md#per
   placeholder with JavaScript disabled, using an isolated SQLite fixture and headless Chrome.
 - [x] Check desktop restored Pride details in both engines, and focused accessible heading/link,
   decorative image semantics and first Tab focus. See [browser evidence](cover_postgres_browser_v0_3_2.md).
-- [ ] Complete broader desktop/keyboard/screen-reader/contrast review if required for final acceptance;
+- [ ] Optional follow-up: broader desktop/keyboard/screen-reader/contrast review;
   visual inspection did not cover every pilot page or a real external provider.
 - [x] Restart/recreate SQLite app with the same named volumes: SQL/files, HTTP and stopped-writer verify passed.
   See [lifecycle protocol](cover_container_lifecycle_v0_3_2.md).
@@ -155,8 +154,9 @@ cover directory as described in [the transition warning](cover_operations.md#per
   all ten image responses per engine passed; SQL unchanged, stopped-writer verify repeated.
 - [x] Visually inspect restored SQLite and PostgreSQL Pride details in headless Chrome on desktop;
   HTTP probes alone are not visual review. Wider page/library coverage remains separate.
-- [ ] Record environment, application/image revision, actual commands, bundle checksums,
-  browser/version, viewport sizes, date, observed results and the user's acceptance decision.
+- [x] Record available environment, revision, commands, bundle checksums, browser/version,
+  viewport information, results and the user's 2026-10-30 acceptance decision. Zen version and
+  exact Zen viewport sizes were not supplied.
 
 Routes for the agreed seeded pilot:
 

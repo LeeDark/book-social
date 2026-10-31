@@ -20,8 +20,9 @@ Actual [SQLite restart/recreation](cover_container_lifecycle_v0_3_2.md) passed w
 SQL/files and successful HTTP checks. Paired [offline SQLite/PostgreSQL recovery](cover_recovery_v0_3_2.md)
 also passed, followed by successful restored-state HTTP/HTMX/image checks for both engines.
 [PostgreSQL restart/recreation and focused desktop/fallback checks](cover_postgres_browser_v0_3_2.md)
-passed; wider visual/accessibility review and final user acceptance remain pending.
-The expanded cover scope is not yet accepted.
+passed. The user accepted #28 on 2026-10-30 with the documented focused accessibility/visual
+review boundaries; #28 is closed. The separate full-catalog artwork task #29 remains open,
+so the expanded v0.3.2 cover scope is not yet complete.
 v0.3.4 will add a reviewed book-addition workflow and grow the catalog to 500 books total.
 
 v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation through the first
@@ -333,7 +334,7 @@ The original accepted contract, which predates file storage and still describes 
 
 - [x] Separate ordinary test fixtures from deterministic development seed data; inventory the
   existing 109-book dataset and document its unverified external metadata provenance and absent covers.
-- [ ] Task 1 — Cover-file storage and display: persistent local storage with a Docker volume,
+- [x] Task 1 — Cover-file storage and display (#28): persistent local storage with a Docker volume,
   HTTP serving, database references and technical metadata; reconcile local files with existing
   external HTTPS cover URLs. Show front covers on book pages and all book cards, retaining a
   placeholder for missing or unavailable images. Document backup/restore and reproducible delivery
