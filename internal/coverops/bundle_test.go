@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/png"
 	"os"
@@ -81,6 +82,35 @@ func TestLoadBundleValidatesAllFiveBooks(t *testing.T) {
 		if entry.local.Main.Width != 4 || entry.local.Thumbnail == nil || entry.local.Thumbnail.Width != 2 {
 			t.Fatalf("prepared metadata = %+v", entry.local)
 		}
+	}
+}
+
+func TestLoadBundleValidatesFullCatalog(t *testing.T) {
+	for _, invalid := range []string{"", "duplicate", "unreviewed", "incomplete"} {
+		t.Run(invalid, func(t *testing.T) {
+			directory, pilot := writeTestBundle(t)
+			document := manifest{Version: 2, BundleID: "full-test"}
+			for index := 0; index < 109; index++ {
+				entry := pilot.Covers[0]
+				entry.Slug = fmt.Sprintf("book-%03d", index)
+				document.Covers = append(document.Covers, entry)
+			}
+			switch invalid {
+			case "duplicate":
+				document.Covers[108].Slug = document.Covers[0].Slug
+			case "unreviewed":
+				document.Covers[108].IsReviewed = false
+			case "incomplete":
+				document.Covers = document.Covers[:108]
+			}
+			bundle, err := LoadBundle(directory, writeTestManifest(t, directory, document))
+			if invalid == "" && (err != nil || !bundle.isFullCatalog || len(bundle.entries) != 109) {
+				t.Fatalf("full bundle = %v, %v", bundle, err)
+			}
+			if invalid != "" && err == nil {
+				t.Fatal("invalid full-catalog bundle accepted")
+			}
+		})
 	}
 }
 

@@ -3,6 +3,7 @@ package coverops
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -19,6 +20,63 @@ func TestSQLitePilotInstallAndRestore(t *testing.T) {
 	ctx := context.Background()
 	db := testutil.NewSQLiteLibraryTestDB(t, ctx)
 	checkPilotRoundTrip(t, db, sqlite.NewBookRepository(db), sqlite.NewCatalogOperatorRepository(db), true)
+}
+
+func TestSQLiteFullCatalogInstall(t *testing.T) {
+	ctx := context.Background()
+	db := testutil.NewSQLiteLibraryTestDB(t, ctx)
+	_, err := db.ExecContext(ctx, `INSERT INTO users (id, first_name, login, password_hash, email, user_role_id)
+		VALUES (1, 'Operator', 'operator', 'hash', 'operator@example.test',
+			(SELECT id FROM roles WHERE role_name = 'admin'))`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for index := 0; index < 107; index++ {
+		slug := fmt.Sprintf("fixture-%03d", index)
+		if _, err := db.ExecContext(ctx, `INSERT INTO books (title, slug) VALUES (?, ?)`, slug, slug); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	catalog := sqlite.NewBookRepository(db)
+	bookList, err := catalog.ListBooks(ctx)
+	if err != nil || len(bookList) != 109 {
+		t.Fatalf("catalog = %d books, %v", len(bookList), err)
+	}
+	dir, pilot := writeTestBundle(t)
+	document := manifest{Version: 2, BundleID: "full-catalog-test"}
+	for _, book := range bookList {
+		entry := pilot.Covers[0]
+		entry.Slug = book.Slug
+		document.Covers = append(document.Covers, entry)
+	}
+	bundle, err := LoadBundle(dir, writeTestManifest(t, dir, document))
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := covers.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	installer := NewInstaller(catalog, sqlite.NewCatalogOperatorRepository(db), store)
+
+	for _, want := range []int{109, 0} {
+		changed, err := installer.Install(ctx, bundle, 1)
+		if err != nil || changed != want {
+			t.Fatalf("Install() = %d, %v, want %d", changed, err, want)
+		}
+	}
+	if count, err := Verify(ctx, catalog, store); err != nil || count != 109 {
+		t.Fatalf("Verify() = %d, %v, want 109", count, err)
+	}
+
+	if _, err := db.ExecContext(ctx, `INSERT INTO books (title, slug) VALUES ('Extra', 'extra')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := installer.Install(ctx, bundle, 1); err == nil {
+		t.Fatal("installation accepted a different catalog inventory")
+	}
 }
 
 func TestPostgresPilotInstall(t *testing.T) {

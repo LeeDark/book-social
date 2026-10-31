@@ -36,19 +36,40 @@ func NewInstaller(catalog CatalogReader, repo InstallationRepository, store *cov
 // Install requires stopped cover writers. Files are retained on SQL failure;
 // repeated installation of identical references performs no SQL writes or audits.
 func (i *Installer) Install(ctx context.Context, bundle *Bundle, actorID int) (int, error) {
-	if bundle == nil || len(bundle.entries) != len(pilotSlugs) {
-		return 0, errors.New("load a validated five-book bundle before installation")
+	if bundle == nil || (!bundle.isFullCatalog && len(bundle.entries) != len(pilotSlugs)) ||
+		(bundle.isFullCatalog && len(bundle.entries) != 109) {
+		return 0, errors.New("load a validated pilot or full-catalog bundle before installation")
 	}
 
 	if err := authorize(ctx, i.repo, actorID); err != nil {
 		return 0, err
 	}
 
+	if bundle.isFullCatalog {
+		catalog, err := i.catalog.ListBooks(ctx)
+		if err != nil {
+			return 0, err
+		}
+
+		slugs := make(map[string]bool, len(catalog))
+		for _, book := range catalog {
+			slugs[book.Slug] = true
+		}
+		if len(catalog) != len(bundle.entries) || len(slugs) != len(bundle.entries) {
+			return 0, errors.New("full-catalog bundle does not match catalog inventory")
+		}
+		for _, entry := range bundle.entries {
+			if !slugs[entry.slug] {
+				return 0, errors.New("full-catalog bundle does not match catalog inventory")
+			}
+		}
+	}
+
 	bookIDs := make([]int, len(bundle.entries))
 	for index, entry := range bundle.entries {
 		book, err := i.catalog.GetBookBySlug(ctx, entry.slug)
 		if err != nil {
-			return 0, fmt.Errorf("resolve pilot slug %s: %w", entry.slug, err)
+			return 0, fmt.Errorf("resolve cover slug %s: %w", entry.slug, err)
 		}
 
 		bookIDs[index] = book.ID
@@ -79,7 +100,7 @@ func (i *Installer) Install(ctx context.Context, bundle *Bundle, actorID int) (i
 				return err
 			}
 			if book.Slug != bundle.entries[index].slug {
-				return errors.New("pilot target changed during installation")
+				return errors.New("cover target changed during installation")
 			}
 
 			before[index] = book

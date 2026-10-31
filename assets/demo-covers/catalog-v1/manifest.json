@@ -1,0 +1,1756 @@
+{
+  "version": 1,
+  "dataset_id": "demo-catalog-covers-v1",
+  "description": "Project demo illustrations, not covers of specific published editions.",
+  "profile": {
+    "format": "WebP",
+    "main": "600x900",
+    "thumbnail": "240x360"
+  },
+  "covers": [
+    {
+      "slug": "a-christmas-carol",
+      "variant": "front",
+      "reviewed_by": "user",
+      "reviewed_on": "2026-10-25",
+      "main": {
+        "file": "a-christmas-carol-main.webp",
+        "sha256": "56dcf67a699b5f6338c2eab9970ea7f7d74ccc615ca37f95a5da681ec1f44d96",
+        "source": "pilot-v1-approved/bundle/a-christmas-carol-main.webp"
+      },
+      "thumbnail": {
+        "file": "a-christmas-carol-thumb.webp",
+        "sha256": "c086678a748336df71f01253160dc70b8611d50c1aa3f446e9c33eb251950ad9",
+        "source": "pilot-v1-approved/bundle/a-christmas-carol-thumb.webp"
+      }
+    },
+    {
+      "slug": "a-connecticut-yankee-in-king-arthurs-court",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "a-connecticut-yankee-in-king-arthurs-court-main.webp",
+        "sha256": "921d80e01ad3716f6d6fba0f59b13aada7db0443df06f1038fe62d969d857c36",
+        "source": "batch-01/bundle/a-connecticut-yankee-in-king-arthurs-court-main.webp"
+      },
+      "thumbnail": {
+        "file": "a-connecticut-yankee-in-king-arthurs-court-thumb.webp",
+        "sha256": "75741e0f8f236952c3d6bc0d9db6948067710348f867b59bd086d6ba7e938a32",
+        "source": "batch-01/bundle/a-connecticut-yankee-in-king-arthurs-court-thumb.webp"
+      }
+    },
+    {
+      "slug": "a-room-of-ones-own",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "a-room-of-ones-own-main.webp",
+        "sha256": "2bbf820d0eb224c7acda5718c8ecf3afaadc3db7034e9f566151146240aa0940",
+        "source": "batch-01/bundle/a-room-of-ones-own-main.webp"
+      },
+      "thumbnail": {
+        "file": "a-room-of-ones-own-thumb.webp",
+        "sha256": "ef4c6596ced26973d14556d27775b642d6deeb0d098563eaacd1c2a8ff85015b",
+        "source": "batch-01/bundle/a-room-of-ones-own-thumb.webp"
+      }
+    },
+    {
+      "slug": "a-study-in-scarlet",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "a-study-in-scarlet-main.webp",
+        "sha256": "fbb6e8913e6f88ebe2e4b99adf6a4ebec5cc87ff4651b554aea02d8cf2349fa8",
+        "source": "batch-01/bundle/a-study-in-scarlet-main.webp"
+      },
+      "thumbnail": {
+        "file": "a-study-in-scarlet-thumb.webp",
+        "sha256": "50da3d7657f7bb0523ff0997cf20f2d4601955ffad53482fbb5c05e81908206d",
+        "source": "batch-01/bundle/a-study-in-scarlet-thumb.webp"
+      }
+    },
+    {
+      "slug": "a-tale-of-two-cities",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "a-tale-of-two-cities-main.webp",
+        "sha256": "88fbef2a43157c81b65fd64cd41bfdcda6e74aae16e3e9ba1693619b03512d40",
+        "source": "batch-01/bundle/a-tale-of-two-cities-main.webp"
+      },
+      "thumbnail": {
+        "file": "a-tale-of-two-cities-thumb.webp",
+        "sha256": "e3b89c069ba777e52060c28c93fafcacb1e233a9984bc0418db24c1936ac59e8",
+        "source": "batch-01/bundle/a-tale-of-two-cities-thumb.webp"
+      }
+    },
+    {
+      "slug": "adventures-of-huckleberry-finn",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "adventures-of-huckleberry-finn-main.webp",
+        "sha256": "51513284aa4dcd4e6875e16f122d966cb5087887e5101c6ce618ff74444c6941",
+        "source": "batch-01/bundle/adventures-of-huckleberry-finn-main.webp"
+      },
+      "thumbnail": {
+        "file": "adventures-of-huckleberry-finn-thumb.webp",
+        "sha256": "94c81a775a5b89419b6edf2e8b72df338bb30c36ebe7f31d996a446cd718161c",
+        "source": "batch-01/bundle/adventures-of-huckleberry-finn-thumb.webp"
+      }
+    },
+    {
+      "slug": "alices-adventures-in-wonderland",
+      "variant": "front",
+      "reviewed_by": "user",
+      "reviewed_on": "2026-10-25",
+      "main": {
+        "file": "alices-adventures-in-wonderland-main.webp",
+        "sha256": "7553ebbe0ddae9d78bc273d691bdd1734226e351a43cef92db70cdd63dcf5fba",
+        "source": "pilot-v1-approved/bundle/alices-adventures-in-wonderland-main.webp"
+      },
+      "thumbnail": {
+        "file": "alices-adventures-in-wonderland-thumb.webp",
+        "sha256": "63f1d586824b0daedaba450882b986dd8db36e7da702a882f971807a855b2edc",
+        "source": "pilot-v1-approved/bundle/alices-adventures-in-wonderland-thumb.webp"
+      }
+    },
+    {
+      "slug": "and-then-there-were-none",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "and-then-there-were-none-main.webp",
+        "sha256": "581bae7bc0ec5721784143a03c625621d9dc2b4bd18b0209cddd66e7175781a5",
+        "source": "batch-01/bundle/and-then-there-were-none-main.webp"
+      },
+      "thumbnail": {
+        "file": "and-then-there-were-none-thumb.webp",
+        "sha256": "d5a539a8bfafb2fb7aef618275e23537088a77c600a88d0475731aaa22bf5097",
+        "source": "batch-01/bundle/and-then-there-were-none-thumb.webp"
+      }
+    },
+    {
+      "slug": "animal-farm",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "animal-farm-main.webp",
+        "sha256": "28784aac5d3ef8fe8a08655cdf50d0641adc73d98a14258fad0ceed99449287a",
+        "source": "batch-01/bundle/animal-farm-main.webp"
+      },
+      "thumbnail": {
+        "file": "animal-farm-thumb.webp",
+        "sha256": "5174b0e24deaee8cd40c7e0ab6019c71f541ebcd900f024fbda4b285995f6ad5",
+        "source": "batch-01/bundle/animal-farm-thumb.webp"
+      }
+    },
+    {
+      "slug": "anna-karenina",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "anna-karenina-main.webp",
+        "sha256": "1028a733d18b5dd1ec03da0930855de3731b2edb2c0f9a8cec36a1e3f2a886db",
+        "source": "batch-01/bundle/anna-karenina-main.webp"
+      },
+      "thumbnail": {
+        "file": "anna-karenina-thumb.webp",
+        "sha256": "9579b97e0ba78e3b476f15205116234495e684cc922937b8ba2a594fe122b0c8",
+        "source": "batch-01/bundle/anna-karenina-thumb.webp"
+      }
+    },
+    {
+      "slug": "around-the-world-in-eighty-days",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "around-the-world-in-eighty-days-main.webp",
+        "sha256": "c1e3b8d7d5fa93d1f215add97336226f68c26c33b49ff81026292000a15f44a2",
+        "source": "batch-01/bundle/around-the-world-in-eighty-days-main.webp"
+      },
+      "thumbnail": {
+        "file": "around-the-world-in-eighty-days-thumb.webp",
+        "sha256": "79899a9251dabdc5844ea5493dcfb13977762154a543e08bf1c700972fea75bb",
+        "source": "batch-01/bundle/around-the-world-in-eighty-days-thumb.webp"
+      }
+    },
+    {
+      "slug": "catriona",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "catriona-main.webp",
+        "sha256": "945ec03fc43f166d25bc3f36775d977fcf1cdc2d6d8281c5c7e6b23ceeffce4b",
+        "source": "batch-01/bundle/catriona-main.webp"
+      },
+      "thumbnail": {
+        "file": "catriona-thumb.webp",
+        "sha256": "b4b941a556609ca7b0681a0e25173c71a11c763ba7ba3a4499fa6f933a27209b",
+        "source": "batch-01/bundle/catriona-thumb.webp"
+      }
+    },
+    {
+      "slug": "crime-and-punishment",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "crime-and-punishment-main.webp",
+        "sha256": "78ef5274b14b7b850fcf811a609a00d53d095ac0858a86ca22be9251d9683da9",
+        "source": "batch-01/bundle/crime-and-punishment-main.webp"
+      },
+      "thumbnail": {
+        "file": "crime-and-punishment-thumb.webp",
+        "sha256": "2c99ba6af5e496782db791741b7f4fbbfd571c63f5fc0a218b062f4b288c6ff3",
+        "source": "batch-01/bundle/crime-and-punishment-thumb.webp"
+      }
+    },
+    {
+      "slug": "david-copperfield",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "david-copperfield-main.webp",
+        "sha256": "3f08026406a5bbca9db75d61b73306b07116bcf3ec2d9873172d9a5903a58b64",
+        "source": "batch-01/bundle/david-copperfield-main.webp"
+      },
+      "thumbnail": {
+        "file": "david-copperfield-thumb.webp",
+        "sha256": "dd80b3920349d460984939ce0272c18f20d8c23aaaee35655c552760f6f26aad",
+        "source": "batch-01/bundle/david-copperfield-thumb.webp"
+      }
+    },
+    {
+      "slug": "de-profundis",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "de-profundis-main.webp",
+        "sha256": "fe35890d378f9b14c58df837f1332d012155d51b1fd68d5f0fcee885773cbdff",
+        "source": "batch-01/bundle/de-profundis-main.webp"
+      },
+      "thumbnail": {
+        "file": "de-profundis-thumb.webp",
+        "sha256": "787a578634d7c70c83573cb2a00187001ca4bc3ac7ee17f0d73cf4ad5e004762",
+        "source": "batch-01/bundle/de-profundis-thumb.webp"
+      }
+    },
+    {
+      "slug": "death-on-the-nile",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "death-on-the-nile-main.webp",
+        "sha256": "53363be9de15641de3187f2fecdd6029af74a36d36aa6a6223a8ed3fccba6432",
+        "source": "batch-01/bundle/death-on-the-nile-main.webp"
+      },
+      "thumbnail": {
+        "file": "death-on-the-nile-thumb.webp",
+        "sha256": "c44a88857937fb11bd35b0b59f3c1d0c60ee9d10164d023402b38604890c8c15",
+        "source": "batch-01/bundle/death-on-the-nile-thumb.webp"
+      }
+    },
+    {
+      "slug": "demons",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "demons-main.webp",
+        "sha256": "1abc7f7d6e915d3fd2c6c510cbfe2209c290ba77abd88acd7e262a791b837e03",
+        "source": "batch-01/bundle/demons-main.webp"
+      },
+      "thumbnail": {
+        "file": "demons-thumb.webp",
+        "sha256": "db24c2efc08fc7fb3fed7174fbc88ba92dc4028bae393df4d8296d437e9c202b",
+        "source": "batch-01/bundle/demons-thumb.webp"
+      }
+    },
+    {
+      "slug": "down-and-out-in-paris-and-london",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "down-and-out-in-paris-and-london-main.webp",
+        "sha256": "f358e2925ef968c2c8360781c4b8050e7aa66c276a87832e50f2cf03295bfb4b",
+        "source": "batch-01/bundle/down-and-out-in-paris-and-london-main.webp"
+      },
+      "thumbnail": {
+        "file": "down-and-out-in-paris-and-london-thumb.webp",
+        "sha256": "3591ad6edfba40440132bad051c3ad5c646a9635acba499911f46380fb0b969f",
+        "source": "batch-01/bundle/down-and-out-in-paris-and-london-thumb.webp"
+      }
+    },
+    {
+      "slug": "dracula",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "dracula-main.webp",
+        "sha256": "0385a84113e103298fa927232cd28787c3ebbc5ee493e82a0382bad0287cefd8",
+        "source": "batch-01/bundle/dracula-main.webp"
+      },
+      "thumbnail": {
+        "file": "dracula-thumb.webp",
+        "sha256": "31ba152f1b9a3bb995418f61c7896b00f8f8341cbccf77dc4c682b1305f56b05",
+        "source": "batch-01/bundle/dracula-thumb.webp"
+      }
+    },
+    {
+      "slug": "draculas-guest",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "draculas-guest-main.webp",
+        "sha256": "fe7b80ff500fcf31f270f627f427f8963992fb7200aa51210ac4f26fceef3cf4",
+        "source": "batch-01/bundle/draculas-guest-main.webp"
+      },
+      "thumbnail": {
+        "file": "draculas-guest-thumb.webp",
+        "sha256": "b3bb3e76d69b8cc2305624e9bfca169f543693f022ce0b4dc8cde7c69756c2ff",
+        "source": "batch-01/bundle/draculas-guest-thumb.webp"
+      }
+    },
+    {
+      "slug": "emma",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "emma-main.webp",
+        "sha256": "892d48fef577697e0fd57b15e2042f5fc4899b6629418b2ee178297de2b9f01b",
+        "source": "batch-01/bundle/emma-main.webp"
+      },
+      "thumbnail": {
+        "file": "emma-thumb.webp",
+        "sha256": "da49c22f9c3e5778c882dbb369fa7b9c7800429c517d52e51a38fa62c603ac94",
+        "source": "batch-01/bundle/emma-thumb.webp"
+      }
+    },
+    {
+      "slug": "frankenstein",
+      "variant": "front",
+      "reviewed_by": "user",
+      "reviewed_on": "2026-10-25",
+      "main": {
+        "file": "frankenstein-main.webp",
+        "sha256": "5fbe59dc755b18f6d0dc0e1b55dff4b4fda7f7991896aa76ab4a36d37468c8fc",
+        "source": "pilot-v1-approved/bundle/frankenstein-main.webp"
+      },
+      "thumbnail": {
+        "file": "frankenstein-thumb.webp",
+        "sha256": "196b782faae8afae9a68d21215331c648dac7383c6c8a4c8884d57dfc42b461d",
+        "source": "pilot-v1-approved/bundle/frankenstein-thumb.webp"
+      }
+    },
+    {
+      "slug": "from-the-earth-to-the-moon",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "from-the-earth-to-the-moon-main.webp",
+        "sha256": "4caa6fdac02b3a530aaf20b2fcd5f4157d53af307b7b5396b1a1a7ad880b1841",
+        "source": "batch-01/bundle/from-the-earth-to-the-moon-main.webp"
+      },
+      "thumbnail": {
+        "file": "from-the-earth-to-the-moon-thumb.webp",
+        "sha256": "f138d89865b9e9aff7b93da49ab66158754179c678d4799e2e60fbe868b8ecbf",
+        "source": "batch-01/bundle/from-the-earth-to-the-moon-thumb.webp"
+      }
+    },
+    {
+      "slug": "gondal-poems",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "gondal-poems-main.webp",
+        "sha256": "dd1eee4cdf8e4807e3b673d9ea9ae5032f96fb9f4f68d1571c61538a9a7679d7",
+        "source": "batch-01/bundle/gondal-poems-main.webp"
+      },
+      "thumbnail": {
+        "file": "gondal-poems-thumb.webp",
+        "sha256": "6d4abb1df34548f09503dc0d902516b59fe4f9414d1cf63370505938f93248ce",
+        "source": "batch-01/bundle/gondal-poems-thumb.webp"
+      }
+    },
+    {
+      "slug": "great-expectations",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "great-expectations-main.webp",
+        "sha256": "85c29323aa5c4f7663e2f1835aa08a2c87b0daaf35a7f22035f03afb8cc75288",
+        "source": "batch-01/bundle/great-expectations-main.webp"
+      },
+      "thumbnail": {
+        "file": "great-expectations-thumb.webp",
+        "sha256": "d3fde72a92a9cc621402dee47cf1ee5c818810f976c542266dd09225e79f83df",
+        "source": "batch-01/bundle/great-expectations-thumb.webp"
+      }
+    },
+    {
+      "slug": "homage-to-catalonia",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "homage-to-catalonia-main.webp",
+        "sha256": "bbbd193e455f0de90b7da0d527c421f9e8af67051d9cccfb8029279c7a11cfa2",
+        "source": "batch-01/bundle/homage-to-catalonia-main.webp"
+      },
+      "thumbnail": {
+        "file": "homage-to-catalonia-thumb.webp",
+        "sha256": "9108f3f48d1e1446997b94b2cd00fcfd1f4cd11ca3a4c965fbb01fbc042e37ad",
+        "source": "batch-01/bundle/homage-to-catalonia-thumb.webp"
+      }
+    },
+    {
+      "slug": "jane-eyre",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "jane-eyre-main.webp",
+        "sha256": "d94345627771e094c9dc925e1b79952e5d59c35d2fbcd1b31715caba85a7584f",
+        "source": "batch-01/bundle/jane-eyre-main.webp"
+      },
+      "thumbnail": {
+        "file": "jane-eyre-thumb.webp",
+        "sha256": "91231807613c51945d3690ac8fcd88af13db6445648cb9b2d2ce95e91631b86d",
+        "source": "batch-01/bundle/jane-eyre-thumb.webp"
+      }
+    },
+    {
+      "slug": "journey-to-the-center-of-the-earth",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "journey-to-the-center-of-the-earth-main.webp",
+        "sha256": "2816dedef59019cb96f2ac31520adb14d3feb49d83d2f5aec314635572698bb8",
+        "source": "batch-01/bundle/journey-to-the-center-of-the-earth-main.webp"
+      },
+      "thumbnail": {
+        "file": "journey-to-the-center-of-the-earth-thumb.webp",
+        "sha256": "303ece50f357b034cc169a87c767f2432a4a5aa33f0454e75571e47e201ece89",
+        "source": "batch-01/bundle/journey-to-the-center-of-the-earth-thumb.webp"
+      }
+    },
+    {
+      "slug": "kidnapped",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "kidnapped-main.webp",
+        "sha256": "ec62bad5d498746c25be48a169cbe9e228dbc90a2d72a9fa29b7a54452b9eae2",
+        "source": "batch-01/bundle/kidnapped-main.webp"
+      },
+      "thumbnail": {
+        "file": "kidnapped-thumb.webp",
+        "sha256": "52de79eb319ed3c3ea41bc83967bbd26b188867ba2ae0a588268b578e5acbda0",
+        "source": "batch-01/bundle/kidnapped-thumb.webp"
+      }
+    },
+    {
+      "slug": "life-on-the-mississippi",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "life-on-the-mississippi-main.webp",
+        "sha256": "a39f2dfb449cc49318170d0959dec5cadeef0a45734df5f4bb9dda0f3d47e903",
+        "source": "batch-01/bundle/life-on-the-mississippi-main.webp"
+      },
+      "thumbnail": {
+        "file": "life-on-the-mississippi-thumb.webp",
+        "sha256": "106a3f6a919e321f05385b0c997dd56d1cf738e4d6f9132deff01311b23e0c01",
+        "source": "batch-01/bundle/life-on-the-mississippi-thumb.webp"
+      }
+    },
+    {
+      "slug": "lives-of-the-most-eminent-literary-and-scientific-men",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "lives-of-the-most-eminent-literary-and-scientific-men-main.webp",
+        "sha256": "0978265bd0f697b07a9c076d1be66b3472cd20509682fd2bae4bd15a3d16d705",
+        "source": "batch-01/bundle/lives-of-the-most-eminent-literary-and-scientific-men-main.webp"
+      },
+      "thumbnail": {
+        "file": "lives-of-the-most-eminent-literary-and-scientific-men-thumb.webp",
+        "sha256": "432cd404f97a59b1d79313dd1602ed64dccd25a4e7aa8c504bd972ddd0ee32a6",
+        "source": "batch-01/bundle/lives-of-the-most-eminent-literary-and-scientific-men-thumb.webp"
+      }
+    },
+    {
+      "slug": "lodore",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "lodore-main.webp",
+        "sha256": "60bc92395393783c136c3e9874632baa0377868dbbe322e9dbf18cabb6b027b3",
+        "source": "batch-01/bundle/lodore-main.webp"
+      },
+      "thumbnail": {
+        "file": "lodore-thumb.webp",
+        "sha256": "e4a58a8feb4944ff0d4df5156d3b1810e63988f0e338e76c0e5b018db4c06834",
+        "source": "batch-01/bundle/lodore-thumb.webp"
+      }
+    },
+    {
+      "slug": "mansfield-park",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "mansfield-park-main.webp",
+        "sha256": "c65d03083094361f0e1eedf699a2b125502159fcbf45b71135bd0fe6a6568675",
+        "source": "batch-01/bundle/mansfield-park-main.webp"
+      },
+      "thumbnail": {
+        "file": "mansfield-park-thumb.webp",
+        "sha256": "66399ea2d077fdb3a07166b364abce5c420c01a2a267eddc9e2ce2ac22d2db39",
+        "source": "batch-01/bundle/mansfield-park-thumb.webp"
+      }
+    },
+    {
+      "slug": "mathilda",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "mathilda-main.webp",
+        "sha256": "0ed2ec5c1c1d9cc1f8a598294cf7ec9964a0e1c13496c828ed8496223b02d450",
+        "source": "batch-01/revisions/mathilda-v2-main.webp"
+      },
+      "thumbnail": {
+        "file": "mathilda-thumb.webp",
+        "sha256": "008106aafb8c981786d24e2f4510ace4b1718617326f1b069c4d68ff9eef0223",
+        "source": "batch-01/revisions/mathilda-v2-thumb.webp"
+      }
+    },
+    {
+      "slug": "meditations",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "meditations-main.webp",
+        "sha256": "6fc07be9018e03d5a74a295deade1c9ecdca4b808aab714706dd322dd5399749",
+        "source": "batch-01/bundle/meditations-main.webp"
+      },
+      "thumbnail": {
+        "file": "meditations-thumb.webp",
+        "sha256": "3e6032a94ef3c34e7858ef108b98a8f4fdc1d354b456a577b3108fca8d00d1f4",
+        "source": "batch-01/bundle/meditations-thumb.webp"
+      }
+    },
+    {
+      "slug": "mrs-dalloway",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "mrs-dalloway-main.webp",
+        "sha256": "0177274fac14f0be9029495234604b47ae1c2a95c3905e9c8f3e1c094241403d",
+        "source": "batch-01/bundle/mrs-dalloway-main.webp"
+      },
+      "thumbnail": {
+        "file": "mrs-dalloway-thumb.webp",
+        "sha256": "ab7078c957df2771d1115e3b164710d51a418d6417655d20aff88c4bd4ef541b",
+        "source": "batch-01/bundle/mrs-dalloway-thumb.webp"
+      }
+    },
+    {
+      "slug": "murder-on-the-orient-express",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "murder-on-the-orient-express-main.webp",
+        "sha256": "c5307627357955bd095c746f150aa73a2327947a2e094ba036ebe65ff5ffd38f",
+        "source": "batch-01/bundle/murder-on-the-orient-express-main.webp"
+      },
+      "thumbnail": {
+        "file": "murder-on-the-orient-express-thumb.webp",
+        "sha256": "9b24a08f58da8735ca5fb638936569fad254f857227c4d5557eb63315a38331d",
+        "source": "batch-01/bundle/murder-on-the-orient-express-thumb.webp"
+      }
+    },
+    {
+      "slug": "nineteen-eighty-four",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "nineteen-eighty-four-main.webp",
+        "sha256": "9fe8d913caea47a43210578ecfb05ea9aa2ec95fe9b66d454952a9fb6db8f376",
+        "source": "batch-01/bundle/nineteen-eighty-four-main.webp"
+      },
+      "thumbnail": {
+        "file": "nineteen-eighty-four-thumb.webp",
+        "sha256": "c920ee3f8efefaad372f7f21da15e5c375ee6eea7d844b942b150d3bc8792075",
+        "source": "batch-01/bundle/nineteen-eighty-four-thumb.webp"
+      }
+    },
+    {
+      "slug": "no-coward-soul-is-mine",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "no-coward-soul-is-mine-main.webp",
+        "sha256": "dfa1ee1bdfef4fa5da133ef54e45dafa2973d29e9490f335b62fb6dcf395e223",
+        "source": "batch-01/bundle/no-coward-soul-is-mine-main.webp"
+      },
+      "thumbnail": {
+        "file": "no-coward-soul-is-mine-thumb.webp",
+        "sha256": "7d32dee80733fd9c37f2791f8bb9613fb4b65e125cb51f465a97872a02a03be3",
+        "source": "batch-01/bundle/no-coward-soul-is-mine-thumb.webp"
+      }
+    },
+    {
+      "slug": "notes-from-underground",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "notes-from-underground-main.webp",
+        "sha256": "9c51a21bb62351ecac34331a8b91014504a60d720593c32032dd81b031196afc",
+        "source": "batch-01/bundle/notes-from-underground-main.webp"
+      },
+      "thumbnail": {
+        "file": "notes-from-underground-thumb.webp",
+        "sha256": "0555934b9a13a7562d0ce71712f74d174b43285d45434e81e81eae4fc093ee15",
+        "source": "batch-01/bundle/notes-from-underground-thumb.webp"
+      }
+    },
+    {
+      "slug": "oliver-twist",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "oliver-twist-main.webp",
+        "sha256": "76975c70c02ec824fa15c0ce4b5b0302a84ee3c410275d935fe14608d226cfff",
+        "source": "batch-01/bundle/oliver-twist-main.webp"
+      },
+      "thumbnail": {
+        "file": "oliver-twist-thumb.webp",
+        "sha256": "6f530d276726086da6049f20737cc253ab86ffd06cd58395c1b81a84cac9e0c4",
+        "source": "batch-01/bundle/oliver-twist-thumb.webp"
+      }
+    },
+    {
+      "slug": "on-the-origin-of-species",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "on-the-origin-of-species-main.webp",
+        "sha256": "4892ab7e3e54dbaf80841147555f067f6d3bc6c633116a4780b3250d176c07cf",
+        "source": "batch-01/bundle/on-the-origin-of-species-main.webp"
+      },
+      "thumbnail": {
+        "file": "on-the-origin-of-species-thumb.webp",
+        "sha256": "4d81ea8474253eb51a8fcee57283ad835e05cf619e14616009ce5a4d460b12ff",
+        "source": "batch-01/bundle/on-the-origin-of-species-thumb.webp"
+      }
+    },
+    {
+      "slug": "orlando",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "orlando-main.webp",
+        "sha256": "24c1aafadc20799be2d9a429851e7d982fe0af121725903ad65203268c52c495",
+        "source": "batch-01/bundle/orlando-main.webp"
+      },
+      "thumbnail": {
+        "file": "orlando-thumb.webp",
+        "sha256": "2ddb2a57f1ac07644e0f737b4957cd2620666d91e6c6e2c089eefd3b659b8e2c",
+        "source": "batch-01/bundle/orlando-thumb.webp"
+      }
+    },
+    {
+      "slug": "personal-recollections-of-joan-of-arc",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "personal-recollections-of-joan-of-arc-main.webp",
+        "sha256": "727d66c0c208cd361fae1c729bf57c4d03b69145d253c543af33d708d313adff",
+        "source": "batch-01/bundle/personal-recollections-of-joan-of-arc-main.webp"
+      },
+      "thumbnail": {
+        "file": "personal-recollections-of-joan-of-arc-thumb.webp",
+        "sha256": "58e75862498045a2127e5fa35685187e0b18e411ad71812f9944c4eb98d1b103",
+        "source": "batch-01/bundle/personal-recollections-of-joan-of-arc-thumb.webp"
+      }
+    },
+    {
+      "slug": "persuasion",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "persuasion-main.webp",
+        "sha256": "54d244d9354a48a85b1d028d93c966f81baa3dfc20baf4a8d6206a05becb9977",
+        "source": "batch-01/bundle/persuasion-main.webp"
+      },
+      "thumbnail": {
+        "file": "persuasion-thumb.webp",
+        "sha256": "c632fde75368e9a6b6058497178e4964955cb05eb0139f128a19cfa1d763a47a",
+        "source": "batch-01/bundle/persuasion-thumb.webp"
+      }
+    },
+    {
+      "slug": "phantasmagoria-and-other-poems",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "phantasmagoria-and-other-poems-main.webp",
+        "sha256": "738efeec6079c2778777b4746075228479dea2a59a5e0438353498e70ab35148",
+        "source": "batch-01/bundle/phantasmagoria-and-other-poems-main.webp"
+      },
+      "thumbnail": {
+        "file": "phantasmagoria-and-other-poems-thumb.webp",
+        "sha256": "b493a14b5d3800f66bb31cbbc4014c8d585ba36e09dcdb9fa9d4a883808f78b5",
+        "source": "batch-01/bundle/phantasmagoria-and-other-poems-thumb.webp"
+      }
+    },
+    {
+      "slug": "poems-by-currer-ellis-and-acton-bell",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "poems-by-currer-ellis-and-acton-bell-main.webp",
+        "sha256": "711aff73f99558bcf0fed93069e1ec27c71e1e3f4edabb855920b18218a32a3e",
+        "source": "batch-01/bundle/poems-by-currer-ellis-and-acton-bell-main.webp"
+      },
+      "thumbnail": {
+        "file": "poems-by-currer-ellis-and-acton-bell-thumb.webp",
+        "sha256": "f71d851094211e0ed6aff948d11b40f320a8ff685e3b5a0a5c9df1b9203e7020",
+        "source": "batch-01/bundle/poems-by-currer-ellis-and-acton-bell-thumb.webp"
+      }
+    },
+    {
+      "slug": "poor-richards-almanack",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "poor-richards-almanack-main.webp",
+        "sha256": "7cdb5794fd24342a46fdcc7dd9f016193454d7dce0938a0f498c88123fcd8854",
+        "source": "batch-01/bundle/poor-richards-almanack-main.webp"
+      },
+      "thumbnail": {
+        "file": "poor-richards-almanack-thumb.webp",
+        "sha256": "a95bd2e73cef777f8453c3cd20d1015812a07f8eab07769a9c22bf0ceae97d92",
+        "source": "batch-01/bundle/poor-richards-almanack-thumb.webp"
+      }
+    },
+    {
+      "slug": "pride-and-prejudice",
+      "variant": "front",
+      "reviewed_by": "user",
+      "reviewed_on": "2026-10-25",
+      "main": {
+        "file": "pride-and-prejudice-main.webp",
+        "sha256": "e1e7359beab7509356565ca690a7aa65f97706b02f60cbff82388bdd28645230",
+        "source": "pilot-v1-approved/bundle/pride-and-prejudice-main.webp"
+      },
+      "thumbnail": {
+        "file": "pride-and-prejudice-thumb.webp",
+        "sha256": "6cb9b1c87ad8c3aaff1f825a304f7e8d2969a62547fb8f0cd0ac902a552a3a14",
+        "source": "pilot-v1-approved/bundle/pride-and-prejudice-thumb.webp"
+      }
+    },
+    {
+      "slug": "resurrection",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "resurrection-main.webp",
+        "sha256": "3e3f2b24a5459bfb6ae4c933fde0a5927428d3d336f5d637a23d0ed701daa9ce",
+        "source": "batch-01/bundle/resurrection-main.webp"
+      },
+      "thumbnail": {
+        "file": "resurrection-thumb.webp",
+        "sha256": "c543519a06cc45ac2dca5dc4bbcd960205793280e8235266a2174aa456eeca41",
+        "source": "batch-01/bundle/resurrection-thumb.webp"
+      }
+    },
+    {
+      "slug": "roger-fry-a-biography",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "roger-fry-a-biography-main.webp",
+        "sha256": "6502728ec2ad86db8db76f40ef80da3ee850f8ed1b0e362809faa9e614528b41",
+        "source": "batch-01/bundle/roger-fry-a-biography-main.webp"
+      },
+      "thumbnail": {
+        "file": "roger-fry-a-biography-thumb.webp",
+        "sha256": "0c99ffc59a92c26b4bf11574ea806ab2314bd8cecd5ad092bedc14421b74ffea",
+        "source": "batch-01/bundle/roger-fry-a-biography-thumb.webp"
+      }
+    },
+    {
+      "slug": "salome",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "salome-main.webp",
+        "sha256": "2a61233a42129e15e8dcbacd98dab1771ea132e5d15834e96da7be09a76cfdf7",
+        "source": "batch-01/bundle/salome-main.webp"
+      },
+      "thumbnail": {
+        "file": "salome-thumb.webp",
+        "sha256": "58e00c92a9cd86e805152fc9187c7d3e619813d656c19b12390ad438c052789d",
+        "source": "batch-01/bundle/salome-thumb.webp"
+      }
+    },
+    {
+      "slug": "selected-poems-of-emily-bronte",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "selected-poems-of-emily-bronte-main.webp",
+        "sha256": "965a6f52a69d75d4bf401e32928f4f919dd9830f6a4b5451b014de10693c367c",
+        "source": "batch-01/bundle/selected-poems-of-emily-bronte-main.webp"
+      },
+      "thumbnail": {
+        "file": "selected-poems-of-emily-bronte-thumb.webp",
+        "sha256": "649eb83ca43e1ca66ae601bff127ab9af468108fdb82ab81ca607924e225f336",
+        "source": "batch-01/bundle/selected-poems-of-emily-bronte-thumb.webp"
+      }
+    },
+    {
+      "slug": "sense-and-sensibility",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "sense-and-sensibility-main.webp",
+        "sha256": "a1c2f2a47b7bc1cbef46da3f13a0c51af2980be0a9e7d6fd98e5bdd5784c068e",
+        "source": "batch-01/bundle/sense-and-sensibility-main.webp"
+      },
+      "thumbnail": {
+        "file": "sense-and-sensibility-thumb.webp",
+        "sha256": "ba81066b7ea0834ab4e26d6f26c01b643de59f06b6081c8ac8fff14de9c82c1d",
+        "source": "batch-01/bundle/sense-and-sensibility-thumb.webp"
+      }
+    },
+    {
+      "slug": "shirley",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "shirley-main.webp",
+        "sha256": "b948c9b5e8fef0ccb2131ef47405f166f1af5ddfc08586e93a02f1c321c4475d",
+        "source": "batch-01/bundle/shirley-main.webp"
+      },
+      "thumbnail": {
+        "file": "shirley-thumb.webp",
+        "sha256": "c2e11c31da1b436f658cf35c7b8db9d9b5d54b36f1e1613e4047c08a6a650a9c",
+        "source": "batch-01/bundle/shirley-thumb.webp"
+      }
+    },
+    {
+      "slug": "strange-case-of-dr-jekyll-and-mr-hyde",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "strange-case-of-dr-jekyll-and-mr-hyde-main.webp",
+        "sha256": "d93d805422fa1a62fcddc6ab6a4f771e4b452c11234c1dfc6cfdf2a95a1f5c87",
+        "source": "batch-01/bundle/strange-case-of-dr-jekyll-and-mr-hyde-main.webp"
+      },
+      "thumbnail": {
+        "file": "strange-case-of-dr-jekyll-and-mr-hyde-thumb.webp",
+        "sha256": "68111fee9964096a5f3c6b733ce724b29940ea6c070cb0f8e61804947490b19d",
+        "source": "batch-01/bundle/strange-case-of-dr-jekyll-and-mr-hyde-thumb.webp"
+      }
+    },
+    {
+      "slug": "sylvie-and-bruno",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "sylvie-and-bruno-main.webp",
+        "sha256": "4d9abe752d5a0f1cfdff7bdf3d6c50c9af4e670049dcf9969f19ed3109476a32",
+        "source": "batch-01/bundle/sylvie-and-bruno-main.webp"
+      },
+      "thumbnail": {
+        "file": "sylvie-and-bruno-thumb.webp",
+        "sha256": "0de7ae22b51797e80c33b03c6291736f510fff5a131d6edd344bf1c6058931b1",
+        "source": "batch-01/bundle/sylvie-and-bruno-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-abc-murders",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-abc-murders-main.webp",
+        "sha256": "967513cc40d76e8e8d9111385641ec5e66dd1d5e763d8006873631baa5f39828",
+        "source": "batch-01/bundle/the-abc-murders-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-abc-murders-thumb.webp",
+        "sha256": "0fa9bde69fb1a982b8ddf19d5412b043da17d91f69a2aa50756414bd09bb61a8",
+        "source": "batch-01/bundle/the-abc-murders-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-adventures-of-sherlock-holmes",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-adventures-of-sherlock-holmes-main.webp",
+        "sha256": "1dd941a948b86b561fd076f0e28f92a91c5175eb803a0fabaeb5a590f7c5fe24",
+        "source": "batch-01/bundle/the-adventures-of-sherlock-holmes-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-adventures-of-sherlock-holmes-thumb.webp",
+        "sha256": "1fefdf5b2b6b118b6809fa3f6818db91188c8edc5c5046dc30f2f7d542816d27",
+        "source": "batch-01/bundle/the-adventures-of-sherlock-holmes-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-adventures-of-tom-sawyer",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-adventures-of-tom-sawyer-main.webp",
+        "sha256": "feed1166dc85f3d77d5e35bf9b08b1b990ed88d16ce23ecf19ad5205cd21158b",
+        "source": "batch-01/bundle/the-adventures-of-tom-sawyer-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-adventures-of-tom-sawyer-thumb.webp",
+        "sha256": "33b7b984dc984c8e924614a51bbf13b6494cc63aaada6f9793c0f57829d6076d",
+        "source": "batch-01/bundle/the-adventures-of-tom-sawyer-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-art-of-war",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-art-of-war-main.webp",
+        "sha256": "a662727813c2c0c35a64593fb76f97e64e6d75cb160ded82bf21cb82ffe6de44",
+        "source": "batch-01/bundle/the-art-of-war-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-art-of-war-thumb.webp",
+        "sha256": "3dd298d1a52bca339cf692cb766d5f4fb4beef70484cd56321293277fa4070e8",
+        "source": "batch-01/bundle/the-art-of-war-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-autobiography-of-benjamin-franklin",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-autobiography-of-benjamin-franklin-main.webp",
+        "sha256": "0e4f26a1a50b849d2f9de8975ea97c965710136a6202a2bc802048ef2c90f80f",
+        "source": "batch-01/bundle/the-autobiography-of-benjamin-franklin-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-autobiography-of-benjamin-franklin-thumb.webp",
+        "sha256": "f1b92031c6014cb19c571f0bf9e914fbf0c166bb0eceb8b74372775f50aac2e9",
+        "source": "batch-01/bundle/the-autobiography-of-benjamin-franklin-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-black-arrow",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-black-arrow-main.webp",
+        "sha256": "dbdf349610abc9e2668b548f4316bda2b08d7cebc95939d2d0728d150e59ad4b",
+        "source": "batch-01/bundle/the-black-arrow-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-black-arrow-thumb.webp",
+        "sha256": "cf774fcd9cbef6eb80ddce0b1fada163a860b757b386f12543f4c2b4c52fe1a2",
+        "source": "batch-01/bundle/the-black-arrow-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-black-tulip",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-black-tulip-main.webp",
+        "sha256": "52534ec434ba84f39fbfae99de1418ad158b1202edeb2878347ce35d40df5b7f",
+        "source": "batch-01/bundle/the-black-tulip-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-black-tulip-thumb.webp",
+        "sha256": "66088cefea4d2649aad8a05e95b1ad7bc8c4f1a1e91d05daca19bd2bfb79b2e1",
+        "source": "batch-01/bundle/the-black-tulip-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-brothers-karamazov",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-brothers-karamazov-main.webp",
+        "sha256": "48f1b1bdcc0a398115ac727d8f8d932ac0d4ca2814d92ad6cd290831d8203250",
+        "source": "batch-01/bundle/the-brothers-karamazov-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-brothers-karamazov-thumb.webp",
+        "sha256": "3ddd161ebfdae4b1527d81b45512423bfa610118f81633d376369a03d8ed4da7",
+        "source": "batch-01/bundle/the-brothers-karamazov-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-children-of-captain-grant",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-children-of-captain-grant-main.webp",
+        "sha256": "1fda510022de3d024e36cb8018e5e435a085965be1ecaa5767a5fbbf9fc42e94",
+        "source": "batch-01/bundle/the-children-of-captain-grant-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-children-of-captain-grant-thumb.webp",
+        "sha256": "a26c10f1271de6716fa815aab9d8fd1a69cb686ab3575f58599bcf46c1acb97a",
+        "source": "batch-01/bundle/the-children-of-captain-grant-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-complete-poems-of-emily-bronte",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-complete-poems-of-emily-bronte-main.webp",
+        "sha256": "b690bdd0d304b4bfe50d7d09c4c4fb3e04723cd18d100ebdc20bc00a699c2932",
+        "source": "batch-01/bundle/the-complete-poems-of-emily-bronte-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-complete-poems-of-emily-bronte-thumb.webp",
+        "sha256": "a572ac50a4ae1c3aafc2dc13e6043b0b429d47fb0f45fcf6aec69e974e2dae88",
+        "source": "batch-01/bundle/the-complete-poems-of-emily-bronte-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-cossacks",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-cossacks-main.webp",
+        "sha256": "fd73d64b72fd58bceb6003063db8862238a4fed14b1f4d300232b7faa99f6433",
+        "source": "batch-01/bundle/the-cossacks-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-cossacks-thumb.webp",
+        "sha256": "923d87a0f99aa312d858d85e20c868fcd1e9fdcf56c08f2baa32c3b5b0540374",
+        "source": "batch-01/bundle/the-cossacks-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-count-of-monte-cristo",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-count-of-monte-cristo-main.webp",
+        "sha256": "96dfc6b99f0848cc8eb2224bf51b78c39e8aa96d9c962092bb56d23bc0655419",
+        "source": "batch-01/bundle/the-count-of-monte-cristo-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-count-of-monte-cristo-thumb.webp",
+        "sha256": "6f80d645c8a7d10d98280e593587cecaa2103b597cb8dc5cf2b00f0e39c00f3f",
+        "source": "batch-01/bundle/the-count-of-monte-cristo-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-death-of-ivan-ilyich",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-death-of-ivan-ilyich-main.webp",
+        "sha256": "5885a561ad37634f84d80a9f40b292118a17689d3ac08a0ce540093e93ebad78",
+        "source": "batch-01/bundle/the-death-of-ivan-ilyich-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-death-of-ivan-ilyich-thumb.webp",
+        "sha256": "8808e97a42694112e71fcdcdfd753369144851ede498ba745ff558272012cd7b",
+        "source": "batch-01/bundle/the-death-of-ivan-ilyich-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-first-men-in-the-moon",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-first-men-in-the-moon-main.webp",
+        "sha256": "bcaa65dde5cd3b6eaaa7937cd23f0ddd1be760055898bae20a36856bb0597497",
+        "source": "batch-01/bundle/the-first-men-in-the-moon-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-first-men-in-the-moon-thumb.webp",
+        "sha256": "7879683bcbc3e4c29547c51a51a208f52484f6361d949acf2f30e43ae1fd435b",
+        "source": "batch-01/bundle/the-first-men-in-the-moon-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-happy-prince-and-other-tales",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-happy-prince-and-other-tales-main.webp",
+        "sha256": "43b32b1d609f84f6434bb7a8f5aec637863d388182d5c897378d0db027711a54",
+        "source": "batch-01/bundle/the-happy-prince-and-other-tales-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-happy-prince-and-other-tales-thumb.webp",
+        "sha256": "57a8d8347471b3ec1f107959bfb64e52ebdc6f8baf07f5f66dfc68b1fefe2de2",
+        "source": "batch-01/bundle/the-happy-prince-and-other-tales-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-hound-of-the-baskervilles",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-hound-of-the-baskervilles-main.webp",
+        "sha256": "e1bcef015263044c14b7dd016e2a7b4e2572e6b4becb3f3404198b1ec33423dc",
+        "source": "batch-01/bundle/the-hound-of-the-baskervilles-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-hound-of-the-baskervilles-thumb.webp",
+        "sha256": "cad260044362458678100ee272240b1f959a47fffea53fac59dbd514f9872e07",
+        "source": "batch-01/bundle/the-hound-of-the-baskervilles-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-hunting-of-the-snark",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-hunting-of-the-snark-main.webp",
+        "sha256": "21d7336a987dbb51f5fc267a8e977359a543ea1f5a756c3c26838e89e0434b1a",
+        "source": "batch-01/bundle/the-hunting-of-the-snark-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-hunting-of-the-snark-thumb.webp",
+        "sha256": "7d5eb52f5d746e23364f7aa4757e30f05724e545c576f3b646f9f098e4a300dc",
+        "source": "batch-01/bundle/the-hunting-of-the-snark-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-idiot",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-idiot-main.webp",
+        "sha256": "5d86b83e5245bb8152a849588d41c8c3a506d227db0a649bcf62217899065150",
+        "source": "batch-01/bundle/the-idiot-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-idiot-thumb.webp",
+        "sha256": "cc94cd48304412be46272b37773806bbe24cdaaace8c26007151ef2f21905d3d",
+        "source": "batch-01/bundle/the-idiot-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-importance-of-being-earnest",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-importance-of-being-earnest-main.webp",
+        "sha256": "a962b20abba82cf36a7e3a3e1411df81646360e62aaefcfe1296ff17078dd463",
+        "source": "batch-01/bundle/the-importance-of-being-earnest-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-importance-of-being-earnest-thumb.webp",
+        "sha256": "fb75ef6e6c461bd70792cd2b2a2e5ea28228656c930cc6186d45c2a4e41b412d",
+        "source": "batch-01/bundle/the-importance-of-being-earnest-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-invisible-man",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-invisible-man-main.webp",
+        "sha256": "32e0021113db958a9f2eefec5e415464fa3844831b5f19f51976914c49ed2050",
+        "source": "batch-01/bundle/the-invisible-man-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-invisible-man-thumb.webp",
+        "sha256": "5568b4457d26d754accb32ae9107cf6387067badbcd0cdf7bb42b58c4b159103",
+        "source": "batch-01/bundle/the-invisible-man-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-island-of-doctor-moreau",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-island-of-doctor-moreau-main.webp",
+        "sha256": "2f0b2f0fb39429f52ef162a540369504521e0a58405195a2290741155aed465a",
+        "source": "batch-01/bundle/the-island-of-doctor-moreau-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-island-of-doctor-moreau-thumb.webp",
+        "sha256": "978dd862550558c9abcc3afe190982db017a607ea97d0c061d7d241179764365",
+        "source": "batch-01/bundle/the-island-of-doctor-moreau-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-jewel-of-seven-stars",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-jewel-of-seven-stars-main.webp",
+        "sha256": "a61e8f4a82b31358b03666bc27ccf3fd78a93c97964d810982d96200c4183d54",
+        "source": "batch-01/bundle/the-jewel-of-seven-stars-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-jewel-of-seven-stars-thumb.webp",
+        "sha256": "c69d0a05d0736071d0f0e5eac2ad85ba44a0fa73ad9ef201df735a4febf1c66a",
+        "source": "batch-01/bundle/the-jewel-of-seven-stars-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-lady-of-the-shroud",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-lady-of-the-shroud-main.webp",
+        "sha256": "309d436498b27a302782be31dadfed26638bcf7188adc240817b6ece89999e86",
+        "source": "batch-01/bundle/the-lady-of-the-shroud-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-lady-of-the-shroud-thumb.webp",
+        "sha256": "3c75e97958b429bb4374635da178d611538350647a4b5f526121f7bb0f82afaa",
+        "source": "batch-01/bundle/the-lady-of-the-shroud-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-lair-of-the-white-worm",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-lair-of-the-white-worm-main.webp",
+        "sha256": "628e1c239be5266266ed25ebea45b127297df7beafbaf861bf3c46568ae6aa1e",
+        "source": "batch-01/bundle/the-lair-of-the-white-worm-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-lair-of-the-white-worm-thumb.webp",
+        "sha256": "b6c85face0c059ad4525962375ab1ef8c8437972d688eebd22d83a8897daae7c",
+        "source": "batch-01/bundle/the-lair-of-the-white-worm-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-last-man",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-last-man-main.webp",
+        "sha256": "b8427bca0a37d6179190e9510dd09ccade55d2300fb6e8b411a13b3a40d29ee7",
+        "source": "batch-01/bundle/the-last-man-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-last-man-thumb.webp",
+        "sha256": "d24f75981992cea5818ee542232bcb2d6a6a55850a65afc4fd2c91467d87c5de",
+        "source": "batch-01/bundle/the-last-man-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-lost-world",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-lost-world-main.webp",
+        "sha256": "6b72c27f804962eacdc4c6e8bc1cb91fe48ba4a01a88f4ebab8877aa646ae0f8",
+        "source": "batch-01/bundle/the-lost-world-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-lost-world-thumb.webp",
+        "sha256": "0eb72af3fc1565c0481e8fb559dee8ae5e1fe882b0749becda85f9f2449eb9b3",
+        "source": "batch-01/bundle/the-lost-world-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-murder-at-the-vicarage",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-murder-at-the-vicarage-main.webp",
+        "sha256": "f896342cd5813c5d998254b27b03802a055d0be56547defd3a67789995b89420",
+        "source": "batch-01/bundle/the-murder-at-the-vicarage-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-murder-at-the-vicarage-thumb.webp",
+        "sha256": "534d015283bc7feaf639dd5bf6790f21dea379b128939c70cf5d5620b14f1dfd",
+        "source": "batch-01/bundle/the-murder-at-the-vicarage-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-mysterious-island",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-mysterious-island-main.webp",
+        "sha256": "59c31e7f453cb3d9043e1f911ec63e99b475da27607ff16b55de1412012db413",
+        "source": "batch-01/bundle/the-mysterious-island-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-mysterious-island-thumb.webp",
+        "sha256": "6cce359822efd21051d53b9f52e90bb0d94ae3083c613586c0a76e8ccc7bfd2f",
+        "source": "batch-01/bundle/the-mysterious-island-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-picture-of-dorian-gray",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-picture-of-dorian-gray-main.webp",
+        "sha256": "69a944565ca11a2f91bb5baafe288283f1203b7cad4d434328fdf97f4eb6aa63",
+        "source": "batch-01/bundle/the-picture-of-dorian-gray-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-picture-of-dorian-gray-thumb.webp",
+        "sha256": "83e0a930350552d2a762e12e6a8b11c3704c1bb7e3c110cb994634bed5e981a4",
+        "source": "batch-01/bundle/the-picture-of-dorian-gray-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-prince-and-the-pauper",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-prince-and-the-pauper-main.webp",
+        "sha256": "e331ed671a35fefa98517576884efea860c0537f23a28929d1302f7dcca84672",
+        "source": "batch-01/bundle/the-prince-and-the-pauper-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-prince-and-the-pauper-thumb.webp",
+        "sha256": "2687546009fd9945692a0e691682a8a3f81329e5433714db29251f7f1e0d72c7",
+        "source": "batch-01/bundle/the-prince-and-the-pauper-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-professor",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-professor-main.webp",
+        "sha256": "635468cf403cbe31fdb14174fa73358a7368e3e2f60a28e207fa33e6b3e517fa",
+        "source": "batch-01/bundle/the-professor-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-professor-thumb.webp",
+        "sha256": "f60a7b65c7eecadb9fbdb4f533712eebe0f75306a51588ab8475ff687fdd8d67",
+        "source": "batch-01/bundle/the-professor-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-road-to-wigan-pier",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-road-to-wigan-pier-main.webp",
+        "sha256": "502f80f564582f8251f44dc0aab4fd8aeead03aefb18c53cd526ac2f5c9466dc",
+        "source": "batch-01/bundle/the-road-to-wigan-pier-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-road-to-wigan-pier-thumb.webp",
+        "sha256": "77c98159e388cef4339016cb5ecb15e3916c8eba047a45876fa9e7c3c4333276",
+        "source": "batch-01/bundle/the-road-to-wigan-pier-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-sign-of-the-four",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-sign-of-the-four-main.webp",
+        "sha256": "25957eaa247fb6a23d18c6784dfb97441548798c5cf84b37dff0408f045e177e",
+        "source": "batch-01/bundle/the-sign-of-the-four-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-sign-of-the-four-thumb.webp",
+        "sha256": "3759f1c6243d9283ec8d7d5e5cdfd1e72ef2d1965833b42340892c9eb36576ab",
+        "source": "batch-01/bundle/the-sign-of-the-four-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-thoughts-of-marcus-aurelius",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-thoughts-of-marcus-aurelius-main.webp",
+        "sha256": "eb3c6fc449cff1a8f9cda2335e71c68d4e13cadde6932fbba04f2d146d20d2c2",
+        "source": "batch-01/bundle/the-thoughts-of-marcus-aurelius-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-thoughts-of-marcus-aurelius-thumb.webp",
+        "sha256": "597f23dab6982bf7a3fba0613ebf36beaed73be0871abf0e66fa56bef27f1538",
+        "source": "batch-01/bundle/the-thoughts-of-marcus-aurelius-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-three-musketeers",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-three-musketeers-main.webp",
+        "sha256": "6c9d37f5d4e6651f27efe2d3bf2a699251f1b4600dee64f15f6c2d4be1e400ae",
+        "source": "batch-01/bundle/the-three-musketeers-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-three-musketeers-thumb.webp",
+        "sha256": "9a7dda8a6356e00242e92c51c511e176fa2bc94979845f143964d57cdf768503",
+        "source": "batch-01/bundle/the-three-musketeers-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-time-machine",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-time-machine-main.webp",
+        "sha256": "17d2cfa512c336cda89b1ac9b76aaeb71644c7bf8884f2e5a9c83195170e8c13",
+        "source": "batch-01/bundle/the-time-machine-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-time-machine-thumb.webp",
+        "sha256": "3f344253fead298a0880ce48322a7399938351abb311836cae1df5c184931535",
+        "source": "batch-01/bundle/the-time-machine-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-vicomte-of-bragelonne",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-vicomte-of-bragelonne-main.webp",
+        "sha256": "2af3be2af0f404e4dd951b3d193988fa0f203c33e218b84cffc99832bae4d44c",
+        "source": "batch-01/bundle/the-vicomte-of-bragelonne-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-vicomte-of-bragelonne-thumb.webp",
+        "sha256": "eb324fbc6e573783c81bc56bc56bc66b57bb9c2e681570aada95a70cebc2ff45",
+        "source": "batch-01/bundle/the-vicomte-of-bragelonne-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-war-of-the-worlds",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-war-of-the-worlds-main.webp",
+        "sha256": "27c9721afb99b1c56d729a0c2037d06a8d712a773fe7010c830df1bec774054a",
+        "source": "batch-01/bundle/the-war-of-the-worlds-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-war-of-the-worlds-thumb.webp",
+        "sha256": "eb8c278fa2fe24735240f4880b401177b7bde170ed7789ee50e4e8c71fe6e076",
+        "source": "batch-01/bundle/the-war-of-the-worlds-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-waves",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-waves-main.webp",
+        "sha256": "e0510d3740d49122a0d371b0280472c46ceacfd657726fbadc86cec189cbc788",
+        "source": "batch-01/bundle/the-waves-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-waves-thumb.webp",
+        "sha256": "4d5a7e2db4936679df918df99098ee20ca891277019eeb3528b0b698bdf04460",
+        "source": "batch-01/bundle/the-waves-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-way-to-wealth",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-way-to-wealth-main.webp",
+        "sha256": "3d413cb375daabce976f624107a1ddc1fd092f5b6ab51fa40a29752e99e83417",
+        "source": "batch-01/revisions/the-way-to-wealth-v2-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-way-to-wealth-thumb.webp",
+        "sha256": "1e9e23b613fcd395bdaec83614de9c6ab31c21e759d2892409fabd9601f6181e",
+        "source": "batch-01/revisions/the-way-to-wealth-v2-thumb.webp"
+      }
+    },
+    {
+      "slug": "the-wealth-of-nations",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "the-wealth-of-nations-main.webp",
+        "sha256": "8526ed857930031441c86b850bd5b15d017eb762f198623101fa3dea0684d60e",
+        "source": "batch-01/revisions/the-wealth-of-nations-v2-main.webp"
+      },
+      "thumbnail": {
+        "file": "the-wealth-of-nations-thumb.webp",
+        "sha256": "b1b37a2a8d9b51d6e91589e0372ffe6583d6af1569c277734ee3716761417c15",
+        "source": "batch-01/revisions/the-wealth-of-nations-v2-thumb.webp"
+      }
+    },
+    {
+      "slug": "through-the-looking-glass",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "through-the-looking-glass-main.webp",
+        "sha256": "b2864e7d82df731eee5ed94eadf6c0008cd59a14161e470fee261af9574b5011",
+        "source": "batch-01/bundle/through-the-looking-glass-main.webp"
+      },
+      "thumbnail": {
+        "file": "through-the-looking-glass-thumb.webp",
+        "sha256": "e374c74f5c4fa0908fc52cf8d852e99233358a092bf84811d4432d6068faef42",
+        "source": "batch-01/bundle/through-the-looking-glass-thumb.webp"
+      }
+    },
+    {
+      "slug": "to-the-lighthouse",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "to-the-lighthouse-main.webp",
+        "sha256": "8af39a48dc3f79cbff76fa7d8f2f667614c22d598027218fc8ba45a8216fc0c7",
+        "source": "batch-01/bundle/to-the-lighthouse-main.webp"
+      },
+      "thumbnail": {
+        "file": "to-the-lighthouse-thumb.webp",
+        "sha256": "d9f220a0ccb9b58fa3e91b317cf4c410a6f28458a8e47a27b6a52ae1a0324d5e",
+        "source": "batch-01/bundle/to-the-lighthouse-thumb.webp"
+      }
+    },
+    {
+      "slug": "tom-sawyer-abroad",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "tom-sawyer-abroad-main.webp",
+        "sha256": "9123a82c84cabe3f5db746ff744769d6bd44553c39f7e3c8b8781faa31dbadd8",
+        "source": "batch-01/bundle/tom-sawyer-abroad-main.webp"
+      },
+      "thumbnail": {
+        "file": "tom-sawyer-abroad-thumb.webp",
+        "sha256": "b6406b0f615efb083d908071a9df7478627713b49c37cc1cb2b81e9f9e6dc83e",
+        "source": "batch-01/bundle/tom-sawyer-abroad-thumb.webp"
+      }
+    },
+    {
+      "slug": "tom-sawyer-detective",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "tom-sawyer-detective-main.webp",
+        "sha256": "f8051d5a2647b490f592a6c1263b4be5f9348b8135bf3e0502000f24cf17abeb",
+        "source": "batch-01/bundle/tom-sawyer-detective-main.webp"
+      },
+      "thumbnail": {
+        "file": "tom-sawyer-detective-thumb.webp",
+        "sha256": "eebdd39e7553a82447a3f57694cd9a0117a5dd998bd1cde84e2fd3fe3913e674",
+        "source": "batch-01/bundle/tom-sawyer-detective-thumb.webp"
+      }
+    },
+    {
+      "slug": "treasure-island",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "treasure-island-main.webp",
+        "sha256": "eeaec72975a357f9551037b0fae14cae5951fece1cdecdf16fec565978c97763",
+        "source": "batch-01/bundle/treasure-island-main.webp"
+      },
+      "thumbnail": {
+        "file": "treasure-island-thumb.webp",
+        "sha256": "9e8d1cb4648432f2796add0c8a93f3617051a436ac968e7bb59e1ead1aa9c965",
+        "source": "batch-01/bundle/treasure-island-thumb.webp"
+      }
+    },
+    {
+      "slug": "twenty-thousand-leagues-under-the-seas",
+      "variant": "front",
+      "reviewed_by": "user",
+      "reviewed_on": "2026-10-25",
+      "main": {
+        "file": "twenty-thousand-leagues-under-the-seas-main.webp",
+        "sha256": "8a8963e7d19827fc144b7e36a1506681877c088f78bb054af4743c4901e80f4f",
+        "source": "pilot-v1-approved/bundle/twenty-thousand-leagues-under-the-seas-main.webp"
+      },
+      "thumbnail": {
+        "file": "twenty-thousand-leagues-under-the-seas-thumb.webp",
+        "sha256": "e6a67e234770939aa108b50e064f81f4f19cd06f5fc35eefdd4874a58741efd2",
+        "source": "pilot-v1-approved/bundle/twenty-thousand-leagues-under-the-seas-thumb.webp"
+      }
+    },
+    {
+      "slug": "twenty-years-after",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "twenty-years-after-main.webp",
+        "sha256": "d47efb5e32a46579317174ad7d53d85d137677246d2788241375c68eacde3247",
+        "source": "batch-01/bundle/twenty-years-after-main.webp"
+      },
+      "thumbnail": {
+        "file": "twenty-years-after-thumb.webp",
+        "sha256": "6231c04f359d575650981ffe0d7e1cc646c6e1c7f629cc8e9f9a728d4be069e4",
+        "source": "batch-01/bundle/twenty-years-after-thumb.webp"
+      }
+    },
+    {
+      "slug": "valperga",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "valperga-main.webp",
+        "sha256": "b0003949e9dffb38292ab27f027191dc86bad0377e291a847c383f5545e3c547",
+        "source": "batch-01/bundle/valperga-main.webp"
+      },
+      "thumbnail": {
+        "file": "valperga-thumb.webp",
+        "sha256": "1c3ca31ed6aebd286a1ec666a2e1d19eeff0d6aca9e9fc6af7b177fc40803ffc",
+        "source": "batch-01/bundle/valperga-thumb.webp"
+      }
+    },
+    {
+      "slug": "villette",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "villette-main.webp",
+        "sha256": "cb45de5980eee7fac58953b34ce12e3550f27d3ac3c5a4eee4a42beb874845ac",
+        "source": "batch-01/bundle/villette-main.webp"
+      },
+      "thumbnail": {
+        "file": "villette-thumb.webp",
+        "sha256": "6d283165b7df0efdb37360db64b78829a8e645e3c6ba6c04e70756bee4d2ec85",
+        "source": "batch-01/bundle/villette-thumb.webp"
+      }
+    },
+    {
+      "slug": "war-and-peace",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "war-and-peace-main.webp",
+        "sha256": "46235b5535b72f3813a8f18d67d05f02d774dc7ade0cb6f53bd9941ae42121e3",
+        "source": "batch-01/bundle/war-and-peace-main.webp"
+      },
+      "thumbnail": {
+        "file": "war-and-peace-thumb.webp",
+        "sha256": "4f1b25c8b9c251b10573cc77c9b436992cbb99e4e5c6bb2000954c9929e3fee6",
+        "source": "batch-01/bundle/war-and-peace-thumb.webp"
+      }
+    },
+    {
+      "slug": "wuthering-heights",
+      "variant": "front",
+      "reviewed_by": "Codex",
+      "reviewed_on": "2026-10-31",
+      "main": {
+        "file": "wuthering-heights-main.webp",
+        "sha256": "c567bea54e42d563dc5324284e6bc783eb3f7dff2fe45e0039a26f84bfd48120",
+        "source": "batch-01/bundle/wuthering-heights-main.webp"
+      },
+      "thumbnail": {
+        "file": "wuthering-heights-thumb.webp",
+        "sha256": "9a89bc2fbcc64c3fc6378c5c2002420e40906739e7b37ea419a76e8876f42518",
+        "source": "batch-01/bundle/wuthering-heights-thumb.webp"
+      }
+    }
+  ]
+}

@@ -46,8 +46,9 @@ type manifestFile struct {
 // Bundle can only acquire prepared bytes through LoadBundle validation.
 // Source artwork and rights evidence stay in the separately retained bundle.
 type Bundle struct {
-	ID      string
-	entries []preparedCover
+	ID            string
+	entries       []preparedCover
+	isFullCatalog bool
 }
 
 type preparedCover struct {
@@ -57,8 +58,8 @@ type preparedCover struct {
 	thumbnail []byte
 }
 
-// LoadBundle verifies a caller-pinned manifest checksum and the entire five-book
-// delivery before any publication or database write. Files must be flat regular files.
+// LoadBundle validates a pinned pilot or full-catalog delivery before publication.
+// Files must be flat regular files; full-catalog targets are checked at installation.
 func LoadBundle(directory, manifestSHA256 string) (*Bundle, error) {
 	root, err := os.OpenRoot(directory)
 	if err != nil {
@@ -83,8 +84,11 @@ func LoadBundle(directory, manifestSHA256 string) (*Bundle, error) {
 	if err := decoder.Decode(new(any)); !errors.Is(err, io.EOF) {
 		return nil, errors.New("manifest has trailing JSON data")
 	}
-	if document.Version != 1 || strings.TrimSpace(document.BundleID) == "" || len(document.Covers) != len(pilotSlugs) {
-		return nil, errors.New("manifest requires version 1, a bundle ID and exactly five pilot books")
+	if strings.TrimSpace(document.BundleID) == "" ||
+		(document.Version == 1 && len(document.Covers) != len(pilotSlugs)) ||
+		(document.Version == 2 && len(document.Covers) != 109) ||
+		(document.Version != 1 && document.Version != 2) {
+		return nil, errors.New("manifest requires a bundle ID and either five pilot books or 109 catalog books")
 	}
 
 	remaining := make(map[string]bool, len(pilotSlugs))
@@ -92,11 +96,15 @@ func LoadBundle(directory, manifestSHA256 string) (*Bundle, error) {
 		remaining[slug] = true
 	}
 
-	bundle := &Bundle{ID: document.BundleID}
+	bundle := &Bundle{ID: document.BundleID, isFullCatalog: document.Version == 2}
+	seen := make(map[string]bool, len(document.Covers))
 	for _, entry := range document.Covers {
-		if !remaining[entry.Slug] || !entry.IsReviewed || strings.TrimSpace(entry.UsageBasis) == "" {
-			return nil, errors.New("manifest requires unique pilot slugs, reviewed artwork and usage evidence")
+		if strings.TrimSpace(entry.Slug) == "" || seen[entry.Slug] ||
+			(document.Version == 1 && !remaining[entry.Slug]) ||
+			!entry.IsReviewed || strings.TrimSpace(entry.UsageBasis) == "" {
+			return nil, errors.New("manifest requires unique valid slugs, reviewed artwork and usage evidence")
 		}
+		seen[entry.Slug] = true
 		delete(remaining, entry.Slug)
 
 		prepared, err := prepareEntry(root, entry)
