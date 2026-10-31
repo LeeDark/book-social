@@ -94,12 +94,12 @@ not retention of those temporary logs, records the results.
 
 Pilot preparation update on 2026-10-25: five candidate illustrations and their draft manifest,
 sources, prompts/provenance and checksums are prepared in
-[`assets/demo-covers/pilot-v1`](../assets/demo-covers/pilot-v1/README.ru.md). The
+[`assets/demo-covers/pilot-v1`](../assets/demo-covers/pilot-v1/README.md). The
 [offline gallery](../assets/demo-covers/pilot-v1/review.html) shows real 240×360 thumbnails and
 links to 600×900 main files. The installer deliberately rejects this historical draft.
 
 The user subsequently approved all five illustrations and the delivery profile on 2026-10-25.
-The separate [approved release](../assets/demo-covers/pilot-v1-approved/README.ru.md) passed
+The separate [approved release](../assets/demo-covers/pilot-v1-approved/README.md) passed
 actual offline installation twice in a fresh SQLite environment: five changes then zero,
 five audits total, five main/thumbnail pairs verified. See the
 [installation protocol](cover_pilot_installation_v0_3_2.md) for hashes, commands and preservation

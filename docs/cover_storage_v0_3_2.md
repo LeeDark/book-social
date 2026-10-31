@@ -49,11 +49,12 @@ identified as project demo illustrations, not covers of particular editions. Exi
 provenance limitations in [demo_catalog_provenance.md](demo_catalog_provenance.md) remain.
 
 The user approved all five illustrations and their delivery profile on 2026-10-25. The separate
-[`pilot-v1-approved` release](../assets/demo-covers/pilot-v1-approved/README.ru.md) retains original
+[`pilot-v1-approved` release](../assets/demo-covers/pilot-v1-approved/README.md) retains original
 PNGs, prepared WebPs, prompts, provenance, review decision and pinned checksums. The
 [installation protocol](cover_pilot_installation_v0_3_2.md) records actual offline SQLite installation
 twice (five changes then zero), five audits and verification. The historical
-[`pilot-v1` draft](../assets/demo-covers/pilot-v1/README.ru.md) remains unchanged and un-installable.
+[`pilot-v1` draft](../assets/demo-covers/pilot-v1/README.md) remains un-installable; its
+original package is preserved in the local archive, while its README and gallery were translated.
 Artwork approval alone does not accept application rendering or authorize the remaining 104
 illustrations. Subsequent user-reported browser evidence is recorded in the
 [acceptance checklist](cover_acceptance_v0_3_2.md#user-reported-browser-evidence).

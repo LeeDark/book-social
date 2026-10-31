@@ -10,7 +10,8 @@ The project user explicitly answered «Да, подтверждаю.» to approv
 and the WebP 600×900 main / 240×360 thumbnail profile for the demo catalog pilot.
 The decision, date, reviewer and scope are recorded in
 [approved provenance](../assets/demo-covers/pilot-v1-approved/artwork-provenance.json).
-The original draft is retained unchanged; generated PNGs and all ten WebPs are byte-identical.
+The original draft is retained in its local archive; generated PNGs and all ten WebPs are
+byte-identical. The working README and gallery were subsequently translated into English.
 Approval does not imply legal clearance or approval of the remaining 104 illustrations.
 
 - Bundle: `pilot-v1-approved-2026-10-25`.
@@ -21,6 +22,8 @@ Approval does not imply legal clearance or approval of the remaining 104 illustr
   independently recorded in [the digest file](../assets/demo-covers/pilot-v1-approved.tar.gz.sha256).
 - [SHA256SUMS](../assets/demo-covers/pilot-v1-approved/SHA256SUMS) covers all 20 payload files,
   including original PNGs, WebPs, prompts, provenance, manifest, gallery and README.
+  These checksums apply to the preserved original archive, not the translated working documents;
+  see the [storage instructions](../assets/demo-covers/STORAGE.md) for verification.
 
 ## Isolated Target and Commands
 
