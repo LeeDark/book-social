@@ -28,11 +28,12 @@ metadata, not independently verified edition records. Some collections and trans
 overlap; there is no ISBN, edition, or language disambiguation. Before reusing descriptions outside
 this demo, verify their source or replace them with reviewed original text.
 
-## Record Inventory
+## Seed Record Inventory
 
 Each row identifies a seeded book by its stable slug. The immediate metadata source is the matching
 row in `db/sqlite/seed.sql` and `db/postgresql/seed.sql`; external-source status is explicit.
-All rows share the limitations above.
+All rows share the limitations above. The cover columns describe the SQL seed before the
+separate demo artwork bundle is installed; they do not describe an installed catalog.
 
 | Book slug                                               | External metadata source | Cover URL | Cover-use basis | Limitations                                 |
 |---------------------------------------------------------|--------------------------|-----------|-----------------|---------------------------------------------|
@@ -148,10 +149,16 @@ All rows share the limitations above.
 
 ## Cover Policy
 
-No seeded record has a cover URL, and no cover asset is distributed. The UI uses its CSS
-placeholder.
-Before adding a seed cover, replace that record's empty cover fields with a metadata source, the
-exact cover URL, a reviewed permitted-use basis, and limitations. Missing or unverified permission
-means the URL stays absent. Public accessibility alone is not permission. Cover URLs remain
-metadata:
-no downloading, uploading, proxying, caching, or file storage is part of this workflow.
+The SQL seed contains no cover associations. Before artwork is installed, the UI uses its CSS
+placeholder. The separate [demo cover dataset](../assets/demo-covers/catalog-v1/README.md)
+provides reviewed project-generated front illustrations for all 109 seeded slugs. The inventory
+records selected files and hashes; generation prompts, review decisions and the original pilot
+provenance are retained separately. Five pilot illustrations were approved by the user; the
+remaining 104 were visually reviewed by Codex at the user's request. They are project demo
+artwork, not covers of specific published editions. No external reference images were used in
+their generation. This does not claim exclusive rights or legal clearance.
+
+Installation associates validated local files with catalog records; it is separate from the seed.
+Source images and archives are excluded from Git and require independent backup as described in
+the [storage instructions](../assets/demo-covers/STORAGE.md). Artwork review does not verify
+the legacy descriptions, author biographies, genre descriptions, or edition metadata above.

@@ -22,7 +22,9 @@ also passed, followed by successful restored-state HTTP/HTMX/image checks for bo
 [PostgreSQL restart/recreation and focused desktop/fallback checks](cover_postgres_browser_v0_3_2.md)
 passed. The user accepted #28 on 2026-10-30 with the documented focused accessibility/visual
 review boundaries; #28 is closed. The separate full-catalog artwork task #29 remains open,
-so the expanded v0.3.2 cover scope is not yet complete.
+so the expanded v0.3.2 cover scope is not yet complete. The 109-cover dataset was assembled and
+verified on disposable SQLite and PostgreSQL databases; the [verification record](cover_catalog_verification_v0_3_2.md)
+records browser coverage and remaining limits. An independent durable artwork backup remains outstanding.
 v0.3.4 will add a reviewed book-addition workflow and grow the catalog to 500 books total.
 
 v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation through the first

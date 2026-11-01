@@ -5,7 +5,8 @@ The user accepted #28 on 2026-10-30, including the documented limits of the focu
 desktop/accessibility checks. Issue #28 was closed as completed; #29 and v0.3.2 remain open.
 Reviewed artwork, isolated SQLite installation and user-reported pilot browser checks are recorded below.
 This record does not accept the separate #29 artwork task or close v0.3.2, and does not replace
-the earlier acceptance of the original #23–#26 workflows.
+the earlier acceptance of the original #23–#26 workflows. Later full-catalog evidence is recorded
+in the separate [#29 verification record](cover_catalog_verification_v0_3_2.md).
 
 ## Closeout Review
 

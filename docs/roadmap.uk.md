@@ -24,6 +24,9 @@ Backlog не змінює поточний пріоритет або обсяг 
 та доступності. #28 закрито; окрема задача повного набору обкладинок #29 залишається відкритою.
 HTTP/HTMX/зображення після відновлення перевірено на SQLite і PostgreSQL, дані не змінилися.
 Парне [офлайн-відновлення SQLite/PostgreSQL](cover_recovery_v0_3_2.md) пройшло.
+The 109-cover dataset has been assembled and verified on disposable SQLite and PostgreSQL
+databases; see the [verification record](cover_catalog_verification_v0_3_2.md) for browser
+coverage and limits. An independent durable artwork backup remains outstanding.
 Розширений обсяг обкладинок не прийнято. У v0.3.4 з'являться процес
 додавання книг із перевіркою та розширення до 500 книг загалом.
 

@@ -50,4 +50,6 @@ produces zero changes. A failed SQL transaction can leave unreferenced files;
 retry the same verified bundle with writers stopped. This does not delete or
 replace accepted source artwork. A test using the actual seed on a disposable
 SQLite database installed 109 covers, installed zero on repeat, and verified 109
-references. PostgreSQL and browser acceptance for this full dataset remain pending.
+references. The same install, repeat and verification checks passed on a disposable PostgreSQL
+database. HTTP and browser evidence and its limits are recorded in the
+[full-catalog verification record](../../../docs/cover_catalog_verification_v0_3_2.md).
