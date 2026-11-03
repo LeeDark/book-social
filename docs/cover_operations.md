@@ -90,6 +90,27 @@ pin that previously reviewed value; calculating a new hash from an untrusted dow
 it straight back is not authenticity verification. Also verify the downloaded bundle archive
 against its independently recorded release checksum before unpacking into a fresh directory.
 
+## Full-Catalog Bundle (Version 2)
+
+A version 2 manifest installs one reviewed front cover for every book. The current dataset is
+[catalog-v1](../assets/demo-covers/catalog-v1/README.md): its `assemble.py` builds the installer
+`manifest.json` from the committed inventory, and its README records the pinned checksum.
+
+- Entries and files follow the version 1 rules above, but the manifest has exactly 109 entries
+  with unique slugs. The loader fixes that count for this dataset; it is not read from the database.
+- Before publishing any file, `install` requires the catalog to contain exactly these 109 slugs,
+  with no missing, extra or different books. A book created through the administrator form, or
+  any other catalog change, makes this bundle uninstallable on that database. Attach covers for
+  new books through the administrator form instead.
+- All entries and files (218 for the current dataset) are validated in memory before publishing.
+  The manifest must stay within the 64 KiB loader limit. The current one is 60,307 bytes, about
+  550 bytes per entry, so a catalog beyond roughly 118 books needs a new manifest version or limit.
+- Reinstalling an unchanged bundle reports zero changes. It does, however, replace any front cover
+  that an administrator changed since the previous installation, with a normal
+  `correct`/`front_cover` audit.
+- Recovery means restoring a [paired backup](#paired-backup) into fresh targets, not reinstalling
+  the bundle into a changed catalog.
+
 ## Explicit Installation
 
 Stop the app and every other cover writer/maintenance job. Resolve uncertain earlier commits and
@@ -134,8 +155,8 @@ Use the same project options as the retained environment. For stage/prod-like lo
 matching override and keep PostgreSQL running while app is stopped. Only restart app after every
 command succeeds. Do not reapply the development seed to install covers in an existing catalog.
 Fresh disposable setup: migrations, matching development seed, explicit administrator provisioning,
-then installation of the separately reviewed matching pilot bundle. No default administrator or
-unreviewed artwork is provisioned automatically.
+then installation of a separately reviewed matching pilot or full-catalog bundle. No default
+administrator or unreviewed artwork is provisioned automatically.
 
 ## Paired Backup
 
@@ -249,10 +270,15 @@ succeeds. No automatic restore/overwrite/cleanup command is provided.
 
 ## Verification and Remaining Acceptance
 
-Automated tests use synthetic five-book bundles, validate refusal/idempotency/audit rollback,
-reopen local storage and restore a SQLite snapshot plus cover files into fresh temporary targets.
-Opt-in PostgreSQL tests check equivalent installation and verification. `make test/integration`
-includes `internal/coverops`; it does not test PostgreSQL dump/restore or container recreation.
+Automated tests use synthetic images, not demo artwork. Five-book pilot bundles validate
+refusal/idempotency/audit rollback, reopen local storage and restore a SQLite snapshot plus cover
+files into fresh temporary targets. Full-catalog tests use the real development seed and the
+committed catalog-v1 inventory with one distinct image pair per book. They also check that the
+inventory reproduces the pinned installer manifest checksum and that a changed catalog is refused.
+Every installation test asserts that each book references its own files. Opt-in PostgreSQL tests
+check equivalent installation and verification.
+`make test/integration` includes `internal/coverops`; it does not test PostgreSQL dump/restore or
+container recreation.
 
 Outside the sandbox, in a disposable local environment with approved pilot artwork:
 
@@ -272,4 +298,7 @@ Outside the sandbox, in a disposable local environment with approved pilot artwo
 
 Record actual commands/results and browser/environment details. Passing unit tests or Compose
 configuration validation does not accept restart/redeploy, real PostgreSQL restore, reviewed artwork
-or visual presentation; #28 and the expanded release scope remain open.
+or visual presentation. The user accepted #28 on 2026-10-30 (see the
+[pilot acceptance record](cover_acceptance_v0_3_2.md)). The 109-book dataset (#29) and its
+review limits are in the [full-catalog verification record](cover_catalog_verification_v0_3_2.md).
+Neither record accepts the v0.3.2 release.
