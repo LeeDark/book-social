@@ -34,7 +34,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	key := strings.TrimPrefix(r.URL.Path, prefix)
-	data, file, err := h.store.Read(key)
+	data, file, err := h.store.ReadPublished(key)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, covers.ErrInvalidKey) ||
 			errors.Is(err, covers.ErrCorruptFile) {

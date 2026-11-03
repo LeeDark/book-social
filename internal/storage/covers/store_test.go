@@ -44,6 +44,12 @@ func TestPutFormatsAndReopen(t *testing.T) {
 				t.Fatalf("Read() = %v, %+v, %v", got, metadata, err)
 			}
 
+			published, publishedFile, err := reopened.ReadPublished(file.Key)
+			wantPublished := PublishedFile{Key: file.Key, MIMEType: file.MIMEType, ChecksumSHA256: file.ChecksumSHA256}
+			if err != nil || !bytes.Equal(published, data) || publishedFile != wantPublished {
+				t.Fatalf("ReadPublished() = %v, %+v, %v", published, publishedFile, err)
+			}
+
 			checksum := sha256.Sum256(data)
 			if file.ChecksumSHA256 != hex.EncodeToString(checksum[:]) || file.Width != 2 || file.Height != 3 ||
 				file.ByteSize != int64(len(data)) || file.MIMEType != "image/"+format ||
@@ -168,6 +174,48 @@ func TestPutDoesNotOverwriteCorruptExistingFile(t *testing.T) {
 		t.Fatalf("existing file changed: %q, %v", got, err)
 	}
 	assertOnlyFile(t, directory, file.Key)
+}
+
+func TestReadPublishedChecksHashWithoutDecoding(t *testing.T) {
+	cases := []struct {
+		name    string
+		key     string
+		data    []byte
+		wantErr error
+	}{
+		// Only Put names files, after full validation; serving trusts that name.
+		{name: "bytes named by their hash are served without decoding", data: []byte("not decoded")},
+		{name: "empty file is refused", data: []byte{}, wantErr: ErrCorruptFile},
+		{name: "bytes not matching the key are refused", key: strings.Repeat("a", 64) + ".png", data: []byte("changed"), wantErr: ErrCorruptFile},
+		{name: "temporary name is refused", key: ".upload-test", data: []byte("secret"), wantErr: ErrInvalidKey},
+	}
+
+	for _, check := range cases {
+		t.Run(check.name, func(t *testing.T) {
+			directory := t.TempDir()
+			store := newStore(t, directory)
+			key := check.key
+			if key == "" {
+				digest := sha256.Sum256(check.data)
+				key = hex.EncodeToString(digest[:]) + ".png"
+			}
+			if err := os.WriteFile(filepath.Join(directory, key), check.data, 0640); err != nil {
+				t.Fatal(err)
+			}
+
+			data, file, err := store.ReadPublished(key)
+			if check.wantErr != nil {
+				if !errors.Is(err, check.wantErr) {
+					t.Fatalf("ReadPublished() error = %v, want %v", err, check.wantErr)
+				}
+				return
+			}
+
+			if err != nil || !bytes.Equal(data, check.data) || file.Key != key || file.MIMEType != "image/png" {
+				t.Fatalf("ReadPublished() = %q, %+v, %v", data, file, err)
+			}
+		})
+	}
 }
 
 func TestReadRejectsUnsafeKeysAndSymlinks(t *testing.T) {

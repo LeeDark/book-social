@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -106,8 +109,9 @@ func (s *Store) Put(ctx context.Context, source io.Reader, filename, declaredTyp
 	return file, nil
 }
 
-// Read verifies bytes before serving, so missing, damaged or mismatched files do
-// not acquire a public immutable cache entry. Reads are bounded by MaxFileBytes.
+// Read fully re-inspects stored bytes, including decoding and measuring the image.
+// Offline verification uses it; HTTP serving uses the cheaper ReadPublished.
+// Reads are bounded by MaxFileBytes.
 func (s *Store) Read(key string) ([]byte, File, error) {
 	data, err := s.read(key)
 	if err != nil {
@@ -120,6 +124,51 @@ func (s *Store) Read(key string) ([]byte, File, error) {
 	}
 
 	return data, file, nil
+}
+
+// PublishedFile identifies stored bytes by their verified key. Unlike File, it has
+// no measured dimensions because the image is not decoded again.
+type PublishedFile struct {
+	Key            string
+	MIMEType       string
+	ChecksumSHA256 string
+}
+
+// ReadPublished checks the canonical key, the size bound and the SHA-256 of the
+// bytes, so missing, damaged or mismatched files do not acquire a public immutable
+// cache entry. Put fully validated the image before naming it by that hash, so a
+// public request does not pay for decoding it again.
+func (s *Store) ReadPublished(key string) ([]byte, PublishedFile, error) {
+	data, err := s.read(key)
+	if err != nil {
+		return nil, PublishedFile{}, err
+	}
+
+	digest := sha256.Sum256(data)
+	checksum := hex.EncodeToString(digest[:])
+	if len(data) == 0 || len(data) > MaxFileBytes || !strings.HasPrefix(key, checksum+".") {
+		return nil, PublishedFile{}, ErrCorruptFile
+	}
+
+	return data, PublishedFile{
+		Key:            key,
+		MIMEType:       mimeTypeForKey(key),
+		ChecksumSHA256: checksum,
+	}, nil
+}
+
+// mimeTypeForKey covers every extension that keyPattern admits.
+func mimeTypeForKey(key string) string {
+	switch filepath.Ext(key) {
+	case ".jpg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".webp":
+		return "image/webp"
+	default:
+		return ""
+	}
 }
 
 func (s *Store) read(key string) ([]byte, error) {
