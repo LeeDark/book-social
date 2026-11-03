@@ -141,7 +141,8 @@ func TestInstallerFailureKeepsSQLUnchanged(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			wantFiles := 2
+			// Five distinct main/thumbnail pairs are published before the SQL step.
+			wantFiles := 10
 			if failure == "forbidden" || failure == "missing target" || failure == "storage" {
 				wantFiles = 0
 			}

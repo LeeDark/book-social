@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
+	"image/color"
+	"image/draw"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -17,27 +19,41 @@ func writeTestBundle(t *testing.T) (string, manifest) {
 	t.Helper()
 
 	directory := t.TempDir()
-	main := writeTestPNG(t, directory, "main.png", 4, 6)
-	thumbnail := writeTestPNG(t, directory, "thumb.png", 2, 3)
 	document := manifest{Version: 1, BundleID: "synthetic-tests-only-v1"}
-	for _, slug := range pilotSlugs {
-		document.Covers = append(document.Covers, manifestCover{
-			Slug:       slug,
-			IsReviewed: true,
-			UsageBasis: "Generated solid-color test fixture, not approved demo artwork.",
-			Main:       main,
-			Thumbnail:  &thumbnail,
-		})
+	for index, slug := range pilotSlugs {
+		document.Covers = append(document.Covers, writeTestCover(t, directory, slug, index))
 	}
 
 	return directory, document
 }
 
-func writeTestPNG(t *testing.T, directory, name string, width, height int) manifestFile {
+// writeTestCover gives every entry its own main/thumbnail pair, so tests can
+// detect a cover attached to the wrong book.
+func writeTestCover(t *testing.T, directory, slug string, shade int) manifestCover {
 	t.Helper()
 
+	main := writeTestPNG(t, directory, slug+"-main.png", 4, 6, shade)
+	thumbnail := writeTestPNG(t, directory, slug+"-thumb.png", 2, 3, shade)
+
+	return manifestCover{
+		Slug:       slug,
+		IsReviewed: true,
+		UsageBasis: "Generated solid-color test fixture, not approved demo artwork.",
+		Main:       main,
+		Thumbnail:  &thumbnail,
+	}
+}
+
+// writeTestPNG writes a solid image; a different shade gives a different content key.
+func writeTestPNG(t *testing.T, directory, name string, width, height, shade int) manifestFile {
+	t.Helper()
+
+	picture := image.NewRGBA(image.Rect(0, 0, width, height))
+	fill := color.RGBA{R: uint8(shade), G: uint8(shade >> 8), B: 0x80, A: 0xff}
+	draw.Draw(picture, picture.Bounds(), image.NewUniform(fill), image.Point{}, draw.Src)
+
 	var data bytes.Buffer
-	if err := png.Encode(&data, image.NewRGBA(image.Rect(0, 0, width, height))); err != nil {
+	if err := png.Encode(&data, picture); err != nil {
 		t.Fatal(err)
 	}
 
@@ -132,7 +148,7 @@ func TestLoadBundleRejectsInvalidDelivery(t *testing.T) {
 		{name: "backslash path", change: func(_ *testing.T, _ string, m *manifest) { m.Covers[4].Main.File = `..\main.png` }},
 		{name: "absolute path", change: func(_ *testing.T, _ string, m *manifest) { m.Covers[4].Main.File = "/main.png" }},
 		{name: "wrong thumbnail proportions", change: func(t *testing.T, dir string, m *manifest) {
-			file := writeTestPNG(t, dir, "wrong.png", 2, 4)
+			file := writeTestPNG(t, dir, "wrong.png", 2, 4, 0)
 			m.Covers[4].Thumbnail = &file
 		}},
 		{name: "main reused as thumbnail", change: func(_ *testing.T, _ string, m *manifest) {
@@ -168,7 +184,7 @@ func TestLoadBundleRejectsUnpinnedOrAmbiguousManifest(t *testing.T) {
 		{name: "unknown field", data: `{"unknown":true}`},
 		{name: "trailing document", data: `{} {}`},
 		{name: "array instead of manifest", data: `[]`},
-		{name: "oversized manifest", data: string(make([]byte, 64*1024+1))},
+		{name: "oversized manifest", data: string(make([]byte, maxManifestBytes+1))},
 	}
 
 	for _, check := range cases {

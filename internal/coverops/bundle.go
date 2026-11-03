@@ -16,6 +16,9 @@ import (
 	"github.com/LeeDark/book-social/internal/storage/covers"
 )
 
+// maxManifestBytes bounds manifest.json; the 109-book manifest must fit it.
+const maxManifestBytes = 64 * 1024
+
 var pilotSlugs = [...]string{
 	"a-christmas-carol",
 	"pride-and-prejudice",
@@ -67,7 +70,7 @@ func LoadBundle(directory, manifestSHA256 string) (*Bundle, error) {
 	}
 	defer func() { _ = root.Close() }()
 
-	data, err := readBundleFile(root, "manifest.json", 64*1024)
+	data, err := readBundleFile(root, "manifest.json", maxManifestBytes)
 	if err != nil {
 		return nil, err
 	}

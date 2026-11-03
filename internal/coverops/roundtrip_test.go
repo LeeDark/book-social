@@ -3,10 +3,10 @@ package coverops
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/LeeDark/book-social/internal/modules/books"
@@ -16,6 +16,12 @@ import (
 	"github.com/LeeDark/book-social/internal/testutil"
 )
 
+const insertTestAdministratorSQL = `
+	INSERT INTO users (id, first_name, login, password_hash, email, user_role_id)
+	VALUES (1, 'Operator', 'operator', 'test-hash', 'operator@example.test',
+		(SELECT id FROM roles WHERE role_name = 'admin'))
+`
+
 func TestSQLitePilotInstallAndRestore(t *testing.T) {
 	ctx := context.Background()
 	db := testutil.NewSQLiteLibraryTestDB(t, ctx)
@@ -24,42 +30,49 @@ func TestSQLitePilotInstallAndRestore(t *testing.T) {
 
 func TestSQLiteFullCatalogInstall(t *testing.T) {
 	ctx := context.Background()
-	db := testutil.NewSQLiteLibraryTestDB(t, ctx)
-	_, err := db.ExecContext(ctx, `INSERT INTO users (id, first_name, login, password_hash, email, user_role_id)
-		VALUES (1, 'Operator', 'operator', 'hash', 'operator@example.test',
-			(SELECT id FROM roles WHERE role_name = 'admin'))`)
-	if err != nil {
+	db := testutil.NewSQLiteDevelopmentSeedDB(t, ctx)
+	checkFullCatalogInstall(t, db, sqlite.NewBookRepository(db), sqlite.NewCatalogOperatorRepository(db))
+}
+
+func TestPostgresFullCatalogInstall(t *testing.T) {
+	ctx := context.Background()
+	db := testutil.NewPostgresDevelopmentSeedDB(t, ctx)
+	checkFullCatalogInstall(t, db, postgresql.NewBookRepository(db), postgresql.NewCatalogOperatorRepository(db))
+}
+
+// checkFullCatalogInstall uses the real development seed and the committed
+// inventory slugs. Distinct synthetic images stand in for artwork kept outside Git.
+func checkFullCatalogInstall(t *testing.T, db *sql.DB, catalog books.BookRepository, operator books.OperatorRepository) {
+	t.Helper()
+
+	ctx := context.Background()
+	if _, err := db.ExecContext(ctx, insertTestAdministratorSQL); err != nil {
 		t.Fatal(err)
-	}
-	for index := 0; index < 107; index++ {
-		slug := fmt.Sprintf("fixture-%03d", index)
-		if _, err := db.ExecContext(ctx, `INSERT INTO books (title, slug) VALUES (?, ?)`, slug, slug); err != nil {
-			t.Fatal(err)
-		}
 	}
 
-	catalog := sqlite.NewBookRepository(db)
-	bookList, err := catalog.ListBooks(ctx)
-	if err != nil || len(bookList) != 109 {
-		t.Fatalf("catalog = %d books, %v", len(bookList), err)
+	inventory := readCatalogInventory(t)
+	slugs := make([]string, 0, len(inventory.Covers))
+	for _, cover := range inventory.Covers {
+		slugs = append(slugs, cover.Slug)
 	}
-	dir, pilot := writeTestBundle(t)
-	document := manifest{Version: 2, BundleID: "full-catalog-test"}
-	for _, book := range bookList {
-		entry := pilot.Covers[0]
-		entry.Slug = book.Slug
-		document.Covers = append(document.Covers, entry)
+	assertCatalogSlugs(t, catalog, slugs)
+
+	bundleDir := t.TempDir()
+	document := manifest{Version: 2, BundleID: inventory.DatasetID}
+	for index, slug := range slugs {
+		document.Covers = append(document.Covers, writeTestCover(t, bundleDir, slug, index))
 	}
-	bundle, err := LoadBundle(dir, writeTestManifest(t, dir, document))
+	bundle, err := LoadBundle(bundleDir, writeTestManifest(t, bundleDir, document))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	store, err := covers.New(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = store.Close() })
-	installer := NewInstaller(catalog, sqlite.NewCatalogOperatorRepository(db), store)
+	installer := NewInstaller(catalog, operator, store)
 
 	for _, want := range []int{109, 0} {
 		changed, err := installer.Install(ctx, bundle, 1)
@@ -67,6 +80,8 @@ func TestSQLiteFullCatalogInstall(t *testing.T) {
 			t.Fatalf("Install() = %d, %v, want %d", changed, err, want)
 		}
 	}
+
+	assertInstalledCovers(t, catalog, bundle)
 	if count, err := Verify(ctx, catalog, store); err != nil || count != 109 {
 		t.Fatalf("Verify() = %d, %v, want 109", count, err)
 	}
@@ -76,6 +91,49 @@ func TestSQLiteFullCatalogInstall(t *testing.T) {
 	}
 	if _, err := installer.Install(ctx, bundle, 1); err == nil {
 		t.Fatal("installation accepted a different catalog inventory")
+	}
+}
+
+// assertCatalogSlugs requires the catalog to contain exactly the expected slugs.
+func assertCatalogSlugs(t *testing.T, catalog books.BookRepository, want []string) {
+	t.Helper()
+
+	bookList, err := catalog.ListBooks(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := make([]string, 0, len(bookList))
+	for _, book := range bookList {
+		got = append(got, book.Slug)
+	}
+	want = slices.Clone(want)
+	slices.Sort(got)
+	slices.Sort(want)
+	if !slices.Equal(got, want) {
+		t.Fatalf("catalog has %d slugs that differ from the %d inventory slugs", len(got), len(want))
+	}
+}
+
+// assertInstalledCovers requires each book to reference its own entry's files.
+func assertInstalledCovers(t *testing.T, catalog books.BookRepository, bundle *Bundle) {
+	t.Helper()
+
+	for _, entry := range bundle.entries {
+		book, err := catalog.GetBookBySlug(context.Background(), entry.slug)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(book.Covers) == 0 {
+			t.Fatalf("%s has no cover after installation", entry.slug)
+		}
+
+		front := book.Covers[0]
+		if front.Variant != "front" || front.StorageKey == nil ||
+			*front.StorageKey != entry.local.Main.StorageKey ||
+			front.Thumbnail == nil || front.Thumbnail.StorageKey != entry.local.Thumbnail.StorageKey {
+			t.Fatalf("%s front cover = %+v, want its own bundle files", entry.slug, front)
+		}
 	}
 }
 
@@ -91,9 +149,7 @@ func checkPilotRoundTrip(t *testing.T, db *sql.DB, catalog books.BookRepository,
 	ctx := context.Background()
 
 	for _, statement := range []string{
-		`INSERT INTO users (id, first_name, login, password_hash, email, user_role_id)
-		 VALUES (1, 'Operator', 'operator', 'test-hash', 'operator@example.test',
-			(SELECT id FROM roles WHERE role_name = 'admin'))`,
+		insertTestAdministratorSQL,
 		`INSERT INTO books (id, title, slug) VALUES
 		 (3, 'A Christmas Carol', 'a-christmas-carol'),
 		 (4, 'Frankenstein', 'frankenstein'),
@@ -129,6 +185,8 @@ func checkPilotRoundTrip(t *testing.T, db *sql.DB, catalog books.BookRepository,
 			t.Fatalf("Install() = %d, %v, want %d changes", changed, err, wantChanges)
 		}
 	}
+
+	assertInstalledCovers(t, catalog, bundle)
 
 	after, err := catalog.GetBookBySlug(ctx, before.Slug)
 	if err != nil {

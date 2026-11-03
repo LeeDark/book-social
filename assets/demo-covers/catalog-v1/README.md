@@ -28,6 +28,9 @@ The assembler produces both `inventory.json` and a version 2 installer
 28329d42d6ad6db7aaffac97cd5f220a7db50f45eebd3133bef9aa1ad293973d
 ```
 
+Any inventory change produces a different checksum. Review it, then update this
+pin and the matching constant in `internal/coverops/catalog_inventory_test.go`.
+
 Stop all cover writers and use a migrated, seeded database, an existing
 administrator ID and an explicit, existing cover directory (the installer never
 creates it; create it yourself only for a new environment). Follow the backup
@@ -50,8 +53,18 @@ slugs before publishing. It validates every file and checksum, then records
 front-cover links and audits in one transaction. Repeating an unchanged install
 produces zero changes. A failed SQL transaction can leave unreferenced files;
 retry the same verified bundle with writers stopped. This does not delete or
-replace accepted source artwork. A test using the actual seed on a disposable
-SQLite database installed 109 covers, installed zero on repeat, and verified 109
-references. The same install, repeat and verification checks passed on a disposable PostgreSQL
-database. HTTP and browser evidence and its limits are recorded in the
+replace accepted source artwork.
+
+A manual run with the real artwork on disposable SQLite and PostgreSQL databases
+seeded from the actual development seed installed 109 covers, installed zero on
+repeat, and verified 109 references. HTTP and browser evidence and its limits are
+recorded in the
 [full-catalog verification record](../../../docs/cover_catalog_verification_v0_3_2.md).
+
+Automated tests in `internal/coverops` do not use the artwork, which is kept
+outside Git. They check that this inventory has 109 unique slugs and 218 unique
+files, reproduces the pinned installer manifest checksum within the loader's
+size limit, and names exactly the books of the development seed. On the real
+seed, both SQLite and PostgreSQL (opt-in) install one distinct synthetic image
+pair per book, assert that each book references its own files, report zero
+changes on repeat, and refuse a changed catalog.
