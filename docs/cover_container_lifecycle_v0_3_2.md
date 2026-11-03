@@ -7,8 +7,10 @@ restart/recreation evidence, not a PostgreSQL lifecycle or backup/restore rehear
 
 ## Environment
 
-- Application revision: `29b16888d8fa07a489e90c8c70201df7c517c92a`; pre-existing documentation
-  edits were preserved. No application code/configuration changes.
+- Application revision: `a3bd50315de3b321b63a0df820b0d8eeda35391b`
+  (`29b16888d8fa07a489e90c8c70201df7c517c92a` before the 2026-11-03 history rewrite that removed
+  cover images from Git); pre-existing documentation edits were preserved. No application
+  code/configuration changes.
 - Docker Engine `29.9.1`, Compose `v5.6.0`; access required sandbox escalation.
 - Fresh project `book-social-cover-step4-lk4lab`; initial project container/volume listings empty.
 - Image `book-social-cover-step4-lk4lab:local`, built from the current Dockerfile:

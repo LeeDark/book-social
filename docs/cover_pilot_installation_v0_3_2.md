@@ -1,6 +1,8 @@
 # Approved Pilot Installation (#28, acceptance step 2)
 
-Recorded on 2026-10-25, application revision `dfb59bd82c327a4baa9625cd78eae29594336e55`.
+Recorded on 2026-10-25, application revision `37d3f39b15b5f5d3a11aa6a45afabe4b4ed383f1`
+(`dfb59bd82c327a4baa9625cd78eae29594336e55` before the 2026-11-03 history rewrite that removed
+cover images from Git; application code is unchanged).
 No application code, migrations or dependencies changed. This is an actual offline SQLite
 installation of approved artwork, not the synthetic installation test or browser acceptance.
 

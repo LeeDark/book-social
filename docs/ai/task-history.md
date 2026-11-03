@@ -1328,8 +1328,49 @@ Residual risks:
 
 - The user confirmed #28 complete, accepting the documented limits of the focused visual and
   accessibility review, and explicitly requested push, PR update and issue closure.
-- Pushed `31b2e65` and earlier local commits to the existing feature branch. Updated draft PR #27
+- Pushed `31b2e65` (now `5690bbd`; see 2026-11-03) and earlier local commits to the existing
+  feature branch. Updated draft PR #27
   with cover implementation, verification, acceptance and the separate remaining #29 scope.
 - Recorded the decision in issue #28 and closed it as completed. #29 and PR #27 remain open;
   no merge, release tag or deployment occurred. Updated overlapping roadmaps and the acceptance
   contract to distinguish accepted #28 from the still-open expanded v0.3.2 scope.
+
+## 2026-11-03 — Review fixes and image-free branch history (#26)
+
+- An external review of PR #27 at `9085dca` reported eight findings. Fixes for findings 2–8 were
+  made in PR #30 against the feature branch: dev SQLite migrations on every Compose start,
+  hash-only verification when serving covers, an existing cover directory for `coverctl install`,
+  the specific oversized-upload message, per-book and real-inventory full-catalog tests, the
+  version 2 operator guide and ignore rules scoped to `assets/demo-covers/`.
+- Finding 1: pilot images committed in `dfb59bd` and `29b1688` and removed from the tree in
+  `8be64af` stayed in history (15 blobs, 17.8 MiB). With the user's explicit permission, the
+  feature branch was rewritten with `git filter-branch --index-filter` to drop only
+  `assets/demo-covers/pilot-v1*/bundle/*.webp` and `assets/demo-covers/pilot-v1*/sources/*.png`,
+  then force-pushed with a lease. The final tree, authors, dates and messages are unchanged; the
+  blobs added by the branch fell from 25.6 MiB to 7.9 MiB.
+- The rewrite changed 21 commits. Records that cite a revision now give the new SHA with the old
+  one in parentheses. Old SHAs remain visible in earlier PR comments and reviews:
+
+| Old | New | Commit |
+|-----|-----|--------|
+| `dfb59bd` | `37d3f39` | assets: add five unapproved demo cover candidates for #28 |
+| `29b1688` | `a3bd503` | assets: approve pilot covers and record isolated installation for #28 |
+| `542f705` | `adae865` | docs: record cover browser checks and SQLite container lifecycle for #28 |
+| `5e43e56` | `9ebec91` | docs: record paired cover recovery verification for #28 |
+| `31b2e65` | `5690bbd` | docs: record PostgreSQL lifecycle and browser checks for #28 |
+| `141db2f` | `247a3af` | docs: record user acceptance and closure of #28 |
+| `1b58876` | `a05132e` | docs: translate pilot cover documentation |
+| `8be64af` | `50383b7` | chore: move cover images out of git |
+| `0fbf174` | `c6a102f` | docs: record review of remaining demo covers |
+| `6258f26` | `cabfbae` | feat: prepare reproducible catalog cover bundle |
+| `c435558` | `5971ad9` | docs: record full catalog cover verification |
+| `9085dca` | `c2fcf16` | docs: record acceptance of catalog cover artwork |
+| `dbc2753` | `e25a002` | fix(docker): migrate retained dev SQLite volumes on startup |
+| `8151cd9` | `6cdd104` | fix(coverctl): refuse a missing cover directory on install |
+| `1101646` | `03ab5cf` | fix(catalog): keep specific cover upload errors |
+| `e25e9fa` | `e7cc447` | test(coverctl): separate install test setup phases |
+| `3dd30a9` | `03fd4b6` | fix(covers): serve published files without decoding them again |
+| `efba063` | `48b0412` | test(coverops): check per-book covers and the real catalog inventory |
+| `aea3e48` | `cf3744a` | docs(covers): describe hash-only verification when serving |
+| `8af251b` | `573c847` | docs(covers): document the full-catalog bundle and current status |
+| `0f5aaca` | `9288f03` | chore: scope image and archive ignore rules to demo covers |

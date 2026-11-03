@@ -3,7 +3,8 @@
 On 2026-10-30, with explicit user authorization, exercised the isolated restored PostgreSQL
 `cover_restore` and restored SQLite data described in [recovery](cover_recovery_v0_3_2.md).
 Application image `sha256:f347346b046fdb8f6460afa0397b7692efac48981755eb671ca38f27c06de561`;
-working revision `5e43e56`. No retained dev/stage/prod environment was accessed.
+working revision `9ebec91` (`5e43e56` before the 2026-11-03 history rewrite that removed cover
+images from Git). No retained dev/stage/prod environment was accessed.
 
 ## PostgreSQL Lifecycle
 

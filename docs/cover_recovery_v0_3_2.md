@@ -1,6 +1,7 @@
 # Paired Pilot Backup/Restore (#28, acceptance step 5)
 
-Offline recovery verified on 2026-10-30, revision `542f705`. No application code, migrations,
+Offline recovery verified on 2026-10-30, revision `adae865` (`542f705` before the 2026-11-03
+history rewrite that removed cover images from Git). No application code, migrations,
 dependencies or retained dev/stage/prod data changed. The initial pass was offline only because
 web-app permission was limited to step 4. The user then explicitly authorized restored-state app
 execution for step 5; both engines passed the HTTP checks recorded below. Visual browser review
@@ -29,8 +30,9 @@ Applied PostgreSQL migrations through 8 and seed once to the new source, explici
 an audit-only administrator (ID 1, `recovery-audit-only@example.test`, unusable password hash),
 then installed approved pilot `pilot-v1-approved-2026-10-25` with its pinned manifest SHA-256
 `4f80285da167fbf1695d58b5ec96abbe125cf222f9ff1e3f78ee248b9f7de6f8`: five changes.
-Original artwork/provenance is retained in Git revision `29b1688` at
-`assets/demo-covers/pilot-v1-approved`. No application or other data/cover writer ran during
+Provenance is retained in Git at `assets/demo-covers/pilot-v1-approved`. The original artwork
+was committed in revision `29b1688`; since the 2026-11-03 history rewrite it is retained only
+outside Git (see `assets/demo-covers/STORAGE.md`). No application or other data/cover writer ran during
 either paired snapshot. PostgreSQL maintenance connections were sequential.
 
 ## SQLite Snapshot and Fresh Restore
