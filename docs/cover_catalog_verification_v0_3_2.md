@@ -39,6 +39,7 @@ library interaction, mobile browser review, backup/restore or container recreati
 
 ## Remaining boundaries
 
-The image files are ignored by Git and currently retained locally; an independent durable backup
-location has not been established. This record does not close issue #29, accept the entire v0.3.2
-release, or claim deployment. Any final release decision should consider these boundaries.
+On 2026-11-03 the user reported choosing independent durable storage and making a backup, and
+accepted completion of #29. The storage location and backup verification were not independently
+inspected. This decision accepts the documented review boundaries above; it does not accept the
+entire v0.3.2 release or claim deployment.

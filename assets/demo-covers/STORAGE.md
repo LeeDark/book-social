@@ -6,8 +6,9 @@ Images are kept outside Git in `data/demo-covers/`. The `pilot-v1`,
 kept separately. Text manifests, prompts, review decisions, and checksums remain
 in `assets/demo-covers/`.
 
-The local directory is ignored by Git and is not a backup. Copy it to durable
-backup storage; its location has not yet been chosen. Restore it on a new machine.
+The local directory is ignored by Git and is not itself a backup. On 2026-11-03,
+the user reported choosing independent durable storage and making a backup; its
+location and verification were not independently inspected. Restore it on a new machine.
 The two existing pilot archives remain local and ignored in `assets/demo-covers/`.
 
 The pilot README and gallery were translated after the original packages were

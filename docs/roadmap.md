@@ -21,10 +21,11 @@ SQL/files and successful HTTP checks. Paired [offline SQLite/PostgreSQL recovery
 also passed, followed by successful restored-state HTTP/HTMX/image checks for both engines.
 [PostgreSQL restart/recreation and focused desktop/fallback checks](cover_postgres_browser_v0_3_2.md)
 passed. The user accepted #28 on 2026-10-30 with the documented focused accessibility/visual
-review boundaries; #28 is closed. The separate full-catalog artwork task #29 remains open,
-so the expanded v0.3.2 cover scope is not yet complete. The 109-cover dataset was assembled and
+review boundaries; #28 is closed. The user accepted completion of full-catalog artwork task #29
+on 2026-11-03. The 109-cover dataset was assembled and
 verified on disposable SQLite and PostgreSQL databases; the [verification record](cover_catalog_verification_v0_3_2.md)
-records browser coverage and remaining limits. An independent durable artwork backup remains outstanding.
+records browser coverage and remaining limits. The user reported an independent durable backup;
+its location and verification were not independently inspected. This does not close v0.3.2.
 v0.3.4 will add a reviewed book-addition workflow and grow the catalog to 500 books total.
 
 v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation through the first
@@ -342,7 +343,7 @@ The original accepted contract, which predates file storage and still describes 
   placeholder for missing or unavailable images. Document backup/restore and reproducible delivery
   of matching seed data and files. Verify the complete path on five pilot books, including restart
   and redeployment. This is a bounded cover feature, not a general media platform.
-- [ ] Task 2 — Demo front covers for all 109 existing books, dependent on Task 1: approve the
+- [x] Task 2 — Demo front covers for all 109 existing books, dependent on Task 1: approve the
   visual approach on the same five-book pilot, then prepare and review the remaining covers in
   batches. Use image generation, optionally with 2–3 suitable reference images per book; record
   reference sources and permitted use. Choose uniform dimensions and a web format during the pilot
