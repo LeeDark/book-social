@@ -5,32 +5,9 @@ bin
 data/*.db
 data/*.db-shm
 data/*.db-wal
+# Local cover files and demo artwork; see assets/demo-covers/STORAGE.md.
 data/covers/
 data/demo-covers/
-
-# Images are stored outside the Git repository.
-*.png
-*.jpg
-*.jpeg
-*.webp
-*.gif
-*.svg
-*.ico
-*.avif
-*.bmp
-*.tif
-*.tiff
-
-# Large archives are stored outside Git.
-*.zip
-*.tar
-*.gz
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
 
 docs/archive
 docs/private
