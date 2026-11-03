@@ -43,3 +43,17 @@ On 2026-11-03 the user reported choosing independent durable storage and making 
 accepted completion of #29. The storage location and backup verification were not independently
 inspected. This decision accepts the documented review boundaries above; it does not accept the
 entire v0.3.2 release or claim deployment.
+
+## Repeat review verification
+
+The review-fix branch at `0d137d4` was checked after the history rewrite. Focused tests for
+`cmd/coverctl`, `internal/coverops`, `internal/storage/covers`, `internal/http/cover`, and
+`internal/modules/books` passed. GitHub CI reported successful `quality` and
+`integration-postgres` checks on that commit.
+
+The Docker image was built and its actual entrypoint was run with disposable SQLite data:
+a new database reached migration 8 with 109 seeded books; a restart reported no change;
+a seeded version-5 database upgraded to version 8 with 109 books; and a dirty migration
+state refused startup. A separate disposable PostgreSQL 18 database with the actual seed and
+real artwork installed 109 covers, changed zero on repeat, and verified 109 references.
+These checks do not establish a full-dataset PostgreSQL restore or container recreation.
