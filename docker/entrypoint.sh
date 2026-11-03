@@ -9,11 +9,18 @@ if [ "$app_env" = "dev" ]; then
 
   mkdir -p "$(dirname "$db_path")"
 
+  is_new_database=false
   if [ ! -s "$db_path" ]; then
-    migrate \
-      -path /app/db/sqlite/migrations \
-      -database "sqlite://$db_path" \
-      up
+    is_new_database=true
+  fi
+
+  # Retained volumes need pending migrations too; `up` is a no-op when current.
+  migrate \
+    -path /app/db/sqlite/migrations \
+    -database "sqlite://$db_path" \
+    up
+
+  if [ "$is_new_database" = true ]; then
     sqlite3 "$db_path" < db/sqlite/seed.sql
     echo "Database initialized: $db_path"
   fi

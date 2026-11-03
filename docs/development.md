@@ -39,7 +39,8 @@ hard links and directory syncing. Successful image responses have a one-year imm
 cache policy; failures use `no-store`.
 
 The storage API and SQL references/metadata are implemented. Apply migrations through `000008`
-before starting this revision. Administrators can attach/replace prepared files in the existing
+before starting this revision; Compose entrypoints apply pending migrations on startup, while host
+runs use `make db/migrate/up`. Administrators can attach/replace prepared files in the existing
 create/edit forms; ordinary edits default to keeping the current cover. Compose now mounts a separate
 cover volume per environment, and `coverctl` installs/verifies reviewed pilot bundles explicitly.
 Pilot artwork and container lifecycle/restore acceptance remain pending. Before upgrading an older
@@ -334,7 +335,7 @@ local/manual checks; they are not separate CI steps. CI does not deploy the appl
 
 For local Docker Compose work, use reset/bootstrap for disposable seeded environments:
 
-- `make compose/dev/up` starts SQLite dev and initializes the database from all SQLite migrations plus `db/sqlite/seed.sql` when the volume is empty.
+- `make compose/dev/up` starts SQLite dev, applies pending SQLite migrations on every start, and loads `db/sqlite/seed.sql` only into a new database.
 - `make compose/stage/up` starts PostgreSQL stage and initializes from all PostgreSQL migrations plus `db/postgresql/seed.sql` when the database is empty.
 - `make compose/prod/up` does the same for a local prod-like PostgreSQL environment.
 
@@ -349,7 +350,7 @@ Dev Compose mounts a named volume at:
 /app/data
 ```
 
-On container startup, `docker/entrypoint.sh` checks the configured SQLite database path. If the database file is missing or empty, it runs all SQLite migrations and then:
+On every container startup, `docker/entrypoint.sh` applies pending SQLite migrations to the configured database path, so a retained volume is upgraded with the image. A dirty migration state stops startup instead of serving an outdated schema. If the database file was missing or empty before that step, it then loads:
 
 ```text
 db/sqlite/seed.sql

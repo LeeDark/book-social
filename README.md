@@ -165,12 +165,12 @@ http://localhost:8080
 ```
 
 The dev Compose setup stores SQLite data in a named volume mounted at `/app/data`.
-On first start, the container applies all SQLite migrations and seeds
-`/app/data/book_social_dev.db` if it is missing or empty. The stage and prod Compose setups run a
-local PostgreSQL container initialized by the app entrypoint with all PostgreSQL migrations and
-`db/postgresql/seed.sql`.
+On every start, the container applies pending SQLite migrations to
+`/app/data/book_social_dev.db`; it seeds the database only if the file was missing or empty. The
+stage and prod Compose setups run a local PostgreSQL container initialized by the app entrypoint
+with all PostgreSQL migrations and `db/postgresql/seed.sql`.
 
-Reset the Docker SQLite database:
+Stop and restart the Docker environment while retaining its database and cover volumes:
 
 ```bash
 make compose/dev/down
