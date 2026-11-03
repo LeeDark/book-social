@@ -12,6 +12,7 @@ type User struct {
 	Login     string
 	Email     string
 	RoleID    int
+	IsAdmin   bool
 }
 
 type Role struct {

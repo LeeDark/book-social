@@ -81,7 +81,7 @@ test/integration: .install-migrate
 		$(MIGRATE_BIN) -path ./db/postgresql/migrations -database "$$test_dsn&x-multi-statement=true" down 1; \
 		$(MIGRATE_BIN) -path ./db/postgresql/migrations -database "$$test_dsn&x-multi-statement=true" up; \
 		BOOK_SOCIAL_POSTGRES_TEST_DSN="$$test_dsn" GOCACHE=/tmp/book-social-go-cache \
-			go test -p 1 -race -count=1 ./internal/testutil ./internal/storage/postgresql ./internal/app; \
+			go test -p 1 -race -count=1 ./internal/testutil ./internal/storage/postgresql ./internal/app ./internal/coverops; \
 		echo "PostgreSQL migration and auth integration checks passed"
 
 .PHONY: lint
@@ -140,7 +140,7 @@ db/migrate/smoke:
 		counts="$$(sqlite3 -noheader -separator '|' "$$smoke_db" \
 			"SELECT (SELECT COUNT(*) FROM books) || '|' || (SELECT COUNT(*) FROM book_authors) || '|' || (SELECT COUNT(*) FROM book_genres) || '|' || (SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'library_items');")"; \
 		test "$$counts" = "109|109|109|1"; \
-		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$smoke_db" down 2; \
+		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$smoke_db" down 5; \
 		rolled_back_tables="$$(sqlite3 -noheader "$$smoke_db" "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'library_items';")"; \
 		test "$$rolled_back_tables" = "0"; \
 		$(MIGRATE) -path "$(MIGRATIONS_DIR)" -database "sqlite://$$legacy_db" up 1; \
@@ -173,9 +173,9 @@ compose/dev/up:
 	$(COMPOSE_DEV) up --build
 
 .PHONY: compose/dev/down
-## compose/dev/down: stop the dev Compose environment and remove volumes
+## compose/dev/down: stop the dev Compose environment and retain volumes
 compose/dev/down:
-	$(COMPOSE_DEV) down -v
+	$(COMPOSE_DEV) down
 
 .PHONY: compose/stage/up
 ## compose/stage/up: start the stage Compose environment with PostgreSQL
@@ -183,9 +183,9 @@ compose/stage/up:
 	$(COMPOSE_STAGE) up --build
 
 .PHONY: compose/stage/down
-## compose/stage/down: stop the stage Compose environment and remove volumes
+## compose/stage/down: stop the stage Compose environment and retain volumes
 compose/stage/down:
-	$(COMPOSE_STAGE) down -v
+	$(COMPOSE_STAGE) down
 
 .PHONY: compose/prod/up
 ## compose/prod/up: start the prod Compose environment with PostgreSQL
@@ -193,6 +193,6 @@ compose/prod/up:
 	$(COMPOSE_PROD) up --build
 
 .PHONY: compose/prod/down
-## compose/prod/down: stop the prod Compose environment and remove volumes
+## compose/prod/down: stop the prod Compose environment and retain volumes
 compose/prod/down:
-	$(COMPOSE_PROD) down -v
+	$(COMPOSE_PROD) down

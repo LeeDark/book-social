@@ -22,6 +22,7 @@ Current modules:
 - users/auth foundation: password policy, registration/authentication services, DB sessions
 - HTTP auth foundation: cookie/token boundary, current-user context, and route guard
 - private library: owner-scoped add/list, lifecycle transitions, and confirmed removal workflow
+- catalog maintenance: administrator-only find/create/correct MPA pages and transactional audit
 
 Current focus:
 - minimal working features first
@@ -54,14 +55,16 @@ Current infrastructure caveat:
 - `APP_ENV=dev` uses SQLite and is the active local database path.
 - `APP_ENV=stage` and `APP_ENV=prod` open PostgreSQL with `APP_DB_DSN`.
 - SQLite and PostgreSQL catalog repositories implement the same normalized v0.2 read contract.
-- SQLite and PostgreSQL v0.1 baseline, v0.2 normalization, v0.2.5 auth, v0.3 private-library, and
-  v0.3.1 lifecycle migrations exist under `db/*/migrations`.
+- SQLite and PostgreSQL v0.1 baseline, v0.2 normalization, v0.2.5 auth, v0.3 private-library,
+  v0.3.1 lifecycle, and v0.3.2 administrator/audit and missing-book request migrations through
+  `000007` exist under `db/*/migrations`.
 - Migration commands use the installed `golang-migrate` CLI through `make db/migrate/up` and `make db/migrate/down`.
 - Reset and Docker/Compose bootstrap apply all migrations first and then seed SQL.
 - `make db/migrate/smoke` checks clean setup, seed counts, the v0.1 relationship migration, the
   v0.2.5 user/session constraints, v0.3 library constraints, and rollback behavior.
-- CI currently keeps migration smoke and a PostgreSQL service job local/manual; PostgreSQL tests
-  use a disposable DSN and should run with `go test -p 1` when sharing one database.
+- CI runs quality checks and `make test/integration` in a separate isolated PostgreSQL job.
+  Standalone SQLite migration smoke and Node slug-suggestion checks remain local/manual.
+  PostgreSQL tests use a disposable DSN and run with `go test -p 1` when sharing one database.
 - Legacy `library`, `shelves`, and `tags` remain demo structures. `library_items` is the separate,
   implemented private-library model.
 - Docker/Compose are supported as local environment workflows for SQLite dev and PostgreSQL stage/prod.
@@ -79,6 +82,23 @@ Current infrastructure caveat:
 Current scope:
 - v0.3.0 Private Library Foundation is closed: authenticated users add known catalog books from
   catalog/detail pages and list only their own items at `/me/library`.
-- v0.3.1 Reading-State Lifecycle is implemented and awaiting review plus mandatory manual smoke:
-  owner-scoped status changes, timestamp rules, optimistic conflicts, catalog state display, and
-  explicit-confirmation removal are in scope. Notes, ratings, and public libraries remain deferred.
+- v0.3.1 Reading-State Lifecycle is closed: owner-scoped status changes, timestamp rules,
+  optimistic conflicts, catalog state display, and explicit-confirmation removal are implemented.
+- v0.3.2 Curated Catalog Operations implementation and acceptance are complete. Demo data/provenance
+  (#23), the administrator boundary, catalog MPA forms, immutable slugs, and transactional audit
+  (#24) are implemented and accepted. Automated HTTP acceptance passes on SQLite and PostgreSQL;
+  the user confirmed successful operator browser review on 2026-10-12. Missing-book
+  feedback (#25) is implemented at `GET/POST /books/request/new`, with bounded field validation,
+  metadata-only logging and a one-request flash. Automated checks pass; the user confirmed
+  successful manual browser review and accepted #25 on 2026-10-15. The subsequent agreed v0.3.2
+  follow-up now saves title, optional author and submitting user before success; migration `000007`
+  is required. Real-database HTTP acceptance passes on SQLite/PostgreSQL; the user confirmed
+  persistence browser acceptance on 2026-10-25 (Zen Browser, SQLite; version not reported).
+  Final #26 automated checks passed on 2026-10-25 against implementation `78fe3ad`; evidence and
+  consolidated manual acceptance are in `docs/testing.md`. Post-review fixes through `9d764db`
+  are pushed and CI passed; final acceptance documentation and PR/issue closure remain. No release is
+  claimed; v0.3.3 scope is unchanged. Operator listing/processing remains v0.4.3.
+- Post-review correction: feedback moved to `/books/request/new` to preserve `/books/request`
+  for existing/new books with slug `request`. Route and backend HTTP regressions cover the change;
+  the user confirmed successful browser recheck on 2026-10-25. Environment details for this run
+  were not separately reported; do not inherit them from the earlier acceptance.

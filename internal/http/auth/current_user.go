@@ -18,6 +18,7 @@ type Identity struct {
 	FirstName string
 	Login     string
 	Email     string
+	IsAdmin   bool
 }
 
 type contextKey struct{}
@@ -33,6 +34,22 @@ func RequireAuthentication(next http.Handler) http.Handler {
 		w.Header().Set("Cache-Control", "no-store")
 		if _, ok := CurrentUserFromRequest(r); !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func RequireAdministrator(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		identity, ok := CurrentUserFromRequest(r)
+		if !ok {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		if !identity.IsAdmin {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)
@@ -71,6 +88,7 @@ func (m *CurrentUserMiddleware) Handler(next http.Handler) http.Handler {
 			FirstName: user.FirstName,
 			Login:     user.Login,
 			Email:     user.Email,
+			IsAdmin:   user.IsAdmin,
 		}
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), contextKey{}, identity)))
 	})

@@ -289,7 +289,25 @@ func (r *LibraryRepository) hydrateBookRelationships(ctx context.Context, items 
 	if err := r.hydrateBookAuthors(ctx, items, bookIndexes, placeholders, args); err != nil {
 		return err
 	}
-	return r.hydrateBookGenres(ctx, items, bookIndexes, placeholders, args)
+	if err := r.hydrateBookGenres(ctx, items, bookIndexes, placeholders, args); err != nil {
+		return err
+	}
+
+	// Reuse the catalog's batch cover read rather than querying per library item.
+	bookList := make([]books.Book, len(items))
+	for index := range items {
+		bookList[index] = items[index].Book
+	}
+
+	if err := NewBookRepository(r.db).hydrateBookCovers(ctx, bookList); err != nil {
+		return library.ErrInternal
+	}
+
+	for index := range items {
+		items[index].Book.Covers = bookList[index].Covers
+	}
+
+	return nil
 }
 
 func (r *LibraryRepository) hydrateBookAuthors(

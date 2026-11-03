@@ -44,6 +44,7 @@ linters:
             - github.com/go-chi/chi/v5
             - github.com/lib/pq
             - golang.org/x/crypto/bcrypt
+            - golang.org/x/image/webp
             - maragu.dev/gomponents
             - modernc.org/sqlite
   exclusions:

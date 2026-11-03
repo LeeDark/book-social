@@ -19,25 +19,8 @@
 }
 
 .book-details__cover {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-
     width: 220px;
     aspect-ratio: 2 / 3;
-    height: auto;
-    padding: 1.2rem;
-
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--cover-background, var(--surface-soft));
-    text-decoration: none;
-}
-
-.book-details__cover--image {
-    display: block;
-    padding: 0;
-    object-fit: cover;
 }
 
 .book-details__body {

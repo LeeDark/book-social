@@ -63,8 +63,8 @@ func TestLibraryRepositoryListByUserIDIsPrivateAndDeterministic(t *testing.T) {
 	if len(items[1].Book.Genres) != 2 || items[1].Book.Genres[0].Slug != "classic" {
 		t.Fatalf("book genres = %#v", items[1].Book.Genres)
 	}
-	if len(items[1].Book.Covers) != 0 {
-		t.Fatalf("book Covers = %#v, want card-level data without covers", items[1].Book.Covers)
+	if len(items[0].Book.Covers) != 0 || len(items[1].Book.Covers) != 2 || items[1].Book.Covers[0].Variant != "front" {
+		t.Fatalf("book Covers = %#v, want front-first cover metadata only where supplied", items[1].Book.Covers)
 	}
 }
 

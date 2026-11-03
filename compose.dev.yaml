@@ -6,6 +6,8 @@ services:
       APP_DB_DSN: file:/app/data/book_social_dev.db
     volumes:
       - sqlite-data:/app/data
+      - covers-dev-data:/app/covers
 
 volumes:
   sqlite-data:
+  covers-dev-data:

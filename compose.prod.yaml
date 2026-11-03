@@ -4,6 +4,8 @@ services:
     environment:
       APP_ENV: prod
       APP_DB_DSN: postgres://book_social:book_social@postgres:5432/book_social_prod?sslmode=disable
+    volumes:
+      - covers-prod-data:/app/covers
     depends_on:
       postgres:
         condition: service_healthy
@@ -25,3 +27,4 @@ services:
 
 volumes:
   postgres-prod-data:
+  covers-prod-data:

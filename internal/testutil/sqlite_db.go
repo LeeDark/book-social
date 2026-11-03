@@ -81,7 +81,8 @@ func ApplySQLiteCatalogTestSchema(t *testing.T, ctx context.Context, db *sql.DB)
 
 func ApplySQLiteCatalogV2TestSchema(t *testing.T, ctx context.Context, db *sql.DB) {
 	t.Helper()
-	applySQLiteCatalogTestMigrations(t, ctx, db, "000003")
+	// Catalog reads use the current schema; historical migrations are tested separately.
+	applySQLiteCatalogTestMigrations(t, ctx, db, "")
 }
 
 func ApplySQLiteLibraryTestSchema(t *testing.T, ctx context.Context, db *sql.DB) {

@@ -14,27 +14,32 @@
             <ul>
                 {{range .Items}}
                     <li>
-                        <article>
-                            <h2><a href="{{.BookURL}}">{{.Title}}</a></h2>
-                            {{if .Authors}}
-                                <p>
-                                    by
-                                    {{range $index, $author := .Authors}}
-                                        {{if $index}}, {{end}}
-                                        <a href="{{$author.URL}}">{{$author.Name}}</a>
-                                    {{end}}
-                                </p>
-                            {{end}}
-                            <p><strong>{{.StateLabel}}</strong></p>
-                            <form method="post" action="/me/library/{{.ID}}/status">
-                                <label for="status-{{.ID}}">Reading status</label>
-                                <select id="status-{{.ID}}" name="status">
-                                    {{range .StatusOptions}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
-                                </select>
-                                <input type="hidden" name="version" value="{{.Version}}">
-                                <button type="submit">Update status</button>
-                            </form>
-                            <p><a href="{{.RemoveURL}}">Remove from library</a></p>
+                        <article class="library-card">
+                            <a class="library-card__cover" href="{{.BookURL}}" aria-label="Open {{.Title}}">
+                                {{template "book_cover" .}}
+                            </a>
+                            <div class="library-card__body">
+                                <h2><a href="{{.BookURL}}">{{.Title}}</a></h2>
+                                {{if .Authors}}
+                                    <p>
+                                        by
+                                        {{range $index, $author := .Authors}}
+                                            {{if $index}}, {{end}}
+                                            <a href="{{$author.URL}}">{{$author.Name}}</a>
+                                        {{end}}
+                                    </p>
+                                {{end}}
+                                <p><strong>{{.StateLabel}}</strong></p>
+                                <form method="post" action="/me/library/{{.ID}}/status">
+                                    <label for="status-{{.ID}}">Reading status</label>
+                                    <select id="status-{{.ID}}" name="status">
+                                        {{range .StatusOptions}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
+                                    </select>
+                                    <input type="hidden" name="version" value="{{.Version}}">
+                                    <button type="submit">Update status</button>
+                                </form>
+                                <p><a href="{{.RemoveURL}}">Remove from library</a></p>
+                            </div>
                         </article>
                     </li>
                 {{end}}

@@ -21,6 +21,7 @@ type BookCardView struct {
 	Genres          []GenreLinkView
 	BookURL         string
 	CoverClass      string
+	FrontCover      *CoverView
 	ShowDetailsLink bool
 	CanAddToLibrary bool
 	LibraryState    *LibraryStateView
@@ -100,6 +101,7 @@ func mapBooksToCards(books []Book) []BookCardView {
 			Genres:          mapGenresToLinks(book.Genres),
 			BookURL:         fmt.Sprintf("/books/%s", book.Slug),
 			CoverClass:      coverClassForBook(book.ID),
+			FrontCover:      SelectCardFrontCover(book.Covers),
 			ShowDetailsLink: true,
 		}
 
@@ -182,8 +184,36 @@ func mapCoversToViews(covers []Cover) []CoverView {
 
 func frontCover(covers []CoverView) *CoverView {
 	for index := range covers {
-		if covers[index].Variant == "front" {
+		if covers[index].Variant == "front" && covers[index].URL != "" {
 			return &covers[index]
+		}
+	}
+
+	return nil
+}
+
+// SelectCardFrontCover selects only front artwork, preferring its prepared thumbnail.
+// Detail views use the main image instead. No filesystem or external URL is read.
+func SelectCardFrontCover(covers []Cover) *CoverView {
+	for _, cover := range covers {
+		if cover.Variant != "front" || cover.URL == "" {
+			continue
+		}
+
+		if thumbnail := cover.Thumbnail; thumbnail != nil {
+			return &CoverView{
+				Variant: "front",
+				URL:     thumbnail.URL(),
+				Width:   &thumbnail.Width,
+				Height:  &thumbnail.Height,
+			}
+		}
+
+		return &CoverView{
+			Variant: "front",
+			URL:     cover.URL,
+			Width:   cover.Width,
+			Height:  cover.Height,
 		}
 	}
 

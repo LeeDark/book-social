@@ -25,6 +25,12 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
     -o /out/${APP_NAME} \
     ./cmd/web
 
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -trimpath \
+    -ldflags="-s -w" \
+    -o /out/coverctl \
+    ./cmd/coverctl
+
 
 FROM debian:${DEBIAN_VERSION}
 
@@ -38,6 +44,7 @@ WORKDIR ${APP_DIR}
 RUN groupadd --system app && useradd --system --gid app app
 
 COPY --from=build /out/${APP_NAME} ${APP_DIR}/${APP_NAME}
+COPY --from=build /out/coverctl ${APP_DIR}/coverctl
 COPY --from=build /go/bin/migrate /usr/local/bin/migrate
 COPY internal/web/ ${APP_DIR}/internal/web/
 COPY db/sqlite/ ${APP_DIR}/db/sqlite/
@@ -48,6 +55,8 @@ RUN apt-get update \
 	&& apt-get install --no-install-recommends --yes postgresql-client sqlite3 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& chmod +x ${APP_DIR}/docker-entrypoint.sh
+
+RUN install -d -m 0750 -o app -g app ${APP_DIR}/covers
 
 EXPOSE 8080
 

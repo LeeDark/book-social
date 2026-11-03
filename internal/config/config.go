@@ -28,6 +28,10 @@ type Config struct {
 		DSN string
 	}
 
+	Covers struct {
+		Dir string
+	}
+
 	Auth struct {
 		SessionLifetime time.Duration
 	}
@@ -54,6 +58,10 @@ func Load() (Config, error) {
 	cfg.HTTP.TrustedProxyCIDRs = trustedProxyCIDRs
 
 	cfg.DB.DSN = getEnv("APP_DB_DSN", "./data/book_social_dev.db")
+	cfg.Covers.Dir = getEnv("APP_COVERS_DIR", "./data/covers")
+	if strings.TrimSpace(cfg.Covers.Dir) == "" {
+		return Config{}, fmt.Errorf("APP_COVERS_DIR must not be empty")
+	}
 	cfg.Auth.SessionLifetime = DefaultSessionLifetime
 
 	cfg.Log.Level = getEnv("APP_LOG_LEVEL", "debug")

@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "bundle_id": "pilot-v1-draft-2026-10-25",
+  "recorded_date": "2026-10-25",
+  "status": "draft_pending_user_visual_and_usage_review",
+  "description": "Original AI-generated project demo illustrations inspired by the named novels, not representations of specific published editions.",
+  "generation": {
+    "tool": "built-in image_gen",
+    "model": "Not exposed by the tool.",
+    "external_reference_images": [],
+    "web_sources_used": [],
+    "prompts": "prompts.json"
+  },
+  "usage": {
+    "intended_use": "Book Social project demo catalog pilot only.",
+    "basis": "Generated specifically for this project; no third-party input/reference images supplied or copied edition covers requested.",
+    "limitations": "No claim of exclusive copyright, legal clearance, public-domain status in every jurisdiction, or verified absence of resemblance. User review and acceptance are pending."
+  },
+  "profile": {
+    "status": "candidate_not_approved",
+    "aspect_ratio": "2:3",
+    "source": {
+      "format": "PNG",
+      "width": 1024,
+      "height": 1536
+    },
+    "main": {
+      "format": "WebP",
+      "width": 600,
+      "height": 900,
+      "quality": 84
+    },
+    "thumbnail": {
+      "format": "WebP",
+      "width": 240,
+      "height": 360,
+      "quality": 82
+    },
+    "processing": "Deterministic ImageMagick resizing and WebP encoding from the preserved generated PNG, no cropping, stretching, repainting or AI-generated derivative.",
+    "text": "No embedded titles/authors; visible book labels remain in the application UI."
+  },
+  "covers": [
+    {
+      "slug": "a-christmas-carol",
+      "title": "A Christmas Carol",
+      "author": "Charles Dickens",
+      "review": {
+        "status": "pending_user_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "assistant_preflight": "Generated output inspected for subject and visible artifacts; not human approval, rights clearance or browser acceptance."
+      },
+      "source": {
+        "file": "sources/a-christmas-carol.png",
+        "sha256": "70e141d32be6eb8e54a6b661b7bace059800969a077d9530712b8bcc3ae41059",
+        "bytes": 3797621
+      },
+      "main": {
+        "file": "bundle/a-christmas-carol-main.webp",
+        "sha256": "56dcf67a699b5f6338c2eab9970ea7f7d74ccc615ca37f95a5da681ec1f44d96",
+        "bytes": 157752
+      },
+      "thumbnail": {
+        "file": "bundle/a-christmas-carol-thumb.webp",
+        "sha256": "c086678a748336df71f01253160dc70b8611d50c1aa3f446e9c33eb251950ad9",
+        "bytes": 28802
+      }
+    },
+    {
+      "slug": "pride-and-prejudice",
+      "title": "Pride and Prejudice",
+      "author": "Jane Austen",
+      "review": {
+        "status": "pending_user_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "assistant_preflight": "Generated output inspected for subject and visible artifacts; not human approval, rights clearance or browser acceptance."
+      },
+      "source": {
+        "file": "sources/pride-and-prejudice.png",
+        "sha256": "36b3ac3bb7060ba6032ff43aa9bdee33224c8accd895fc079bbefcbbbc066232",
+        "bytes": 3628428
+      },
+      "main": {
+        "file": "bundle/pride-and-prejudice-main.webp",
+        "sha256": "e1e7359beab7509356565ca690a7aa65f97706b02f60cbff82388bdd28645230",
+        "bytes": 155230
+      },
+      "thumbnail": {
+        "file": "bundle/pride-and-prejudice-thumb.webp",
+        "sha256": "6cb9b1c87ad8c3aaff1f825a304f7e8d2969a62547fb8f0cd0ac902a552a3a14",
+        "bytes": 26926
+      }
+    },
+    {
+      "slug": "frankenstein",
+      "title": "Frankenstein",
+      "author": "Mary Shelley",
+      "review": {
+        "status": "pending_user_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "assistant_preflight": "Generated output inspected for subject and visible artifacts; not human approval, rights clearance or browser acceptance."
+      },
+      "source": {
+        "file": "sources/frankenstein.png",
+        "sha256": "ea8d9eb3726b9f84133370b660346d1d13f50a0b858016d3105c7837e1faefc4",
+        "bytes": 3398913
+      },
+      "main": {
+        "file": "bundle/frankenstein-main.webp",
+        "sha256": "5fbe59dc755b18f6d0dc0e1b55dff4b4fda7f7991896aa76ab4a36d37468c8fc",
+        "bytes": 99140
+      },
+      "thumbnail": {
+        "file": "bundle/frankenstein-thumb.webp",
+        "sha256": "196b782faae8afae9a68d21215331c648dac7383c6c8a4c8884d57dfc42b461d",
+        "bytes": 17950
+      }
+    },
+    {
+      "slug": "alices-adventures-in-wonderland",
+      "title": "Alice's Adventures in Wonderland",
+      "author": "Lewis Carroll",
+      "review": {
+        "status": "pending_user_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "assistant_preflight": "Generated output inspected for subject and visible artifacts; not human approval, rights clearance or browser acceptance."
+      },
+      "source": {
+        "file": "sources/alices-adventures-in-wonderland.png",
+        "sha256": "558e6e3f599db36ebb676554165f62c577255be0bd417d1b5c3c2122cf6d4178",
+        "bytes": 3631309
+      },
+      "main": {
+        "file": "bundle/alices-adventures-in-wonderland-main.webp",
+        "sha256": "7553ebbe0ddae9d78bc273d691bdd1734226e351a43cef92db70cdd63dcf5fba",
+        "bytes": 155394
+      },
+      "thumbnail": {
+        "file": "bundle/alices-adventures-in-wonderland-thumb.webp",
+        "sha256": "63f1d586824b0daedaba450882b986dd8db36e7da702a882f971807a855b2edc",
+        "bytes": 30418
+      }
+    },
+    {
+      "slug": "twenty-thousand-leagues-under-the-seas",
+      "title": "Twenty Thousand Leagues Under the Seas",
+      "author": "Jules Verne",
+      "review": {
+        "status": "pending_user_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "assistant_preflight": "Generated output inspected for subject and visible artifacts; not human approval, rights clearance or browser acceptance."
+      },
+      "source": {
+        "file": "sources/twenty-thousand-leagues-under-the-seas.png",
+        "sha256": "5518fc346ad6ada60dd432eb99621bd9d6ef27783edc83ecec2843f49f8900ef",
+        "bytes": 3356503
+      },
+      "main": {
+        "file": "bundle/twenty-thousand-leagues-under-the-seas-main.webp",
+        "sha256": "8a8963e7d19827fc144b7e36a1506681877c088f78bb054af4743c4901e80f4f",
+        "bytes": 124862
+      },
+      "thumbnail": {
+        "file": "bundle/twenty-thousand-leagues-under-the-seas-thumb.webp",
+        "sha256": "e6a67e234770939aa108b50e064f81f4f19cd06f5fc35eefdd4874a58741efd2",
+        "bytes": 22574
+      }
+    }
+  ]
+}

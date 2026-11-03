@@ -10,23 +10,26 @@ The router applies middleware in this order:
 SecurityHeaders -> RequestID -> TrustedRealIP -> request logger -> Recoverer -> dynamic timeout -> no-store -> current-user -> flash -> CrossOriginProtection -> route guard/handler
 ```
 
-`TrustedRealIP` is a no-op unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured, forwarded
-client-IP headers are accepted only from an immediate peer inside one of those networks; otherwise
-the logger uses the connection `RemoteAddr`.
+`TrustedRealIP` is a no-op unless `APP_TRUSTED_PROXY_CIDRS` is configured. When configured,
+forwarded client-IP headers are accepted only from an immediate peer inside one of those networks;
+otherwise the logger uses the connection `RemoteAddr`.
 
-`http.CrossOriginProtection` is applied to dynamic MPA routes and has no insecure bypass patterns. Unsafe browser requests
-identified as cross-origin by Fetch Metadata or `Origin` receive `403` before reaching a handler;
-same-origin requests and safe methods continue normally. Requests without either browser signal are
-accepted as non-browser/unknown clients, so HTTPS and `SameSite=Lax` remain separate defenses.
+`http.CrossOriginProtection` is applied to dynamic MPA routes and has no insecure bypass patterns.
+Unsafe browser requests identified as cross-origin by Fetch Metadata or `Origin` receive `403`
+before reaching a handler; same-origin requests and safe methods continue normally. Requests without
+either browser signal are accepted as non-browser/unknown clients, so HTTPS and `SameSite=Lax`
+remain separate defenses.
 
 The application timeout is added only to dynamic MPA page routes:
 
 ```text
 GET /, /about, /books, /books/{slug}, /authors/{slug} -> Timeout(30s)
+GET/POST /books/request/new -> Timeout(30s)
 ```
 
-`/healthz`, `/static/*`, and the fallback 404 handler do not use the application timeout. The 404
-handler still loads current-user and flash request state so its navigation matches dynamic pages.
+`/healthz`, `/static/*`, `/media/covers/*`, and the fallback 404 handler do not use the application
+timeout. The 404 handler still loads current-user and flash request state so its navigation matches
+dynamic pages.
 Server transport timeouts remain configured separately in `internal/app/server.go`.
 
 Every response receives the conservative browser policy from `internal/http/middleware/security.go`:
@@ -56,7 +59,16 @@ GET /books               Catalog page
 GET /books/{slug}        Book details page
 GET /authors/{slug}      Author page
 GET /static/*            Static files
+GET/HEAD /media/covers/{key}  Public local cover file; no session/flash loading
 ```
+
+Local cover files use verified MIME types, SHA-256 ETags and
+`Cache-Control: public, max-age=31536000, immutable`. Conditional and byte-range requests are
+supported. Missing, invalid or damaged files return `404`; unexpected storage failures return
+a generic `500`. Errors use `no-store`; methods other than GET/HEAD return `405`. Keys must match
+`<lowercase-sha256>.<jpg|png|webp>`; directory listings and temporary files are not exposed.
+Step 4 of #28 supports local-cover maintenance through the existing administrator create/edit POST
+routes below; no separate upload endpoint or external-URL download/proxy is added.
 
 Authentication routes use the v0.2.5 opaque DB-backed session foundation:
 
@@ -95,6 +107,72 @@ Malformed item IDs, status values, and versions return `422`; owner-scoped missi
 `404`; stale forms return `409` without overwriting a newer state or deleting the item. The existing
 authentication, cross-origin, and `no-store` policies apply unchanged.
 
+### v0.3.2 catalog-operation routes
+
+All five administrator routes are wired into the runtime with server-rendered search, creation,
+and correction pages. DB-backed HTTP acceptance verifies both database backends; the user confirmed
+successful local browser review on 2026-10-12.
+The guard reads the current role through session loading on every request; promotion and demotion
+take effect on the next request without signing in again. Page models and request logs do not
+receive the internal `IsAdmin` capability. Operator services also check the actor's database
+capability, inside the transaction for catalog writes.
+
+```text
+GET  /admin/catalog                    optional query field: q
+GET  /admin/catalog/books/new          creation form
+POST /admin/catalog/books/new          book form
+GET  /admin/catalog/books/{id}/edit    correction form
+POST /admin/catalog/books/{id}/edit    book form
+```
+
+Admin routes redirect anonymous users to `/login`, return `403` for ordinary authenticated users,
+and retain existing `no-store` and cross-origin policies. Book forms use Post/Redirect/Get;
+malformed input is `422`, unknown book IDs are `404`, and duplicate create slugs are `409`.
+Successful writes redirect to the book's edit page with a fixed one-request flash. Blank search does
+not list the catalog. Validation/conflict pages retain submitted text and existing-author/genre
+selections, with linked field errors. Forms submit multipart data; URL-encoded POSTs remain accepted.
+URL-encoded bodies and multipart text are limited to 128 KiB; the entire multipart body is limited
+to 12 MiB, with at most one main image and one optional thumbnail, each at most 5 MiB. Temporary
+files and open upload streams are cleaned after every parsed request. Malformed/oversized forms,
+duplicate scalar/file fields, unknown file fields and malformed selected IDs return `422` without
+reaching a catalog write. File inputs must be selected again after validation/conflict errors.
+
+`front_cover_action` is `keep` (also the omitted default), `upload`, `external` or `remove`.
+`front_cover_url` is supplied only for `external`; `front_cover_file` and optional
+`front_cover_thumbnail` are supplied only for `upload`. Contradictory actions/values are `422`.
+Only validated image bytes supply keys/technical metadata; form fields cannot select storage paths.
+Ordinary text edits keep local or external covers. Successful file publication precedes the SQL
+transaction; file/reference/audit failures never set a success flash. SQL rollback preserves the
+previous cover and may leave unreferenced immutable files for later controlled cleanup.
+Operator book IDs and author/genre selections must fit `1..2147483647` on both backends.
+Overflow returns `422`; a well-formed but absent book ID returns `404`.
+Only POST-body fields are accepted; correction ignores any submitted slug, actor, or audit fields.
+The creation form proposes an ASCII slug through optional JavaScript until the operator edits it.
+Without JavaScript, the operator enters a slug manually; server validation is always required.
+
+The missing-book feedback routes for #25 are wired into the runtime:
+
+```text
+GET  /books/request/new                    missing-book form
+POST /books/request/new                    title, author
+```
+
+The form uses `RequireAuthentication`; anonymous or expired sessions receive `303 /login`.
+Only body fields `title` and `author` are used. Invalid fields, malformed encoding, and bodies over
+64 KiB return accessible `422` form errors. Successful submission emits one metadata-only event
+and redirects with `303 /books` and a one-request confirmation flash. Unsafe cross-origin POST
+requests receive `403` before event creation; `no-store` applies to these routes.
+The two-segment `/books/request/new` form path does not collide with `/books/{slug}`:
+`/books/request` remains the public URL of a book whose slug is `request`. The previous form URL
+is not redirected, since that would hide existing books. Old form POSTs must be reopened from
+the catalog at the new URL. The service saves the
+normalized fields, session user ID and UTC time before reporting success; save failures return a
+generic `500` without a success event, flash or redirect. No external service is called. Migration
+`000007` is required. The user accepted the original non-persistent flow on 2026-10-15. Persistence
+HTTP acceptance passes on SQLite/PostgreSQL; the user confirmed persistence browser review on
+2026-10-25 (Zen Browser, SQLite). Details are in
+[Curated Catalog Operations v0.3.2 Contract](catalog_operations_v0_3_2.md).
+
 ## Catalog Filters
 
 `GET /books` supports:
@@ -112,7 +190,9 @@ Unknown filter slugs return an empty catalog result, not a 404.
 - Unknown book slugs return 404.
 - Unknown author slugs return 404.
 - Book details render all related authors and genres. When no `front` cover metadata exists, the
-  page renders its CSS cover placeholder.
+  page renders its CSS cover placeholder. Details use the main front image; home/catalog/author
+  and private-library cards prefer the supplied thumbnail, falling back to the main URL when absent.
+  An external script reveals the placeholder on image errors, also for HTMX catalog fragments.
 - Author pages show the selected author's details and catalog cards with each book's complete
   author and genre lists.
 

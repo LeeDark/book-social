@@ -20,6 +20,8 @@ type ItemView struct {
 	RemoveURL     string
 	Title         string
 	BookURL       string
+	CoverClass    string
+	FrontCover    *books.CoverView
 	Authors       []AuthorLinkView
 	StateLabel    string
 	StatusOptions []StatusOption
@@ -49,6 +51,8 @@ func mapItemsToViews(items []Item) []ItemView {
 			RemoveURL:     fmt.Sprintf("/me/library/%d/remove", item.ID),
 			Title:         item.Book.Title,
 			BookURL:       fmt.Sprintf("/books/%s", item.Book.Slug),
+			CoverClass:    fmt.Sprintf("cover-%d", item.Book.ID%5),
+			FrontCover:    books.SelectCardFrontCover(item.Book.Covers),
 			Authors:       mapAuthorsToLinks(item.Book.Authors),
 			StateLabel:    item.Status.Label(),
 			StatusOptions: statusOptions(item.Status),

@@ -14,12 +14,14 @@ import (
 	"github.com/LeeDark/book-social/internal/buildinfo"
 	"github.com/LeeDark/book-social/internal/config"
 	httpauth "github.com/LeeDark/book-social/internal/http/auth"
+	"github.com/LeeDark/book-social/internal/http/cover"
 	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/logging"
 	"github.com/LeeDark/book-social/internal/modules/books"
 	"github.com/LeeDark/book-social/internal/modules/library"
 	"github.com/LeeDark/book-social/internal/modules/users"
+	"github.com/LeeDark/book-social/internal/storage/covers"
 	"github.com/LeeDark/book-social/internal/storage/postgresql"
 	"github.com/LeeDark/book-social/internal/storage/sqlite"
 )
@@ -48,24 +50,30 @@ func main() {
 
 func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	var (
-		err         error
-		db          *sql.DB
-		bookRepo    books.BookRepository
-		libraryRepo library.Repository
-		userRepo    users.RegistrationRepository
-		sessionRepo users.SessionRepository
+		err             error
+		db              *sql.DB
+		bookRepo        books.BookRepository
+		operatorRepo    books.OperatorRepository
+		missingBookRepo books.MissingBookRepository
+		libraryRepo     library.Repository
+		userRepo        users.RegistrationRepository
+		sessionRepo     users.SessionRepository
 	)
 
 	switch cfg.Env {
 	case config.EnvDev:
 		db, err = sqlite.Open(ctx, cfg.DB.DSN)
 		bookRepo = sqlite.NewBookRepository(db)
+		operatorRepo = sqlite.NewCatalogOperatorRepository(db)
+		missingBookRepo = sqlite.NewMissingBookRepository(db)
 		libraryRepo = sqlite.NewLibraryRepository(db)
 		userRepo = sqlite.NewUserRepository(db)
 		sessionRepo = sqlite.NewSessionRepository(db)
 	case config.EnvStage, config.EnvProd:
 		db, err = postgresql.Open(ctx, cfg.DB.DSN)
 		bookRepo = postgresql.NewBookRepository(db)
+		operatorRepo = postgresql.NewCatalogOperatorRepository(db)
+		missingBookRepo = postgresql.NewMissingBookRepository(db)
 		libraryRepo = postgresql.NewLibraryRepository(db)
 		userRepo = postgresql.NewUserRepository(db)
 		sessionRepo = postgresql.NewSessionRepository(db)
@@ -84,12 +92,20 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		return fmt.Errorf("create renderer: %w", err)
 	}
 
+	coverStore, err := covers.New(cfg.Covers.Dir)
+	if err != nil {
+		return fmt.Errorf("create cover storage: %w", err)
+	}
+	defer func() { _ = coverStore.Close() }()
+
 	cookies := newSessionCookieManager(cfg)
 	flashes := flash.NewManager(cfg.Env != config.EnvDev)
 
 	userService := users.NewService(userRepo, users.NewPasswordPolicy())
 	sessionService := users.NewSessionService(userRepo, sessionRepo, cfg.Auth.SessionLifetime)
 	catalogService := books.NewCatalogService(bookRepo)
+	operatorService := books.NewOperatorServiceWithCovers(operatorRepo, app.NewCoverPreparer(coverStore))
+	missingBookService := books.NewMissingBookService(missingBookRepo, logger)
 	libraryService := library.NewService(libraryRepo, bookRepo)
 
 	currentUserMiddleware := httpauth.NewCurrentUserMiddleware(cookies, sessionService)
@@ -112,6 +128,9 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		libraryStateProvider,
 	)
 	libraryHandler := library.NewHandler(libraryService, flashes, renderer, logger)
+	operatorHandler := books.NewOperatorHandler(operatorService, flashes, renderer, logger)
+	missingBookHandler := books.NewMissingBookHandler(missingBookService, flashes, renderer, logger)
+	coverHandler := cover.NewHandler(coverStore, logger)
 
 	deps := app.Deps{
 		Config:                cfg,
@@ -121,6 +140,9 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		FlashManager:          flashes,
 		AuthHandler:           authHandler,
 		LibraryHandler:        libraryHandler,
+		AdminCatalogHandler:   operatorHandler,
+		MissingBookHandler:    missingBookHandler,
+		CoverHandler:          coverHandler,
 	}
 
 	application := app.New(deps, homeHandler, catalogHandler)

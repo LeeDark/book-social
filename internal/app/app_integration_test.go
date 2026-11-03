@@ -79,7 +79,7 @@ func TestCatalogRoutesWithSQLite(t *testing.T) {
 				"Romance",
 				`src="https://example.test/covers/pride-and-prejudice.jpg"`,
 			},
-			wantExact: []string{`<img class="book-details__cover book-details__cover--image" src="https://example.test/covers/pride-and-prejudice.jpg" alt="Cover of Pride and Prejudice">`},
+			wantExact: []string{`data-cover-image src="https://example.test/covers/pride-and-prejudice.jpg"`, `aria-label="Book cover for Pride and Prejudice"`},
 		},
 		{
 			name:          "book details without cover use placeholder",

@@ -140,6 +140,20 @@ The user's latest explicit instruction takes precedence over the defaults in thi
 - Put `Closes #N` on its own real Markdown paragraph and inspect the published body with
   `gh ... --json body --jq .body` before relying on a closing reference.
 
+### Required readability pass
+
+Before editing Go or SQL, read `docs/code-readability.md` in full.
+
+Before reporting completion:
+
+- Review every new or materially changed function and SQL statement against the guide.
+- Check blank lines between distinct logical phases explicitly.
+- Review the actual code, not only formatter/linter output.
+- Fix violations within the task scope.
+- Report any remaining exceptions explicitly.
+
+Passing `gofmt`, tests, or lint does not replace this review.
+
 ## Completion contract
 
 After an implementation or documentation change, summarize:

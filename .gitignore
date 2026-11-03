@@ -5,6 +5,9 @@ bin
 data/*.db
 data/*.db-shm
 data/*.db-wal
+# Local cover files and demo artwork; see assets/demo-covers/STORAGE.md.
+data/covers/
+data/demo-covers/
 
 docs/archive
 docs/private

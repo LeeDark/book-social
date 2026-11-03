@@ -43,9 +43,36 @@
         color-mix(in srgb, var(--cover-background-start, var(--surface-soft)) 22%, var(--pico-card-background-color));
 }
 
-.book-card__cover-book {
+.book-card__cover .book-cover {
     width: min(7rem, 42%);
+    height: auto;
     aspect-ratio: 2 / 3;
+}
+
+.library-card {
+    display: grid;
+    grid-template-columns: 6rem minmax(0, 1fr);
+    gap: 1rem;
+}
+
+.library-card__cover {
+    align-self: start;
+    aspect-ratio: 2 / 3;
+    text-decoration: none;
+}
+
+.library-card__body {
+    min-width: 0;
+}
+
+@media (max-width: 480px) {
+    .library-card {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .library-card__cover {
+        width: 6rem;
+    }
 }
 
 .book-card__body {
