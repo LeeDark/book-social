@@ -319,7 +319,8 @@ func parseOperatorForm(w http.ResponseWriter, r *http.Request, isNew bool) (Oper
 		}
 	}
 
-	if _, err := normalizeCoverChange(input); err != nil {
+	// A rejected file is also missing from input; keep the specific file error.
+	if _, err := normalizeCoverChange(input); err != nil && form.Errors["front_cover"] == "" {
 		form.Errors["front_cover"] = "Choose one cover action and supply only its URL or files."
 	}
 
