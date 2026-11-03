@@ -3,6 +3,11 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"image"
+	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -84,4 +89,93 @@ func TestVerifyExistingSQLiteDatabase(t *testing.T) {
 	if !strings.Contains(output.String(), "Verified 0 local cover references") {
 		t.Fatalf("verify output = %q", output.String())
 	}
+}
+
+func TestInstallDoesNotCreateMissingCoverDirectory(t *testing.T) {
+	directory := t.TempDir()
+	dbPath := filepath.Join(directory, "catalog.db")
+	coversDir := filepath.Join(directory, "mistyped-covers")
+	ctx := context.Background()
+	db := testutil.NewSQLiteTestDB(t, ctx, dbPath)
+	testutil.ApplySQLiteLibraryTestSchema(t, ctx, db)
+	testutil.SeedSQLiteCatalogV2TestData(t, ctx, db)
+	bundleDir, manifestChecksum := writePilotBundle(t)
+	t.Setenv("APP_ENV", "dev")
+	t.Setenv("APP_DB_DSN", "file:"+dbPath)
+	t.Setenv("APP_COVERS_DIR", coversDir)
+
+	err := run(ctx, []string{
+		"install", "-writers-stopped",
+		"-bundle", bundleDir,
+		"-manifest-sha256", manifestChecksum,
+		"-actor-id", "1",
+	}, new(bytes.Buffer))
+	if err == nil || !strings.Contains(err.Error(), "existing cover directory") {
+		t.Fatalf("install with a missing cover directory: %v", err)
+	}
+
+	if _, err := os.Stat(coversDir); !os.IsNotExist(err) {
+		t.Fatalf("install created or could not inspect a missing cover directory: %v", err)
+	}
+}
+
+// writePilotBundle writes a valid five-book pilot bundle with synthetic images.
+func writePilotBundle(t *testing.T) (string, string) {
+	t.Helper()
+
+	type bundleFile struct {
+		File   string `json:"file"`
+		SHA256 string `json:"sha256"`
+	}
+
+	directory := t.TempDir()
+	writeImage := func(name string, width, height int) bundleFile {
+		var data bytes.Buffer
+		if err := png.Encode(&data, image.NewRGBA(image.Rect(0, 0, width, height))); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(directory, name), data.Bytes(), 0600); err != nil {
+			t.Fatal(err)
+		}
+
+		return bundleFile{File: name, SHA256: sha256Hex(data.Bytes())}
+	}
+
+	mainImage := writeImage("main.png", 4, 6)
+	thumbnailImage := writeImage("thumb.png", 2, 3)
+	covers := make([]map[string]any, 0, 5)
+	for _, slug := range []string{
+		"a-christmas-carol",
+		"pride-and-prejudice",
+		"frankenstein",
+		"alices-adventures-in-wonderland",
+		"twenty-thousand-leagues-under-the-seas",
+	} {
+		covers = append(covers, map[string]any{
+			"slug":        slug,
+			"reviewed":    true,
+			"usage_basis": "Generated solid-color test fixture, not approved demo artwork.",
+			"main":        mainImage,
+			"thumbnail":   thumbnailImage,
+		})
+	}
+
+	manifest, err := json.Marshal(map[string]any{
+		"version":   1,
+		"bundle_id": "synthetic-tests-only-v1",
+		"covers":    covers,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(directory, "manifest.json"), manifest, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	return directory, sha256Hex(manifest)
+}
+
+func sha256Hex(data []byte) string {
+	digest := sha256.Sum256(data)
+	return hex.EncodeToString(digest[:])
 }

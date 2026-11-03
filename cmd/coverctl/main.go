@@ -74,17 +74,17 @@ func run(ctx context.Context, args []string, output io.Writer) error {
 		return err
 	}
 
+	// Never create a missing target: a mistyped directory would receive the files
+	// while SQL references point the application at its real, unchanged directory.
+	if info, err := os.Stat(cfg.Covers.Dir); err != nil || !info.IsDir() {
+		return errors.New("cover maintenance requires an existing cover directory")
+	}
+
 	db, catalog, operator, err := openRepositories(ctx, cfg)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = db.Close() }()
-
-	if args[0] == "verify" {
-		if info, err := os.Stat(cfg.Covers.Dir); err != nil || !info.IsDir() {
-			return errors.New("verify requires an existing cover directory")
-		}
-	}
 
 	store, err := covers.New(cfg.Covers.Dir)
 	if err != nil {

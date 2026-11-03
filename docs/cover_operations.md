@@ -106,7 +106,9 @@ APP_ENV=dev APP_DB_DSN=/absolute/path/book_social.db APP_COVERS_DIR=/absolute/pa
 
 Both `APP_DB_DSN` and `APP_COVERS_DIR` must be explicitly set; maintenance refuses application
 defaults for those targets. The SQLite database must already exist; the command will not silently
-create/seed a target.
+create/seed a target. The cover directory must exist too: `install` and `verify` never create it, so
+a mistyped path fails instead of receiving files the application does not serve. Create the
+directory explicitly only for a new environment.
 For PostgreSQL, use `APP_ENV=stage` or `prod` and the explicitly selected `APP_DB_DSN`.
 Resolve every slug and check authorization before publishing. All references and ordinary
 `correct`/`front_cover` audits commit together after authorization/target rechecks. Unrelated book

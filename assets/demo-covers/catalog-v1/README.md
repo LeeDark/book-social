@@ -29,9 +29,11 @@ The assembler produces both `inventory.json` and a version 2 installer
 ```
 
 Stop all cover writers and use a migrated, seeded database, an existing
-administrator ID and an explicit cover directory. Follow the backup and recovery
-procedure in [cover operations](../../../docs/cover_operations.md). For an
-isolated SQLite environment, substitute your absolute paths and administrator ID:
+administrator ID and an explicit, existing cover directory (the installer never
+creates it; create it yourself only for a new environment). Follow the backup
+and recovery procedure in [cover operations](../../../docs/cover_operations.md).
+For an isolated SQLite environment, substitute your absolute paths and
+administrator ID:
 
 ```bash
 APP_ENV=dev APP_DB_DSN=/absolute/path/catalog.db APP_COVERS_DIR=/absolute/path/covers \
