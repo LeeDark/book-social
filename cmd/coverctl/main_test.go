@@ -96,9 +96,11 @@ func TestInstallDoesNotCreateMissingCoverDirectory(t *testing.T) {
 	dbPath := filepath.Join(directory, "catalog.db")
 	coversDir := filepath.Join(directory, "mistyped-covers")
 	ctx := context.Background()
+
 	db := testutil.NewSQLiteTestDB(t, ctx, dbPath)
 	testutil.ApplySQLiteLibraryTestSchema(t, ctx, db)
 	testutil.SeedSQLiteCatalogV2TestData(t, ctx, db)
+
 	bundleDir, manifestChecksum := writePilotBundle(t)
 	t.Setenv("APP_ENV", "dev")
 	t.Setenv("APP_DB_DSN", "file:"+dbPath)
