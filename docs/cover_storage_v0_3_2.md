@@ -140,10 +140,12 @@ The process opens the store at startup and closes it on shutdown. `APP_COVERS_DI
 ignored by Git. Compose sets a separate persistent `/app/covers` volume per environment; see
 [delivery and recovery](cover_operations.md) before upgrading a retained container.
 
-`GET` and `HEAD /media/covers/{key}` work without session or flash loading. The handler verifies
-the file's checksum and fully validates its image content on each request before serving; this
-bounded initial implementation trades decode work for detecting damaged or incorrectly supplied
-files. It returns the image MIME type, SHA-256 ETag and a one-year immutable public cache policy.
+`GET` and `HEAD /media/covers/{key}` work without session or flash loading. On each request the
+handler checks the canonical key, the size bound and the file's SHA-256 before serving, so
+damaged or replaced bytes are refused. It does not decode the image again: publication already
+validated it fully before naming it by that hash, and decoding a maximum-size image on every
+public request cost about 100 ms of CPU. `coverctl verify` keeps the full decode-based inspection.
+The handler returns the image MIME type, SHA-256 ETag and a one-year immutable public cache policy.
 Conditional requests and byte ranges are supported. Missing, invalid or damaged files return
 `404`; unexpected storage failures return a generic `500` and server-side diagnostics. Error
 responses use `no-store`; other methods return `405`. All routes retain global security headers.
