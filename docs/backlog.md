@@ -24,10 +24,12 @@ document. Do not use this file as an unbounded duplicate of the roadmap.
 
 ## Current planning boundary
 
-v0.2.6 Registration/Login/Logout, v0.3.0 Private Library Foundation, and v0.3.1 Reading-State
-Lifecycle are closed. No later release scope is active yet. No backlog item is promoted by this
-document; defer unrelated API, rendering, and infrastructure ideas until a concrete revisit
-condition is met.
+v0.2.6 Registration/Login/Logout, v0.3.0 Private Library Foundation, v0.3.1 Reading-State
+Lifecycle, and v0.3.2 Curated Catalog Operations are closed. The active release is v0.3.3
+Reliability and Release Closure. No backlog item is promoted to roadmap scope by this document:
+the code-hygiene items below ride along with named roadmap items and add no release outcome.
+Defer unrelated API, rendering, and infrastructure ideas until a concrete revisit condition is
+met.
 
 ## Code hygiene linked to releases
 
