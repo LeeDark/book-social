@@ -359,7 +359,8 @@ the MPA, and an operator can correct catalog data without direct SQL.
 
 #### v0.3.3 — Reliability and Release Closure
 
-Status: active.
+Status: active. The execution plan, planning decisions and issues #33–#40 are in
+[`reliability_release_v0_3_3.md`](reliability_release_v0_3_3.md).
 
 - [ ] Add the small critical-flow end-to-end HTTP set and complete SQLite migration/seed smoke;
   run the documented PostgreSQL critical-path verification.
