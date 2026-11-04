@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 
 	"github.com/LeeDark/book-social/internal/modules/books"
@@ -143,6 +144,34 @@ func TestBookRepositoryGetBookBySlugReturnsNotFound(t *testing.T) {
 	_, err := repo.GetBookBySlug(ctx, "missing-book")
 	if err != books.ErrBookNotFound {
 		t.Fatalf("GetBookBySlug() error = %v, want %v", err, books.ErrBookNotFound)
+	}
+}
+
+func TestBookRepositoryGetBookIDBySlug(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBookRepository(newTestBookRepositoryDB(t, ctx))
+
+	book, err := repo.GetBookBySlug(ctx, "dracula")
+	if err != nil {
+		t.Fatalf("GetBookBySlug() error = %v", err)
+	}
+
+	bookID, err := repo.GetBookIDBySlug(ctx, "dracula")
+	if err != nil {
+		t.Fatalf("GetBookIDBySlug() error = %v", err)
+	}
+	if bookID != book.ID {
+		t.Fatalf("GetBookIDBySlug() = %d, want %d", bookID, book.ID)
+	}
+}
+
+func TestBookRepositoryGetBookIDBySlugReturnsNotFound(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBookRepository(newTestBookRepositoryDB(t, ctx))
+
+	_, err := repo.GetBookIDBySlug(ctx, "missing-book")
+	if !errors.Is(err, books.ErrBookNotFound) {
+		t.Fatalf("GetBookIDBySlug() error = %v, want %v", err, books.ErrBookNotFound)
 	}
 }
 

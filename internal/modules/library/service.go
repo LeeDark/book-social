@@ -36,20 +36,20 @@ func (s *Service) Add(ctx context.Context, userID int, bookSlug string) error {
 		return ErrInvalidInput
 	}
 
-	book, err := s.books.GetBookBySlug(ctx, bookSlug)
+	bookID, err := s.books.GetBookIDBySlug(ctx, bookSlug)
 	if err != nil {
 		if errors.Is(err, books.ErrBookNotFound) {
 			return ErrBookNotFound
 		}
 		return ErrInternal
 	}
-	if book.ID <= 0 {
+	if bookID <= 0 {
 		return ErrInternal
 	}
 
 	err = s.repo.Add(ctx, AddItemParams{
 		UserID:  userID,
-		BookID:  book.ID,
+		BookID:  bookID,
 		AddedAt: s.now().UTC(),
 	})
 	return mapRepositoryError(err)

@@ -920,7 +920,13 @@ func newAuthIntegrationTestApp(t *testing.T, userRepo users.RegistrationReposito
 	return New(deps, NewHomeHandler(catalogService, renderer, logger), catalogHandler).Router
 }
 
-func newLibraryIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepository, sessionRepo users.SessionRepository, bookRepo books.BookRepository, libraryRepo library.Repository) http.Handler {
+// libraryBookRepository is the catalog repository surface that library integration apps need.
+type libraryBookRepository interface {
+	books.BookRepository
+	library.BookFinder
+}
+
+func newLibraryIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepository, sessionRepo users.SessionRepository, bookRepo libraryBookRepository, libraryRepo library.Repository) http.Handler {
 	t.Helper()
 	testutil.ChdirProjectRoot(t)
 	renderer, err := render.NewRenderer()
