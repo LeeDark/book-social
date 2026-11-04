@@ -30,6 +30,8 @@ type fakeLibraryService struct {
 	getErr     error
 	updateErr  error
 	removeErr  error
+	// itemCalls counts Get, UpdateStatus and Remove calls, which must not happen for invalid input.
+	itemCalls int
 }
 
 func (s *fakeLibraryService) Add(_ context.Context, userID int, slug string) error {
@@ -44,14 +46,17 @@ func (s *fakeLibraryService) List(_ context.Context, userID int) ([]Item, error)
 }
 
 func (s *fakeLibraryService) Get(context.Context, int, int) (Item, error) {
+	s.itemCalls++
 	return Item{}, s.getErr
 }
 
 func (s *fakeLibraryService) UpdateStatus(context.Context, int, int, ReadingStatus, int) error {
+	s.itemCalls++
 	return s.updateErr
 }
 
 func (s *fakeLibraryService) Remove(context.Context, int, int, int) error {
+	s.itemCalls++
 	return s.removeErr
 }
 
@@ -176,6 +181,77 @@ func TestHandlerMapsLifecycleErrorsToResponses(t *testing.T) {
 			}
 			if !strings.Contains(recorder.Body.String(), tt.wantFragment) {
 				t.Fatalf("response missing %q: %q", tt.wantFragment, recorder.Body.String())
+			}
+		})
+	}
+}
+
+func TestHandlerRejectsOutOfRangeItemIDsAndVersionsBeforeServiceCall(t *testing.T) {
+	invalidValues := []string{"0", "-1", "abc", "2147483648", "9999999999"}
+
+	type routeCase struct {
+		name   string
+		method string
+		path   string
+		body   string
+	}
+	var testCases []routeCase
+	for _, value := range invalidValues {
+		testCases = append(testCases,
+			routeCase{
+				name:   "status change with item ID " + value,
+				method: http.MethodPost,
+				path:   "/me/library/" + value + "/status",
+				body:   "status=reading&version=1",
+			},
+			routeCase{
+				name:   "status change with version " + value,
+				method: http.MethodPost,
+				path:   "/me/library/1/status",
+				body:   "status=reading&version=" + value,
+			},
+			routeCase{
+				name:   "removal confirmation with item ID " + value,
+				method: http.MethodGet,
+				path:   "/me/library/" + value + "/remove",
+			},
+			routeCase{
+				name:   "removal with item ID " + value,
+				method: http.MethodPost,
+				path:   "/me/library/" + value + "/remove",
+				body:   "version=1",
+			},
+			routeCase{
+				name:   "removal with version " + value,
+				method: http.MethodPost,
+				path:   "/me/library/1/remove",
+				body:   "version=" + value,
+			},
+		)
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &fakeLibraryService{}
+			handler := newTestHandler(t, service)
+			router := chi.NewRouter()
+			router.Post("/me/library/{itemID}/status", handler.UpdateStatus)
+			router.Get("/me/library/{itemID}/remove", handler.RemoveConfirmation)
+			router.Post("/me/library/{itemID}/remove", handler.Remove)
+
+			request := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
+			if tt.body != "" {
+				request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			}
+			request.AddCookie(&http.Cookie{Name: "library_test_session", Value: "valid-session"})
+			recorder := httptest.NewRecorder()
+			authenticatedLibraryHandler(t, router).ServeHTTP(recorder, request)
+
+			if recorder.Code != http.StatusUnprocessableEntity {
+				t.Fatalf("status = %d, want %d: %q", recorder.Code, http.StatusUnprocessableEntity, recorder.Body.String())
+			}
+			if service.itemCalls != 0 {
+				t.Fatalf("service item calls = %d, want 0", service.itemCalls)
 			}
 		})
 	}

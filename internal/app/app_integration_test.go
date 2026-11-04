@@ -604,6 +604,54 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 			t.Fatalf("confirmed removal = %d %q", removed.Code, removed.Header().Get("Location"))
 		}
 	})
+
+	t.Run("out-of-range item IDs and versions are refused with 422", func(t *testing.T) {
+		session := register("Carol", "carol-range")
+
+		for _, value := range []string{"0", "-1", "abc", "2147483648", "9999999999"} {
+			for _, tt := range []struct {
+				name    string
+				request *http.Request
+			}{
+				{
+					name: "status change with item ID " + value,
+					request: formRequest(http.MethodPost, "/me/library/"+value+"/status", url.Values{
+						"status":  {"reading"},
+						"version": {"1"},
+					}),
+				},
+				{
+					name: "status change with version " + value,
+					request: formRequest(http.MethodPost, "/me/library/1/status", url.Values{
+						"status":  {"reading"},
+						"version": {value},
+					}),
+				},
+				{
+					name:    "removal confirmation with item ID " + value,
+					request: httptest.NewRequest(http.MethodGet, "/me/library/"+value+"/remove", nil),
+				},
+				{
+					name:    "removal with item ID " + value,
+					request: formRequest(http.MethodPost, "/me/library/"+value+"/remove", url.Values{"version": {"1"}}),
+				},
+				{
+					name:    "removal with version " + value,
+					request: formRequest(http.MethodPost, "/me/library/1/remove", url.Values{"version": {value}}),
+				},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					tt.request.AddCookie(session)
+					recorder := httptest.NewRecorder()
+					handler.ServeHTTP(recorder, tt.request)
+
+					if recorder.Code != http.StatusUnprocessableEntity {
+						t.Fatalf("status = %d, want %d", recorder.Code, http.StatusUnprocessableEntity)
+					}
+				})
+			}
+		}
+	})
 }
 
 func testAuthRoutes(t *testing.T, handler http.Handler) {
