@@ -29,6 +29,72 @@ Lifecycle are closed. No later release scope is active yet. No backlog item is p
 document; defer unrelated API, rendering, and infrastructure ideas until a concrete revisit
 condition is met.
 
+## Code hygiene linked to releases
+
+Status: scheduled cleanup from the 2026-11-04 review of the full code history at `85c7899`.
+
+Current decision: each item below is attached to the release whose roadmap work touches the same
+code, or to that release's closure. Do it in the same change as the named roadmap item; it does
+not add a separate roadmap outcome.
+
+Why it is not roadmap work: none of these changes is visible to a user or operator on its own,
+which the roadmap's planning principles require of release scope.
+
+Revisit when planning each release. If the linked roadmap item moves to another release, move its
+hygiene item with it. Remove an item once it is done, and record the reason for a dropped item in
+`docs/ai/task-history.md`.
+
+### v0.3.3: with release closure
+
+Roadmap:
+[v0.3.3 — Reliability and Release Closure](roadmap.md#v033--reliability-and-release-closure).
+
+- Remove `github.com/a-h/templ` and `maragu.dev/gomponents` from the `depguard` allowlist
+  (`.golangci.yml:43`, `:48`). Neither module has been in `go.mod` since `5c7edc1`, and the
+  [Templ or gomponents](#typed-server-side-rendering-templ-or-gomponents) item requires a decision
+  before either returns.
+- Re-panic `http.ErrAbortHandler` in the project's `Recoverer`, as chi's own recoverer does
+  (`internal/http/middleware/recovery.go:18`).
+- Call `stop()` once the root context is done, so that a second interrupt ends the process during
+  the five-second shutdown (`cmd/web/main.go:31`).
+- With the library ID-range item: resolve a book ID from its slug without loading authors, genres
+  and covers. `library.Service.Add` uses the catalog's full `GetBookBySlug` today
+  (`internal/modules/library/service.go:39`).
+- With the login/email item: remove the unused `users.Service.Register`, which only tests call
+  (`internal/modules/users/service.go:91`), and require `RegistrationSessionStore` in the
+  `NewService` parameter type instead of checking it with a type assertion at run time
+  (`internal/modules/users/service.go:23`).
+
+### v0.3.4: with the catalog expansion
+
+Roadmap: [v0.3.4 — Public Demo Polish](roadmap.md#v034--public-demo-polish).
+
+- With the cover-bundle limit item: define the cover file limits (5 MiB, 4096 px per side,
+  12,000,000 pixels, portrait JPEG, PNG or static WebP) once in Go and use that definition in both
+  `internal/storage/covers/image.go` and `internal/modules/books/local_cover.go:57-59`. Migration
+  `000008` keeps the database-side `CHECK` mirror for both dialects.
+- With the featured-books item: share one batch helper per storage package that loads authors and
+  genres for a list of book IDs. Book and library repositories hold four copies today
+  (`internal/storage/sqlite/books_repository.go:168`, `:236`, `library_repository.go:363`, `:429`;
+  `internal/storage/postgresql/books_repository.go:139`, `:182`, `library_repository.go:313`,
+  `:378`). If v0.3.4 does not change the card read model, move this item to
+  [v0.4.0](roadmap.md#v040--catalog-and-locale-contracts).
+
+### v0.3.5: with stage hardening
+
+Roadmap: [v0.3.5 — Hetzner Cloud Hosted Stage](roadmap.md#v035--hetzner-cloud-hosted-stage).
+
+- With the missing-book request limit item: replace the `users.ErrUnauthenticated` import in
+  `books` with a local error, so that the catalog module no longer depends on `users`
+  (`internal/modules/books/missing_book.go:10`, `missing_book_handler.go:14`).
+
+### Not attached to a release
+
+- Lint test files. `.golangci.yml:6` sets `run.tests: false`, so about 14,000 lines of tests are
+  not linted. Run the linter once with `tests: true` to measure the findings. Attach this item to
+  a release when the linter set grows, or when a test defect appears that a linter would have
+  caught.
+
 ## Public catalog JSON API
 
 Status: deferred; no active implementation.
