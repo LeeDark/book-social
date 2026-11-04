@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 )
@@ -12,7 +13,6 @@ type recordingUserRepository struct {
 	created        CreateUserParams
 	createdUser    User
 	roleLookup     string
-	txCalls        int
 	roleErr        error
 	createErr      error
 	credentials    Credentials
@@ -78,11 +78,6 @@ func (r *recordingUserRepository) FindByID(ctx context.Context, id int) (User, e
 	return User{}, nil
 }
 
-func (r *recordingUserRepository) WithinTransaction(ctx context.Context, fn func(UserRepository) error) error {
-	r.txCalls++
-	return fn(r)
-}
-
 func TestRegistrationCreatesUserWithDefaultRoleAndPasswordHash(t *testing.T) {
 	ctx := context.Background()
 	repo := &recordingUserRepository{
@@ -98,15 +93,15 @@ func TestRegistrationCreatesUserWithDefaultRoleAndPasswordHash(t *testing.T) {
 		PasswordConfirmation: "correct horse battery staple",
 	}
 
-	got, err := service.Register(ctx, input)
+	got, err := service.RegisterAndCreateSession(ctx, input, make([]byte, SessionTokenHashSize), time.Hour)
 	if err != nil {
-		t.Fatalf("Register() error = %v", err)
+		t.Fatalf("RegisterAndCreateSession() error = %v", err)
 	}
-	if repo.txCalls != 1 {
-		t.Fatalf("transaction calls = %d, want 1", repo.txCalls)
+	if repo.sessionTxCalls != 1 {
+		t.Fatalf("transaction calls = %d, want 1", repo.sessionTxCalls)
 	}
 	if got != repo.createdUser {
-		t.Fatalf("Register() user = %+v, want %+v", got, repo.createdUser)
+		t.Fatalf("RegisterAndCreateSession() user = %+v, want %+v", got, repo.createdUser)
 	}
 	if repo.roleLookup != "user" {
 		t.Fatalf("role lookup = %q, want %q", repo.roleLookup, "user")
@@ -163,6 +158,16 @@ func TestRegistrationRejectsInvalidInput(t *testing.T) {
 			},
 		},
 		{
+			name: "login containing @",
+			input: RegistrationInput{
+				FirstName:            "Ada",
+				Login:                "bob@example.test",
+				Email:                "ada@example.test",
+				Password:             "correct horse battery staple",
+				PasswordConfirmation: "correct horse battery staple",
+			},
+		},
+		{
 			name: "password confirmation mismatch",
 			input: RegistrationInput{
 				FirstName:            "Ada",
@@ -177,13 +182,13 @@ func TestRegistrationRejectsInvalidInput(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &recordingUserRepository{role: Role{ID: 9, Name: "user"}}
-			_, err := NewService(repo, NewPasswordPolicy()).Register(context.Background(), tt.input)
+			_, err := NewService(repo, NewPasswordPolicy()).RegisterAndCreateSession(context.Background(), tt.input, make([]byte, SessionTokenHashSize), time.Hour)
 			var validationErr ValidationError
 			if !errors.As(err, &validationErr) {
-				t.Fatalf("Register() error = %v, want ValidationError", err)
+				t.Fatalf("RegisterAndCreateSession() error = %v, want ValidationError", err)
 			}
-			if repo.txCalls != 0 {
-				t.Fatalf("transaction calls = %d, want 0", repo.txCalls)
+			if repo.sessionTxCalls != 0 {
+				t.Fatalf("transaction calls = %d, want 0", repo.sessionTxCalls)
 			}
 		})
 	}
@@ -204,9 +209,9 @@ func TestRegistrationMapsDuplicateIdentityErrors(t *testing.T) {
 				role:      Role{ID: 9, Name: "user"},
 				createErr: tt.err,
 			}
-			_, err := NewService(repo, NewPasswordPolicy()).Register(context.Background(), validRegistrationInput())
+			_, err := NewService(repo, NewPasswordPolicy()).RegisterAndCreateSession(context.Background(), validRegistrationInput(), make([]byte, SessionTokenHashSize), time.Hour)
 			if !errors.Is(err, tt.err) {
-				t.Fatalf("Register() error = %v, want %v", err, tt.err)
+				t.Fatalf("RegisterAndCreateSession() error = %v, want %v", err, tt.err)
 			}
 		})
 	}
@@ -218,12 +223,53 @@ func TestRegistrationMapsRepositoryFailureToInternalError(t *testing.T) {
 		createErr: errors.New("database connection details must not escape"),
 	}
 
-	_, err := NewService(repo, NewPasswordPolicy()).Register(context.Background(), validRegistrationInput())
+	_, err := NewService(repo, NewPasswordPolicy()).RegisterAndCreateSession(context.Background(), validRegistrationInput(), make([]byte, SessionTokenHashSize), time.Hour)
 	if !errors.Is(err, ErrInternal) {
-		t.Fatalf("Register() error = %v, want ErrInternal", err)
+		t.Fatalf("RegisterAndCreateSession() error = %v, want ErrInternal", err)
 	}
 	if err.Error() != ErrInternal.Error() {
-		t.Fatalf("Register() error = %q, want generic %q", err, ErrInternal)
+		t.Fatalf("RegisterAndCreateSession() error = %q, want generic %q", err, ErrInternal)
+	}
+}
+
+func TestNormalizeRegistrationInputLogin(t *testing.T) {
+	tests := []struct {
+		name        string
+		login       string
+		wantLogin   string
+		wantMessage string
+	}{
+		{name: "plain login is accepted", login: "ada", wantLogin: "ada"},
+		{name: "login is trimmed and lowercased", login: "  Ada.Lovelace ", wantLogin: "ada.lovelace"},
+		{name: "login equal to an email is rejected", login: "bob@example.test", wantMessage: "must not contain @"},
+		{name: "login with only @ is rejected", login: "@", wantMessage: "must not contain @"},
+		{name: "login with surrounding spaces and @ is rejected", login: " ada@ ", wantMessage: "must not contain @"},
+		{name: "blank login is required", login: "   ", wantMessage: "is required"},
+		{name: "login over 64 characters is too long", login: strings.Repeat("a", 65), wantMessage: "is too long"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			input := validRegistrationInput()
+			input.Login = tt.login
+
+			got, err := normalizeRegistrationInput(input)
+
+			if tt.wantMessage == "" {
+				if err != nil {
+					t.Fatalf("normalizeRegistrationInput() error = %v, want nil", err)
+				}
+				if got.Login != tt.wantLogin {
+					t.Fatalf("normalized login = %q, want %q", got.Login, tt.wantLogin)
+				}
+				return
+			}
+
+			want := ValidationError{Field: "login", Message: tt.wantMessage}
+			if validationErr, ok := errors.AsType[ValidationError](err); !ok || validationErr != want {
+				t.Fatalf("normalizeRegistrationInput() error = %v, want %+v", err, want)
+			}
+		})
 	}
 }
 

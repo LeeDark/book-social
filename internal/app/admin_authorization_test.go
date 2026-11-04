@@ -89,19 +89,16 @@ func checkAdministratorAuthorization(t *testing.T, db *sql.DB, userRepo users.Re
 	}
 	application := New(deps, NewHomeHandler(fakeFeaturedBooksProvider{}, renderer, logger), fakeCatalogHandler{})
 
-	user, err := users.NewService(userRepo, users.NewPasswordPolicy()).Register(ctx, users.RegistrationInput{
-		FirstName: "Operator", Login: "operator", Email: "operator@example.test",
-		Password: "operator-test-password", PasswordConfirmation: "operator-test-password",
-	})
-	if err != nil {
-		t.Fatalf("register ordinary user: %v", err)
-	}
 	rawToken, err := cookies.GenerateToken()
 	if err != nil {
 		t.Fatal("generate session token")
 	}
-	if err := sessions.CreateSession(ctx, user.ID, httpauth.HashToken(rawToken)); err != nil {
-		t.Fatalf("create session: %v", err)
+	user, err := users.NewService(userRepo, users.NewPasswordPolicy()).RegisterAndCreateSession(ctx, users.RegistrationInput{
+		FirstName: "Operator", Login: "operator", Email: "operator@example.test",
+		Password: "operator-test-password", PasswordConfirmation: "operator-test-password",
+	}, httpauth.HashToken(rawToken), time.Hour)
+	if err != nil {
+		t.Fatalf("register ordinary user with a session: %v", err)
 	}
 	cookieResponse := httptest.NewRecorder()
 	if err := cookies.Set(cookieResponse, rawToken); err != nil {

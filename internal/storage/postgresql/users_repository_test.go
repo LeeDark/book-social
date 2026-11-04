@@ -48,6 +48,66 @@ func TestUserRepositoryContract(t *testing.T) {
 	}
 }
 
+func TestUserRepositoryFindCredentialsPrefersEmailOwnerOverMatchingLogin(t *testing.T) {
+	ctx := context.Background()
+	db := testutil.NewPostgresCatalogV2TestDB(t, ctx)
+	repo := NewUserRepository(db)
+
+	role, err := repo.FindRoleByName(ctx, "user")
+	if err != nil {
+		t.Fatalf("FindRoleByName() error = %v", err)
+	}
+
+	// The legacy account is created first so an unordered lookup would be
+	// likely to return it instead of the email owner.
+	legacy, err := repo.CreateUser(ctx, users.CreateUserParams{
+		FirstName:    "Legacy",
+		Login:        "bob@example.test",
+		Email:        "legacy@example.test",
+		PasswordHash: "$2a$10$legacy-hash",
+		RoleID:       role.ID,
+	})
+	if err != nil {
+		t.Fatalf("CreateUser() legacy error = %v", err)
+	}
+	owner, err := repo.CreateUser(ctx, users.CreateUserParams{
+		FirstName:    "Bob",
+		Login:        "bob",
+		Email:        "bob@example.test",
+		PasswordHash: "$2a$10$owner-hash",
+		RoleID:       role.ID,
+	})
+	if err != nil {
+		t.Fatalf("CreateUser() email owner error = %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		identifier string
+		want       users.User
+		wantHash   string
+	}{
+		{name: "shared value returns the email owner", identifier: "bob@example.test", want: owner, wantHash: "$2a$10$owner-hash"},
+		{name: "email owner login still matches", identifier: "bob", want: owner, wantHash: "$2a$10$owner-hash"},
+		{name: "legacy account email still matches", identifier: "legacy@example.test", want: legacy, wantHash: "$2a$10$legacy-hash"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := repo.FindCredentials(ctx, tt.identifier)
+			if err != nil {
+				t.Fatalf("FindCredentials() error = %v", err)
+			}
+			if got.User != tt.want || got.PasswordHash != tt.wantHash {
+				t.Fatalf("FindCredentials() user = %+v, want %+v", got.User, tt.want)
+			}
+		})
+	}
+
+	if _, err := repo.FindByID(ctx, legacy.ID); err != nil {
+		t.Fatalf("FindByID() legacy account error = %v", err)
+	}
+}
+
 func TestSessionRepositoryContract(t *testing.T) {
 	ctx := context.Background()
 	db := testutil.NewPostgresCatalogV2TestDB(t, ctx)

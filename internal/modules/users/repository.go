@@ -14,7 +14,7 @@ type UserRepository interface {
 
 type RegistrationRepository interface {
 	UserRepository
-	WithinTransaction(ctx context.Context, fn func(UserRepository) error) error
+	RegistrationSessionStore
 }
 
 // RegistrationSessionRepository is the transactional boundary used when a
