@@ -6,32 +6,26 @@ The project is intentionally simple: modular monolith, layered architecture, SQL
 
 ## Current Status
 
-v0.3.1 Reading-State Lifecycle is closed on top of the v0.3.0 Private Library Foundation.
-The original v0.3.2 Curated Catalog Operations scope is implemented and accepted: deterministic demo
-data/provenance, administrator-only catalog find/create/correct pages with transactional audit,
-and authenticated missing-book requests persisted before confirmation. Apply migrations through
-`000008` before using the updated application. The expanded cover scope now has local file
-storage/HTTP delivery, database references/metadata, administrator uploads and shared cover rendering
-with unavailable-image fallback. Persistent Compose volumes and an explicit pilot installer/verifier
-are configured; the reviewed five-book artwork, container lifecycle/real PostgreSQL restore and
-visual acceptance remain pending. See [the cover contract](docs/cover_storage_v0_3_2.md) and
+v0.3.2 Curated Catalog Operations is closed: PR #27 was merged and its merge commit tagged
+`v0.3.2` on 2026-11-03. It builds on v0.3.0 Private Library Foundation and v0.3.1 Reading-State
+Lifecycle. The active release is **v0.3.3 Reliability and Release Closure**; see the
+[roadmap](docs/roadmap.md#v033--reliability-and-release-closure). No deployed release is claimed.
+
+v0.3.2 added deterministic demo data with documented provenance, administrator-only catalog
+find/create/correct pages with transactional audit, authenticated missing-book requests saved before
+confirmation, local cover-file storage and HTTP delivery, administrator cover uploads, and reviewed
+demo front covers for all 109 books. Apply migrations through `000008` before using the current
+application.
+
+Cover artwork is kept outside Git and installed from a reviewed bundle with `coverctl`; see the
+[cover contract](docs/cover_storage_v0_3_2.md) and the
 [delivery/recovery procedure](docs/cover_operations.md). Before recreating an older container,
-preserve its cover files: the new volumes do not migrate its old writable layer automatically.
-Cover-specific automated checks pass on SQLite/PostgreSQL at `27c64d2`; reviewed artwork and manual
-acceptance remain open. See [the separate #28 acceptance record](docs/cover_acceptance_v0_3_2.md).
-
-Final automated checks passed on 2026-10-25, including real SQLite/PostgreSQL acceptance. The user
-accepted the operator flow on 2026-10-12 and missing-book persistence on 2026-10-25 (Zen Browser,
-SQLite). See [verification and acceptance evidence](docs/testing.md#v032-acceptance-coverage-26).
-Post-review fixes are pushed through `9d764db`; CI passed on that head. Final acceptance
-documentation and PR/issue closure remain under #26; no merged, tagged or deployed release is claimed.
-
-Demo metadata has documented but unverified external provenance; the seed contains no covers.
+preserve its cover files: the volumes do not migrate an old writable layer automatically. Demo
+metadata has documented but unverified external provenance, and the SQL seed contains no covers.
 Operator listing and processed/rejected decisions for saved requests remain planned for v0.4.3.
-
-Post-review correction: the feedback form is now at `/books/request/new`, avoiding a collision
-with public books whose slug is `request`. The user confirmed successful focused browser recheck
-on 2026-10-25; environment details for this recheck were not separately reported.
+Verification and acceptance evidence: [testing](docs/testing.md#v032-acceptance-coverage-26),
+[cover acceptance](docs/cover_acceptance_v0_3_2.md) and
+[full-catalog cover verification](docs/cover_catalog_verification_v0_3_2.md).
 
 - Home and About pages.
 - Book catalog page.
@@ -44,8 +38,9 @@ on 2026-10-25; environment details for this recheck were not separately reported
 - HTMX catalog filter spike as progressive enhancement.
 - Environment-based database selection: SQLite for `dev`, PostgreSQL for `stage` and `prod`.
 - SQLite and PostgreSQL implement the same normalized catalog read contract.
-- `golang-migrate` CLI wiring and v0.1/v0.2 migrations for SQLite and PostgreSQL.
-- Normalized catalog tables for many-to-many authors/genres and URL-only cover metadata.
+- `golang-migrate` CLI wiring and paired migrations `000001`–`000008` for SQLite and PostgreSQL.
+- Normalized catalog tables for many-to-many authors/genres and cover references: external HTTPS
+  URLs or local files with technical metadata.
 - Catalog cards and book details render all related authors and genres.
 - Book details use the main `front` image; home/catalog/author/library cards prefer its thumbnail.
   Missing covers use a CSS placeholder; a small external script reveals it on image-load failure,
@@ -76,6 +71,13 @@ on 2026-10-25; environment details for this recheck were not separately reported
   nullable timestamps, and an optimistic-lock version.
 - Users can change an owned item's state between Want to read, Reading, and Read; stale mutations
   are conflicts, repeating the current state is a no-op, and removal requires a confirmation page.
+- Administrators find, create, and correct books at `/admin/catalog`. Slugs are immutable, every
+  write appends a transactional audit record, and the administrator role is appointed through a
+  documented database operation.
+- Authenticated users can request a missing book at `/books/request/new`. The title, optional
+  author, and user are saved before confirmation; the submitted text stays out of logs.
+- Local cover files are named by their SHA-256, served from `/media/covers/` with immutable caching,
+  uploaded by administrators, and installed or verified offline with `coverctl install|verify`.
 
 Not current production direction:
 - Docker and Docker Compose are supported as local environment workflows, not production infrastructure.
@@ -89,6 +91,7 @@ Not current production direction:
 - SQLite via `modernc.org/sqlite`
 - PostgreSQL driver via `github.com/lib/pq`
 - bcrypt via `golang.org/x/crypto/bcrypt`
+- WebP decoding via `golang.org/x/image/webp` for cover validation
 - `golang-migrate` CLI for schema migrations, built with SQLite and PostgreSQL drivers
 - Pico CSS plus project CSS
 - HTMX vendored locally for a small catalog filter spike
@@ -188,6 +191,8 @@ Useful routes:
 /books/{book-slug}
 /authors/{author-slug}
 /me/library
+/books/request/new
+/admin/catalog          administrators only
 ```
 
 ## Test
@@ -201,20 +206,26 @@ In constrained environments, this command is preferred over starting a real web 
 ## Project Structure
 
 ```text
-cmd/web/                 application entrypoint
-internal/app/            app wiring, routes, home handler
-internal/modules/books/  books/catalog module
-internal/modules/users/  auth/user/session service and repository contracts
-internal/modules/library/ private-library lifecycle service, handler, and repository contracts
-internal/storage/sqlite/ SQLite repository implementation
-internal/storage/postgresql/ PostgreSQL connection and repository implementation
-internal/http/auth/      session cookie, current-user context, and route-guard foundation
-internal/http/           rendering, response helpers, middleware, view models
-internal/web/            server templates and static assets
-db/sqlite/               local SQLite schema, migrations, seed, reset script
-db/postgresql/           PostgreSQL schema, migrations, seed, reset script
-docs/                    project documentation
-docs/ai/                 AI-agent context, task history, spike notes
+cmd/web/                      application entrypoint
+cmd/coverctl/                 offline cover bundle installation and verification
+internal/app/                 app wiring, routes, home and auth handlers, module adapters
+internal/modules/books/       catalog, administrator operations, missing-book requests
+internal/modules/users/       auth/user/session service and repository contracts
+internal/modules/library/     private-library lifecycle service, handler, and repository contracts
+internal/coverops/            cover bundle loading, installation, and verification
+internal/storage/sqlite/      SQLite repository implementation
+internal/storage/postgresql/  PostgreSQL connection and repository implementation
+internal/storage/covers/      local cover-file store and image validation
+internal/http/auth/           session cookie, current-user context, and route guards
+internal/http/cover/          `/media/covers/` file delivery
+internal/http/                rendering, response helpers, middleware, view models
+internal/web/                 server templates, static assets, and JavaScript tests
+db/sqlite/                    local SQLite schema, migrations, seed, reset script
+db/postgresql/                PostgreSQL schema, migrations, seed, reset script
+assets/demo-covers/           cover manifests, prompts, review records (images live outside Git)
+k8s/                          local kind learning manifests
+docs/                         project documentation
+docs/ai/                      AI-agent context, task history, spike notes
 ```
 
 ## Documentation
@@ -226,6 +237,9 @@ docs/ai/                 AI-agent context, task history, spike notes
 - [Go and SQL readability](docs/code-readability.md)
 - [Private Library v0.3 contract](docs/library_v0_3.md)
 - [Curated Catalog Operations v0.3.2 contract](docs/catalog_operations_v0_3_2.md)
+- [Demo catalog provenance](docs/demo_catalog_provenance.md)
+- [Cover file storage contract](docs/cover_storage_v0_3_2.md)
+- [Cover delivery and recovery](docs/cover_operations.md)
 - [Database v0.1](docs/database_v0_1.md)
 - [Database v0.2](docs/database_v0_2.md)
 - [MPA auth contract](docs/drafts/auth-contract.ru.md)
@@ -238,7 +252,13 @@ docs/ai/                 AI-agent context, task history, spike notes
 ## Roadmap Summary
 
 Near-term work:
-- Complete v0.3.2 release closure after accepted missing-book persistence verification.
+- v0.3.3 Reliability and Release Closure: critical-flow end-to-end HTTP tests, the documented
+  SQLite/PostgreSQL verification, safe library-operation logs, accessibility smoke checks, a release
+  checklist, and the defects found in the 2026-11-04 code-history review.
+- v0.3.4 Public Demo Polish: a reviewed book-addition workflow, growth to 500 books, and interface
+  polish.
+- v0.3.5 Hetzner Cloud Hosted Stage: one reproducible PostgreSQL stage with HTTPS, backups, and a
+  verified restore.
 - Keep Docker/Compose as local environment workflows; do not add production deployment claims yet.
 
 v0.2 direction:
