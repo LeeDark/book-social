@@ -604,6 +604,139 @@ func testPrivateLibraryRoutes(t *testing.T, handler http.Handler) {
 			t.Fatalf("confirmed removal = %d %q", removed.Code, removed.Header().Get("Location"))
 		}
 	})
+
+	t.Run("invalid or out-of-range item IDs and versions are refused with 422 without a write", func(t *testing.T) {
+		session := register("Carol", "carol-range")
+		if recorder := addBook(session, "dracula"); recorder.Code != http.StatusSeeOther {
+			t.Fatalf("add = %d %q", recorder.Code, recorder.Body.String())
+		}
+		itemPath := ownLibraryItemPath(t, handler, session)
+
+		for _, value := range []string{"0", "-1", "abc", "2147483648", "9999999999"} {
+			for _, tt := range []struct {
+				name    string
+				request *http.Request
+			}{
+				{
+					name: "status change with item ID " + value,
+					request: formRequest(http.MethodPost, "/me/library/"+value+"/status", url.Values{
+						"status":  {"reading"},
+						"version": {"1"},
+					}),
+				},
+				{
+					name: "status change with version " + value,
+					request: formRequest(http.MethodPost, itemPath+"/status", url.Values{
+						"status":  {"reading"},
+						"version": {value},
+					}),
+				},
+				{
+					name:    "removal confirmation with item ID " + value,
+					request: httptest.NewRequest(http.MethodGet, "/me/library/"+value+"/remove", nil),
+				},
+				{
+					name:    "removal with item ID " + value,
+					request: formRequest(http.MethodPost, "/me/library/"+value+"/remove", url.Values{"version": {"1"}}),
+				},
+				{
+					name:    "removal with version " + value,
+					request: formRequest(http.MethodPost, itemPath+"/remove", url.Values{"version": {value}}),
+				},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					tt.request.AddCookie(session)
+					recorder := httptest.NewRecorder()
+					handler.ServeHTTP(recorder, tt.request)
+
+					if recorder.Code != http.StatusUnprocessableEntity {
+						t.Fatalf("status = %d, want %d", recorder.Code, http.StatusUnprocessableEntity)
+					}
+					for _, fragment := range []string{`role="alert"`, `href="/me/library" aria-current="page"`} {
+						if !strings.Contains(recorder.Body.String(), fragment) {
+							t.Fatalf("refusal page missing %q: %q", fragment, recorder.Body.String())
+						}
+					}
+				})
+			}
+		}
+
+		request := httptest.NewRequest(http.MethodGet, "/me/library", nil)
+		request.AddCookie(session)
+		page := httptest.NewRecorder()
+		handler.ServeHTTP(page, request)
+
+		for _, fragment := range []string{
+			`action="` + itemPath + `/status"`,
+			"<strong>Want to read</strong>",
+			`name="version" value="1"`,
+		} {
+			if !strings.Contains(page.Body.String(), fragment) {
+				t.Fatalf("library after refusals missing %q, so an invalid request wrote: %q", fragment, page.Body.String())
+			}
+		}
+	})
+
+	t.Run("maximum item ID reaches the owner-scoped lookup and returns 404", func(t *testing.T) {
+		session := register("Dave", "dave-range")
+		const maxItemPath = "/me/library/2147483647"
+
+		for _, tt := range []struct {
+			name    string
+			request *http.Request
+		}{
+			{
+				name: "status change",
+				request: formRequest(http.MethodPost, maxItemPath+"/status", url.Values{
+					"status":  {"reading"},
+					"version": {"2147483647"},
+				}),
+			},
+			{
+				name:    "removal confirmation",
+				request: httptest.NewRequest(http.MethodGet, maxItemPath+"/remove", nil),
+			},
+			{
+				name:    "removal",
+				request: formRequest(http.MethodPost, maxItemPath+"/remove", url.Values{"version": {"2147483647"}}),
+			},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				tt.request.AddCookie(session)
+				recorder := httptest.NewRecorder()
+				handler.ServeHTTP(recorder, tt.request)
+
+				if recorder.Code != http.StatusNotFound {
+					t.Fatalf("status = %d, want %d", recorder.Code, http.StatusNotFound)
+				}
+			})
+		}
+	})
+}
+
+// ownLibraryItemPath returns the item path of the only book in the session owner's library.
+func ownLibraryItemPath(t *testing.T, handler http.Handler, session *http.Cookie) string {
+	t.Helper()
+
+	request := httptest.NewRequest(http.MethodGet, "/me/library", nil)
+	request.AddCookie(session)
+	page := httptest.NewRecorder()
+	handler.ServeHTTP(page, request)
+
+	const prefix = `action="/me/library/`
+	body := page.Body.String()
+	start := strings.Index(body, prefix)
+	if start < 0 {
+		t.Fatalf("library page does not contain a status form: %q", body)
+	}
+
+	action := body[start+len(`action="`):]
+	end := strings.Index(action, `/status"`)
+	if end < 0 {
+		t.Fatalf("status form action is malformed: %q", action)
+	}
+
+	return action[:end]
 }
 
 func testAuthRoutes(t *testing.T, handler http.Handler) {
@@ -872,7 +1005,13 @@ func newAuthIntegrationTestApp(t *testing.T, userRepo users.RegistrationReposito
 	return New(deps, NewHomeHandler(catalogService, renderer, logger), catalogHandler).Router
 }
 
-func newLibraryIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepository, sessionRepo users.SessionRepository, bookRepo books.BookRepository, libraryRepo library.Repository) http.Handler {
+// libraryBookRepository is the catalog repository surface that library integration apps need.
+type libraryBookRepository interface {
+	books.BookRepository
+	library.BookFinder
+}
+
+func newLibraryIntegrationTestApp(t *testing.T, userRepo users.RegistrationRepository, sessionRepo users.SessionRepository, bookRepo libraryBookRepository, libraryRepo library.Repository) http.Handler {
 	t.Helper()
 	testutil.ChdirProjectRoot(t)
 	renderer, err := render.NewRenderer()

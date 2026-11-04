@@ -25,28 +25,6 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) WithinTransaction(ctx context.Context, fn func(users.UserRepository) error) error {
-	db, ok := r.db.(*sql.DB)
-	if !ok {
-		return users.ErrInternal
-	}
-
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return users.ErrInternal
-	}
-
-	txRepo := &UserRepository{db: tx}
-	if err := fn(txRepo); err != nil {
-		_ = tx.Rollback()
-		return mapRepositoryError(err)
-	}
-	if err := tx.Commit(); err != nil {
-		return users.ErrInternal
-	}
-	return nil
-}
-
 func (r *UserRepository) WithinRegistrationSessionTransaction(ctx context.Context, fn func(users.RegistrationSessionRepository) error) error {
 	db, ok := r.db.(*sql.DB)
 	if !ok {
@@ -111,12 +89,16 @@ func (r *UserRepository) FindRoleByName(ctx context.Context, name string) (users
 
 func (r *UserRepository) FindCredentials(ctx context.Context, identifier string) (users.Credentials, error) {
 	var credentials users.Credentials
+	// A legacy login may equal another account's email. Prefer the email owner
+	// so that account can always sign in with its email address.
 	if err := r.db.QueryRowContext(ctx, `
 		SELECT id, first_name, login, email, user_role_id, password_hash
 		FROM users
-		WHERE login = ? OR email = ?
+		WHERE login = ?
+			OR email = ?
+		ORDER BY CASE WHEN email = ? THEN 0 ELSE 1 END
 		LIMIT 1
-	`, identifier, identifier).Scan(
+	`, identifier, identifier, identifier).Scan(
 		&credentials.User.ID,
 		&credentials.User.FirstName,
 		&credentials.User.Login,

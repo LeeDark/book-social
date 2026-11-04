@@ -8,49 +8,21 @@ does not change the active priority or release scope until an item is explicitly
 
 ## Current Planning Status
 
-The v0.3.2 scope is expanded: persistent cover-file storage and display, followed by reviewed
-generated demo front covers for the existing 109 books, are now required before release closure.
-Deliver these as two dependent tasks, starting with a five-book pilot. Earlier acceptance below
-applies to the original scope only. Local storage, administrator uploads and shared cover rendering
-are implemented. Persistent Compose volumes and pilot install/verify tools are configured.
-Five pilot artworks and their profile are user-approved; isolated SQLite installation passed twice
-(five changes then zero). The user confirmed mobile pilot display, library, home, HTMX and
-blocked-image fallback in Zen; see [browser evidence](cover_acceptance_v0_3_2.md#user-reported-browser-evidence).
-Actual [SQLite restart/recreation](cover_container_lifecycle_v0_3_2.md) passed with unchanged
-SQL/files and successful HTTP checks. Paired [offline SQLite/PostgreSQL recovery](cover_recovery_v0_3_2.md)
-also passed, followed by successful restored-state HTTP/HTMX/image checks for both engines.
-[PostgreSQL restart/recreation and focused desktop/fallback checks](cover_postgres_browser_v0_3_2.md)
-passed. The user accepted #28 on 2026-10-30 with the documented focused accessibility/visual
-review boundaries; #28 is closed. The user accepted completion of full-catalog artwork task #29
-on 2026-11-03. The 109-cover dataset was assembled and
-verified on disposable SQLite and PostgreSQL databases; the [verification record](cover_catalog_verification_v0_3_2.md)
-records browser coverage and remaining limits. The user reported an independent durable backup;
-its location and verification were not independently inspected. This does not close v0.3.2.
-v0.3.4 will add a reviewed book-addition workflow and grow the catalog to 500 books total.
+v0.2.1 through v0.2.6 and v0.3.0 through v0.3.2 are closed. Active scope:
+**[v0.3.3 Reliability and Release Closure](#v033--reliability-and-release-closure)**.
 
-v0.2.1 through v0.2.6 are closed. v0.2.6 exposes the accepted auth foundation through the first
-browser-facing flow: registration, login, idempotent logout, protected `/me`, auth navigation, and
-one-request success flashes. Its manual browser smoke and release closure are complete.
+v0.3.2 Curated Catalog Operations closed on 2026-11-03: PR #27 was merged, its merge commit is
+tagged `v0.3.2`, and issues #22–#26, #28 and #29 are closed. The release delivered deterministic
+demo data with documented provenance, administrator catalog find/create/correct pages with
+transactional audit, persisted missing-book requests, local cover-file storage and delivery, and
+reviewed demo front covers for all 109 books. No deployment is claimed. The user reported an
+independent durable artwork backup; its location and verification were not independently
+inspected.
 
-v0.3.0 Private Library Foundation and v0.3.1 Reading-State Lifecycle are closed. The v0.3.1
-release completed automated verification, SQLite migration smoke, and the mandatory manual browser
-smoke. Active scope: **v0.3.2 Curated Catalog Operations**. Demo data/provenance (#23) and the
-operator workflow (#24) are implemented, with SQLite/PostgreSQL automated acceptance passing.
-The user confirmed successful operator browser review on 2026-10-12; #24 is accepted.
-Missing-book feedback (#25) is implemented with automated verification; the user confirmed successful
-manual browser review on 2026-10-15 and accepted #25's non-persistent flow. The agreed v0.3.2
-follow-up is to persist the requested title, optional author and submitting user. Operator listing
-and processed/rejected decisions are planned for v0.4.3. Service/runtime persistence is implemented;
-real-database HTTP acceptance passes on SQLite and PostgreSQL. The user confirmed persistence
-browser acceptance on 2026-10-25 (Zen Browser, SQLite). Final automated checks also passed on
-2026-10-25. The original scope is accepted; #26 now covers external-review fixes and final closure.
-Local commits fix the feedback route collision, locale-dependent PostgreSQL seed ordering and
-operator ID overflow; regression checks pass on SQLite/PostgreSQL. Feedback is now at
-`/books/request/new`, preserving public books at `/books/request`; the user confirmed successful
-browser recheck on 2026-10-25 (environment not separately reported). Fixes are pushed through
-`9d764db`, with both CI jobs passing. Final acceptance documentation and issue/PR closure
-remain pending. PR #27 stays Draft; merge requires separate authorization. No tag or deployment
-is claimed; v0.3.3 scope is unchanged.
+On 2026-11-04, findings from a review of the full code history were added to v0.3.3 through
+v0.3.5 below. Code-hygiene cleanup tied to the same releases is recorded in
+[backlog.md](backlog.md#code-hygiene-linked-to-releases). v0.3.4 adds a reviewed book-addition
+workflow and grows the catalog to 500 books total.
 
 ## Planning Principles
 
@@ -331,7 +303,7 @@ Outcome: the private library supports the complete add → update → return →
 
 #### v0.3.2 — Curated Catalog Operations
 
-Status: original scope and post-review browser recheck accepted; expanded cover scope is open.
+Status: closed on 2026-11-03 (PR #27 merged, tag `v0.3.2`).
 The original accepted contract, which predates file storage and still describes URL-only covers, is in
 [`catalog_operations_v0_3_2.md`](catalog_operations_v0_3_2.md).
 
@@ -364,8 +336,8 @@ The original three scope items are accepted. Persistence implementation and auto
 on SQLite/PostgreSQL are complete; the user confirmed persistence browser acceptance on 2026-10-25
 (Zen Browser, SQLite). Final #26 checks passed on 2026-10-25: full race tests, vet/lint, SQLite
 migration/seed smoke, isolated PostgreSQL integration, JavaScript tests and formatting/diff checks.
-See [verification and manual evidence](testing.md#v032-acceptance-coverage-26). Final documentation
-acceptance documentation and PR/issue closure remain pending; v0.3.3 scope is unchanged.
+See [verification and manual evidence](testing.md#v032-acceptance-coverage-26). The acceptance
+record was published with PR #27, and #26 was closed on 2026-11-03.
 
 Post-review corrections: feedback GET/POST moved to `/books/request/new` without renaming or
 reserving book slugs; PostgreSQL seed uses `COLLATE "C"`; operator IDs use `1..2147483647`.
@@ -374,10 +346,12 @@ Downgrade documentation now requires stopped writers, backup and schema/data ins
 any dirty-version repair; `force` is not automatic SQL recovery. Earlier manual acceptance applies
 to the previous form route; the user separately confirmed the new-route recheck on 2026-10-25
 without reporting environment details. Fixes through `9d764db` are pushed, and final local checks
-and published-head CI passed. Commit/push of this acceptance record and final closure remain.
+and published-head CI passed. The acceptance record and final closure followed in PR #27.
 
-The earlier verification and #26 closure notes above cover the original implementation only.
-The two new cover tasks need separate tracking and acceptance before v0.3.2 can close.
+The verification notes above cover the original implementation. The two cover tasks were tracked
+and accepted separately: #28 on 2026-10-30 and #29 on 2026-11-03; see
+[cover acceptance](cover_acceptance_v0_3_2.md) and the
+[full-catalog verification](cover_catalog_verification_v0_3_2.md).
 Cover completion does not establish the accuracy or provenance of legacy book descriptions.
 
 Outcome: the existing 109 books have reproducible, reviewed demo front-cover files shown throughout
@@ -385,12 +359,26 @@ the MPA, and an operator can correct catalog data without direct SQL.
 
 #### v0.3.3 — Reliability and Release Closure
 
+Status: active. The execution plan, planning decisions and issues #33–#40 are in
+[`reliability_release_v0_3_3.md`](reliability_release_v0_3_3.md).
+
 - [ ] Add the small critical-flow end-to-end HTTP set and complete SQLite migration/seed smoke;
   run the documented PostgreSQL critical-path verification.
 - [ ] Record safe structured library-operation logs and product events, retaining request IDs and
   the existing health endpoint without adding a monitoring stack.
 - [ ] Finish accessibility smoke checks, release checklist, and documentation for implemented
   routes, domain rules, migrations, demo data, and verification evidence.
+- [ ] Reject private-library item IDs and versions outside the shared PostgreSQL `INTEGER` range
+  `1..2147483647` with `422`, as operator routes already do; PostgreSQL currently turns them into
+  `500` responses instead of `404`.
+- [ ] Prevent a new login from matching another account's email address, for example by rejecting
+  `@` in logins; such a login can block the email owner's sign-in by email. Check existing accounts
+  before tightening the rule.
+- [ ] Store SQLite timestamps in a fixed-width UTC text format so comparison and ordering match
+  PostgreSQL within one second (session expiry, library `added_at`); keep reading existing values.
+- [ ] Close the check-to-drop race in the PostgreSQL guarded downgrades `000003`–`000006` with an
+  exclusive table lock, as `000007` and `000008` do, or keep stopping all writers as an explicit
+  release-checklist step.
 
 Outcome: the complete private-library flow is releasable and operable as a curated demonstration.
 
@@ -409,6 +397,19 @@ Outcome: the complete private-library flow is releasable and operable as a curat
   documentation, roadmap, and an available contact method.
 - [ ] Add baseline public-page metadata; canonical URLs, redirects, and sitemap behavior remain
   v0.4 work.
+- [ ] Before the expansion, remove the fixed 109-book count and the 64 KiB manifest limit from
+  cover bundle installation; the current 109-cover installer manifest already uses about 92% of
+  that limit.
+- [ ] Align operator slug suggestions with the seed convention before batch additions: drop
+  apostrophes instead of splitting words, and decide how accented and Cyrillic titles are handled
+  (they now produce partial or empty suggestions).
+- [ ] Fix navigation gaps: replace or remove the navigation and breadcrumb links to the missing
+  `/authors` and `/genres` pages, show library state and the add action on author pages, and
+  return users to the local page they came from after sign-in.
+- [ ] Bring the registration form to the accessibility level of the missing-book form: report all
+  field errors at once with an error summary and `aria-invalid`. Add a favicon.
+- [ ] Load only the featured books for the home page instead of the whole catalog. Operator search
+  may stay in memory within the 500-book bound; SQL search remains v0.4.2 work.
 
 Outcome: Book Social can be shown as a clear, polished public demonstration with 500 reviewed books
 and demo front covers, without claiming a public beta or a finished social service.
@@ -429,6 +430,19 @@ and demo front covers, without claiming a public beta or a finished social servi
   separate from the VM, and a verified restore using disposable data.
 - [ ] Record actual cost, CPU/RAM/latency, and growth boundaries; defer Prometheus and Grafana to
   v0.4, and add Loki or OpenTelemetry only when operational evidence justifies them.
+- [ ] Run the application container as a non-root user; prepare ownership of the retained database
+  and cover volumes before switching.
+- [ ] Configure Caddy to replace or remove client-supplied `X-Forwarded-For`, `X-Real-IP` and
+  `True-Client-IP` before listing it in `APP_TRUSTED_PROXY_CIDRS`: the application trusts these
+  headers from a trusted peer. Document this requirement.
+- [ ] Add login throttling and a per-user limit on missing-book requests before the stage is
+  reachable from the internet, or record why the closed stage can wait for v0.4.4.
+- [ ] Deliver the reviewed cover bundle from storage outside Git with its pinned manifest checksum,
+  and confirm it with `coverctl verify` after installation.
+- [ ] Make the readiness check verify database connectivity and keep `/healthz` as the liveness
+  check. Delete expired sessions on a schedule or during session handling.
+- [ ] Define how unreferenced cover files are listed and removed, starting with a dry run, before
+  replaced covers accumulate on the stage.
 
 Outcome: a low-cost, reproducible PostgreSQL stage environment runs on Hetzner Cloud with verified
 deployment, migration, backup, and restore behavior; it can accommodate later observability
@@ -436,27 +450,28 @@ components without changing the application architecture.
 
 ### Product Scope
 
-- [ ] Introduce a focused `library` module with handler, service/use-case, and repository
+- [x] Introduce a focused `library` module with handler, service/use-case, and repository
   boundaries.
-- [ ] Define the minimal `library_items` schema around real use cases.
-- [ ] Add a book to the current user's library from catalog and book pages.
-- [ ] Support the system statuses `want_to_read`, `reading`, and `read`.
-- [ ] Change the status of an existing item.
-- [ ] Remove an item with explicit confirmation.
-- [ ] Add `/me/library` and show the current library state on book pages.
-- [ ] Enforce one item per `user_id + book_id`.
-- [ ] Define `added_at`, `started_at`, and `finished_at` transition rules.
-- [ ] Handle anonymous access, duplicate additions, unknown books, and update conflicts.
-- [ ] Add a clear missing-book state and a simple way to request or report a missing book.
+- [x] Define the minimal `library_items` schema around real use cases.
+- [x] Add a book to the current user's library from catalog and book pages.
+- [x] Support the system statuses `want_to_read`, `reading`, and `read`.
+- [x] Change the status of an existing item.
+- [x] Remove an item with explicit confirmation.
+- [x] Add `/me/library` and show the current library state on book pages.
+- [x] Enforce one item per `user_id + book_id`.
+- [x] Define `added_at`, `started_at`, and `finished_at` transition rules.
+- [x] Handle anonymous access, duplicate additions, unknown books, and update conflicts.
+- [x] Add a clear missing-book state and a simple way to request or report a missing book.
 
 ### Catalog and Operator Scope
 
 - [x] Separate ordinary test fixtures from deterministic development seed data.
-- [ ] Complete v0.3.2 cover storage/display and reviewed demo front covers for the existing 109
-  books; complete the reviewed addition workflow and expand to 500 books total in v0.3.4.
-- [ ] Prepare a reproducible demo catalog suitable for product demonstrations and a small closed
+- [x] Complete v0.3.2 cover storage/display and reviewed demo front covers for the existing 109
+  books.
+- [ ] Complete the reviewed addition workflow and expand to 500 books total in v0.3.4.
+- [x] Prepare a reproducible demo catalog suitable for product demonstrations and a small closed
   user cohort.
-- [ ] Document data provenance and permitted cover usage for demo records.
+- [x] Document data provenance and permitted cover usage for demo records.
 - [x] Protect minimal admin routes with an administrator role.
 - [x] Allow an operator to find, create, and correct the metadata needed by the demo catalog.
 - [x] Record critical administrative changes with actor, entity, action, and time.
@@ -465,18 +480,20 @@ components without changing the application architecture.
 
 - [ ] Define a small application error model for not found, validation, conflict, unauthorized,
   forbidden, and internal failures.
-- [ ] Keep HTTP status mapping in handlers rather than services.
-- [ ] Define repository contracts from the consuming service packages.
-- [ ] Let services own transaction boundaries for multi-table use cases.
-- [ ] Verify equivalent application semantics for SQLite and PostgreSQL.
-- [ ] Cover status transitions and permissions with unit tests.
-- [ ] Cover forms, validation, anonymous access, and conflicts with `httptest`.
+- [x] Keep HTTP status mapping in handlers rather than services.
+- [x] Define repository contracts from the consuming service packages.
+- [x] Let services own transaction boundaries for multi-table use cases.
+- [ ] Verify equivalent application semantics for SQLite and PostgreSQL. Out-of-range library item
+  IDs still differ; see v0.3.3.
+- [x] Cover status transitions and permissions with unit tests.
+- [x] Cover forms, validation, anonymous access, and conflicts with `httptest`.
 - [ ] Add a small end-to-end HTTP test set for the critical library flow.
 - [ ] Keep new forms keyboard-accessible with labels, useful errors, and actionable empty states.
+  The registration form still reports one error at a time; see v0.3.4.
 
 ### Observability Baseline
 
-- [ ] Keep structured logs, request IDs, and a simple health endpoint.
+- [x] Keep structured logs, request IDs, and a simple health endpoint.
 - [ ] Record operation name, duration, and result type for critical library operations without
   passwords, tokens, private notes, or other sensitive data.
 - [ ] Define product events for registration, first book addition, status change, and missing-book
@@ -486,11 +503,11 @@ components without changing the application architecture.
 
 ### Definition of Done
 
-- [ ] A new user can complete the full register-to-library flow without manual database changes.
-- [ ] Library data is private by default and cannot be changed by another user.
-- [ ] Demo data can be reproduced separately from test fixtures.
+- [x] A new user can complete the full register-to-library flow without manual database changes.
+- [x] Library data is private by default and cannot be changed by another user.
+- [x] Demo data can be reproduced separately from test fixtures.
 - [ ] Critical flows pass on SQLite and have an explicit PostgreSQL verification path.
-- [ ] An operator can correct the catalog data required for the demonstration without direct SQL.
+- [x] An operator can correct the catalog data required for the demonstration without direct SQL.
 - [ ] `make test` passes and a short release checklist covers migrations, demo data, and smoke
   checks.
 

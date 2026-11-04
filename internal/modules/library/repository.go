@@ -1,13 +1,11 @@
 package library
 
-import (
-	"context"
+import "context"
 
-	"github.com/LeeDark/book-social/internal/modules/books"
-)
-
+// BookFinder resolves a catalog book ID without loading the full catalog read model.
 type BookFinder interface {
-	GetBookBySlug(ctx context.Context, slug string) (books.Book, error)
+	// GetBookIDBySlug returns books.ErrBookNotFound for an unknown slug.
+	GetBookIDBySlug(ctx context.Context, slug string) (int, error)
 }
 
 type Repository interface {

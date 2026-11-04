@@ -20,8 +20,7 @@ type RegistrationInput struct {
 // role, and stores the first opaque session. The raw token never reaches this
 // boundary; callers pass its hash only.
 func (s *Service) RegisterAndCreateSession(ctx context.Context, input RegistrationInput, tokenHash []byte, lifetime time.Duration) (User, error) {
-	store, ok := s.repo.(RegistrationSessionStore)
-	if !ok || len(tokenHash) != SessionTokenHashSize || lifetime <= 0 {
+	if len(tokenHash) != SessionTokenHashSize || lifetime <= 0 {
 		return User{}, ErrInternal
 	}
 
@@ -29,6 +28,7 @@ func (s *Service) RegisterAndCreateSession(ctx context.Context, input Registrati
 	if err != nil {
 		return User{}, err
 	}
+
 	passwordHash, err := s.policy.Hash(input.Password)
 	if err != nil {
 		if errors.Is(err, ErrPasswordTooShort) || errors.Is(err, ErrPasswordTooLong) {
@@ -39,7 +39,7 @@ func (s *Service) RegisterAndCreateSession(ctx context.Context, input Registrati
 
 	createdAt := time.Now().UTC()
 	var created User
-	err = store.WithinRegistrationSessionTransaction(ctx, func(tx RegistrationSessionRepository) error {
+	err = s.repo.WithinRegistrationSessionTransaction(ctx, func(tx RegistrationSessionRepository) error {
 		role, err := tx.FindRoleByName(ctx, "user")
 		if err != nil {
 			return err
@@ -47,22 +47,30 @@ func (s *Service) RegisterAndCreateSession(ctx context.Context, input Registrati
 		if role.ID == 0 || role.Name != "user" {
 			return ErrInternal
 		}
+
 		created, err = tx.CreateUser(ctx, CreateUserParams{
-			FirstName: input.FirstName, Login: input.Login, Email: input.Email,
-			PasswordHash: passwordHash, RoleID: role.ID,
+			FirstName:    input.FirstName,
+			Login:        input.Login,
+			Email:        input.Email,
+			PasswordHash: passwordHash,
+			RoleID:       role.ID,
 		})
 		if err != nil {
 			return err
 		}
+
 		_, err = tx.CreateSession(ctx, CreateSessionParams{
-			UserID: created.ID, TokenHash: append([]byte(nil), tokenHash...),
-			CreatedAt: createdAt, ExpiresAt: createdAt.Add(lifetime),
+			UserID:    created.ID,
+			TokenHash: append([]byte(nil), tokenHash...),
+			CreatedAt: createdAt,
+			ExpiresAt: createdAt.Add(lifetime),
 		})
 		return err
 	})
 	if err != nil {
 		return User{}, mapRegistrationError(err)
 	}
+
 	return created, nil
 }
 
@@ -86,46 +94,6 @@ var nonexistentUserHash = func() string {
 
 func NewService(repo RegistrationRepository, policy passwordBoundary) *Service {
 	return &Service{repo: repo, policy: policy}
-}
-
-func (s *Service) Register(ctx context.Context, input RegistrationInput) (User, error) {
-	input, err := normalizeRegistrationInput(input)
-	if err != nil {
-		return User{}, err
-	}
-
-	passwordHash, err := s.policy.Hash(input.Password)
-	if err != nil {
-		if errors.Is(err, ErrPasswordTooShort) || errors.Is(err, ErrPasswordTooLong) {
-			return User{}, ValidationError{Field: "password", Message: err.Error()}
-		}
-		return User{}, ErrInternal
-	}
-
-	var created User
-	err = s.repo.WithinTransaction(ctx, func(tx UserRepository) error {
-		role, err := tx.FindRoleByName(ctx, "user")
-		if err != nil {
-			return err
-		}
-		if role.ID == 0 || role.Name != "user" {
-			return ErrInternal
-		}
-
-		created, err = tx.CreateUser(ctx, CreateUserParams{
-			FirstName:    input.FirstName,
-			Login:        input.Login,
-			Email:        input.Email,
-			PasswordHash: passwordHash,
-			RoleID:       role.ID,
-		})
-		return err
-	})
-	if err != nil {
-		return User{}, mapRegistrationError(err)
-	}
-
-	return created, nil
 }
 
 func (s *Service) Authenticate(ctx context.Context, identifier, password string) (User, error) {
@@ -174,6 +142,11 @@ func normalizeRegistrationInput(input RegistrationInput) (RegistrationInput, err
 		if utf8.RuneCountInString(validation.value) > validation.maximum {
 			return RegistrationInput{}, ValidationError{Field: validation.field, Message: "is too long"}
 		}
+	}
+	// A login with "@" could equal another account's email and make sign-in by
+	// that email ambiguous, so new logins never contain it.
+	if strings.Contains(input.Login, "@") {
+		return RegistrationInput{}, ValidationError{Field: "login", Message: "must not contain @"}
 	}
 	if !strings.Contains(input.Email, "@") {
 		return RegistrationInput{}, ValidationError{Field: "email", Message: "is invalid"}

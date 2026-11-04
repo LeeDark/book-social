@@ -175,23 +175,41 @@ func lifecycleFormValues(w http.ResponseWriter, r *http.Request) (int, int, erro
 	if err != nil {
 		return 0, 0, err
 	}
+
 	r.Body = http.MaxBytesReader(w, r.Body, maxLibraryFormBytes)
 	if err := r.ParseForm(); err != nil {
 		return 0, 0, err
 	}
-	version, err := strconv.Atoi(r.PostForm.Get("version"))
-	if err != nil || version <= 0 {
+
+	version, err := parsePositiveInt32(r.PostForm.Get("version"))
+	if err != nil {
 		return 0, 0, errors.New("invalid version")
 	}
+
 	return itemID, version, nil
 }
 
 func itemIDFromRequest(r *http.Request) (int, error) {
-	itemID, err := strconv.Atoi(chi.URLParam(r, "itemID"))
-	if err != nil || itemID <= 0 {
+	itemID, err := parsePositiveInt32(chi.URLParam(r, "itemID"))
+	if err != nil {
 		return 0, errors.New("invalid item ID")
 	}
+
 	return itemID, nil
+}
+
+// parsePositiveInt32 accepts only 1..2147483647: both backends share the positive PostgreSQL
+// INTEGER range, so a larger value is invalid input rather than a database error.
+func parsePositiveInt32(value string) (int, error) {
+	parsed, err := strconv.ParseInt(value, 10, 32)
+	if err != nil {
+		return 0, err
+	}
+	if parsed <= 0 {
+		return 0, errors.New("value must be positive")
+	}
+
+	return int(parsed), nil
 }
 
 func (h *Handler) lifecycleError(w http.ResponseWriter, r *http.Request, userID int, err error) {

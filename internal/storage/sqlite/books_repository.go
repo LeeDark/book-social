@@ -147,6 +147,26 @@ func (r *BookRepository) GetBookBySlug(ctx context.Context, slug string) (books.
 	return bookList[0], nil
 }
 
+// GetBookIDBySlug serves callers that need only the ID, such as adding a book to a library.
+func (r *BookRepository) GetBookIDBySlug(ctx context.Context, slug string) (int, error) {
+	const query = `
+		SELECT id
+		FROM books
+		WHERE slug = ?
+		LIMIT 1;
+	`
+
+	var bookID int
+	if err := r.db.QueryRowContext(ctx, query, slug).Scan(&bookID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, books.ErrBookNotFound
+		}
+		return 0, fmt.Errorf("get book ID by slug: %w", err)
+	}
+
+	return bookID, nil
+}
+
 func (r *BookRepository) hydrateBookRelationships(ctx context.Context, bookList []books.Book) error {
 	if len(bookList) == 0 {
 		return nil

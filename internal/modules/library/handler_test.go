@@ -30,6 +30,10 @@ type fakeLibraryService struct {
 	getErr     error
 	updateErr  error
 	removeErr  error
+	// itemCalls counts Get, UpdateStatus and Remove calls, which must not happen for invalid input.
+	itemCalls       int
+	receivedItemID  int
+	receivedVersion int
 }
 
 func (s *fakeLibraryService) Add(_ context.Context, userID int, slug string) error {
@@ -43,15 +47,23 @@ func (s *fakeLibraryService) List(_ context.Context, userID int) ([]Item, error)
 	return s.items, s.listErr
 }
 
-func (s *fakeLibraryService) Get(context.Context, int, int) (Item, error) {
-	return Item{}, s.getErr
+func (s *fakeLibraryService) Get(_ context.Context, _ int, itemID int) (Item, error) {
+	s.itemCalls++
+	s.receivedItemID = itemID
+	return Item{ID: itemID}, s.getErr
 }
 
-func (s *fakeLibraryService) UpdateStatus(context.Context, int, int, ReadingStatus, int) error {
+func (s *fakeLibraryService) UpdateStatus(_ context.Context, _ int, itemID int, _ ReadingStatus, version int) error {
+	s.itemCalls++
+	s.receivedItemID = itemID
+	s.receivedVersion = version
 	return s.updateErr
 }
 
-func (s *fakeLibraryService) Remove(context.Context, int, int, int) error {
+func (s *fakeLibraryService) Remove(_ context.Context, _ int, itemID, version int) error {
+	s.itemCalls++
+	s.receivedItemID = itemID
+	s.receivedVersion = version
 	return s.removeErr
 }
 
@@ -179,6 +191,146 @@ func TestHandlerMapsLifecycleErrorsToResponses(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHandlerRejectsInvalidItemIDsAndVersionsBeforeServiceCall(t *testing.T) {
+	invalidValues := []string{"0", "-1", "abc", "2147483648", "9999999999"}
+
+	var testCases []lifecycleRouteCase
+	for _, value := range invalidValues {
+		testCases = append(testCases,
+			lifecycleRouteCase{
+				name:   "status change with item ID " + value,
+				method: http.MethodPost,
+				path:   "/me/library/" + value + "/status",
+				body:   "status=reading&version=1",
+			},
+			lifecycleRouteCase{
+				name:   "status change with version " + value,
+				method: http.MethodPost,
+				path:   "/me/library/1/status",
+				body:   "status=reading&version=" + value,
+			},
+			lifecycleRouteCase{
+				name:   "removal confirmation with item ID " + value,
+				method: http.MethodGet,
+				path:   "/me/library/" + value + "/remove",
+			},
+			lifecycleRouteCase{
+				name:   "removal with item ID " + value,
+				method: http.MethodPost,
+				path:   "/me/library/" + value + "/remove",
+				body:   "version=1",
+			},
+			lifecycleRouteCase{
+				name:   "removal with version " + value,
+				method: http.MethodPost,
+				path:   "/me/library/1/remove",
+				body:   "version=" + value,
+			},
+		)
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &fakeLibraryService{}
+			recorder := serveLifecycleRoute(t, service, tt)
+
+			if recorder.Code != http.StatusUnprocessableEntity {
+				t.Fatalf("status = %d, want %d: %q", recorder.Code, http.StatusUnprocessableEntity, recorder.Body.String())
+			}
+			if service.itemCalls != 0 {
+				t.Fatalf("service item calls = %d, want 0", service.itemCalls)
+			}
+		})
+	}
+}
+
+func TestHandlerPassesMaximumItemIDAndVersionToService(t *testing.T) {
+	const maxValue = 2147483647
+
+	testCases := []struct {
+		lifecycleRouteCase
+		wantStatus  int
+		wantVersion int
+	}{
+		{
+			lifecycleRouteCase: lifecycleRouteCase{
+				name:   "status change",
+				method: http.MethodPost,
+				path:   "/me/library/2147483647/status",
+				body:   "status=reading&version=2147483647",
+			},
+			wantStatus:  http.StatusSeeOther,
+			wantVersion: maxValue,
+		},
+		{
+			lifecycleRouteCase: lifecycleRouteCase{
+				name:   "removal confirmation",
+				method: http.MethodGet,
+				path:   "/me/library/2147483647/remove",
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			lifecycleRouteCase: lifecycleRouteCase{
+				name:   "removal",
+				method: http.MethodPost,
+				path:   "/me/library/2147483647/remove",
+				body:   "version=2147483647",
+			},
+			wantStatus:  http.StatusSeeOther,
+			wantVersion: maxValue,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &fakeLibraryService{}
+			recorder := serveLifecycleRoute(t, service, tt.lifecycleRouteCase)
+
+			if recorder.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d: %q", recorder.Code, tt.wantStatus, recorder.Body.String())
+			}
+			if service.itemCalls != 1 {
+				t.Fatalf("service item calls = %d, want 1", service.itemCalls)
+			}
+			if service.receivedItemID != maxValue || service.receivedVersion != tt.wantVersion {
+				t.Fatalf(
+					"service received item %d version %d, want item %d version %d",
+					service.receivedItemID, service.receivedVersion, maxValue, tt.wantVersion,
+				)
+			}
+		})
+	}
+}
+
+type lifecycleRouteCase struct {
+	name   string
+	method string
+	path   string
+	body   string
+}
+
+// serveLifecycleRoute sends one authenticated request through the item lifecycle routes.
+func serveLifecycleRoute(t *testing.T, service *fakeLibraryService, tt lifecycleRouteCase) *httptest.ResponseRecorder {
+	t.Helper()
+
+	handler := newTestHandler(t, service)
+	router := chi.NewRouter()
+	router.Post("/me/library/{itemID}/status", handler.UpdateStatus)
+	router.Get("/me/library/{itemID}/remove", handler.RemoveConfirmation)
+	router.Post("/me/library/{itemID}/remove", handler.Remove)
+
+	request := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
+	if tt.body != "" {
+		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+	request.AddCookie(&http.Cookie{Name: "library_test_session", Value: "valid-session"})
+	recorder := httptest.NewRecorder()
+	authenticatedLibraryHandler(t, router).ServeHTTP(recorder, request)
+
+	return recorder
 }
 
 func authenticatedLibraryHandler(t *testing.T, next http.Handler) http.Handler {

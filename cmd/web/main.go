@@ -53,6 +53,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		err             error
 		db              *sql.DB
 		bookRepo        books.BookRepository
+		bookIDFinder    library.BookFinder
 		operatorRepo    books.OperatorRepository
 		missingBookRepo books.MissingBookRepository
 		libraryRepo     library.Repository
@@ -63,7 +64,9 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	switch cfg.Env {
 	case config.EnvDev:
 		db, err = sqlite.Open(ctx, cfg.DB.DSN)
-		bookRepo = sqlite.NewBookRepository(db)
+		catalogRepo := sqlite.NewBookRepository(db)
+		bookRepo = catalogRepo
+		bookIDFinder = catalogRepo
 		operatorRepo = sqlite.NewCatalogOperatorRepository(db)
 		missingBookRepo = sqlite.NewMissingBookRepository(db)
 		libraryRepo = sqlite.NewLibraryRepository(db)
@@ -71,7 +74,9 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 		sessionRepo = sqlite.NewSessionRepository(db)
 	case config.EnvStage, config.EnvProd:
 		db, err = postgresql.Open(ctx, cfg.DB.DSN)
-		bookRepo = postgresql.NewBookRepository(db)
+		catalogRepo := postgresql.NewBookRepository(db)
+		bookRepo = catalogRepo
+		bookIDFinder = catalogRepo
 		operatorRepo = postgresql.NewCatalogOperatorRepository(db)
 		missingBookRepo = postgresql.NewMissingBookRepository(db)
 		libraryRepo = postgresql.NewLibraryRepository(db)
@@ -106,7 +111,7 @@ func run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	catalogService := books.NewCatalogService(bookRepo)
 	operatorService := books.NewOperatorServiceWithCovers(operatorRepo, app.NewCoverPreparer(coverStore))
 	missingBookService := books.NewMissingBookService(missingBookRepo, logger)
-	libraryService := library.NewService(libraryRepo, bookRepo)
+	libraryService := library.NewService(libraryRepo, bookIDFinder)
 
 	currentUserMiddleware := httpauth.NewCurrentUserMiddleware(cookies, sessionService)
 	libraryStateProvider := app.NewLibraryStateProvider(libraryService)

@@ -103,9 +103,10 @@ POST /me/library/{itemID}/remove  form field: version
 ```
 
 The status action and confirmed removal use `303 /me/library` plus a one-request flash on success.
-Malformed item IDs, status values, and versions return `422`; owner-scoped missing items return
-`404`; stale forms return `409` without overwriting a newer state or deleting the item. The existing
-authentication, cross-origin, and `no-store` policies apply unchanged.
+Item IDs and versions must fit `1..2147483647` on both backends. Malformed or out-of-range item
+IDs and versions, and unknown status values, return `422` before any lookup or write; owner-scoped
+missing items return `404`; stale forms return `409` without overwriting a newer state or deleting
+the item. The existing authentication, cross-origin, and `no-store` policies apply unchanged.
 
 ### v0.3.2 catalog-operation routes
 

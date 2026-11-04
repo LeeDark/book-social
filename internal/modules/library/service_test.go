@@ -86,19 +86,19 @@ func (r *recordingRepository) Remove(_ context.Context, userID, itemID, expected
 }
 
 type recordingBookFinder struct {
-	book       books.Book
-	err        error
-	receivedID string
+	bookID       int
+	err          error
+	receivedSlug string
 }
 
-func (f *recordingBookFinder) GetBookBySlug(_ context.Context, slug string) (books.Book, error) {
-	f.receivedID = slug
-	return f.book, f.err
+func (f *recordingBookFinder) GetBookIDBySlug(_ context.Context, slug string) (int, error) {
+	f.receivedSlug = slug
+	return f.bookID, f.err
 }
 
 func TestServiceAddNormalizesSlugAndUsesUTCClock(t *testing.T) {
 	repo := &recordingRepository{}
-	finder := &recordingBookFinder{book: books.Book{ID: 7, Slug: "pride-and-prejudice"}}
+	finder := &recordingBookFinder{bookID: 7}
 	service := NewService(repo, finder)
 	service.now = func() time.Time {
 		return time.Date(2026, 9, 19, 16, 30, 0, 0, time.FixedZone("UTC+2", 2*60*60))
@@ -108,8 +108,8 @@ func TestServiceAddNormalizesSlugAndUsesUTCClock(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Add() error = %v", err)
 	}
-	if finder.receivedID != "pride-and-prejudice" {
-		t.Fatalf("book slug = %q, want normalized slug", finder.receivedID)
+	if finder.receivedSlug != "pride-and-prejudice" {
+		t.Fatalf("book slug = %q, want normalized slug", finder.receivedSlug)
 	}
 	if repo.added.UserID != 42 || repo.added.BookID != 7 {
 		t.Fatalf("Add() params = %+v", repo.added)
@@ -133,13 +133,13 @@ func TestServiceAddRejectsInvalidInputBeforeCatalogLookup(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			finder := &recordingBookFinder{book: books.Book{ID: 1}}
+			finder := &recordingBookFinder{bookID: 1}
 			err := NewService(&recordingRepository{}, finder).Add(context.Background(), tt.userID, tt.slug)
 			if !errors.Is(err, ErrInvalidInput) {
 				t.Fatalf("Add() error = %v, want ErrInvalidInput", err)
 			}
-			if finder.receivedID != "" {
-				t.Fatalf("catalog lookup received %q for invalid input", finder.receivedID)
+			if finder.receivedSlug != "" {
+				t.Fatalf("catalog lookup received %q for invalid input", finder.receivedSlug)
 			}
 		})
 	}
@@ -161,7 +161,7 @@ func TestServiceAddMapsCatalogAndRepositoryErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &recordingRepository{addErr: tt.addErr}
-			finder := &recordingBookFinder{book: books.Book{ID: 1}, err: tt.finderErr}
+			finder := &recordingBookFinder{bookID: 1, err: tt.finderErr}
 
 			err := NewService(repo, finder).Add(context.Background(), 1, "known-book")
 			if !errors.Is(err, tt.want) {
@@ -175,7 +175,7 @@ func TestServiceAddMapsCatalogAndRepositoryErrors(t *testing.T) {
 }
 
 func TestServiceAddRejectsCatalogBookWithoutID(t *testing.T) {
-	err := NewService(&recordingRepository{}, &recordingBookFinder{book: books.Book{Slug: "known-book"}}).
+	err := NewService(&recordingRepository{}, &recordingBookFinder{}).
 		Add(context.Background(), 1, "known-book")
 	if !errors.Is(err, ErrInternal) {
 		t.Fatalf("Add() error = %v, want ErrInternal", err)

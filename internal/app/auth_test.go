@@ -16,6 +16,7 @@ import (
 	"github.com/LeeDark/book-social/internal/http/flash"
 	"github.com/LeeDark/book-social/internal/http/render"
 	"github.com/LeeDark/book-social/internal/modules/users"
+	"github.com/LeeDark/book-social/internal/storage/sqlite"
 	"github.com/LeeDark/book-social/internal/testutil"
 )
 
@@ -169,6 +170,46 @@ func TestAuthHandlerRejectsMalformedAndOversizedFormsBeforeService(t *testing.T)
 				t.Fatal("malformed registration reached service")
 			}
 		})
+	}
+}
+
+func TestRegistrationRejectsLoginWithAtSignWithoutCreatingAccount(t *testing.T) {
+	ctx := context.Background()
+	db := testutil.NewSQLiteCatalogV2TestDB(t, ctx)
+	handler := newAuthIntegrationTestApp(t, sqlite.NewUserRepository(db), sqlite.NewSessionRepository(db), sqlite.NewBookRepository(db))
+	password := "correct horse battery staple"
+	form := url.Values{
+		"first_name":            {"Ada"},
+		"login":                 {"bob@example.test"},
+		"email":                 {"ada@example.test"},
+		"password":              {password},
+		"password_confirmation": {password},
+	}
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, formRequest(http.MethodPost, "/register", form))
+
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want 422", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, `<small id="login-error">must not contain @</small>`) || strings.Contains(body, password) {
+		t.Fatalf("registration response does not show only the safe login field error: %q", body)
+	}
+	for _, cookie := range rec.Result().Cookies() {
+		if cookie.Name == "book_social_session" {
+			t.Fatal("refused registration set a session cookie")
+		}
+	}
+
+	for _, table := range []string{"users", "sessions"} {
+		var count int
+		if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+table).Scan(&count); err != nil {
+			t.Fatalf("count %s: %v", table, err)
+		}
+		if count != 0 {
+			t.Fatalf("%s rows = %d, want 0", table, count)
+		}
 	}
 }
 

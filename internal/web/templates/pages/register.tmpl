@@ -7,7 +7,8 @@
         <input id="first_name" name="first_name" autocomplete="given-name" value="{{.Form.FirstName}}" aria-describedby="first_name-error">
         {{with index .Form.Errors "first_name"}}<small id="first_name-error">{{.}}</small>{{end}}
         <label for="login">Login</label>
-        <input id="login" name="login" autocomplete="username" value="{{.Form.Login}}" aria-describedby="login-error">
+        <input id="login" name="login" autocomplete="username" value="{{.Form.Login}}" aria-describedby="login-hint login-error">
+        <small id="login-hint">Use a name without @; you can sign in with either your login or your email.</small>
         {{with index .Form.Errors "login"}}<small id="login-error">{{.}}</small>{{end}}
         <label for="email">Email</label>
         <input id="email" name="email" type="email" autocomplete="email" value="{{.Form.Email}}" aria-describedby="email-error">

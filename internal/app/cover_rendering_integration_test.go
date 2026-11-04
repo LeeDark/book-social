@@ -52,7 +52,7 @@ func TestPostgresCoverRendering(t *testing.T) {
 func checkCoverRendering(
 	t *testing.T,
 	db *sql.DB,
-	bookRepo books.BookRepository,
+	bookRepo libraryBookRepository,
 	operatorRepo books.OperatorRepository,
 	libraryRepo library.Repository,
 	userRepo users.RegistrationRepository,

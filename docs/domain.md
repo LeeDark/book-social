@@ -99,10 +99,12 @@ external import, and cover asset handling remain deferred. Current and planned r
 
 The current `users` module provides:
 
-- registration input normalization and validation;
+- registration input normalization and validation; a new login must not contain `@`, so it cannot
+  equal another account's email;
 - server-owned assignment of the ordinary `user` role;
 - bcrypt hashing with a minimum of 12 Unicode characters and a maximum of 72 UTF-8 bytes;
-- credential verification with one neutral invalid-credentials outcome;
+- credential verification by login or email with one neutral invalid-credentials outcome; when an
+  older login equals another account's email, the email owner is matched;
 - a dummy bcrypt verification path for an unknown account;
 - DB-backed opaque-session creation, lookup, expiry, and invalidation;
 - current-user identity without password hash, with an internal `IsAdmin` capability loaded from
