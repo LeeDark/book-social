@@ -50,7 +50,10 @@ operator ID overflow; regression checks pass on SQLite/PostgreSQL. Feedback is n
 browser recheck on 2026-10-25 (environment not separately reported). Fixes are pushed through
 `9d764db`, with both CI jobs passing. Final acceptance documentation and issue/PR closure
 remain pending. PR #27 stays Draft; merge requires separate authorization. No tag or deployment
-is claimed; v0.3.3 scope is unchanged.
+is claimed; this v0.3.2 work does not change v0.3.3 scope.
+
+On 2026-11-04, findings from a review of the full code history were added to v0.3.3 through
+v0.3.5 below.
 
 ## Planning Principles
 
@@ -365,7 +368,8 @@ on SQLite/PostgreSQL are complete; the user confirmed persistence browser accept
 (Zen Browser, SQLite). Final #26 checks passed on 2026-10-25: full race tests, vet/lint, SQLite
 migration/seed smoke, isolated PostgreSQL integration, JavaScript tests and formatting/diff checks.
 See [verification and manual evidence](testing.md#v032-acceptance-coverage-26). Final documentation
-acceptance documentation and PR/issue closure remain pending; v0.3.3 scope is unchanged.
+acceptance documentation and PR/issue closure remain pending; this closure work does not change
+v0.3.3 scope.
 
 Post-review corrections: feedback GET/POST moved to `/books/request/new` without renaming or
 reserving book slugs; PostgreSQL seed uses `COLLATE "C"`; operator IDs use `1..2147483647`.
@@ -391,6 +395,17 @@ the MPA, and an operator can correct catalog data without direct SQL.
   the existing health endpoint without adding a monitoring stack.
 - [ ] Finish accessibility smoke checks, release checklist, and documentation for implemented
   routes, domain rules, migrations, demo data, and verification evidence.
+- [ ] Reject private-library item IDs and versions outside the shared PostgreSQL `INTEGER` range
+  `1..2147483647` with `422`, as operator routes already do; PostgreSQL currently turns them into
+  `500` responses instead of `404`.
+- [ ] Prevent a new login from matching another account's email address, for example by rejecting
+  `@` in logins; such a login can block the email owner's sign-in by email. Check existing accounts
+  before tightening the rule.
+- [ ] Store SQLite timestamps in a fixed-width UTC text format so comparison and ordering match
+  PostgreSQL within one second (session expiry, library `added_at`); keep reading existing values.
+- [ ] Close the check-to-drop race in the PostgreSQL guarded downgrades `000003`–`000006` with an
+  exclusive table lock, as `000007` and `000008` do, or keep stopping all writers as an explicit
+  release-checklist step.
 
 Outcome: the complete private-library flow is releasable and operable as a curated demonstration.
 
@@ -409,6 +424,19 @@ Outcome: the complete private-library flow is releasable and operable as a curat
   documentation, roadmap, and an available contact method.
 - [ ] Add baseline public-page metadata; canonical URLs, redirects, and sitemap behavior remain
   v0.4 work.
+- [ ] Before the expansion, remove the fixed 109-book count and the 64 KiB manifest limit from
+  cover bundle installation; the current 109-cover installer manifest already uses about 92% of
+  that limit.
+- [ ] Align operator slug suggestions with the seed convention before batch additions: drop
+  apostrophes instead of splitting words, and decide how accented and Cyrillic titles are handled
+  (they now produce partial or empty suggestions).
+- [ ] Fix navigation gaps: replace or remove the navigation and breadcrumb links to the missing
+  `/authors` and `/genres` pages, show library state and the add action on author pages, and
+  return users to the local page they came from after sign-in.
+- [ ] Bring the registration form to the accessibility level of the missing-book form: report all
+  field errors at once with an error summary and `aria-invalid`. Add a favicon.
+- [ ] Load only the featured books for the home page instead of the whole catalog. Operator search
+  may stay in memory within the 500-book bound; SQL search remains v0.4.2 work.
 
 Outcome: Book Social can be shown as a clear, polished public demonstration with 500 reviewed books
 and demo front covers, without claiming a public beta or a finished social service.
@@ -429,6 +457,19 @@ and demo front covers, without claiming a public beta or a finished social servi
   separate from the VM, and a verified restore using disposable data.
 - [ ] Record actual cost, CPU/RAM/latency, and growth boundaries; defer Prometheus and Grafana to
   v0.4, and add Loki or OpenTelemetry only when operational evidence justifies them.
+- [ ] Run the application container as a non-root user; prepare ownership of the retained database
+  and cover volumes before switching.
+- [ ] Configure Caddy to replace or remove client-supplied `X-Forwarded-For`, `X-Real-IP` and
+  `True-Client-IP` before listing it in `APP_TRUSTED_PROXY_CIDRS`: the application trusts these
+  headers from a trusted peer. Document this requirement.
+- [ ] Add login throttling and a per-user limit on missing-book requests before the stage is
+  reachable from the internet, or record why the closed stage can wait for v0.4.4.
+- [ ] Deliver the reviewed cover bundle from storage outside Git with its pinned manifest checksum,
+  and confirm it with `coverctl verify` after installation.
+- [ ] Make the readiness check verify database connectivity and keep `/healthz` as the liveness
+  check. Delete expired sessions on a schedule or during session handling.
+- [ ] Define how unreferenced cover files are listed and removed, starting with a dry run, before
+  replaced covers accumulate on the stage.
 
 Outcome: a low-cost, reproducible PostgreSQL stage environment runs on Hetzner Cloud with verified
 deployment, migration, backup, and restore behavior; it can accommodate later observability
